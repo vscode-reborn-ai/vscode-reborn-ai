@@ -1,5 +1,15 @@
 # ChatGPT Reborn
 
+## Get for VSCode
+
+Search for "ChatGPT Reborn" in the VSCode extension search.
+
+or install it directly from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn).
+
+## About
+
+Install it by searching for
+
 ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
 
 Note: This version is API only, you create an OpenAI API key to use it.
@@ -71,8 +81,8 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## TODO
 
-- [ ] Short-term - Publish to VSCode Marketplace.
-- [ ] Short-term - Add model dropdown to ChatGPT UI.
+- [x] Short-term - Publish to VSCode Marketplace.
+- [x] Short-term - Add model dropdown to ChatGPT UI.
 - [ ] Short-term - Allow more custom prompts.
 - [ ] Short-term - Add way to manage custom prompts in UI.
 - [ ] Long-term - Add option to stream directly into the editor.
