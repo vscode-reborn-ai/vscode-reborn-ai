@@ -259,6 +259,42 @@
     document.addEventListener("click", (e) => {
         const targetButton = e.target.closest('button');
 
+        if (targetButton?.id === "models-button") {
+            e.preventDefault();
+            document.getElementById('model-button-wrapper')?.classList.toggle("hidden");
+
+            return;
+        } else {
+            document.getElementById('model-button-wrapper')?.classList.add("hidden");
+        }
+
+        if (targetButton?.id === "gpt-3.5-turbo-button") {
+            e.preventDefault();
+            vscode.postMessage({
+                type: "setModel",
+                value: "gpt-3.5-turbo"
+            });
+            return;
+        }
+
+        if (targetButton?.id === "gpt-4-button") {
+            e.preventDefault();
+            vscode.postMessage({
+                type: "setModel",
+                value: "gpt-4"
+            });
+            return;
+        }
+
+        if (targetButton?.id === "gpt-4-32k-button") {
+            e.preventDefault();
+            vscode.postMessage({
+                type: "setModel",
+                value: "gpt-4-32k"
+            });
+            return;
+        }
+
         if (targetButton?.id === "more-button") {
             e.preventDefault();
             document.getElementById('chat-button-wrapper')?.classList.toggle("hidden");
