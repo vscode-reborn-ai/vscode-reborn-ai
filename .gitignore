@@ -4,3 +4,4 @@ node_modules
 .vscode-test/
 *.vsix
 !node_modules/chatgpt/build/index.js
+yarn-error.log

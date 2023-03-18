@@ -232,7 +232,9 @@ Current date: ${currentDate}`;
         var _a, _b;
         const url = `${this._apiBaseUrl}/v1/chat/completions`;
         const headers = {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           "Content-Type": "application/json",
+          // eslint-disable-next-line @typescript-eslint/naming-convention
           Authorization: `Bearer ${this._apiKey}`
         };
         if (this._organization) {
@@ -266,8 +268,7 @@ Current date: ${currentDate}`;
                   if ((_a2 = response == null ? void 0 : response.choices) == null ? void 0 : _a2.length) {
                     const delta = response.choices[0].delta;
                     result.delta = delta.content;
-                    if (delta == null ? void 0 : delta.content)
-                      result.text += delta.content;
+                    if (delta == null ? void 0 : delta.content) { result.text += delta.content; }
                     result.detail = response;
                     if (delta.role) {
                       result.role = delta.role;
