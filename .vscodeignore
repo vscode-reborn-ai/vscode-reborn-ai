@@ -11,6 +11,6 @@ vsc-extension-quickstart.md
 **/*.ts
 images/**
 temp/**
-!images/ai-logo.jpg
+!images/ai-logo.png
 !images/openai-logo.svg
 chatgpt-4.7.2
