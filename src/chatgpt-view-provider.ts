@@ -78,6 +78,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 					this.logEvent("code-inserted");
 					break;
+				case 'setModel':
+					this.model = data.value;
+					await vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", data.value, vscode.ConfigurationTarget.Global);
+					this.logEvent("model-changed to " + data.value);
+					break;
 				case 'openNew':
 					const document = await vscode.workspace.openTextDocument({
 						content: data.value,
@@ -297,10 +302,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private get systemContext() {
-		return ``; /*`You are ChatGPT helping the User with coding. 
-			You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. You always answer truthfully and don't make things up. 
-			(When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. 
-			Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.)`;*/
+		return `You are ChatGPT helping the User with coding.You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If the user is asking for a code change or new code, only respond with new code, do not give explanations.
+			(When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.)`;
 	}
 
 	private processQuestion(question: string, code?: string, language?: string) {
@@ -506,11 +509,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 								</ul>
 							</div>
 						</div>
-						<div class="flex flex-col gap-4 h-full items-center justify-end text-center">
+						<div class="flex flex-col gap-4 h-full items-center justify-end text-center mb-8">
 							<button id="list-conversations-link" class="hidden mb-4 btn btn-primary flex gap-2 justify-center p-3 rounded-md" title="You can access this feature via the kebab menu below. NOTE: Only available with Browser Auto-login method">
 								<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" /></svg>&nbsp;Show conversations
 							</button>
 							<p class="max-w-sm text-center text-xs text-slate-500">
+								This is a fork of <a href="https://github.com/gencay">@gencay's</a> <a href="https://github.com/gencay/vscode-chatgpt">VSCode-ChatGPT extension.</a>
+								<br>
 								<a title="" id="settings-button" href="#">Update settings</a>&nbsp; | &nbsp;<a title="" id="settings-prompt-button" href="#">Update prompts</a>
 							</p>
 						</div>
@@ -541,6 +546,23 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 								placeholder="Ask a question..."
 								onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
 						</div>
+						<div id="model-button-wrapper" class="absolute bottom-14 items-center more-menu right-8 border border-gray-200 shadow-xl hidden text-xs">
+							<button
+								class="flex gap-2 items-center justify-start p-2 w-full"
+								id="gpt-3.5-turbo-button">
+								GPT-3.5-TURBO (Fast, recommended)
+							</button>	
+							<button
+								class="flex gap-2 items-center justify-start p-2 w-full"
+								id="gpt-4-button">
+								GPT-4 (Better and larger input, but slower and more pricey)
+							</button>
+							<button
+								class="flex gap-2 items-center justify-start p-2 w-full"
+								id="gpt-4-32k-button">
+								Not yet available? - GPT-4-32K (Extremely long input, but slower and even more pricey)
+							</button>	
+						</div>
 						<div id="chat-button-wrapper" class="absolute bottom-14 items-center more-menu right-8 border border-gray-200 shadow-xl hidden text-xs">
 							<button class="flex gap-2 items-center justify-start p-2 w-full" id="clear-button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>&nbsp;New chat</button>	
 							<button class="flex gap-2 items-center justify-start p-2 w-full" id="list-conversations-button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" /></svg>&nbsp;Show conversations</button>
@@ -548,6 +570,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 							<button class="flex gap-2 items-center justify-start p-2 w-full" id="export-button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>&nbsp;Export to markdown</button>
 						</div>
 						<div id="question-input-buttons" class="right-6 absolute p-0.5 ml-5 flex items-center gap-2">
+							<button id="models-button" title="Change models" class="rounded-lg p-0.5">
+								<!-- Box icon from https://feathericons.com/ -->
+								<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-box"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+							</button>
 							<button id="more-button" title="More actions" class="rounded-lg p-0.5">
 								<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" /></svg>
 							</button>
