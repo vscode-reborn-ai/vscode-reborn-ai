@@ -8,8 +8,6 @@ or install it directly from the [VSCode Marketplace](https://marketplace.visuals
 
 ## About
 
-Install it by searching for
-
 ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
 
 Note: This version is API only, you create an OpenAI API key to use it.
