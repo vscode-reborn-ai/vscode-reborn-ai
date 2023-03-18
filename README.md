@@ -18,6 +18,8 @@ This is a fork of the popular, but now discontinued [vscode-chatgpt](https://git
 
 To use GPT-4 use an API key that has access to GPT-4, if you're part of an organization that has access to GPT-4, set the organization ID in the settings. Note that GPT-4 is noticeably slower than GPT-3.5-turbo. Change the `chatgpt.gpt3.model` setting to `gpt-4` to use GPT-4, or set it to `gpt-3.5-turbo` to use GPT-3.5-turbo. You don't have to "Start new chat" to use a different model, the next message you send will use the new model.
 
+This extension has an option for `gpt-4-32k`, but at this moment users that have access to `gpt-4` don't seem to have access to `gpt-4-32k` yet. It's still an option to allow users to use the 32k version the moment it's made available by OpenAI.
+
 ## Installation
 
 To set up the project, first clone the repository:
@@ -28,10 +30,10 @@ bashCopy code
 
 Next, change into the project directory and install the dependencies using Yarn:
 
-bashCopy code
-
-`cd vscode-chatgpt-reborn
-yarn install`
+```bash
+cd vscode-chatgpt-reborn
+yarn install
+```
 
 ## Running Scripts
 
@@ -39,27 +41,27 @@ You can run the following scripts using Yarn:
 
 - Build the extension:
 
-bashCopy code
-
-`yarn run build`
+```bash
+yarn run build
+```
 
 - Watch for changes and rebuild automatically:
 
-bashCopy code
-
-`yarn run watch`
+```bash
+yarn run watch
+```
 
 - Format the code using Prettier and run tests with fixes:
 
-bashCopy code
-
-`yarn run fmt`
+```bash
+yarn run fmt
+```
 
 - Run tests using ESLint and TypeScript:
 
-bashCopy code
-
-`yarn run test`
+```bash
+yarn run test
+```
 
 ## Testing the Extension in Visual Studio Code
 
