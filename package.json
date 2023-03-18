@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.10.1",
+  "version": "3.10.2",
   "aiKey": "",
   "repository": {
     "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"
