@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.10.1",
+  "version": "3.10.2",
   "aiKey": "",
   "repository": {
     "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"
@@ -474,11 +474,8 @@
         "chatgpt.gpt3.model": {
           "type": "string",
           "enum": [
-            "text-davinci-002-render",
             "gpt-4",
             "gpt-4-32k",
-            "text-davinci-002-render-paid",
-            "text-davinci-002-render-sha",
             "gpt-3.5-turbo",
             "gpt-3.5-turbo-0301",
             "text-davinci-003",
@@ -545,6 +542,11 @@
           "default": false,
           "markdownDescription": "Specify if you want to disable the telemetry. This extension also respects your default vs-code telemetry setting `telemetry.telemetryLevel`. We check both settings for telemetry. **Important**: No user data is tracked, we only use telemetry to see what is used, and what isn't. This allows us to make accurate decisions on what to add or enhance to the extension.",
           "order": 42
+        },
+        "chatgpt.systemContext": {
+          "type": "string",
+          "default": "You are ChatGPT helping the User with coding.You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If the user is asking for a code change or new code, only respond with new code, do not give explanations. When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.",
+          "description": "System context description. Use this to tell ChatGPT how to respond to the user."
         }
       }
     }

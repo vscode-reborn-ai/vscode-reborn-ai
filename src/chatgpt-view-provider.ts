@@ -116,12 +116,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					});
 					break;
 				case 'openSettings':
-					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:YOUR_PUBLISHER_NAME.vscode-chatgpt chatgpt.");
+					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn chatgpt.");
 
 					this.logEvent("settings-opened");
 					break;
 				case 'openSettingsPrompt':
-					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:YOUR_PUBLISHER_NAME.vscode-chatgpt promptPrefix");
+					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn promptPrefix");
 
 					this.logEvent("settings-prompt-opened");
 					break;
@@ -302,9 +302,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private get systemContext() {
-		return `You are ChatGPT helping the User with coding.You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If the user is asking for a code change or new code, only respond with new code, do not give explanations.
-			(When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.)`;
+		return vscode.workspace.getConfiguration('chatgpt').get('systemContext');
 	}
+
 
 	private processQuestion(question: string, code?: string, language?: string) {
 		if (code != null) {
