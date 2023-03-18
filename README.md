@@ -81,7 +81,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 - [x] Short-term - Publish to VSCode Marketplace.
 - [x] Short-term - Add model dropdown to ChatGPT UI.
-- [ ] Short-term - Allow more custom prompts.
+- [x] Short-term - Allow more custom prompts.
 - [ ] Short-term - Add way to manage custom prompts in UI.
 - [ ] Long-term - Add option to stream directly into the editor.
 
