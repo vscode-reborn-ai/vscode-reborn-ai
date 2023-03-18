@@ -90,6 +90,26 @@
           "command": "vscode-chatgpt.customPrompt2",
           "group": "chatGpt@10",
           "when": "editorHasSelection && customPrompt2-enabled"
+        },
+        {
+          "command": "vscode-chatgpt.customPrompt3",
+          "group": "chatGpt@11",
+          "when": "editorHasSelection && customPrompt3-enabled"
+        },
+        {
+          "command": "vscode-chatgpt.customPrompt4",
+          "group": "chatGpt@12",
+          "when": "editorHasSelection && customPrompt4-enabled"
+        },
+        {
+          "command": "vscode-chatgpt.customPrompt5",
+          "group": "chatGpt@13",
+          "when": "editorHasSelection && customPrompt5-enabled"
+        },
+        {
+          "command": "vscode-chatgpt.customPrompt6",
+          "group": "chatGpt@14",
+          "when": "editorHasSelection && customPrompt6-enabled"
         }
       ]
     },
@@ -212,6 +232,26 @@
       {
         "command": "vscode-chatgpt.customPrompt2",
         "title": "ChatGPT: Custom prompt 2",
+        "enablement": "editorHasSelection"
+      },
+      {
+        "command": "vscode-chatgpt.customPrompt3",
+        "title": "ChatGPT: Custom prompt 3",
+        "enablement": "editorHasSelection"
+      },
+      {
+        "command": "vscode-chatgpt.customPrompt4",
+        "title": "ChatGPT: Custom prompt 4",
+        "enablement": "editorHasSelection"
+      },
+      {
+        "command": "vscode-chatgpt.customPrompt5",
+        "title": "ChatGPT: Custom prompt 5",
+        "enablement": "editorHasSelection"
+      },
+      {
+        "command": "vscode-chatgpt.customPrompt6",
+        "title": "ChatGPT: Custom prompt 6",
         "enablement": "editorHasSelection"
       },
       {
@@ -361,27 +401,75 @@
           "markdownDescription": "Enable the prompt prefix used for your custom prompt. The default value is empty, if you enable this item make sure to set this `chatgpt.promptPrefix.customPrompt2`",
           "order": 23
         },
+        "chatgpt.promptPrefix.customPrompt3": {
+          "type": "string",
+          "default": "",
+          "description": "Your custom prompt. It's disabled by default, please set to a custom prompt and enable it if you prefer using customized prompt",
+          "order": 24
+        },
+        "chatgpt.promptPrefix.customPrompt3-enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable the prompt prefix used for your custom prompt. The default value is empty, if you enable this item make sure to set this `chatgpt.promptPrefix.customPrompt3`",
+          "order": 25
+        },
+        "chatgpt.promptPrefix.customPrompt4": {
+          "type": "string",
+          "default": "",
+          "description": "Your custom prompt. It's disabled by default, please set to a custom prompt and enable it if you prefer using customized prompt",
+          "order": 26
+        },
+        "chatgpt.promptPrefix.customPrompt4-enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable the prompt prefix used for your custom prompt. The default value is empty, if you enable this item make sure to set this `chatgpt.promptPrefix.customPrompt4`",
+          "order": 27
+        },
+        "chatgpt.promptPrefix.customPrompt5": {
+          "type": "string",
+          "default": "",
+          "description": "Your custom prompt. It's disabled by default, please set to a custom prompt and enable it if you prefer using customized prompt",
+          "order": 28
+        },
+        "chatgpt.promptPrefix.customPrompt5-enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable the prompt prefix used for your custom prompt. The default value is empty, if you enable this item make sure to set this `chatgpt.promptPrefix.customPrompt5`",
+          "order": 29
+        },
+        "chatgpt.promptPrefix.customPrompt6": {
+          "type": "string",
+          "default": "",
+          "description": "Your custom prompt. It's disabled by default, please set to a custom prompt and enable it if you prefer using customized prompt",
+          "order": 30
+        },
+        "chatgpt.promptPrefix.customPrompt6-enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable the prompt prefix used for your custom prompt. The default value is empty, if you enable this item make sure to set this `chatgpt.promptPrefix.customPrompt6`",
+          "order": 31
+        },
         "chatgpt.promptPrefix.adhoc-enabled": {
           "type": "boolean",
           "default": true,
           "description": "Enable the prompt prefix used for adhoc command for the selected code in the context menu",
-          "order": 24
+          "order": 32
         },
         "chatgpt.gpt3.apiKey": {
           "type": "string",
           "markdownDescription": "OpenAI API key. [Get your API Key from OpenAI](https://beta.openai.com/account/api-keys). \n\n**Please enable OpenAI API Key method to use this setting.**",
-          "order": 30
+          "order": 33
         },
         "chatgpt.gpt3.apiBaseUrl": {
           "type": "string",
           "default": "https://api.openai.com",
           "markdownDescription": "Optional override for the OpenAI API base URL. If you customize it, please make sure you have the same format. e.g. starts with `https://` without a trailing slash. The completions endpoint suffix is added internally, e.g. for reference: `${apiBaseUrl}/v1/completions`",
-          "order": 31
+          "order": 34
         },
         "chatgpt.gpt3.organization": {
           "type": "string",
           "markdownDescription": "OpenAI Organization ID. [Documentation](https://beta.openai.com/docs/api-reference/requesting-organization). \n\n**Please enable OpenAI API Key method to use this setting.**",
-          "order": 32
+          "order": 35
         },
         "chatgpt.gpt3.model": {
           "type": "string",
@@ -401,7 +489,7 @@
           ],
           "default": "gpt-3.5-turbo",
           "markdownDescription": "OpenAI models to use for your prompts. [Documentation](https://beta.openai.com/docs/models/models). \n\n**If you face 400 Bad Request please make sure you are using the right model for your integration method.**",
-          "order": 33,
+          "order": 36,
           "enumItemLabels": [
             "OpenAI API Key - gpt-4",
             "OpenAI API Key - gpt-3.5-turbo",
@@ -423,37 +511,37 @@
           "type": "number",
           "default": 1024,
           "markdownDescription": "The maximum number of tokens to generate in the completion. \n\nThe token count of your prompt plus max_tokens cannot exceed the model's context length. Most models have a context length of 2048 tokens (except for the newest models, which support 4096). [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-max_tokens) \n\n**Please enable OpenAI API Key method to use this setting.**",
-          "order": 34
+          "order": 37
         },
         "chatgpt.gpt3.temperature": {
           "type": "number",
           "default": 1,
           "markdownDescription": "What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer.\n\nIt is recommended altering this or top_p but not both. [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-temperature) \n\n**Please enable OpenAI API Key method to use this setting.**",
-          "order": 35
+          "order": 38
         },
         "chatgpt.gpt3.top_p": {
           "type": "number",
           "default": 1,
           "markdownDescription": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. \n\nIt is recommended altering this or temperature but not both. [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p) \n\n**Please enable OpenAI API Key method to use this setting.**",
-          "order": 36
+          "order": 39
         },
         "chatgpt.response.showNotification": {
           "type": "boolean",
           "default": false,
           "description": "Choose whether you'd like to receive a notification when ChatGPT bot responds to your query.",
-          "order": 37
+          "order": 40
         },
         "chatgpt.response.autoScroll": {
           "type": "boolean",
           "default": true,
           "description": "Whenever there is a new question or response added to the conversation window, extension will automatically scroll to the bottom. You can change that behavior by disabling this setting.",
-          "order": 38
+          "order": 41
         },
         "chatgpt.telemetry.disable": {
           "type": "boolean",
           "default": false,
           "markdownDescription": "Specify if you want to disable the telemetry. This extension also respects your default vs-code telemetry setting `telemetry.telemetryLevel`. We check both settings for telemetry. **Important**: No user data is tracked, we only use telemetry to see what is used, and what isn't. This allows us to make accurate decisions on what to add or enhance to the extension.",
-          "order": 39
+          "order": 42
         }
       }
     }

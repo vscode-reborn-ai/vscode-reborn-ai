@@ -1,7 +1,11 @@
 import * as vscode from "vscode";
 import ChatGptViewProvider from './chatgpt-view-provider';
 
-const menuCommands = ["addTests", "findProblems", "optimize", "explain", "addComments", "completeCode", "generateCode", "customPrompt1", "customPrompt2", "adhoc"];
+const menuCommands = [
+	"addTests", "findProblems", "optimize", "explain",
+	"addComments", "completeCode", "generateCode",
+	"customPrompt1", "customPrompt2", "customPrompt3", "customPrompt4", "customPrompt5", "customPrompt6",
+	"adhoc"];
 
 export async function activate(context: vscode.ExtensionContext) {
 	let adhocCommandPrefix: string = context.globalState.get("chatgpt-adhoc-prompt") || '';
