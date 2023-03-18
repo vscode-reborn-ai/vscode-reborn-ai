@@ -1,9 +1,9 @@
 {
   "name": "vscode-chatgpt-reborn",
   "publisher": "christopher-hayes",
-  "displayName": "vscode-chatgpt-reborn",
+  "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
-  "description": "vscode-chatgpt-reborn",
+  "description": "This is a fork of the now discontinued vscode-chatgpt extension.",
   "version": "3.9.8",
   "aiKey": "",
   "repository": {

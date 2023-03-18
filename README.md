@@ -1,8 +1,10 @@
-# ChatGPT for VSCode - Reborn
+# ChatGPT Reborn
 
-vscode-chatgpt-reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
+ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
 
 Note: This version is API only, you create an OpenAI API key to use it.
+
+This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it.
 
 ## GPT-4
 
