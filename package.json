@@ -552,11 +552,14 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "rimraf out && npm run esbuild-base -- --minify",
+    "vscode:prepublish": "rimraf out && npm run esbuild-base -- --minify && npm run build-webview",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-    "build": "npm run -S esbuild-base -- --sourcemap",
-    "watch": "npm run -S esbuild-base -- --sourcemap --watch",
-    "fmt": "prettier --write \"src/**/*.ts\"&& npm run test -- --fix",
+    "build": "npm run -S esbuild-base -- --sourcemap && npm run build-webview",
+    "watch": "npm-run-all -p watch:*",
+    "watch:esbuild": "npm run -S esbuild-base -- --sourcemap --watch",
+    "watch:webview": "webpack --mode development --watch",
+    "build-webview": "webpack --mode production",
+    "fmt": "prettier --write \"src/**/*.ts\" && npm run test -- --fix",
     "test": "eslint src --ext ts && tsc --noEmit"
   },
   "devDependencies": {
@@ -564,6 +567,8 @@
     "@types/isomorphic-fetch": "^0.0.36",
     "@types/mocha": "^10.0.1",
     "@types/node": "16.x",
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
     "@types/uuid": "^9.0.0",
     "@types/vscode": "^1.73.0",
     "@types/vscode-webview": "^1.57.0",
@@ -574,10 +579,16 @@
     "eslint": "^8.28.0",
     "glob": "^8.0.3",
     "mocha": "^10.1.0",
-    "ts-loader": "^9.4.1",
-    "typescript": "^4.9.3"
+    "npm-run-all": "^4.1.5",
+    "tailwindcss": "^3.2.7",
+    "ts-loader": "^9.4.2",
+    "typescript": "^4.9.3",
+    "webpack": "^5.76.2",
+    "webpack-cli": "^5.0.1"
   },
   "dependencies": {
+    "autoprefixer": "^10.4.14",
+    "css-loader": "^6.7.3",
     "delay": "^5.0.0",
     "eventsource-parser": "^0.1.0",
     "gpt3-tokenizer": "^1.1.5",
@@ -585,9 +596,14 @@
     "keyv": "^4.5.2",
     "openai": "^3.1.0",
     "p-timeout": "^6.1.1",
+    "postcss": "^8.4.21",
+    "postcss-loader": "^7.1.0",
     "quick-lru": "^6.1.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "remark": "^14.0.2",
     "strip-markdown": "^5.0.0",
+    "style-loader": "^3.3.2",
     "uuid": "^9.0.0"
   },
   "resolutions": {

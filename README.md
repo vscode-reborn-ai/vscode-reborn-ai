@@ -87,6 +87,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [x] Short-term - Add setting for a custom system message.
 - [ ] Short-term - Add way to manage custom prompts in UI.
 - [ ] Long-term - Add option to stream directly into the editor.
+- [ ] Long-term - Inline diff
 
 ## Contributing
 
