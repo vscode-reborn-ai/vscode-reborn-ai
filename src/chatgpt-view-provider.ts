@@ -454,7 +454,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private getWebviewHtml(webview: vscode.Webview): string {
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'main.js'));
 		const vendorHighlightCss = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.css'));
 		const vendorHighlightJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.js'));
 		const vendorMarkedJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'marked.min.js'));
@@ -476,7 +475,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				<script src="${vendorMarkedJs}" defer async></script>
 				<script src="${vendorTurndownJs}" defer async></script>
 				<script nonce="${nonce}" src="${webpackScript}" defer async></script>
-				<script nonce="${nonce}" src="${scriptUri}"></script>
 				<link href="${vendorHighlightCss}" rel="stylesheet">
 			</body>
 			</html>`;

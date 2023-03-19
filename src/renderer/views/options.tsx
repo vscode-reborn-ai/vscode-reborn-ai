@@ -1,5 +1,5 @@
 import React from "react";
 
-export default function Options(props: { vscode: any }) {
+export default function Options() {
   return <div>Options</div>;
 }

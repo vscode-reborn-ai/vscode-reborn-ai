@@ -19,6 +19,6 @@
 		"node_modules",
 		"dist",
 		"out",
-		"src/views/**"
+		"src/renderer/views/**"
 	]
 }

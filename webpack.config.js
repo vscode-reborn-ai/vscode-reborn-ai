@@ -1,7 +1,7 @@
 const path = require("path");
 
 module.exports = {
-    entry: './src/views/index.tsx',
+    entry: './src/renderer/index.tsx',
     output: {
         filename: 'webview.bundle.js',
         path: path.resolve(__dirname, 'out'),
@@ -11,6 +11,7 @@ module.exports = {
         rules: [
             {
                 test: /\.(ts|tsx)$/,
+                include: path.resolve(__dirname, 'src/renderer'), // only look into the src/renderer folder
                 exclude: /node_modules/,
                 use: [
                     {
@@ -20,6 +21,7 @@ module.exports = {
             },
             {
                 test: /\.css$/,
+                include: path.resolve(__dirname, 'src/renderer'), // only look into the src/renderer folder
                 use: [
                     'style-loader',
                     {
