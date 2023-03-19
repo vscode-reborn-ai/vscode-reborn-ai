@@ -118,7 +118,7 @@ code {
     font-family: var(--vscode-editor-font-family) !important;
 }
 
-button {
+/* button {
     border: none;
     padding: var(--input-padding-vertical) var(--input-padding-horizontal);
     text-align: center;
@@ -147,7 +147,7 @@ button.secondary {
 
 button.secondary:hover {
     background: var(--vscode-button-secondaryHoverBackground);
-}
+} */
 
 input:not([type='checkbox']),
 textarea {

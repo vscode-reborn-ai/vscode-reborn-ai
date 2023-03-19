@@ -6,6 +6,7 @@
   "description": "This is a fork of the now discontinued vscode-chatgpt extension.",
   "version": "3.10.2",
   "aiKey": "",
+  "license": "ISC",
   "repository": {
     "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"
   },
@@ -563,6 +564,7 @@
     "test": "eslint src --ext ts && tsc --noEmit"
   },
   "devDependencies": {
+    "@tailwindcss/forms": "^0.5.3",
     "@types/glob": "^8.0.0",
     "@types/isomorphic-fetch": "^0.0.36",
     "@types/mocha": "^10.0.1",
@@ -601,6 +603,7 @@
     "quick-lru": "^6.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.9.0",
     "remark": "^14.0.2",
     "strip-markdown": "^5.0.0",
     "style-loader": "^3.3.2",

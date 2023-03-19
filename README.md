@@ -14,7 +14,7 @@ Note: This version is API only, you create an OpenAI API key to use it.
 
 This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it.
 
-## GPT-4
+### GPT-4
 
 To use GPT-4 use an API key that has access to GPT-4, if you're part of an organization that has access to GPT-4, set the organization ID in the settings. Note that GPT-4 is noticeably slower than GPT-3.5-turbo. Change the `chatgpt.gpt3.model` setting to `gpt-4` to use GPT-4, or set it to `gpt-3.5-turbo` to use GPT-3.5-turbo. You don't have to "Start new chat" to use a different model, the next message you send will use the new model.
 
@@ -24,9 +24,9 @@ This extension has an option for `gpt-4-32k`, but at this moment users that have
 
 To set up the project, first clone the repository:
 
-bashCopy code
-
-`git clone https://github.com/christopher-hayes/vscode-chatgpt-reborn.git`
+```bash
+git clone https://github.com/christopher-hayes/vscode-chatgpt-reborn.git
+```
 
 Next, change into the project directory and install the dependencies using Yarn:
 
@@ -39,25 +39,25 @@ yarn install
 
 You can run the following scripts using Yarn:
 
-- Build the extension:
+### Build the extension
 
 ```bash
 yarn run build
 ```
 
-- Watch for changes and rebuild automatically:
+### Watch for changes and rebuild automatically
 
 ```bash
 yarn run watch
 ```
 
-- Format the code using Prettier and run tests with fixes:
+### Format the code using Prettier and run tests with fixes
 
 ```bash
 yarn run fmt
 ```
 
-- Run tests using ESLint and TypeScript:
+### Run tests using ESLint and TypeScript
 
 ```bash
 yarn run test
@@ -94,3 +94,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 If you want to contribute to the vscode-chatgpt-reborn project, follow the project's contribution guidelines and submit pull requests or open issues on the GitHub repository:
 
 [https://github.com/christopher-hayes/vscode-chatgpt-reborn](https://github.com/christopher-hayes/vscode-chatgpt-reborn)
+
+## License
+
+This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.

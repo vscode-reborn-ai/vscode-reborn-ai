@@ -455,15 +455,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	private getWebviewHtml(webview: vscode.Webview): string {
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'main.js'));
-		const stylesMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'main.css'));
-
 		const vendorHighlightCss = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.css'));
 		const vendorHighlightJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.js'));
 		const vendorMarkedJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'marked.min.js'));
-		// const vendorTailwindJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'tailwindcss.3.2.4.min.js'));
 		const vendorTurndownJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'turndown.js'));
-
-		const webpackScript = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'webview.bundle.js'));
+		// React code bundled by webpack, this includes styling
+		const webpackScript = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview.bundle.js'));
 
 		const nonce = this.getRandomId();
 
@@ -472,18 +469,15 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-				<link href="${stylesMainUri}" rel="stylesheet">
-				<link href="${vendorHighlightCss}" rel="stylesheet">
-				<script src="${vendorHighlightJs}" defer async></script>
-				<script src="${vendorMarkedJs}" defer async></script>
-				<script src="${vendorTurndownJs}" defer async></script>
-				<script src="${webpackScript}" defer async></script>
 			</head>
 			<body class="overflow-hidden">
 				<div id="root" class="flex flex-col h-screen">
+				<script src="${vendorHighlightJs}" defer async></script>
+				<script src="${vendorMarkedJs}" defer async></script>
+				<script src="${vendorTurndownJs}" defer async></script>
+				<script nonce="${nonce}" src="${webpackScript}" defer async></script>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
-				<script nonce="${nonce}" src="${scriptUri}"></script>
+				<link href="${vendorHighlightCss}" rel="stylesheet">
 			</body>
 			</html>`;
 	}
