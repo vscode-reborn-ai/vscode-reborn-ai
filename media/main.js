@@ -250,7 +250,7 @@
     };
 
     document.getElementById('question-input').addEventListener("keydown", function (event) {
-        if (event.key == "Enter" && !event.shiftKey && !event.isComposing) {
+        if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
             event.preventDefault();
             addFreeTextQuestion();
         }

@@ -65,16 +65,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			context.globalState.update("chatgpt-user-agent", null);
 		}
 
-		if (e.affectsConfiguration('chatgpt.chromiumPath')) {
-			provider.setChromeExecutablePath();
-		}
-
 		if (e.affectsConfiguration('chatgpt.profilePath')) {
 			provider.setProfilePath();
-		}
-
-		if (e.affectsConfiguration('chatgpt.proxyServer')) {
-			provider.setProxyServer();
 		}
 
 		if (e.affectsConfiguration('chatgpt.method')) {

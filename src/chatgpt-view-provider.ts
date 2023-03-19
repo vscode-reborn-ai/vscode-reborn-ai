@@ -1,7 +1,5 @@
 import delay from 'delay';
 import fetch from 'isomorphic-fetch';
-import * as fs from 'node:fs';
-import * as os from 'node:os';
 import * as vscode from 'vscode';
 import { ChatGPTAPI as ChatGPTAPI3 } from '../chatgpt-4.7.2/index';
 import { ChatGPTAPI as ChatGPTAPI35 } from '../chatgpt-5.1.1/index';
@@ -14,7 +12,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	public autoScroll: boolean;
 	public useAutoLogin?: boolean;
 	public useGpt3?: boolean;
-	public chromiumPath?: string;
 	public profilePath?: string;
 	public model?: string;
 
@@ -22,7 +19,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private apiGpt35?: ChatGPTAPI35;
 	private conversationId?: string;
 	private messageId?: string;
-	private proxyServer?: string;
 	private loginMethod?: LoginMethod;
 	private authType?: AuthType;
 
@@ -43,9 +39,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
 
 		this.setMethod();
-		this.setChromeExecutablePath();
 		this.setProfilePath();
-		this.setProxyServer();
 		this.setAuthType();
 	}
 
@@ -139,7 +133,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			}
 		});
 
-		if (this.leftOverMessage != null) {
+		if (this.leftOverMessage !== null) {
 			// If there were any messages that wasn't delivered, render after resolveWebView is called.
 			this.sendMessage(this.leftOverMessage);
 			this.leftOverMessage = null;
@@ -163,10 +157,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		this.logEvent("cleared-session");
 	}
 
-	public setProxyServer(): void {
-		this.proxyServer = vscode.workspace.getConfiguration("chatgpt").get("proxyServer");
-	}
-
 	public setMethod(): void {
 		this.loginMethod = vscode.workspace.getConfiguration("chatgpt").get("method") as LoginMethod;
 
@@ -177,34 +167,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	public setAuthType(): void {
 		this.authType = vscode.workspace.getConfiguration("chatgpt").get("authenticationType");
-		this.clearSession();
-	}
-
-	public setChromeExecutablePath(): void {
-		let path = "";
-		switch (os.platform()) {
-			case 'win32':
-				path = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-				break;
-
-			case 'darwin':
-				path = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-				break;
-
-			default:
-				/**
-				 * Since two (2) separate chrome releases exists on linux
-				 * we first do a check to ensure we're executing the right one.
-				 */
-				const chromeExists = fs.existsSync('/usr/bin/google-chrome');
-
-				path = chromeExists
-					? '/usr/bin/google-chrome'
-					: '/usr/bin/google-chrome-stable';
-				break;
-		}
-
-		this.chromiumPath = vscode.workspace.getConfiguration("chatgpt").get("chromiumPath") || path;
 		this.clearSession();
 	}
 
@@ -234,9 +196,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			if ((this.isGpt35Model && !this.apiGpt35) || (!this.isGpt35Model && !this.apiGpt3) || modelChanged) {
 				let apiKey = configuration.get("gpt3.apiKey") as string || state.get("chatgpt-gpt3-apiKey") as string;
 				const organization = configuration.get("gpt3.organization") as string;
-				const max_tokens = configuration.get("gpt3.maxTokens") as number;
+				const maxTokens = configuration.get("gpt3.maxTokens") as number;
 				const temperature = configuration.get("gpt3.temperature") as number;
-				const top_p = configuration.get("gpt3.top_p") as number;
+				const topP = configuration.get("gpt3.top_p") as number;
 				const apiBaseUrl = configuration.get("gpt3.apiBaseUrl") as string;
 
 				if (!apiKey) {
@@ -274,9 +236,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						organization,
 						completionParams: {
 							model: this.model,
-							max_tokens,
+							// eslint-disable-next-line @typescript-eslint/naming-convention
+							max_tokens: maxTokens,
 							temperature,
-							top_p,
+							// eslint-disable-next-line @typescript-eslint/naming-convention
+							top_p: topP,
 						}
 					});
 				} else {
@@ -287,9 +251,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						organization,
 						completionParams: {
 							model: this.model,
-							max_tokens,
+							// eslint-disable-next-line @typescript-eslint/naming-convention
+							max_tokens: maxTokens,
 							temperature,
-							top_p,
+							// eslint-disable-next-line @typescript-eslint/naming-convention
+							top_p: topP,
 						}
 					});
 				}
@@ -302,12 +268,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private get systemContext() {
-		return vscode.workspace.getConfiguration('chatgpt').get('systemContext');
+		return vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? `You are ChatGPT helping the User with coding.You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If the user is asking for a code change or new code, only respond with new code, do not give explanations. When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.`;
 	}
 
 
 	private processQuestion(question: string, code?: string, language?: string) {
-		if (code != null) {
+		if (code !== null) {
 			// Add prompt prefix to the code if there was a code block selected
 			question = `${question}${language ? ` (The following code is in ${language} programming language)` : ''}: ${code}`;
 		}
@@ -333,7 +299,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		const responseInMarkdown = !this.isCodexModel;
 
 		// If the ChatGPT view is not in focus/visible; focus on it to render Q&A
-		if (this.webView == null) {
+		if (this.webView === null) {
 			vscode.commands.executeCommand('vscode-chatgpt.view.focus');
 		} else {
 			this.webView?.show?.(true);
@@ -350,7 +316,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			if (this.useGpt3) {
 				if (this.isGpt35Model && this.apiGpt35) {
 					const gpt3Response = await this.apiGpt35.sendMessage(question, {
-						systemMessage: this.systemContext,
+						systemMessage: `${this.systemContext}`,
 						messageId: this.conversationId,
 						parentMessageId: this.messageId,
 						abortSignal: this.abortController.signal,
@@ -362,7 +328,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					({ text: this.response, id: this.conversationId, parentMessageId: this.messageId } = gpt3Response);
 				} else if (!this.isGpt35Model && this.apiGpt3) {
 					({ text: this.response, conversationId: this.conversationId, parentMessageId: this.messageId } = await this.apiGpt3.sendMessage(question, {
-						promptPrefix: this.systemContext,
+						promptPrefix: `${this.systemContext}`,
 						abortSignal: this.abortController.signal,
 						onProgress: (partialResponse) => {
 							this.response = partialResponse.text;
@@ -372,7 +338,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				}
 			}
 
-			if (options.previousAnswer != null) {
+			if (options.previousAnswer !== null) {
 				this.response = options.previousAnswer + this.response;
 			}
 
@@ -458,13 +424,33 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private logEvent(eventName: string, properties?: {}): void {
 		// You can initialize your telemetry reporter and consume it here - *replaced with console.debug to prevent unwanted telemetry logs
 		// this.reporter?.sendTelemetryEvent(eventName, { "chatgpt.loginMethod": this.loginMethod!, "chatgpt.authType": this.authType!, "chatgpt.model": this.model || "unknown", ...properties }, { "chatgpt.questionCounter": this.questionCounter });
-		console.debug(eventName, { "chatgpt.loginMethod": this.loginMethod!, "chatgpt.authType": this.authType!, "chatgpt.model": this.model || "unknown", ...properties }, { "chatgpt.questionCounter": this.questionCounter });
+		console.debug(eventName, {
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			"chatgpt.loginMethod": this.loginMethod!,
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			"chatgpt.authType": this.authType!,
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			"chatgpt.model": this.model || "unknown", ...properties
+		}, {
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			"chatgpt.questionCounter": this.questionCounter
+		});
 	}
 
 	private logError(eventName: string): void {
 		// You can initialize your telemetry reporter and consume it here - *replaced with console.error to prevent unwanted telemetry logs
 		// this.reporter?.sendTelemetryErrorEvent(eventName, { "chatgpt.loginMethod": this.loginMethod!, "chatgpt.authType": this.authType!, "chatgpt.model": this.model || "unknown" }, { "chatgpt.questionCounter": this.questionCounter });
-		console.error(eventName, { "chatgpt.loginMethod": this.loginMethod!, "chatgpt.authType": this.authType!, "chatgpt.model": this.model || "unknown" }, { "chatgpt.questionCounter": this.questionCounter });
+		console.error(eventName, {
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			"chatgpt.loginMethod": this.loginMethod!,
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			"chatgpt.authType": this.authType!,
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			"chatgpt.model": this.model || "unknown"
+		}, {
+			// eslint-disable-next-line @typescript-eslint/naming-convention
+			"chatgpt.questionCounter": this.questionCounter
+		});
 	}
 
 	private getWebviewHtml(webview: vscode.Webview) {

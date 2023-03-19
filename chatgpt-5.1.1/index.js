@@ -145,7 +145,9 @@ var ChatGPTAPI = class {
     this._completionParams = {
       model: CHATGPT_MODEL,
       temperature: 0.8,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       top_p: 1,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       presence_penalty: 1,
       ...completionParams
     };
@@ -199,6 +201,7 @@ Current date: ${currentDate}`;
    * @returns The response from ChatGPT
    */
   async sendMessage(text, opts = {}) {
+    // Extract necessary fields from options
     const {
       parentMessageId,
       messageId = uuidv4(),
@@ -207,29 +210,39 @@ Current date: ${currentDate}`;
       stream = onProgress ? true : false,
       completionParams
     } = opts;
+
+    // Initialize abort controller and signal
     let { abortSignal } = opts;
     let abortController = null;
     if (timeoutMs && !abortSignal) {
       abortController = new AbortController();
       abortSignal = abortController.signal;
     }
+
+    // Create user message object
     const message = {
       role: "user",
       id: messageId,
       parentMessageId,
       text
     };
+
+    // Upsert the message
     await this._upsertMessage(message);
+
+    // Build messages array
     const { messages } = await this._buildMessages(text, opts);
+
+    // Create assistant result object
     const result = {
       role: "assistant",
       id: uuidv4(),
       parentMessageId: messageId,
       text: ""
     };
+
     const responseP = new Promise(
       async (resolve, reject) => {
-        var _a, _b;
         const url = `${this._apiBaseUrl}/v1/chat/completions`;
         const headers = {
           // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -237,15 +250,18 @@ Current date: ${currentDate}`;
           // eslint-disable-next-line @typescript-eslint/naming-convention
           Authorization: `Bearer ${this._apiKey}`
         };
+
         if (this._organization) {
           headers["OpenAI-Organization"] = this._organization;
         }
+
         const body = {
           ...this._completionParams,
           ...completionParams,
           messages,
           stream
         };
+
         if (stream) {
           fetchSSE(
             url,
@@ -255,7 +271,6 @@ Current date: ${currentDate}`;
               body: JSON.stringify(body),
               signal: abortSignal,
               onMessage: (data) => {
-                var _a2;
                 if (data === "[DONE]") {
                   result.text = result.text.trim();
                   return resolve(result);
@@ -265,18 +280,18 @@ Current date: ${currentDate}`;
                   if (response.id) {
                     result.id = response.id;
                   }
-                  if ((_a2 = response == null ? void 0 : response.choices) == null ? void 0 : _a2.length) {
+                  if (response.choices?.length) {
                     const delta = response.choices[0].delta;
                     result.delta = delta.content;
-                    if (delta == null ? void 0 : delta.content) { result.text += delta.content; }
+                    if (delta.content) { result.text += delta.content; }
                     result.detail = response;
                     if (delta.role) {
                       result.role = delta.role;
                     }
-                    onProgress == null ? void 0 : onProgress(result);
+                    onProgress?.(result);
                   }
                 } catch (err) {
-                  console.warn("OpenAI stream SEE event unexpected error", err);
+                  console.warn("Open AI has an unexpected error during streaming", err);
                   return reject(err);
                 }
               }
@@ -291,35 +306,38 @@ Current date: ${currentDate}`;
               body: JSON.stringify(body),
               signal: abortSignal
             });
+
             if (!res.ok) {
               const reason = await res.text();
-              const msg = `OpenAI error ${res.status || res.statusText}: ${reason}`;
+              const msg = `OpenAI has an error: ${res.status || res.statusText}: ${reason}`;
               const error = new ChatGPTError(msg, { cause: res });
               error.statusCode = res.status;
               error.statusText = res.statusText;
               return reject(error);
             }
+
             const response = await res.json();
             if (this._debug) {
               console.log(response);
             }
-            if (response == null ? void 0 : response.id) {
+            if (response.id) {
               result.id = response.id;
             }
-            if ((_a = response == null ? void 0 : response.choices) == null ? void 0 : _a.length) {
+            if (response.choices?.length) {
               const message2 = response.choices[0].message;
               result.text = message2.content;
               if (message2.role) {
                 result.role = message2.role;
               }
             } else {
-              const res2 = response;
+              const errorResponse = response;
               return reject(
                 new Error(
-                  `OpenAI error: ${((_b = res2 == null ? void 0 : res2.detail) == null ? void 0 : _b.message) || (res2 == null ? void 0 : res2.detail) || "unknown"}`
+                  `OpenAI has an error: ${errorResponse?.detail?.message || errorResponse?.detail || "unknown"}`
                 )
               );
             }
+
             result.detail = response;
             return resolve(result);
           } catch (err) {
@@ -330,9 +348,9 @@ Current date: ${currentDate}`;
     ).then((message2) => {
       return this._upsertMessage(message2).then(() => message2);
     });
+
     if (timeoutMs) {
       if (abortController) {
-        ;
         responseP.cancel = () => {
           abortController.abort();
         };
@@ -345,70 +363,104 @@ Current date: ${currentDate}`;
       return responseP;
     }
   }
+
+
   get apiKey() {
     return this._apiKey;
   }
   set apiKey(apiKey) {
     this._apiKey = apiKey;
   }
+
+  // Helper function to construct human-readable prompt lines based on message role
+  getMessageLines(role, label, content) {
+    switch (role) {
+      case "system":
+        return [`Instructions:\n${content}`];
+      case "user":
+        return [`${label}:\n${content}`];
+      default:
+        return [`${label}:\n${content}`];
+    }
+  }
+
   async _buildMessages(text, opts) {
     const { systemMessage = this._systemMessage } = opts;
     let { parentMessageId } = opts;
+
     const userLabel = USER_LABEL_DEFAULT;
     const assistantLabel = ASSISTANT_LABEL_DEFAULT;
     let messages = [];
+
+    // Add system message if present
     if (systemMessage) {
       messages.push({
         role: "system",
-        content: systemMessage
+        content: systemMessage,
       });
     }
+
     const systemMessageOffset = messages.length;
-    let nextMessages = text ? messages.concat([
-      {
-        role: "user",
-        content: text,
-        name: opts.name
-      }
-    ]) : messages;
+
+    // Create new array with added user message or use original messages array
+    let nextMessages = text
+      ? messages.concat([
+        {
+          role: "user",
+          content: text,
+          name: opts.name,
+        },
+      ])
+      : messages;
+
+    // Iterate while there is a parent message ID
     do {
-      const prompt = nextMessages.reduce((prompt2, message) => {
-        switch (message.role) {
-          case "system":
-            return prompt2.concat([`Instructions:
-${message.content}`]);
-          case "user":
-            return prompt2.concat([`${userLabel}:
-${message.content}`]);
-          default:
-            return prompt2.concat([`${assistantLabel}:
-${message.content}`]);
-        }
-      }, []).join("\n\n");
+      // Construct the prompt for each message in the array
+      nextMessages
+        .reduce((promptAcc, message) => {
+          const messageLines = this.getMessageLines(
+            message.role,
+            message.role === "user" ? userLabel : assistantLabel,
+            message.content
+          );
+          return promptAcc.concat(messageLines);
+        }, [])
+        .join("\n\n");
+
       messages = nextMessages;
+
       if (!parentMessageId) {
         break;
       }
+
+      // Retrieve parent message by ID
       const parentMessage = await this._getMessageById(parentMessageId);
+
       if (!parentMessage) {
         break;
       }
+
       const parentMessageRole = parentMessage.role || "user";
-      nextMessages = nextMessages.slice(0, systemMessageOffset).concat([
-        {
-          role: parentMessageRole,
-          content: parentMessage.text,
-          name: parentMessage.name
-        },
-        ...nextMessages.slice(systemMessageOffset)
-      ]);
+
+      // Include the parent message and update the nextMessages array
+      nextMessages = nextMessages
+        .slice(0, systemMessageOffset)
+        .concat([
+          {
+            role: parentMessageRole,
+            content: parentMessage.text,
+            name: parentMessage.name,
+          },
+          ...nextMessages.slice(systemMessageOffset),
+        ]);
+
       parentMessageId = parentMessage.parentMessageId;
+
     } while (true);
+
     return { messages };
   }
-  // protected get _isCodexModel() {
-  //   return this._completionParams.model.startsWith('code-')
-  // }
+
   async _defaultGetMessageById(id) {
     const res = await this._messageStore.get(id);
     return res;
