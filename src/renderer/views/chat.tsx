@@ -164,6 +164,15 @@ export default function Chat({
     }
   };
 
+  const unEscapeHTML = (unsafe: any) => {
+    return unsafe
+      .replaceAll("&amp;", "&")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+      .replaceAll("&quot;", '"')
+      .replaceAll("&#039;", "'");
+  };
+
   // Handle messages sent from the extension to the webview
   window.addEventListener("message", (event) => {
     const message = event.data;
@@ -198,7 +207,7 @@ export default function Chat({
         let updatedValue = "";
 
         if (!message.responseInMarkdown) {
-          updatedValue = "```\r\n" + message.value + " \r\n ```";
+          updatedValue = "```\r\n" + unEscapeHTML(message.value) + " \r\n ```";
         } else {
           updatedValue =
             message.value.split("```").length % 2 === 1
@@ -270,13 +279,6 @@ export default function Chat({
         } as Message;
 
         addMessage(errorMessage);
-
-        // list.innerHTML += `<div class="p-4 self-end mt-4 pb-8 error-element-ext">
-        //                 <h2 class="mb-5 flex">${aiSvg}ChatGPT</h2>
-        //                 <div class="text-red-400">${marked.parse(
-        //                   messageValue
-        //                 )}</div>
-        //             </div>`;
         break;
       case "clearConversation":
         postMessage("clearConversation");
@@ -298,12 +300,12 @@ export default function Chat({
       />
       {/* Conversation messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-4">
-          {messages.map((message: any, index: number) => {
+        <div className="flex flex-col gap-4 pb-40">
+          {messages.map((message: any) => {
             return (
               <div
                 className="w-full p-4 self-end mt-4 question-element-ext relative input-background"
-                key={index}
+                key={message.id}
               >
                 <h2 className="mb-5 flex">
                   {message.author === Author.user ? (
@@ -351,7 +353,11 @@ export default function Chat({
                     ${message.isStreaming ? "result-streaming" : ""}
                   `}
                 >
-                  {(window as any)?.marked.parse(message.text) ?? message.text}
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: message.text,
+                    }}
+                  />
                 </div>
               </div>
             );

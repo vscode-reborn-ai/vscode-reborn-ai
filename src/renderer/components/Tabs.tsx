@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 const tabs = [
   //   { name: "Options", href: "/options", count: "4" },
   { name: "Prompts", href: "/prompts" },
+  { name: "Actions", href: "/actions" },
   { name: "Chat 1", href: "/" },
 ];
 
@@ -23,7 +24,7 @@ export default function Tabs() {
 
   return (
     <div>
-      <div className="sm:hidden">
+      <div className="2xs:hidden py-1 px-2">
         <label htmlFor="tabs" className="sr-only">
           Select a tab
         </label>
@@ -31,7 +32,7 @@ export default function Tabs() {
         <select
           id="tabs"
           name="tabs"
-          className="block w-full rounded-md py-2 pl-3 pr-10 text-base focus:border-tab-active focus:outline-none focus:ring-tab-active sm:text-sm"
+          className="block w-full rounded-md py-2 pl-3 pr-10 bg-tab-inactive-unfocused border-tab-inactive-border text-tab-inactive-unfocused  focus:border-tab-active focus:outline-none focus:ring-tab-active text-xs"
           defaultValue={tabs.find((tab) => currentTabName === tab.name)?.name}
         >
           {tabs.map((tab) => (
@@ -39,7 +40,7 @@ export default function Tabs() {
           ))}
         </select>
       </div>
-      <div className="hidden sm:block">
+      <div className="hidden 2xs:block">
         <div className="border-b">
           <nav className="-mb-px flex space-x-2" aria-label="Tabs">
             {tabs.map((tab) => (

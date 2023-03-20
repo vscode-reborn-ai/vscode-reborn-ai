@@ -29,6 +29,12 @@ module.exports = {
                 input: {
                     DEFAULT: 'var(--vscode-settings-textInputBackground)',
                 },
+                list: {
+                    DEFAULT: 'var(--vscode-list-focusBackground)',
+                    'focus': 'var(--vscode-list-focusBackground)',
+                    'active': 'var(--vscode-list-activeSelectionBackground)',
+                    'hover': 'var(--vscode-list-hoverBackground)',
+                },
             },
             textColor: {
                 DEFAULT: 'var(--vscode-foreground)',
@@ -59,6 +65,15 @@ module.exports = {
                 input: {
                     DEFAULT: 'var(--vscode-settings-textInputForeground)',
                 },
+                list: {
+                    DEFAULT: 'var(--vscode-list-focusForeground)',
+                    'focus': 'var(--vscode-list-focusForeground)',
+                    'active': 'var(--vscode-list-activeSelectionForeground)',
+                    'hover': 'var(--vscode-list-hoverForeground)',
+                    invalid: 'var(--vscode-list-invalidItemForeground)',
+                    error: 'var(--vscode-list-errorForeground)',
+                    warning: 'var(--vscode-list-warningForeground)',
+                },
             },
             borderColor: {
                 DEFAULT: 'var(--vscode-input-border)',
@@ -87,6 +102,15 @@ module.exports = {
                     'active': 'var(--vscode-tab-activeBorder)',
                     'active-unfocused': 'var(--vscode-tab-unfocusedActiveBorder)',
                 },
+            },
+            divideColor: {
+                DEFAULT: 'var(--vscode-textSeparator-foreground)',
+                button: 'var(--vscode-button-separator)',
+                menu: 'var(--vscode-menu-separatorBackground)',
+            },
+            screens: {
+                '2xs': '320px',
+                'xs': '480px',
             },
         },
     },

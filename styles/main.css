@@ -43,6 +43,7 @@ a:active {
     color: var(--vscode-textLink-activeForeground);
 }
 
+/*
 blockquote,
 dd,
 dl,
@@ -113,6 +114,7 @@ h6 {
     margin-right: 0 !important;
     font-weight: bold !important;
 }
+*/
 
 code {
     font-family: var(--vscode-editor-font-family) !important;
@@ -226,6 +228,7 @@ textarea::placeholder {
     }
 }
 
+/*
 .textarea-wrapper {
     display: grid;
     max-height: 20rem;
@@ -251,6 +254,8 @@ textarea::placeholder {
     font: inherit;
     grid-area: 1 / 1 / 2 / 2;
 }
+
+*/
 
 .pre-code-element:not(:last-child) {
     margin-bottom: 2rem;

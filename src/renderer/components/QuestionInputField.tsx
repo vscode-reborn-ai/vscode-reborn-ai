@@ -1,4 +1,5 @@
 import React from "react";
+import { Tooltip } from "react-tooltip";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 
@@ -12,12 +13,12 @@ export default ({
   inProgress: boolean;
 }) => {
   return (
-    <footer className="fixed bottom-0 w-full flex flex-col gap-y-1">
+    <footer className="fixed bottom-0 w-full flex flex-col gap-y-1 pt-2 bg">
       <div className="px-4 flex items-center">
         <div className="flex-1 textarea-wrapper">
           <textarea
             rows={1}
-            className="rounded-sm border text-input bg-secondary"
+            className="w-full text-sm rounded border border-input text-input bg-input resize-none"
             id="question-input"
             placeholder="Ask a question..."
             ref={questionInputRef}
@@ -51,7 +52,7 @@ export default ({
         {!inProgress && (
           <div
             id="question-input-buttons"
-            className="right-6 absolute p-0.5 ml-5 flex items-center gap-2"
+            className="right-6 absolute py-0.5 px-2 -mt-1 ml-5 flex items-center gap-2 rounded hover:bg-button-secondary focus:bg-button-secondary"
           >
             <button
               title="Submit prompt"
@@ -75,8 +76,32 @@ export default ({
           </div>
         )}
       </div>
-      <div className="flex flex-row gap-2 py-1 px-4">
-        <ModelSelect postMessage={postMessage} />
+      <div className="flex flex-row justify-between gap-2 py-1 px-4">
+        <div className="flex flex-row gap-2">
+          <ModelSelect postMessage={postMessage} />
+        </div>
+        <div className="flex flex-row gap-2">
+          <button
+            className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
+            onClick={() => {
+              postMessage("openSettings");
+            }}
+            data-tooltip-id="footer-tooltip"
+            data-tooltip-content="Open extension settings"
+          >
+            <Icon icon="cog" className="w-3 h-3" />
+            Settings
+          </button>
+          <button
+            className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
+            data-tooltip-id="footer-tooltip"
+            data-tooltip-content="Export the conversation to a markdown file"
+          >
+            <Icon icon="download" className="w-3 h-3" />
+            Export
+          </button>
+        </div>
+        <Tooltip id="footer-tooltip" place="top" delayShow={800} />
       </div>
     </footer>
   );
