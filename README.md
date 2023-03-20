@@ -10,7 +10,7 @@ or install it directly from the [VSCode Marketplace](https://marketplace.visuals
 
 ## About this fork
 
-This version is API only, you create an OpenAI API key to use it. "Browser
+This version is API **only**, you must create an OpenAI API key to use it.
 
 This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it.
 
