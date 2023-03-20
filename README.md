@@ -1,14 +1,12 @@
 # ChatGPT Reborn
 
+ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
+
 ## Get for VSCode
 
 Search for "ChatGPT Reborn" in the VSCode extension search.
 
 or install it directly from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn).
-
-## About this extension
-
-ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
 
 ## About this fork
 
@@ -21,6 +19,8 @@ This is a fork of the popular, but now discontinued [vscode-chatgpt](https://git
 **What does that mean for this fork?** I'll be continuing work on this extension, I have some ideas for features that focus on automation. A major react refactor will be releasing soon, which sets the groundwork for a more powerful UI experience. I suggest taking a look at "ChatGPT: Genie AI", and if you like the UI in this "Reborn" fork, feel free to stay as well.
 
 ## GPT-4
+
+Note: You must have access to GPT-4 via API key to use GPT-4. You would've had to signed up on the GPT-4 waitlist and received an email that you now have access.
 
 To use GPT-4 use an API key that has access to GPT-4, if you're part of an organization that has access to GPT-4, set the organization ID in the settings. Note that GPT-4 is noticeably slower than GPT-3.5-turbo. Change the `chatgpt.gpt3.model` setting to `gpt-4` to use GPT-4, or set it to `gpt-3.5-turbo` to use GPT-3.5-turbo. You don't have to "Start new chat" to use a different model, the next message you send will use the new model.
 
