@@ -6,13 +6,19 @@ Search for "ChatGPT Reborn" in the VSCode extension search.
 
 or install it directly from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn).
 
-## About
+## About this extension
 
 ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
 
-Note: This version is API only, you create an OpenAI API key to use it.
+## About this fork
+
+This version is API only, you create an OpenAI API key to use it. "Browser
 
 This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it.
+
+**Update March 20:** Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work in an API-only format: https://github.com/ai-genie/chatgpt-vscode
+
+**What does that mean for this fork?** I'll be continuing work on this extension, I have some ideas for features that focus on automation. A major react refactor will be releasing soon, which sets the groundwork for a more powerful UI experience. I suggest taking a look at "ChatGPT: Genie AI", and if you like the UI in this "Reborn" fork, feel free to stay as well.
 
 ## GPT-4
 
@@ -23,8 +29,6 @@ This extension has an option for `gpt-4-32k`, but at this moment users that have
 ## Installation
 
 To set up the project, first clone the repository:
-
-bashCopy code
 
 `git clone https://github.com/christopher-hayes/vscode-chatgpt-reborn.git`
 
