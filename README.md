@@ -20,7 +20,7 @@ This is a fork of the popular, but now discontinued [vscode-chatgpt](https://git
 
 ## GPT-4
 
-Note: You must have access to GPT-4 via API key to use GPT-4. You would've had to signed up on the GPT-4 waitlist and received an email that you now have access.
+**Note:** You must have access to GPT-4 via API key to use GPT-4. You would've signed up on the GPT-4 waitlist and received an email that you now have GPT-4 API access. This is **not** the same as having access to GPT-4 at chat.openai.com, that is not considered "API access".
 
 To use GPT-4 use an API key that has access to GPT-4, if you're part of an organization that has access to GPT-4, set the organization ID in the settings. Note that GPT-4 is noticeably slower than GPT-3.5-turbo. Change the `chatgpt.gpt3.model` setting to `gpt-4` to use GPT-4, or set it to `gpt-3.5-turbo` to use GPT-3.5-turbo. You don't have to "Start new chat" to use a different model, the next message you send will use the new model.
 
