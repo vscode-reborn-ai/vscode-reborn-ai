@@ -147,7 +147,7 @@ button.secondary {
 
 button.secondary:hover {
     background: var(--vscode-button-secondaryHoverBackground);
-} */
+}
 
 input:not([type='checkbox']),
 textarea {
@@ -169,6 +169,7 @@ textarea::placeholder {
 [contenteditable='true'] {
     outline: 1px solid var(--vscode-focusBorder);
 }
+*/
 
 /* CSS Spinner */
 .spinner {
@@ -359,4 +360,69 @@ textarea::placeholder {
 .answer-element-ext a {
     text-decoration-line: underline;
     text-underline-offset: 2px;
+}
+
+
+/* VSCode-themed HLJS syntax highlighting */
+.hljs-attribute,
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-meta-keyword,
+.hljs-doctag,
+.hljs-symbol {
+  color: var(--vscode-symbolIcon-keywordForeground);
+}
+
+.hljs-title,
+.hljs-attr,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-type,
+.hljs-string {
+  color: var(--vscode-symbolIcon-stringForeground);
+}
+
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal {
+  color: var(--vscode-symbolIcon-numberForeground);
+}
+
+.hljs-comment,
+.hljs-code,
+.hljs-class .hljs-title {
+  color: var(--vscode-symbolIcon-commentForeground);
+}
+
+.hljs-subst {
+  color: var(--vscode-symbolIcon-textForeground);
+}
+
+.hljs-function,
+.hljs-section,
+.hljs-name,
+.hljs-quote,
+.hljs-class .hljs-id {
+  color: var(--vscode-symbolIcon-functionForeground);
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: var(--vscode-symbolIcon-referenceForeground);
+}
+
+.hljs-meta {
+  color: var(--vscode-symbolIcon-metaForeground);
+}
+
+.hljs-tag,
+.hljs-tag .hljs-title {
+  color: var(--vscode-symbolIcon-propertyForeground);
+}
+
+.hljs-attribute,
+.hljs-class .hljs-title,
+.hljs-type {
+  color: var(--vscode-symbolIcon-typeForeground);
 }

@@ -21,7 +21,12 @@ module.exports = {
             },
             {
                 test: /\.css$/,
-                include: path.resolve(__dirname, 'src/renderer'), // only look into the src/renderer folder
+                include:
+                    [
+                        path.resolve(__dirname, 'src/renderer'), // React UI code
+                        path.resolve(__dirname, 'node_modules/react-tooltip'), // react-tooltip
+                        path.resolve(__dirname, 'styles'), // custom styles
+                    ],
                 use: [
                     'style-loader',
                     {

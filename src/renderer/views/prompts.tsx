@@ -1,9 +1,8 @@
 import React from "react";
 import CustomPromptPanel from "../components/CustomPromptPanel";
-import { getVSCodeAPI } from "../utils";
 
-export default function Prompts() {
-  const vscode = getVSCodeAPI();
-
+export default function Prompts(props: {
+  postMessage: (type: string, value: any, language?: string) => void;
+}) {
   return <CustomPromptPanel />;
 }

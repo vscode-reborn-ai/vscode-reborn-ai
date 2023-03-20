@@ -1,7 +1,7 @@
 import React from "react";
 
-export default function Options(props: {
+export default function Stats(props: {
   postMessage: (type: string, value: any, language?: string) => void;
 }) {
-  return <div>Options</div>;
+  return <div>Stats</div>;
 }

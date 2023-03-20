@@ -5,6 +5,7 @@ module.exports = {
         extend: {
             backgroundColor: {
                 DEFAULT: 'var(--vscode-editor-background)',
+                secondary: 'var(--vscode-editorWidget-background)',
                 tab: {
                     DEFAULT: 'var(--vscode-tab-activeBackground)',
                     'inactive': 'var(--vscode-tab-inactiveBackground)',
@@ -25,9 +26,13 @@ module.exports = {
                     DEFAULT: 'var(--vscode-menu-background)',
                     'selection': 'var(--vscode-menu-selectionBackground)',
                 },
+                input: {
+                    DEFAULT: 'var(--vscode-settings-textInputBackground)',
+                },
             },
             textColor: {
                 DEFAULT: 'var(--vscode-foreground)',
+                secondary: 'var(--vscode-editorWidget-foreground)',
                 tab: {
                     DEFAULT: 'var(--vscode-tab-activeForeground)',
                     'inactive': 'var(--vscode-tab-inactiveForeground)',
@@ -51,9 +56,13 @@ module.exports = {
                     DEFAULT: 'var(--vscode-menu-foreground)',
                     'selection': 'var(--vscode-menu-selectionForeground)',
                 },
+                input: {
+                    DEFAULT: 'var(--vscode-settings-textInputForeground)',
+                },
             },
             borderColor: {
                 DEFAULT: 'var(--vscode-input-border)',
+                secondary: 'var(--vscode-editorWidget-border)',
                 tab: {
                     DEFAULT: 'var(--vscode-tab-border)',
                     'inactive': 'var(--vscode-tab-border)',
@@ -65,6 +74,9 @@ module.exports = {
                 },
                 menu: {
                     DEFAULT: 'var(--vscode-menu-border)',
+                },
+                input: {
+                    DEFAULT: 'var(--vscode-settings-textInputBorder)',
                 },
             },
             ringColor: {

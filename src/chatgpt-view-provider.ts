@@ -62,6 +62,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
 
 		webviewView.webview.onDidReceiveMessage(async data => {
+			console.log("Main Process - Received message from webview: ", data);
 			switch (data.type) {
 				case 'addFreeTextQuestion':
 					this.sendApiRequest(data.value, { command: "freeText" });
@@ -92,22 +93,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 					this.logEvent("conversation-cleared");
 					break;
-				case 'clearBrowser':
-					this.logEvent("browser-cleared");
-					break;
 				case 'cleargpt3':
 					this.apiGpt3 = undefined;
 
 					this.logEvent("gpt3-cleared");
 					break;
 				case 'login':
-					this.prepareConversation().then(success => {
-						if (success) {
-							this.sendMessage({ type: 'loginSuccessful', showConversations: this.useAutoLogin }, true);
-
-							this.logEvent("logged-in");
-						}
-					});
+					this.prepareConversation();
 					break;
 				case 'openSettings':
 					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn chatgpt.");
@@ -119,16 +111,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 					this.logEvent("settings-prompt-opened");
 					break;
-				case 'listConversations':
-					this.logEvent("conversations-list-attempted");
-					break;
-				case 'showConversation':
-					/// ...
-					break;
 				case "stopGenerating":
 					this.stopGenerating();
 					break;
 				default:
+					console.log('Main Process - Uncaught message type: "' + data.type + '"');
 					break;
 			}
 		});
@@ -263,6 +250,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		this.sendMessage({ type: 'loginSuccessful', showConversations: this.useAutoLogin }, true);
+		this.logEvent("logged-in");
 
 		return true;
 	}
@@ -283,6 +271,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	public async sendApiRequest(prompt: string, options: { command: string, code?: string, previousAnswer?: string, language?: string; }) {
 		if (this.inProgress) {
 			// The AI is still thinking... Do not accept more questions.
+			this.logEvent('api-request-rejected', { "chatgpt.command": options.command, "chatgpt.hasCode": String(!!options.code), "chatgpt.hasPreviousAnswer": String(!!options.previousAnswer) });
 			return;
 		}
 
@@ -311,9 +300,59 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		this.currentMessageId = this.getRandomId();
 
 		this.sendMessage({ type: 'addQuestion', value: prompt, code: options.code, autoScroll: this.autoScroll });
+		const isObject = function (value: any) {
+			var type = typeof value;
+			return value !== null && (type === 'object' || type === 'function');
+		};
+
+		const debounce = (func: (arg0: any) => void, delay: number | undefined, { leading }: any) => {
+			let timerId: string | number | NodeJS.Timeout | undefined;
+
+			return (...args: any) => {
+				if (!timerId && leading) {
+					// @ts-ignore
+					func(...args);
+				}
+				clearTimeout(timerId);
+
+				// @ts-ignore
+				timerId = setTimeout(() => func(...args), delay);
+			};
+		};
+
+		const throttle = function (func: any, wait: number, options?: { leading: any; trailing: any; maxWait: any; } | undefined) {
+			var leading = true,
+				trailing = true;
+
+			if (typeof func !== 'function') {
+				throw new TypeError('Expected a function');
+			}
+			if (options && isObject(options)) {
+				leading = 'leading' in options ? !!options.leading : leading;
+				trailing = 'trailing' in options ? !!options.trailing : trailing;
+			}
+			return debounce(func, wait, {
+				leading: leading,
+				// @ts-ignore
+				maxWait: wait,
+				trailing: trailing
+			});
+		};
+
 
 		try {
 			if (this.useGpt3) {
+				const throttledSendMessage = throttle(function (data: any) {
+					// @ts-ignore
+					data.sendMessage({
+						type: 'addResponse',
+						value: data.response,
+						id: data.currentMessageId,
+						autoScroll: data.autoScroll,
+						responseInMarkdown: data.responseInMarkdown
+					});
+				}, 500);
+
 				if (this.isGpt35Model && this.apiGpt35) {
 					const gpt3Response = await this.apiGpt35.sendMessage(question, {
 						systemMessage: `${this.systemContext}`,
@@ -322,7 +361,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						abortSignal: this.abortController.signal,
 						onProgress: (partialResponse) => {
 							this.response = partialResponse.text;
-							this.sendMessage({ type: 'addResponse', value: this.response, id: this.currentMessageId, autoScroll: this.autoScroll, responseInMarkdown });
+							throttledSendMessage({
+								sendMessage: this.sendMessage,
+								value: this.response,
+								id: this.currentMessageId,
+								autoScroll: this.autoScroll,
+								responseInMarkdown: responseInMarkdown
+							});
 						},
 					});
 					({ text: this.response, id: this.conversationId, parentMessageId: this.messageId } = gpt3Response);
@@ -332,7 +377,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						abortSignal: this.abortController.signal,
 						onProgress: (partialResponse) => {
 							this.response = partialResponse.text;
-							this.sendMessage({ type: 'addResponse', value: this.response, id: this.currentMessageId, autoScroll: this.autoScroll, responseInMarkdown });
+							throttledSendMessage({
+								sendMessage: this.sendMessage,
+								value: this.response,
+								id: this.currentMessageId,
+								autoScroll: this.autoScroll,
+								responseInMarkdown: responseInMarkdown
+							});
 						},
 					}));
 				}
