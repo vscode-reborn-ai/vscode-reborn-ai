@@ -97,15 +97,31 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [x] Short-term - Add model dropdown to ChatGPT UI.
 - [x] Short-term - Allow more custom prompts.
 - [x] Short-term - Add setting for a custom system message.
+- [ ] Short-term - Move API key from settings config to secure storage.
 - [ ] Short-term - Add way to manage custom prompts in UI.
 - [ ] Long-term - Add option to stream directly into the editor.
 - [ ] Long-term - Inline diff
+- [ ] Long-term - "Smart" actions based on the type of file open.
+- [ ] Long-term - "Smart" actions on that run at a project level.
 
 ## Contributing
 
 If you want to contribute to the vscode-chatgpt-reborn project, follow the project's contribution guidelines and submit pull requests or open issues on the GitHub repository:
 
 [https://github.com/christopher-hayes/vscode-chatgpt-reborn](https://github.com/christopher-hayes/vscode-chatgpt-reborn)
+
+## Tech
+
+- [TypeScript](https://www.typescriptlang.org/)
+- [VSCode Extension API](https://code.visualstudio.com/api)
+
+### UI
+
+- [React](https://reactjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+- The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
+- This does not use VSCode's [WebView UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit/tree/main/src). But, I'm open to switching to the WebView UI toolkit since it better aligns with VSCode's UI.
 
 ## License
 
