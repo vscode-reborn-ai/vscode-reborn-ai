@@ -1,20 +1,32 @@
 # ChatGPT Reborn
 
+ChatGPT Reborn is a Visual Studio Code extension that allows you to use the ChatGPT API to write, refactor, and improve your code.
+
 ## Get for VSCode
 
 Search for "ChatGPT Reborn" in the VSCode extension search.
 
 or install it directly from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn).
 
-## About
+## About this fork
 
-ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
+This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it. Note that this version is API-only, the browser code was not open-sourced by Gencay (due to OpenAI ToS issue), and I have no intention of violating OpenAI's ToS either.
 
-Note: This version is API only, you create an OpenAI API key to use it.
+**The new "ChatGPT: Genie AI" extension**
 
-This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it.
+Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work in an API-only format: <https://github.com/ai-genie/chatgpt-vscode>
+
+**What does that mean for this fork?**
+
+I'll be continuing work on this extension, I have some ideas for features that focus on automation. A major react refactor will be releasing soon, which sets the groundwork for a more powerful UI experience.
+
+**FOSS**
+
+As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it may allow Genie AI to become far more powerful and useful to users. But, you can expect "Reborn" to stay FOSS for as long as I am maintainer, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
 
 ### GPT-4
+
+**Note:** You must have access to GPT-4 via API key to use GPT-4. You would've signed up on the GPT-4 waitlist and received an email that you now have GPT-4 API access. This is **not** the same as having access to GPT-4 at chat.openai.com, that is not considered "API access".
 
 To use GPT-4 use an API key that has access to GPT-4, if you're part of an organization that has access to GPT-4, set the organization ID in the settings. Note that GPT-4 is noticeably slower than GPT-3.5-turbo. Change the `chatgpt.gpt3.model` setting to `gpt-4` to use GPT-4, or set it to `gpt-3.5-turbo` to use GPT-3.5-turbo. You don't have to "Start new chat" to use a different model, the next message you send will use the new model.
 
