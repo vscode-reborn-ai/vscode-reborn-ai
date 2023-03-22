@@ -116,8 +116,8 @@ h6 {
 }
 */
 
-code {
-    font-family: var(--vscode-editor-font-family) !important;
+.message-wrapper p {
+    @apply my-2 mx-4;
 }
 
 /* button {

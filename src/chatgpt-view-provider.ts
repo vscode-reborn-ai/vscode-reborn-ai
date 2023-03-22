@@ -351,7 +351,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						autoScroll: data.autoScroll,
 						responseInMarkdown: data.responseInMarkdown
 					});
-				}, 500);
+				}, 300);
 
 				if (this.isGpt35Model && this.apiGpt35) {
 					const gpt3Response = await this.apiGpt35.sendMessage(question, {
@@ -389,7 +389,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				}
 			}
 
-			if (options.previousAnswer !== null) {
+			if (options.previousAnswer !== null && options.previousAnswer !== undefined) {
 				this.response = options.previousAnswer + this.response;
 			}
 
@@ -405,7 +405,14 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					});
 			}
 
-			this.sendMessage({ type: 'addResponse', value: this.response, done: true, id: this.currentMessageId, autoScroll: this.autoScroll, responseInMarkdown });
+			this.sendMessage({
+				type: 'addResponse',
+				value: this.response,
+				done: true,
+				id: this.currentMessageId,
+				autoScroll: this.autoScroll,
+				responseInMarkdown
+			});
 
 			if (this.subscribeToResponse) {
 				vscode.window.showInformationMessage("ChatGPT responded to your question.", "Open conversation").then(async () => {

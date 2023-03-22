@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import ReactDOMServer from "react-dom/server";
 import { Tooltip } from "react-tooltip";
+import CodeBlock from "../components/CodeBlock";
 import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
@@ -174,7 +176,7 @@ export default function Chat({
   };
 
   // Handle messages sent from the extension to the webview
-  window.addEventListener("message", (event) => {
+  const handleMessages = (event: any) => {
     const message = event.data;
 
     console.log("Renderer - Received message from main process: ", message);
@@ -195,12 +197,13 @@ export default function Chat({
 
         addMessage(question);
 
-        debugger;
         break;
       case "addResponse":
         if (message.value === "") {
           return;
         }
+
+        console.log("Renderer - Adding response: ", message);
 
         let existingMessage =
           message.id && messages.find((m) => m.id === message.id);
@@ -217,8 +220,6 @@ export default function Chat({
 
         const markedResponse = (window as any)?.marked.parse(updatedValue);
         let botResponse: Message;
-
-        debugger;
 
         if (existingMessage) {
           // get the message from the conversation with the matching id
@@ -254,10 +255,6 @@ export default function Chat({
         }
 
         if (message.done) {
-          // const preCodeList = list.lastChild.querySelectorAll("pre > code");
-          // preCodeList.forEach
-          // TODO: Add codeBlockActions to the code blocks
-
           updateMessage({
             ...botResponse,
             isStreaming: false,
@@ -289,7 +286,30 @@ export default function Chat({
       default:
         console.log('Renderer - Uncaught message type: "' + message.type + '"');
     }
-  });
+  };
+
+  // Only add the event listener once
+  useEffect(() => {
+    console.log("Renderer - Adding event listener (once)");
+    window.addEventListener("message", handleMessages);
+
+    return () => {
+      // unmount cleanup function
+      console.log("Renderer - Removing event listener");
+      window.removeEventListener("message", handleMessages);
+    };
+  }, []);
+
+  function insertCodeActions(htmlString: string) {
+    console.log("Renderer - Inserting code actions html:", htmlString);
+    const regex = /<pre><code class="(.*?)">(.*?)<\/code><\/pre>/gs; // regex to match pre > code elements
+    return htmlString.replace(
+      regex,
+      ReactDOMServer.renderToString(
+        <CodeBlock code="$2" postMessage={postMessage} />
+      )
+    );
+  }
 
   return (
     <>
@@ -354,8 +374,9 @@ export default function Chat({
                   `}
                 >
                   <div
+                    className="message-wrapper"
                     dangerouslySetInnerHTML={{
-                      __html: message.text,
+                      __html: insertCodeActions(message.text),
                     }}
                   />
                 </div>
