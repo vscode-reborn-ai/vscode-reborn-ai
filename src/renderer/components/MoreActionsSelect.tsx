@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { Conversation } from "../renderer-types";
 import Icon from "./Icon";
 
 export default function MoreActionsSelect({
-  postMessage,
+  vscode,
+  currentConversation,
 }: {
-  postMessage: (type: string, value?: any, language?: string) => void;
+  vscode: any;
+  currentConversation: Conversation;
 }) {
   const [showMoreActions, setShowMoreActions] = useState(false);
 
@@ -18,7 +21,12 @@ export default function MoreActionsSelect({
         document.getElementById("qa-list")
       );
 
-      postMessage("openNew", markdown, "markdown");
+      vscode.postMessage({
+        type: "openNew",
+        value: markdown,
+        language: "markdown",
+        conversationId: currentConversation.id,
+      });
     }
   };
 

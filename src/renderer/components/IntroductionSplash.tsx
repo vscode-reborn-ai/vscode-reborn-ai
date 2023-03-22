@@ -1,10 +1,10 @@
 import React from "react";
 
 export default function ({
-  postMessage,
+  vscode,
   className,
 }: {
-  postMessage: (type: string, value?: any, language?: string) => void;
+  vscode: any;
   className?: string;
 }) {
   return (

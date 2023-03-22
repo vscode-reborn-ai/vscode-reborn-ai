@@ -65,7 +65,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			console.log("Main Process - Received message from webview: ", data);
 			switch (data.type) {
 				case 'addFreeTextQuestion':
-					this.sendApiRequest(data.value, { command: "freeText" });
+					this.sendApiRequest(data.value, {
+						command: "freeText",
+						conversationId: data.conversationId ?? 'no conversation id from webview, data: ' + JSON.stringify(data),
+						lastBotMessageId: data.lastBotMessageId,
+					});
 					break;
 				case 'editCode':
 					const escapedString = (data.value as string).replace(/\$/g, '\\$');;
@@ -130,9 +134,21 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private stopGenerating(): void {
 		this.abortController?.abort?.();
 		this.inProgress = false;
-		this.sendMessage({ type: 'showInProgress', inProgress: this.inProgress });
+		this.sendMessage({
+			type: 'showInProgress',
+			inProgress: this.inProgress,
+			conversationId: 'stop gen, no conversation id'
+		});
 		const responseInMarkdown = !this.isCodexModel;
-		this.sendMessage({ type: 'addResponse', value: this.response, done: true, id: this.currentMessageId, autoScroll: this.autoScroll, responseInMarkdown });
+		this.sendMessage({
+			type: 'addResponse',
+			value: this.response,
+			done: true,
+			id: this.currentMessageId,
+			autoScroll: this.autoScroll,
+			responseInMarkdown,
+			conversationId: 'stop gen, no conversation id'
+		});
 		this.logEvent("stopped-generating");
 	}
 
@@ -268,10 +284,21 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		return question + "\r\n";
 	}
 
-	public async sendApiRequest(prompt: string, options: { command: string, code?: string, previousAnswer?: string, language?: string; }) {
+	public async sendApiRequest(prompt: string, options: {
+		command: string,
+		conversationId?: string,
+		lastBotMessageId?: string,
+		code?: string,
+		previousAnswer?: string,
+		language?: string;
+	}) {
 		if (this.inProgress) {
 			// The AI is still thinking... Do not accept more questions.
-			this.logEvent('api-request-rejected', { "chatgpt.command": options.command, "chatgpt.hasCode": String(!!options.code), "chatgpt.hasPreviousAnswer": String(!!options.previousAnswer) });
+			this.logEvent('api-request-rejected', {
+				"chatgpt.command": options.command,
+				"chatgpt.hasCode": String(!!options.code),
+				"chatgpt.hasPreviousAnswer": String(!!options.previousAnswer)
+			});
 			return;
 		}
 
@@ -296,10 +323,22 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		this.inProgress = true;
 		this.abortController = new AbortController();
-		this.sendMessage({ type: 'showInProgress', inProgress: this.inProgress, showStopButton: this.useGpt3 });
+		this.sendMessage({
+			type: 'showInProgress',
+			inProgress: this.inProgress,
+			showStopButton: this.useGpt3,
+			conversationId: options.conversationId ?? 'no conversation id',
+		});
 		this.currentMessageId = this.getRandomId();
 
-		this.sendMessage({ type: 'addQuestion', value: prompt, code: options.code, autoScroll: this.autoScroll });
+		this.sendMessage({
+			type: 'addQuestion',
+			value: prompt,
+			code: options.code,
+			autoScroll: this.autoScroll,
+			conversationId: options.conversationId ?? 'no conversation id',
+			lastBotMessageId: options.lastBotMessageId ?? 'no last bot message id',
+		});
 		const isObject = function (value: any) {
 			var type = typeof value;
 			return value !== null && (type === 'object' || type === 'function');
@@ -349,15 +388,16 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						value: data.response,
 						id: data.currentMessageId,
 						autoScroll: data.autoScroll,
-						responseInMarkdown: data.responseInMarkdown
+						responseInMarkdown: data.responseInMarkdown,
+						conversationId: data.conversationId,
 					});
-				}, 300);
+				}, 100);
 
 				if (this.isGpt35Model && this.apiGpt35) {
 					const gpt3Response = await this.apiGpt35.sendMessage(question, {
 						systemMessage: `${this.systemContext}`,
-						messageId: this.conversationId,
-						parentMessageId: this.messageId,
+						// messageId: this.conversationId,
+						parentMessageId: options.lastBotMessageId, // this.messageId,
 						abortSignal: this.abortController.signal,
 						onProgress: (partialResponse) => {
 							this.response = partialResponse.text;
@@ -366,7 +406,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 								value: this.response,
 								id: this.currentMessageId,
 								autoScroll: this.autoScroll,
-								responseInMarkdown: responseInMarkdown
+								responseInMarkdown: responseInMarkdown,
+								conversationId: options.conversationId,
 							});
 						},
 					});
@@ -375,6 +416,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					({ text: this.response, conversationId: this.conversationId, parentMessageId: this.messageId } = await this.apiGpt3.sendMessage(question, {
 						promptPrefix: `${this.systemContext}`,
 						abortSignal: this.abortController.signal,
+						parentMessageId: options.lastBotMessageId,
 						onProgress: (partialResponse) => {
 							this.response = partialResponse.text;
 							throttledSendMessage({
@@ -382,7 +424,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 								value: this.response,
 								id: this.currentMessageId,
 								autoScroll: this.autoScroll,
-								responseInMarkdown: responseInMarkdown
+								responseInMarkdown: responseInMarkdown,
+								conversationId: options.conversationId,
 							});
 						},
 					}));
@@ -400,13 +443,19 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				vscode.window.showInformationMessage("It looks like ChatGPT didn't complete their answer for your coding question. You can ask it to continue and combine the answers.", "Continue and combine answers")
 					.then(async (choice) => {
 						if (choice === "Continue and combine answers") {
-							this.sendApiRequest("Continue", { command: options.command, code: undefined, previousAnswer: this.response });
+							this.sendApiRequest("Continue", {
+								command: options.command,
+								conversationId: options.conversationId,
+								code: undefined,
+								previousAnswer: this.response
+							});
 						}
 					});
 			}
 
 			this.sendMessage({
 				type: 'addResponse',
+				conversationId: options.conversationId ?? 'no conversation id',
 				value: this.response,
 				done: true,
 				id: this.currentMessageId,
@@ -432,7 +481,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					if (choice === "Clear conversation and retry") {
 						await vscode.commands.executeCommand("vscode-chatgpt.clearConversation");
 						await delay(250);
-						this.sendApiRequest(prompt, { command: options.command, code: options.code });
+						this.sendApiRequest(prompt, {
+							conversationId: options.conversationId,
+							lastBotMessageId: options.lastBotMessageId,
+							command: options.command,
+							code: options.code
+						});
 					}
 				});
 			} else if (error.statusCode === 400) {
@@ -457,12 +511,21 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 `;
 			}
 
-			this.sendMessage({ type: 'addError', value: message, autoScroll: this.autoScroll });
+			this.sendMessage({
+				type: 'addError',
+				conversationId: options.conversationId,
+				value: message,
+				autoScroll: this.autoScroll
+			});
 
 			return;
 		} finally {
 			this.inProgress = false;
-			this.sendMessage({ type: 'showInProgress', inProgress: this.inProgress });
+			this.sendMessage({
+				type: 'showInProgress',
+				conversationId: options.conversationId,
+				inProgress: this.inProgress
+			});
 		}
 	}
 

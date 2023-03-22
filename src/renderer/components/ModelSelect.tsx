@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { Tooltip } from "react-tooltip";
+import { Conversation } from "../renderer-types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
-  postMessage,
+  vscode,
+  currentConversation,
 }: {
-  postMessage: (type: string, value?: any, language?: string) => void;
+  vscode: any;
+  currentConversation: Conversation;
 }) {
   const [showModels, setShowModels] = useState(false);
   const [currentModel, setCurrentModel] = useState("gpt-3.5-turbo");
@@ -32,7 +35,11 @@ export default function ModelSelect({
         <button
           className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
           onClick={() => {
-            postMessage("setModel", "gpt-3.5-turbo");
+            vscode.postMessage({
+              type: "setModel",
+              value: "gpt-3.5-turbo",
+              conversationId: currentConversation.id,
+            });
             setCurrentModel("gpt-3.5-turbo");
             setShowModels(false);
           }}
@@ -42,7 +49,11 @@ export default function ModelSelect({
         <button
           className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
           onClick={() => {
-            postMessage("setModel", "gpt-4");
+            vscode.postMessage({
+              type: "setModel",
+              value: "gpt-4",
+              conversationId: currentConversation.id,
+            });
             setCurrentModel("gpt-4");
             setShowModels(false);
           }}
@@ -53,7 +64,11 @@ export default function ModelSelect({
         <button
           className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
           onClick={() => {
-            postMessage("setModel", "gpt-4-32k");
+            vscode.postMessage({
+              type: "setModel",
+              value: "gpt-4-32k",
+              conversationId: currentConversation.id,
+            });
             setCurrentModel("gpt-4-32k");
             setShowModels(false);
           }}
@@ -64,7 +79,11 @@ export default function ModelSelect({
         <button
           className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
           onClick={() => {
-            postMessage("setModel", "text-davinci-003");
+            vscode.postMessage({
+              type: "setModel",
+              value: "text-davinci-003",
+              conversationId: currentConversation.id,
+            });
             setCurrentModel("text-davinci-003");
             setShowModels(false);
           }}

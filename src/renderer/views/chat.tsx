@@ -1,52 +1,20 @@
-import React, { useEffect, useState } from "react";
-import ReactDOMServer from "react-dom/server";
+import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
 import CodeBlock from "../components/CodeBlock";
 import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
-
-enum Author {
-  user = "user",
-  bot = "bot",
-}
-
-interface Message {
-  id?: string;
-  author: Author;
-  text: string;
-  date?: string;
-  isError?: boolean;
-  isStreaming?: boolean;
-}
-
-interface Conversation {
-  id?: string;
-  messages: Message[];
-  title?: string;
-  datetime?: string;
-}
+import { Author, Conversation } from "../renderer-types";
 
 export default function Chat({
-  postMessage,
+  vscode,
+  conversation,
+  setConversationList,
 }: {
-  postMessage: (type: string, value?: any, language?: string) => void;
+  vscode: any;
+  conversation: Conversation;
+  setConversationList: React.Dispatch<React.SetStateAction<Conversation[]>>;
 }) {
-  const [showConversationList, setShowConversationList] = useState(false);
-  const questionInputRef = React.createRef<HTMLTextAreaElement>();
-  const [inProgress, setInProgress] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
-
-  const initialConversation = {
-    id: "",
-    messages,
-  } as Conversation;
-  const [conversationList, setConversationList] = useState<Conversation[]>([
-    initialConversation,
-  ]);
-  const [conversation, setConversation] =
-    useState<Conversation>(initialConversation);
-
   (window as any).marked.setOptions({
     renderer: new (window as any).marked.Renderer(),
     highlight: function (code: any, _lang: any) {
@@ -71,21 +39,7 @@ export default function Chat({
         inline: "nearest",
       });
     }
-  }, [messages]);
-
-  const addMessage = (message: Message) => {
-    const messageExists = messages.find((m) => m.id === message.id);
-
-    if (messageExists) {
-      updateMessage(message);
-    } else {
-      setMessages((prev) => [...prev, message]);
-    }
-  };
-
-  const updateMessage = (message: Message) => {
-    setMessages((prev) => prev.map((m) => (m.id === message.id ? message : m)));
-  };
+  }, [conversation.messages]);
 
   // TODO:
   // document.addEventListener("click", (e: any) => {
@@ -162,166 +116,26 @@ export default function Chat({
         document.getElementById("qa-list")
       );
 
-      postMessage("openNew", markdown, "markdown");
+      vscode.postMessage({
+        type: "openNew",
+        value: markdown,
+        language: "markdown",
+        conversationId: conversation.id,
+      });
     }
   };
-
-  const unEscapeHTML = (unsafe: any) => {
-    return unsafe
-      .replaceAll("&amp;", "&")
-      .replaceAll("&lt;", "<")
-      .replaceAll("&gt;", ">")
-      .replaceAll("&quot;", '"')
-      .replaceAll("&#039;", "'");
-  };
-
-  // Handle messages sent from the extension to the webview
-  const handleMessages = (event: any) => {
-    const message = event.data;
-
-    console.log("Renderer - Received message from main process: ", message);
-
-    switch (message.type) {
-      case "showInProgress":
-        setInProgress(message.inProgress);
-        break;
-      case "addQuestion":
-        const question = {
-          id:
-            message.id ??
-            `${messages.length}-${Math.floor(Math.random() * 1000)}`,
-          author: Author.user,
-          text: message.value,
-          datetime: Date.now(),
-        } as Message;
-
-        addMessage(question);
-
-        break;
-      case "addResponse":
-        if (message.value === "") {
-          return;
-        }
-
-        console.log("Renderer - Adding response: ", message);
-
-        let existingMessage =
-          message.id && messages.find((m) => m.id === message.id);
-        let updatedValue = "";
-
-        if (!message.responseInMarkdown) {
-          updatedValue = "```\r\n" + unEscapeHTML(message.value) + " \r\n ```";
-        } else {
-          updatedValue =
-            message.value.split("```").length % 2 === 1
-              ? message.value
-              : message.value + "\n\n```\n\n";
-        }
-
-        const markedResponse = (window as any)?.marked.parse(updatedValue);
-        let botResponse: Message;
-
-        if (existingMessage) {
-          // get the message from the conversation with the matching id
-          botResponse =
-            messages.find((m) => m.id === message.id) ??
-            ({
-              id: message.id,
-              author: Author.bot,
-              text: markedResponse,
-              datetime: Date.now(),
-            } as Message);
-
-          if (botResponse) {
-            botResponse.text = markedResponse;
-
-            updateMessage(botResponse);
-          } else {
-            console.error(
-              `Could not find message with id ${message.id} in conversation.`
-            );
-          }
-        } else {
-          botResponse = {
-            id: message.id,
-            author: Author.bot,
-            text: markedResponse,
-            datetime: Date.now(),
-            // Check if message.done exists, only streaming if .done exists and is false
-            isStreaming: message.done === undefined ? false : !message.done,
-          } as Message;
-
-          addMessage(botResponse);
-        }
-
-        if (message.done) {
-          updateMessage({
-            ...botResponse,
-            isStreaming: false,
-          });
-        }
-
-        break;
-      case "addError":
-        const messageValue =
-          message.value ||
-          "An error occurred. If this issue persists please clear your session token with `ChatGPT: Reset session` command and/or restart your Visual Studio Code. If you still experience issues, it may be due to an OpenAI outage. Take a look at https://status.openai.com to see if there's an OpenAI outage.";
-
-        const errorMessage = {
-          id: message.id,
-          author: Author.bot,
-          text: messageValue,
-          datetime: Date.now(),
-          isError: true,
-        } as Message;
-
-        addMessage(errorMessage);
-        break;
-      case "clearConversation":
-        postMessage("clearConversation");
-        break;
-      case "exportConversation":
-        exportConversation();
-        break;
-      default:
-        console.log('Renderer - Uncaught message type: "' + message.type + '"');
-    }
-  };
-
-  // Only add the event listener once
-  useEffect(() => {
-    console.log("Renderer - Adding event listener (once)");
-    window.addEventListener("message", handleMessages);
-
-    return () => {
-      // unmount cleanup function
-      console.log("Renderer - Removing event listener");
-      window.removeEventListener("message", handleMessages);
-    };
-  }, []);
-
-  function insertCodeActions(htmlString: string) {
-    console.log("Renderer - Inserting code actions html:", htmlString);
-    const regex = /<pre><code class="(.*?)">(.*?)<\/code><\/pre>/gs; // regex to match pre > code elements
-    return htmlString.replace(
-      regex,
-      ReactDOMServer.renderToString(
-        <CodeBlock code="$2" postMessage={postMessage} />
-      )
-    );
-  }
 
   return (
     <>
       {/* Introduction */}
       <IntroductionSplash
-        className={messages?.length > 0 ? "hidden" : ""}
-        postMessage={postMessage}
+        className={conversation.messages?.length > 0 ? "hidden" : ""}
+        vscode={vscode}
       />
       {/* Conversation messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-4 pb-40">
-          {messages.map((message: any) => {
+        <div className="flex flex-col gap-4 pb-40" id="conversation-list">
+          {conversation.messages.map((message: any) => {
             return (
               <div
                 className="w-full p-4 self-end mt-4 question-element-ext relative input-background"
@@ -368,17 +182,42 @@ export default function Chat({
                   </div>
                 </div>
                 <div
-                  className={`overflow-y-auto
+                  className={`
                     ${message.isError ? "text-red-400" : ""}
                     ${message.isStreaming ? "result-streaming" : ""}
                   `}
                 >
-                  <div
-                    className="message-wrapper"
-                    dangerouslySetInnerHTML={{
-                      __html: insertCodeActions(message.text),
-                    }}
-                  />
+                  <div className="message-wrapper">
+                    {message.text
+                      .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
+                      .reduce((acc: any[], item: any) => {
+                        if (item) {
+                          acc.push(item);
+                        }
+                        return acc;
+                      }, [])
+                      .map(
+                        (item: string, index: React.Key | null | undefined) => {
+                          if (item.startsWith("<pre><code")) {
+                            return (
+                              <CodeBlock
+                                code={item}
+                                vscode={vscode}
+                                key={index}
+                                currentConversation={conversation}
+                              />
+                            );
+                          } else {
+                            return (
+                              <div
+                                key={index}
+                                dangerouslySetInnerHTML={{ __html: item }}
+                              />
+                            );
+                          }
+                        }
+                      )}
+                  </div>
                 </div>
               </div>
             );
@@ -387,7 +226,7 @@ export default function Chat({
         </div>
       </div>
       {/* AI Response In Progress */}
-      {inProgress && (
+      {conversation.inProgress && (
         <div id="in-progress" className="pl-4 pt-2 items-center hidden">
           <div className="typing">Thinking</div>
           <div className="spinner">
@@ -408,11 +247,7 @@ export default function Chat({
         </div>
       )}
       {/* Question Input */}
-      <QuestionInputField
-        inProgress={inProgress}
-        questionInputRef={questionInputRef}
-        postMessage={postMessage}
-      />
+      <QuestionInputField vscode={vscode} currentConversation={conversation} />
     </>
   );
 }

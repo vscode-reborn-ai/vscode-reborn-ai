@@ -1,7 +1,5 @@
 import React from "react";
 
-export default function Stats(props: {
-  postMessage: (type: string, value: any, language?: string) => void;
-}) {
+export default function Stats({ vscode }: { vscode: any }) {
   return <div>Stats</div>;
 }

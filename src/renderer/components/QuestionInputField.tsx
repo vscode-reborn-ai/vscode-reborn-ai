@@ -1,17 +1,18 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
+import { Author, Conversation } from "../renderer-types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 
 export default ({
-  postMessage,
-  questionInputRef,
-  inProgress,
+  vscode,
+  currentConversation,
 }: {
-  postMessage: (type: string, value?: any, language?: string) => void;
-  questionInputRef: any;
-  inProgress: boolean;
+  vscode: any;
+  currentConversation: Conversation;
 }) => {
+  const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
+
   return (
     <footer className="fixed bottom-0 w-full flex flex-col gap-y-1 pt-2 bg">
       <div className="px-4 flex items-center">
@@ -22,7 +23,7 @@ export default ({
             id="question-input"
             placeholder="Ask a question..."
             ref={questionInputRef}
-            disabled={inProgress}
+            // disabled={currentConversation.inProgress} TODO: fix this, not working predictably
             onInput={(e) => {
               const target = e.target as any;
               if (target) {
@@ -30,26 +31,60 @@ export default ({
               }
             }}
             onKeyDown={(event: any) => {
+              // avoid awkward newline before submitting question
               if (
                 event.key === "Enter" &&
                 !event.shiftKey &&
                 !event.isComposing
               ) {
-                const target = event.target as any;
+                event.preventDefault();
+              }
+            }}
+            onKeyUp={(event: any) => {
+              if (
+                event.key === "Enter" &&
+                !event.shiftKey &&
+                !event.isComposing
+              ) {
+                const question = questionInputRef?.current?.value;
 
-                if (target && target.value?.length > 0) {
-                  postMessage("addFreeTextQuestion", target.value);
+                if (question && question.length > 0) {
+                  vscode.postMessage({
+                    type: "addFreeTextQuestion",
+                    value: questionInputRef.current.value,
+                    conversationId: currentConversation.id,
+                    lastBotMessageId:
+                      currentConversation.messages.find(
+                        (m) => m.author === Author.bot
+                      )?.id ?? "",
+                  });
 
-                  target.value = "";
-                  target.rows = 1;
+                  questionInputRef.current.value = "";
+                  questionInputRef.current.rows = 1;
+
+                  // reset the textarea height
+                  const target = event.target as any;
+                  if (target) {
+                    target.parentNode.dataset.replicatedValue = "";
+                  }
                 } else {
                   console.warn("Ask - No target or target value");
+                }
+              } else if (
+                event.key === "Enter" &&
+                event.shiftKey &&
+                !event.isComposing
+              ) {
+                // update the textarea height
+                const target = event.target as any;
+                if (target) {
+                  target.parentNode.dataset.replicatedValue = target?.value;
                 }
               }
             }}
           ></textarea>
         </div>
-        {!inProgress && (
+        {!currentConversation.inProgress && (
           <div
             id="question-input-buttons"
             className="right-6 absolute py-0.5 px-2 -mt-1 ml-5 flex items-center gap-2 rounded hover:bg-button-secondary focus:bg-button-secondary"
@@ -61,12 +96,32 @@ export default ({
                 const question = questionInputRef?.current?.value;
 
                 if (question && question.length > 0) {
-                  postMessage(
-                    "addFreeTextQuestion",
-                    questionInputRef.current.value
-                  );
+                  vscode.postMessage({
+                    type: "addFreeTextQuestion",
+                    value: questionInputRef.current.value,
+                    conversationId: currentConversation.id,
+                    lastBotMessageId:
+                      currentConversation.messages.find(
+                        (m) => m.author === Author.bot
+                      )?.id ?? "",
+                  });
 
                   questionInputRef.current.value = "";
+                  questionInputRef.current.rows = 1;
+
+                  // reset the textarea height
+                  if (
+                    questionInputRef.current &&
+                    (questionInputRef.current?.parentNode as any)?.dataset
+                  ) {
+                    (
+                      questionInputRef.current.parentNode as any
+                    ).dataset.replicatedValue = "";
+                  }
+                } else {
+                  console.warn(
+                    "QuestionInputField - No target or target value"
+                  );
                 }
               }}
             >
@@ -78,13 +133,19 @@ export default ({
       </div>
       <div className="flex flex-row justify-between gap-2 py-1 px-4">
         <div className="flex flex-row gap-2">
-          <ModelSelect postMessage={postMessage} />
+          <ModelSelect
+            vscode={vscode}
+            currentConversation={currentConversation}
+          />
         </div>
         <div className="flex flex-row gap-2">
           <button
             className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
             onClick={() => {
-              postMessage("openSettings");
+              vscode.postMessage({
+                type: "openSettings",
+                conversationId: currentConversation.id,
+              });
             }}
             data-tooltip-id="footer-tooltip"
             data-tooltip-content="Open extension settings"

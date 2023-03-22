@@ -1,14 +1,21 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
+import { Conversation } from "../renderer-types";
 import Icon from "./Icon";
 
 interface CodeBlockProps {
-  postMessage: (type: string, value?: any, language?: string) => void;
+  vscode: any;
   code: string;
   className?: string;
+  currentConversation: Conversation;
 }
 
-const CodeBlock = ({ postMessage, code, className }: CodeBlockProps) => {
+const CodeBlock = ({
+  vscode,
+  currentConversation,
+  code,
+  className,
+}: CodeBlockProps) => {
   const [showCopied, setShowCopied] = React.useState(false);
   const [showInserted, setShowInserted] = React.useState(false);
 
@@ -18,11 +25,13 @@ const CodeBlock = ({ postMessage, code, className }: CodeBlockProps) => {
         ${className}
       `}
     >
-      <div className="absolute bg top-2 right-4 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100">
+      <div className="absolute bg top-1 right-4 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100">
         <button
           data-tooltip-id="code-actions-tooltip"
           data-tooltip-content="Copy to clipboard"
-          className="code-element-ext p-1 pr-2 flex items-center rounded-lg"
+          className={`code-element-ext p-1 pr-2 flex items-center rounded-lg
+            ${showCopied ? "text-green-500" : ""}
+          `}
           onClick={() => {
             console.log("copying code to clipboard");
             navigator.clipboard.writeText(code).then(() => {
@@ -35,10 +44,10 @@ const CodeBlock = ({ postMessage, code, className }: CodeBlockProps) => {
           }}
         >
           {showCopied ? (
-            <span className="text-green-500">
+            <>
               <Icon icon="check" className="w-4 h-4 mr-2" />
               Copied
-            </span>
+            </>
           ) : (
             <>
               <Icon icon="clipboard" className="w-4 h-4 mr-2" />
@@ -49,9 +58,15 @@ const CodeBlock = ({ postMessage, code, className }: CodeBlockProps) => {
         <button
           data-tooltip-id="code-actions-tooltip"
           data-tooltip-content="Insert into the current file"
-          className="edit-element-ext p-1 pr-2 flex items-center rounded-lg"
+          className={`edit-element-ext p-1 pr-2 flex items-center rounded-lg"
+            ${showInserted ? "text-green-500" : ""}
+          `}
           onClick={() => {
-            postMessage("editCode", code);
+            vscode.postMessage({
+              type: "editCode",
+              value: code,
+              conversationId: currentConversation.id,
+            });
 
             setShowInserted(true);
 
@@ -61,10 +76,10 @@ const CodeBlock = ({ postMessage, code, className }: CodeBlockProps) => {
           }}
         >
           {showInserted ? (
-            <span className="text-green-500">
+            <>
               <Icon icon="check" className="w-4 h-4 mr-2" />
               Inserted
-            </span>
+            </>
           ) : (
             <>
               <Icon icon="pencil" className="w-4 h-4 mr-2" />
@@ -77,7 +92,11 @@ const CodeBlock = ({ postMessage, code, className }: CodeBlockProps) => {
           data-tooltip-content="Create a new file with the below code"
           className="new-code-element-ext p-1 pr-2 flex items-center rounded-lg"
           onClick={() => {
-            postMessage("openNew", code);
+            vscode.postMessage({
+              type: "openNew",
+              value: code,
+              conversationId: currentConversation.id,
+            });
           }}
         >
           <Icon icon="plus" className="w-4 h-4 mr-2" />
@@ -88,7 +107,9 @@ const CodeBlock = ({ postMessage, code, className }: CodeBlockProps) => {
       <code
         className="block p-2 overflow-x-auto"
         dangerouslySetInnerHTML={{
-          __html: code,
+          __html: code
+            .replace(/<pre><code[^>]*>/, "")
+            .replace(/<\/code><\/pre>/, ""),
         }}
       />
     </pre>

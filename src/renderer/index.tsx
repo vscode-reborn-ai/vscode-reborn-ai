@@ -1,40 +1,25 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import "../../styles/main.css";
-import Tabs from "./components/Tabs";
-import Actions from "./views/actions";
-import Chat from "./views/chat";
-import Prompts from "./views/prompts";
+import Layout from "./layout";
+
+let vscode = acquireVsCodeApi();
 
 const App = () => {
-  const vscode = acquireVsCodeApi();
-
-  const postMessage = (type: string, value?: any, language?: string) => {
-    vscode.postMessage({
-      type,
-      value,
-      language,
-    });
-  };
+  if (!vscode) {
+    try {
+      vscode = acquireVsCodeApi();
+    } catch (error) {
+      vscode = (window as any).acquireVsCodeApi();
+    }
+  }
 
   return (
     <React.StrictMode>
       <Router basename="/index.html">
-        <Tabs />
-        <Routes>
-          <Route
-            path="/prompts"
-            element={<Prompts postMessage={postMessage} />}
-          />
-          <Route
-            path="/actions"
-            element={<Actions postMessage={postMessage} />}
-          />
-          <Route path="/" element={<Chat postMessage={postMessage} />} />
-          {/* <Route path="/options" element={<Options postMessage={postMessage} />} /> */}
-        </Routes>
+        <Layout vscode={vscode} />
       </Router>
     </React.StrictMode>
   );

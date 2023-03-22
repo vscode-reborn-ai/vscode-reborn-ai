@@ -1,7 +1,5 @@
 import React from "react";
 
-export default function Options(props: {
-  postMessage: (type: string, value: any, language?: string) => void;
-}) {
+export default function Options({ vscode }: { vscode: any }) {
   return <div>Options</div>;
 }

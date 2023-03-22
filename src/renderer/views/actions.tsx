@@ -22,9 +22,7 @@ const aiActions = {
   ],
 };
 
-export default function Actions(props: {
-  postMessage: (type: string, value: any, language?: string) => void;
-}) {
+export default function Actions({ vscode }: { vscode: any }) {
   return (
     <nav className="h-full overflow-y-auto" aria-label="Directory">
       {Object.keys(aiActions).map((category) => (
@@ -59,7 +57,12 @@ export default function Actions(props: {
                         <button
                           type="button"
                           className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-menu bg-menu hover:bg-menu focus:outline-none focus:ring-2 focus:ring-offset-2"
-                          onClick={() => props.postMessage("runAction", action)}
+                          onClick={() =>
+                            vscode.postMessage({
+                              type: "runAction",
+                              value: action,
+                            })
+                          }
                         >
                           Run
                         </button>

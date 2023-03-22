@@ -1,7 +1,7 @@
 const path = require("path");
 
 module.exports = {
-    entry: './src/renderer/index.tsx',
+    entry: './src/renderer/app.tsx',
     output: {
         filename: 'webview.bundle.js',
         path: path.resolve(__dirname, 'out'),
