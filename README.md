@@ -1,6 +1,6 @@
 # ChatGPT Reborn
 
-ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
+ChatGPT Reborn is a Visual Studio Code extension that allows you to use the ChatGPT API to write, refactor, and improve your code.
 
 ## Get for VSCode
 
@@ -10,13 +10,19 @@ or install it directly from the [VSCode Marketplace](https://marketplace.visuals
 
 ## About this fork
 
-This version is API **only**, you must create an OpenAI API key to use it.
+This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it. Note that this version is API-only, the browser code was not open-sourced by Gencay (due to OpenAI ToS issue), and I have no intention of violating OpenAI's ToS either.
 
-This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it.
+**The new "ChatGPT: Genie AI" extension**
 
-**Update March 20:** Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work in an API-only format: https://github.com/ai-genie/chatgpt-vscode
+Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work in an API-only format: https://github.com/ai-genie/chatgpt-vscode
 
-**What does that mean for this fork?** I'll be continuing work on this extension, I have some ideas for features that focus on automation. A major react refactor will be releasing soon, which sets the groundwork for a more powerful UI experience. I suggest taking a look at "ChatGPT: Genie AI", and if you like the UI in this "Reborn" fork, feel free to stay as well.
+**What does that mean for this fork?**
+
+I'll be continuing work on this extension, I have some ideas for features that focus on automation. A major react refactor will be releasing soon, which sets the groundwork for a more powerful UI experience.
+
+**FOSS**
+
+As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it may allow Genie AI to become far more powerful and useful to users. But, you can expect "Reborn" to stay FOSS for as long as I am maintainer, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
 
 ## GPT-4
 
