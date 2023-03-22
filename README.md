@@ -103,6 +103,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [ ] Long-term - Inline diff
 - [ ] Long-term - "Smart" actions based on the type of file open.
 - [ ] Long-term - "Smart" actions on that run at a project level.
+- [ ] Long-term - AI-generated git commit messages
 
 ## Contributing
 
