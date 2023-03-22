@@ -20,20 +20,22 @@ export default function Tabs({
 }) {
   const navigate = useNavigate();
   const [tabs, setTabs] = useState([
-    { name: "Prompts", href: "/prompts" },
-    { name: "Actions", href: "/actions" },
+    // { name: "Prompts", href: "/prompts", id: "prompts" },
+    // { name: "Actions", href: "/actions", id: "actions" },
     ...conversationList.map((conversation) => ({
       name: conversation.title,
+      id: conversation.id,
       href: `/chat/${encodeURI(conversation.id)}`,
     })),
   ]);
 
   useEffect(() => {
     setTabs([
-      // { name: "Prompts", href: "/prompts" },
-      // { name: "Actions", href: "/actions" },
+      // { name: "Prompts", href: "/prompts" id: "prompts" },
+      // { name: "Actions", href: "/actions" id: "actions" },
       ...conversationList.map((conversation) => ({
         name: conversation.title,
+        id: conversation.id,
         href: `/chat/${encodeURI(conversation.id)}`,
       })),
     ]);
@@ -99,7 +101,7 @@ export default function Tabs({
                     : "bg-tab-inactive-unfocused border-tab-inactive-border text-tab-inactive-unfocused hover:bg-tab-inactive hover:text-tab-inactive",
                   "flex whitespace-nowrap border-b-2 pt-2 pb-1 pl-2 pr-1 text-xs items-center"
                 )}
-                key={tab.name}
+                key={tab.id}
               >
                 <Link
                   to={tab.href}
@@ -114,9 +116,24 @@ export default function Tabs({
                   <button
                     className="ml-2 opacity-0 group-hover:opacity-40 hover:opacity-100 hover:text-red focus-within:opacity-100 focus-within:text-red"
                     onClick={() => {
+                      // navigate to the first tab
+                      // if there's no more chats, create a new one
+                      if (conversationList.length === 1) {
+                        createNewConversation();
+                      } else {
+                        navigate(
+                          `/chat/${encodeURI(
+                            conversationList[0].id === tab.id
+                              ? conversationList[1].id
+                              : conversationList[0].id
+                          )}`
+                        );
+                      }
+
+                      // remove the tab from the list
                       setConversationList((prev: Conversation[]) => {
                         return prev.filter(
-                          (conversation) => conversation.title !== tab.name
+                          (conversation) => conversation.id !== tab.id
                         );
                       });
                     }}

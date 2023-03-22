@@ -33,6 +33,7 @@ const CodeBlock = ({
             ${showCopied ? "text-green-500" : ""}
           `}
           onClick={() => {
+            // TODO: fix copy to clipboard
             console.log("copying code to clipboard");
             navigator.clipboard.writeText(code).then(() => {
               setShowCopied(true);
