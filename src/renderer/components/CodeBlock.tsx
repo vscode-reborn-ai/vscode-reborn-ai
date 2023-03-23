@@ -1,7 +1,7 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
 import { Conversation } from "../renderer-types";
-import Icon from "./Icon";
+import CodeBlockActionsButton from "./CodeBlockActionsButton";
 
 interface CodeBlockProps {
   vscode: any;
@@ -16,97 +16,85 @@ const CodeBlock = ({
   code,
   className,
 }: CodeBlockProps) => {
-  const [showCopied, setShowCopied] = React.useState(false);
-  const [showInserted, setShowInserted] = React.useState(false);
+  const [codeTextContent, setCodeTextContent] = React.useState("");
+  const [language, setLanguage] = React.useState("");
+  const codeRef = React.useRef<HTMLPreElement>(null);
+
+  React.useEffect(() => {
+    let textContent = codeRef.current?.innerText || "";
+
+    // if it ends with a newline, remove it
+    if (textContent.endsWith("\n")) {
+      textContent = textContent.slice(0, -1);
+    }
+
+    setCodeTextContent(textContent);
+
+    // set language based on hljs class
+    const detectedLanguage = code.match(/language-(\w+)/)?.[1] || "";
+    setLanguage(detectedLanguage);
+  }, [code]);
 
   return (
     <pre
-      className={`c-codeblock group bg-secondary my-4 relative rounded border bg-opacity-20
+      className={`c-codeblock group bg-input my-4 relative rounded border bg-opacity-20
         ${className}
       `}
     >
-      <div className="absolute bg top-1 right-4 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100">
-        <button
-          data-tooltip-id="code-actions-tooltip"
-          data-tooltip-content="Copy to clipboard"
-          className={`code-element-ext p-1 pr-2 flex items-center rounded-lg
-            ${showCopied ? "text-green-500" : ""}
-          `}
+      {language && (
+        <div className="absolute -top-5 right-4 text-[10px] text-tab-inactive-unfocused">
+          {language}
+        </div>
+      )}
+      <div className="absolute top-[0.4em] right-2 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100">
+        <CodeBlockActionsButton
+          vscode={vscode}
+          codeTextContent={codeTextContent}
+          iconName="clipboard"
+          tooltipContent="Copy to clipboard"
+          buttonText="Copy"
+          buttonSuccessText="Copied"
           onClick={() => {
-            // TODO: fix copy to clipboard
-            console.log("copying code to clipboard");
-            navigator.clipboard.writeText(code).then(() => {
-              setShowCopied(true);
-
-              setTimeout(() => {
-                setShowCopied(false);
-              }, 1500);
-            });
+            navigator.clipboard.writeText(codeTextContent);
           }}
-        >
-          {showCopied ? (
-            <>
-              <Icon icon="check" className="w-4 h-4 mr-2" />
-              Copied
-            </>
-          ) : (
-            <>
-              <Icon icon="clipboard" className="w-4 h-4 mr-2" />
-              Copy
-            </>
-          )}
-        </button>
-        <button
-          data-tooltip-id="code-actions-tooltip"
-          data-tooltip-content="Insert into the current file"
-          className={`edit-element-ext p-1 pr-2 flex items-center rounded-lg"
-            ${showInserted ? "text-green-500" : ""}
-          `}
+        />
+
+        <CodeBlockActionsButton
+          vscode={vscode}
+          codeTextContent={codeTextContent}
+          iconName="pencil"
+          tooltipContent="Insert into the current file"
+          buttonText="Insert"
+          buttonSuccessText="Inserted"
           onClick={() => {
             vscode.postMessage({
               type: "editCode",
-              value: code,
+              value: codeTextContent,
               conversationId: currentConversation.id,
             });
-
-            setShowInserted(true);
-
-            setTimeout(() => {
-              setShowInserted(false);
-            }, 1500);
           }}
-        >
-          {showInserted ? (
-            <>
-              <Icon icon="check" className="w-4 h-4 mr-2" />
-              Inserted
-            </>
-          ) : (
-            <>
-              <Icon icon="pencil" className="w-4 h-4 mr-2" />
-              Insert
-            </>
-          )}
-        </button>
-        <button
-          data-tooltip-id="code-actions-tooltip"
-          data-tooltip-content="Create a new file with the below code"
-          className="new-code-element-ext p-1 pr-2 flex items-center rounded-lg"
+        />
+        <CodeBlockActionsButton
+          vscode={vscode}
+          codeTextContent={codeTextContent}
+          iconName="plus"
+          tooltipContent="Create a new file with the below code"
+          buttonText="New"
+          buttonSuccessText="Created"
           onClick={() => {
             vscode.postMessage({
               type: "openNew",
-              value: code,
+              value: codeTextContent,
               conversationId: currentConversation.id,
+              language,
             });
           }}
-        >
-          <Icon icon="plus" className="w-4 h-4 mr-2" />
-          New
-        </button>
+        />
         <Tooltip id="code-actions-tooltip" place="bottom" />
       </div>
       <code
-        className="block p-2 overflow-x-auto"
+        className="block px-4 py-2 overflow-x-auto bg-input font-code text-code"
+        ref={codeRef}
         dangerouslySetInnerHTML={{
           __html: code
             .replace(/<pre><code[^>]*>/, "")

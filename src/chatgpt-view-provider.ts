@@ -542,6 +542,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
+
 	private logEvent(eventName: string, properties?: {}): void {
 		// You can initialize your telemetry reporter and consume it here - *replaced with console.debug to prevent unwanted telemetry logs
 		// this.reporter?.sendTelemetryEvent(eventName, { "chatgpt.loginMethod": this.loginMethod!, "chatgpt.authType": this.authType!, "chatgpt.model": this.model || "unknown", ...properties }, { "chatgpt.questionCounter": this.questionCounter });

@@ -8,6 +8,8 @@ import Layout from "./layout";
 let vscode = acquireVsCodeApi();
 
 const App = () => {
+  const DEBUG = false;
+
   if (!vscode) {
     try {
       vscode = acquireVsCodeApi();
@@ -19,7 +21,7 @@ const App = () => {
   return (
     <React.StrictMode>
       <Router basename="/index.html">
-        <Layout vscode={vscode} />
+        <Layout vscode={vscode} debug={DEBUG} />
       </Router>
     </React.StrictMode>
   );

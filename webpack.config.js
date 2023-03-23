@@ -1,4 +1,5 @@
 const path = require("path");
+const { EnvironmentPlugin } = require('webpack');
 
 module.exports = {
     entry: './src/renderer/app.tsx',
@@ -43,5 +44,5 @@ module.exports = {
     },
     performance: {
         hints: false
-    }
+    },
 };

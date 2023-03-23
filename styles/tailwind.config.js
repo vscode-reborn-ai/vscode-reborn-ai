@@ -3,9 +3,22 @@ module.exports = {
     content: ["./src/**/*.{js,ts,jsx,tsx}"],
     theme: {
         extend: {
+            fontFamily: {
+                code: ['var(--vscode-editor-font-family)'],
+                DEFAULT: ['var(--vscode-font-family)'],
+            },
+            fontSize: {
+                code: ['var(--vscode-editor-font-size)'],
+                DEFAULT: ['var(--vscode-font-size)'],
+            },
+            fontWeight: {
+                code: ['var(--vscode-editor-font-weight)'],
+                DEFAULT: ['var(--vscode-font-weight)'],
+            },
             backgroundColor: {
                 DEFAULT: 'var(--vscode-editor-background)',
                 secondary: 'var(--vscode-editorWidget-background)',
+                sidebar: 'var(--vscode-sideBar-background)',
                 tab: {
                     DEFAULT: 'var(--vscode-tab-activeBackground)',
                     'inactive': 'var(--vscode-tab-inactiveBackground)',

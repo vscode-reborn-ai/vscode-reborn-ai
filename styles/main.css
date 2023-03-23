@@ -116,8 +116,13 @@ h6 {
 }
 */
 
+/* horizontally indent any elements that are not code blocks */
+.message-wrapper > *:not(pre) {
+    @apply mx-4;
+}
+/* space out paragraphs */
 .message-wrapper p {
-    @apply my-2 mx-4;
+    @apply my-2;
 }
 
 /* button {
@@ -276,10 +281,6 @@ textarea::placeholder {
     font-size: var(--vscode-font-size);
 }
 
-.input-background {
-    background: var(--vscode-input-background);
-}
-
 .send-element-ext,
 .cancel-element-ext {
     font-size: smaller;
@@ -367,10 +368,11 @@ textarea::placeholder {
     text-underline-offset: 2px;
 }
 
-
 /* VSCode-themed HLJS syntax highlighting */
+pre > code {
+    color: var(--vscode-terminal-ansiBrightBlue);
+}
 .hljs-attribute,
-.hljs-keyword,
 .hljs-selector-tag,
 .hljs-meta-keyword,
 .hljs-doctag,
@@ -378,9 +380,20 @@ textarea::placeholder {
   color: var(--vscode-symbolIcon-keywordForeground);
 }
 
-.hljs-title,
+.hljs-params,
+.hljs-variable {
+    color: var(--vscode-symbolIcon-variableForeground);
+}
+
+.hljs-title {
+    color: var(--vscode-symbolIcon-functionForeground);
+}
+
+.hljs-keyword {
+    color: var(--vscode-symbolIcon-keywordForeground);
+}
+
 .hljs-attr,
-.hljs-variable,
 .hljs-template-variable,
 .hljs-type,
 .hljs-string {

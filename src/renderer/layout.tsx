@@ -7,7 +7,13 @@ import { Author, Conversation, Message } from "./renderer-types";
 import { addMessage, unEscapeHTML, updateMessage } from "./utils";
 import Chat from "./views/chat";
 
-export default function Layout({ vscode }: { vscode: any }) {
+export default function Layout({
+  vscode,
+  debug,
+}: {
+  vscode: any;
+  debug: boolean;
+}) {
   const initialConversation = {
     id: `Chat-${Date.now()}`,
     title: "Chat",
@@ -33,18 +39,18 @@ export default function Layout({ vscode }: { vscode: any }) {
       ) ?? currentConversation;
 
     switch (message.type) {
-      case "showInProgress":
-        const updatedConversationList = conversationList.map((c) =>
-          c.id === conversation.id
-            ? {
-                ...conversation,
-                inProgress: message.inProgress,
-              }
-            : c
-        );
+      // case "showInProgress":
+      //   const updatedConversationList = conversationList.map((c) =>
+      //     c.id === conversation.id
+      //       ? {
+      //           ...conversation,
+      //           inProgress: message.inProgress,
+      //         }
+      //       : c
+      //   );
 
-        setConversationList(updatedConversationList);
-        break;
+      //   setConversationList(updatedConversationList);
+      //   break;
       case "addQuestion":
         const question = {
           id:
@@ -195,6 +201,7 @@ export default function Layout({ vscode }: { vscode: any }) {
                 vscode={vscode}
                 conversation={conversation}
                 setConversationList={setConversationList}
+                debug={debug}
               />
             }
           />

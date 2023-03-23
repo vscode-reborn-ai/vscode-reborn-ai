@@ -92,14 +92,17 @@ export default function Tabs({
       </div>
       <div className="hidden 2xs:block">
         <nav className="border-b">
-          <ul className="-mb-px flex space-x-2" aria-label="Tabs">
+          <ul
+            className="flex divide-tab bg-tab-inactive-unfocused"
+            aria-label="Tabs"
+          >
             {tabs.map((tab) => (
               <li
                 className={classNames(
                   currentConversation.title === tab.name
-                    ? "group bg-tab border-tab text-tab-active-fg"
-                    : "bg-tab-inactive-unfocused border-tab-inactive-border text-tab-inactive-unfocused hover:bg-tab-inactive hover:text-tab-inactive",
-                  "flex whitespace-nowrap border-b-2 pt-2 pb-1 pl-2 pr-1 text-xs items-center"
+                    ? "group bg-tab border-tab"
+                    : "bg-tab-inactive-unfocused border-tab-inactive-border hover:bg-tab-inactive hover:text-tab-inactive",
+                  "flex whitespace-nowrap pt-2 pb-1 pl-2 pr-1 text-xs items-center"
                 )}
                 key={tab.id}
               >

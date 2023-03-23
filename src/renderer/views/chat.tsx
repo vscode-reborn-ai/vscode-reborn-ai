@@ -8,13 +8,19 @@ import { Author, Conversation } from "../renderer-types";
 
 export default function Chat({
   vscode,
+  debug,
   conversation,
   setConversationList,
 }: {
   vscode: any;
+  debug: boolean;
   conversation: Conversation;
   setConversationList: React.Dispatch<React.SetStateAction<Conversation[]>>;
 }) {
+  const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
+    null
+  );
+
   (window as any).marked.setOptions({
     renderer: new (window as any).marked.Renderer(),
     highlight: function (code: any, _lang: any) {
@@ -127,6 +133,17 @@ export default function Chat({
 
   return (
     <>
+      {debug && (
+        <div className="text-xs text-gray-500">
+          Conversation ID: {conversation?.id}
+          <br />
+          Conversation Title: {conversation?.title}
+          <br />
+          Conversation Datetime: {conversation?.datetime}
+          <br />
+          Conversation inProgress: {conversation?.inProgress}
+        </div>
+      )}
       {/* Introduction */}
       <IntroductionSplash
         className={conversation.messages?.length > 0 ? "hidden" : ""}
@@ -134,53 +151,66 @@ export default function Chat({
       />
       {/* Conversation messages */}
       <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-4 pb-40" id="conversation-list">
+        <div className="flex flex-col pb-40" id="conversation-list">
           {conversation.messages.map((message: any) => {
             return (
               <div
-                className="w-full p-4 self-end mt-4 question-element-ext relative input-background"
+                className={`w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative
+                  ${message.author === Author.user ? "bg-input" : "bg-sidebar"}
+                `}
                 key={message.id}
               >
-                <h2 className="mb-5 flex">
-                  {message.author === Author.user ? (
-                    <>
-                      <Icon icon="user" className="w-6 h-6 mr-2" />
-                      You
-                    </>
-                  ) : (
-                    <>
-                      <Icon icon="ai" className="w-6 h-6 mr-2" />
-                      ChatGPT
-                    </>
+                <header className="flex items-center">
+                  <h2 className="flex-grow flex items-center">
+                    {message.author === Author.user ? (
+                      <>
+                        <Icon icon="user" className="w-6 h-6 mr-2" />
+                        You
+                      </>
+                    ) : (
+                      <>
+                        <Icon icon="ai" className="w-6 h-6 mr-2" />
+                        ChatGPT
+                      </>
+                    )}
+                  </h2>
+                  {message.author === Author.user && (
+                    <div className="flex items-center">
+                      <div
+                        className={`hidden send-cancel-elements-ext gap-2
+                        ${editingMessageID === message.id ? "" : "hidden"}
+                      `}
+                      >
+                        <button
+                          className="send-element-ext p-1 pr-2 flex items-center"
+                          data-tooltip-id="message-tooltip"
+                          data-tooltip-content="Send this prompt"
+                        >
+                          <Icon icon="send" className="w-3 h-3 mr-1" />
+                          Send
+                        </button>
+                        <button
+                          className="cancel-element-ext p-1 pr-2 flex items-center"
+                          data-tooltip-id="message-tooltip"
+                          data-tooltip-content="Cancel"
+                        >
+                          <Icon icon="cancel" className="w-3 h-3 mr-1" />
+                          Cancel
+                        </button>
+                      </div>
+                      <button
+                        className="p-1.5 flex items-center rounded"
+                        data-tooltip-id="message-tooltip"
+                        data-tooltip-content="Edit and resend this prompt"
+                        onClick={() => {
+                          setEditingMessageID(message.id);
+                        }}
+                      >
+                        <Icon icon="pencil" className="w-3 h-3" />
+                      </button>
+                    </div>
                   )}
-                </h2>
-                <div className="mb-2 flex items-center">
-                  <button
-                    className="resend-element-ext p-1.5 flex items-center rounded-lg absolute right-6 top-6"
-                    data-tooltip-id="message-tooltip"
-                    data-tooltip-content="Edit and resend this prompt"
-                  >
-                    <Icon icon="pencil" className="w-3 h-3" />
-                  </button>
-                  <div className="hidden send-cancel-elements-ext gap-2">
-                    <button
-                      className="send-element-ext p-1 pr-2 flex items-center"
-                      data-tooltip-id="message-tooltip"
-                      data-tooltip-content="Send this prompt"
-                    >
-                      <Icon icon="send" className="w-3 h-3 mr-1" />
-                      Send
-                    </button>
-                    <button
-                      className="cancel-element-ext p-1 pr-2 flex items-center"
-                      data-tooltip-id="message-tooltip"
-                      data-tooltip-content="Cancel"
-                    >
-                      <Icon icon="cancel" className="w-3 h-3 mr-1" />
-                      Cancel
-                    </button>
-                  </div>
-                </div>
+                </header>
                 <div
                   className={`
                     ${message.isError ? "text-red-400" : ""}
@@ -218,6 +248,18 @@ export default function Chat({
                         }
                       )}
                   </div>
+                  {debug && (
+                    <div className="text-xs text-gray-500">
+                      Message ID: {message?.id}
+                      <br />
+                      Message Author: {message?.author}
+                      <br />
+                      Message Timestamp: {message?.timestamp}
+                      <br />
+                      Message isStreaming: {message?.isStreaming}
+                      <br />
+                    </div>
+                  )}
                 </div>
               </div>
             );
