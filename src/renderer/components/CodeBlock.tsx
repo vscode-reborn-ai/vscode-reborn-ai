@@ -1,6 +1,6 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
-import { Conversation } from "../renderer-types";
+import { Conversation } from "../../types";
 import CodeBlockActionsButton from "./CodeBlockActionsButton";
 
 interface CodeBlockProps {

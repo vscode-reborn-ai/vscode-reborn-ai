@@ -1,6 +1,6 @@
 // Convenience functions for the renderer code
 
-import { Conversation, Message } from "./renderer-types";
+import { Conversation, Message } from "../types";
 
 export const unEscapeHTML = (unsafe: any) => {
     return unsafe

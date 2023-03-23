@@ -8,7 +8,7 @@ import Layout from "./layout";
 let vscode = acquireVsCodeApi();
 
 const App = () => {
-  const DEBUG = false;
+  const DEBUG = true;
 
   if (!vscode) {
     try {

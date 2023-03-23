@@ -3,7 +3,8 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import "../../styles/main.css";
 import Tabs from "./components/Tabs";
-import { Author, Conversation, Message } from "./renderer-types";
+// import { Author, Conversation, Message } from "./renderer-types";
+import { Conversation, Message, Model, Role } from "../types";
 import { addMessage, unEscapeHTML, updateMessage } from "./utils";
 import Chat from "./views/chat";
 
@@ -18,7 +19,9 @@ export default function Layout({
     id: `Chat-${Date.now()}`,
     title: "Chat",
     messages: [],
+    createdAt: Date.now(),
     inProgress: false,
+    model: Model.gpt_35_turbo,
   } as Conversation;
 
   const [conversationList, setConversationList] = useState<Conversation[]>([
@@ -39,18 +42,18 @@ export default function Layout({
       ) ?? currentConversation;
 
     switch (message.type) {
-      // case "showInProgress":
-      //   const updatedConversationList = conversationList.map((c) =>
-      //     c.id === conversation.id
-      //       ? {
-      //           ...conversation,
-      //           inProgress: message.inProgress,
-      //         }
-      //       : c
-      //   );
+      case "showInProgress":
+        const updatedConversationList = conversationList.map((c) =>
+          c.id === conversation.id
+            ? {
+                ...conversation,
+                inProgress: message.inProgress,
+              }
+            : c
+        );
 
-      //   setConversationList(updatedConversationList);
-      //   break;
+        setConversationList(updatedConversationList);
+        break;
       case "addQuestion":
         const question = {
           id:
@@ -58,9 +61,9 @@ export default function Layout({
             `${conversation.messages.length}-${Math.floor(
               Math.random() * 1000
             )}`,
-          author: Author.user,
-          text: message.value,
-          datetime: Date.now(),
+          role: Role.user,
+          content: message.value,
+          createdAt: Date.now(),
         } as Message;
 
         addMessage(question, conversation, setConversationList);
@@ -90,18 +93,20 @@ export default function Layout({
         let botResponse: Message;
 
         if (existingMessage) {
+          console.log("Updating existing message");
           // get the message from the conversation with the matching id
           botResponse =
             conversation.messages.find((m) => m.id === message.id) ??
             ({
               id: message.id,
-              author: Author.bot,
-              text: markedResponse,
-              datetime: Date.now(),
+              role: Role.assistant,
+              content: markedResponse,
+              createdAt: Date.now(),
             } as Message);
 
           if (botResponse) {
-            botResponse.text = markedResponse;
+            botResponse.content = markedResponse;
+            botResponse.updatedAt = Date.now();
 
             updateMessage(botResponse, conversation, setConversationList);
           } else {
@@ -112,11 +117,11 @@ export default function Layout({
         } else {
           botResponse = {
             id: message.id,
-            author: Author.bot,
-            text: markedResponse,
-            datetime: Date.now(),
+            role: Role.assistant,
+            content: markedResponse,
+            createdAt: Date.now(),
             // Check if message.done exists, only streaming if .done exists and is false
-            isStreaming: message.done === undefined ? false : !message.done,
+            done: message?.done ?? true,
           } as Message;
 
           addMessage(botResponse, conversation, setConversationList);
@@ -126,7 +131,7 @@ export default function Layout({
           updateMessage(
             {
               ...botResponse,
-              isStreaming: false,
+              done: true,
             } as Message,
             conversation,
             setConversationList
@@ -141,9 +146,9 @@ export default function Layout({
 
         const errorMessage = {
           id: message.id,
-          author: Author.bot,
-          text: messageValue,
-          datetime: Date.now(),
+          role: Role.assistant,
+          content: messageValue,
+          createdAt: Date.now(),
           isError: true,
         } as Message;
 

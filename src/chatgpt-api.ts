@@ -30,10 +30,8 @@ import Keyv from "keyv";
 import pTimeout from "p-timeout";
 import QuickLRU from "quick-lru";
 import { v4 as uuidv4 } from "uuid";
+import { ChatGPTError } from "./types";
 
-// src/types.ts
-var ChatGPTError = class extends Error {
-};
 var openai;
 ((openai2) => {
 })(openai || (openai = {}));
@@ -43,9 +41,15 @@ var fetch = globalThis.fetch;
 
 // src/fetch-sse.ts
 import { createParser } from "eventsource-parser";
+import { Conversation } from "./types";
 
-// src/stream-async-iterable.ts
-async function* streamAsyncIterable(stream) {
+// src/stream-async-iterable.t./types
+async function* streamAsyncIterable(stream: ReadableStream<Uint8Array> | null) {
+  if (!stream) {
+    console.warn("streamAsyncIterable: stream is null");
+    return;
+  }
+
   const reader = stream.getReader();
   try {
     while (true) {
@@ -61,7 +65,14 @@ async function* streamAsyncIterable(stream) {
 }
 
 // src/fetch-sse.ts
-async function fetchSSE(url, options, fetch2 = fetch) {
+async function fetchSSE(url: RequestInfo | URL, options: {
+  [x: string]: any; method?: string; headers?: {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    "Content-Type": string;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    Authorization: string;
+  }; body?: string; signal?: any; onMessage: any;
+}, fetch2 = fetch) {
   const { onMessage, ...fetchOptions } = options;
   const res = await fetch2(url, fetchOptions);
   if (!res.ok) {
@@ -71,11 +82,14 @@ async function fetchSSE(url, options, fetch2 = fetch) {
     } catch (err) {
       reason = res.statusText;
     }
-    const msg = `ChatGPT error ${res.status}: ${reason}`;
-    const error = new ChatGPTError(msg, { cause: res });
-    error.statusCode = res.status;
-    error.statusText = res.statusText;
-    error.reason = reason;
+
+    const error = {
+      response: res,
+      statusCode: res.status,
+      statusText: res.statusText,
+      reason: reason,
+    } as ChatGPTError;
+
     throw error;
   }
   const parser = createParser((event) => {
@@ -83,9 +97,9 @@ async function fetchSSE(url, options, fetch2 = fetch) {
       onMessage(event.data);
     }
   });
-  if (!res.body.getReader) {
-    const body = res.body;
-    if (!body.on || !body.read) {
+  if (!res?.body?.getReader) {
+    const body = res.body as any;
+    if (!body?.on || !body?.read) {
       throw new ChatGPTError('unsupported "fetch" implementation');
     }
     body.on("readable", () => {
@@ -106,7 +120,20 @@ async function fetchSSE(url, options, fetch2 = fetch) {
 var CHATGPT_MODEL = "gpt-3.5-turbo";
 var USER_LABEL_DEFAULT = "User";
 var ASSISTANT_LABEL_DEFAULT = "ChatGPT";
-var ChatGPTAPI = class {
+class ChatGPTAPI {
+  _apiKey: string;
+  _apiBaseUrl: string;
+  _debug: boolean;
+  _organizationId: string | undefined;
+  _fetch: typeof fetch;
+  _completionParams: any;
+  _systemMessage: string;
+  _maxModelTokens: number;
+  _maxResponseTokens: number;
+  _getMessageById: any;
+  _upsertMessage: any;
+  _messageStore: any;
+
   /**
    * Creates a new client wrapper around OpenAI's chat completion API, mimicing the official ChatGPT webapp's functionality as closely as possible.
    *
@@ -122,12 +149,25 @@ var ChatGPTAPI = class {
    * @param organization - Optional organization string for openai calls
    * @param fetch - Optional override for the `fetch` implementation to use. Defaults to the global `fetch` function.
    */
-  constructor(opts) {
+  constructor(opts: {
+    apiKey: string;
+    systemMessage: string;
+    completionParams?: any;
+    upsertMessage?: any;
+    maxModelTokens?: 4000 | undefined;
+    maxResponseTokens?: 1000 | undefined;
+    apiBaseUrl?: string | undefined;
+    getMessageById?: string;
+    organizationId?: string;
+    debug?: true | undefined;
+    messageStore?: any;
+    fetch?: ((input: RequestInfo | URL, init?: RequestInit | undefined) => Promise<Response>) | undefined;
+  }) {
     const {
       apiKey,
       apiBaseUrl = "https://api.openai.com",
-      organization,
-      debug = false,
+      organizationId: organizationId,
+      debug = true, // false,
       messageStore,
       completionParams,
       systemMessage,
@@ -139,7 +179,7 @@ var ChatGPTAPI = class {
     } = opts;
     this._apiKey = apiKey;
     this._apiBaseUrl = apiBaseUrl;
-    this._organization = organization;
+    this._organizationId = organizationId;
     this._debug = !!debug;
     this._fetch = fetch2;
     this._completionParams = {
@@ -167,7 +207,7 @@ Current date: ${currentDate}`;
     } else {
       this._messageStore = new Keyv({
         store: new QuickLRU({ maxSize: 1e4 })
-      });
+      } as any);
     }
     if (!this._apiKey) {
       throw new Error("OpenAI missing required apiKey");
@@ -200,27 +240,38 @@ Current date: ${currentDate}`;
    *
    * @returns The response from ChatGPT
    */
-  async sendMessage(text, opts = {}) {
+  async sendMessage(text: any,
+    conversation: Conversation,
+    opts: {
+      parentMessageId?: any;
+      messageId?: any;
+      systemMessage?: any;
+      timeoutMs?: any;
+      onProgress?: any;
+      abortSignal?: any;
+      completionParams?: any;
+      stream?: any;
+    }) {
     // Extract necessary fields from options
     const {
       parentMessageId,
       messageId = uuidv4(),
       timeoutMs,
       onProgress,
-      stream = onProgress ? true : false,
+      stream = true, // = onProgress ? true : false,
       completionParams
     } = opts;
 
     // Initialize abort controller and signal
     let { abortSignal } = opts;
-    let abortController = null;
+    let abortController: AbortController | null = null;
     if (timeoutMs && !abortSignal) {
       abortController = new AbortController();
       abortSignal = abortController.signal;
     }
 
     // Create user message object
-    const message = {
+    const newMessage = {
       role: "user",
       id: messageId,
       parentMessageId,
@@ -228,10 +279,12 @@ Current date: ${currentDate}`;
     };
 
     // Upsert the message
-    await this._upsertMessage(message);
+    // await this._upsertMessage(message);
 
     // Build messages array
-    const { messages } = await this._buildMessages(text, opts);
+    // const { messages } = await this._buildMessages(text, opts);
+
+    const messages = [...conversation.messages, newMessage];
 
     // Create assistant result object
     const result = {
@@ -239,7 +292,7 @@ Current date: ${currentDate}`;
       id: uuidv4(),
       parentMessageId: messageId,
       text: ""
-    };
+    } as any;
 
     const responseP = new Promise(
       async (resolve, reject) => {
@@ -249,10 +302,10 @@ Current date: ${currentDate}`;
           "Content-Type": "application/json",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           Authorization: `Bearer ${this._apiKey}`
-        };
+        } as any;
 
-        if (this._organization) {
-          headers["OpenAI-Organization"] = this._organization;
+        if (this._organizationId) {
+          headers["OpenAI-Organization"] = this._organizationId;
         }
 
         const body = {
@@ -270,7 +323,7 @@ Current date: ${currentDate}`;
               headers,
               body: JSON.stringify(body),
               signal: abortSignal,
-              onMessage: (data) => {
+              onMessage: (data: string) => {
                 if (data === "[DONE]") {
                   result.text = result.text.trim();
                   return resolve(result);
@@ -309,10 +362,14 @@ Current date: ${currentDate}`;
 
             if (!res.ok) {
               const reason = await res.text();
-              const msg = `OpenAI has an error: ${res.status || res.statusText}: ${reason}`;
-              const error = new ChatGPTError(msg, { cause: res });
-              error.statusCode = res.status;
-              error.statusText = res.statusText;
+
+              const error = {
+                response: res,
+                statusCode: res.status,
+                statusText: res.statusText,
+                reason,
+              } as ChatGPTError;
+
               return reject(error);
             }
 
@@ -347,12 +404,12 @@ Current date: ${currentDate}`;
       }
     ).then((message2) => {
       return this._upsertMessage(message2).then(() => message2);
-    });
+    }) as any;
 
     if (timeoutMs) {
       if (abortController) {
         responseP.cancel = () => {
-          abortController.abort();
+          abortController?.abort();
         };
       }
       return pTimeout(responseP, {
@@ -373,7 +430,7 @@ Current date: ${currentDate}`;
   }
 
   // Helper function to construct human-readable prompt lines based on message role
-  getMessageLines(role, label, content) {
+  getMessageLines(role: string, label: string, content: any) {
     switch (role) {
       case "system":
         return [`Instructions:\n${content}`];
@@ -384,13 +441,13 @@ Current date: ${currentDate}`;
     }
   }
 
-  async _buildMessages(text, opts) {
+  async _buildMessages(text: any, opts: { name?: any; systemMessage?: any; parentMessageId?: any; }) {
     const { systemMessage = this._systemMessage } = opts;
     let { parentMessageId } = opts;
 
     const userLabel = USER_LABEL_DEFAULT;
     const assistantLabel = ASSISTANT_LABEL_DEFAULT;
-    let messages = [];
+    let messages = [] as any;
 
     // Add system message if present
     if (systemMessage) {
@@ -417,7 +474,7 @@ Current date: ${currentDate}`;
     do {
       // Construct the prompt for each message in the array
       nextMessages
-        .reduce((promptAcc, message) => {
+        .reduce((promptAcc: any[], message: { role: string; content: any; }) => {
           const messageLines = this.getMessageLines(
             message.role,
             message.role === "user" ? userLabel : assistantLabel,
@@ -461,11 +518,11 @@ Current date: ${currentDate}`;
     return { messages };
   }
 
-  async _defaultGetMessageById(id) {
+  async _defaultGetMessageById(id: any) {
     const res = await this._messageStore.get(id);
     return res;
   }
-  async _defaultUpsertMessage(message) {
+  async _defaultUpsertMessage(message: { id: any; }) {
     await this._messageStore.set(message.id, message);
   }
 };

@@ -126,31 +126,6 @@ declare namespace openai {
         total_tokens: number;
     };
 }
-/**
- * https://chat.openapi.com/backend-api/conversation
- */
-type ConversationJSONBody = {
-    /**
-     * The action to take
-     */
-    action: string;
-    /**
-     * The ID of the conversation
-     */
-    conversation_id?: string;
-    /**
-     * Prompts to provide
-     */
-    messages: Prompt[];
-    /**
-     * The model to use
-     */
-    model: string;
-    /**
-     * The parent message ID
-     */
-    parent_message_id: string;
-};
 type Prompt = {
     /**
      * The content of the prompt
@@ -175,11 +150,6 @@ type PromptContent = {
      * The parts to the prompt
      */
     parts: string[];
-};
-type ConversationResponseEvent = {
-    message?: Message;
-    conversation_id?: string;
-    error?: string | null;
 };
 type Message = {
     id: string;
@@ -351,4 +321,4 @@ declare class ChatGPTUnofficialProxyAPI {
     sendMessage(text: string, opts?: SendMessageBrowserOptions): Promise<ChatMessage>;
 }
 
-export { ChatGPTAPI, ChatGPTError, ChatGPTErrorType, ChatGPTUnofficialProxyAPI, ChatMessage, ContentType, ConversationJSONBody, ConversationResponseEvent, FetchFn, GetAccessTokenFn, GetMessageByIdFunction, Message, MessageActionType, MessageContent, MessageMetadata, Prompt, PromptContent, Role, SendMessageBrowserOptions, SendMessageOptions, UpsertMessageFunction, openai };
+export { ChatGPTAPI, ChatGPTError, ChatGPTErrorType, ChatGPTUnofficialProxyAPI, ChatMessage, ContentType, FetchFn, GetAccessTokenFn, GetMessageByIdFunction, Message, MessageActionType, MessageContent, MessageMetadata, Prompt, PromptContent, Role, SendMessageBrowserOptions, SendMessageOptions, UpsertMessageFunction, openai };

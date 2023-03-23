@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tooltip } from "react-tooltip";
-import { Conversation } from "../renderer-types";
+import { Conversation, Model } from "../../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
@@ -37,10 +37,10 @@ export default function ModelSelect({
           onClick={() => {
             vscode.postMessage({
               type: "setModel",
-              value: "gpt-3.5-turbo",
+              value: Model.gpt_35_turbo,
               conversationId: currentConversation.id,
             });
-            setCurrentModel("gpt-3.5-turbo");
+            setCurrentModel(Model.gpt_35_turbo);
             setShowModels(false);
           }}
         >
@@ -51,10 +51,10 @@ export default function ModelSelect({
           onClick={() => {
             vscode.postMessage({
               type: "setModel",
-              value: "gpt-4",
+              value: Model.gpt_4,
               conversationId: currentConversation.id,
             });
-            setCurrentModel("gpt-4");
+            setCurrentModel(Model.gpt_4);
             setShowModels(false);
           }}
         >
@@ -66,10 +66,10 @@ export default function ModelSelect({
           onClick={() => {
             vscode.postMessage({
               type: "setModel",
-              value: "gpt-4-32k",
+              value: Model.gpt_4_32k,
               conversationId: currentConversation.id,
             });
-            setCurrentModel("gpt-4-32k");
+            setCurrentModel(Model.gpt_4_32k);
             setShowModels(false);
           }}
         >
@@ -81,10 +81,10 @@ export default function ModelSelect({
           onClick={() => {
             vscode.postMessage({
               type: "setModel",
-              value: "text-davinci-003",
+              value: Model.text_davinci_003,
               conversationId: currentConversation.id,
             });
-            setCurrentModel("text-davinci-003");
+            setCurrentModel(Model.text_davinci_003);
             setShowModels(false);
           }}
         >

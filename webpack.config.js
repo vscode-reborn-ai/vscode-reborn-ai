@@ -1,8 +1,7 @@
 const path = require("path");
-const { EnvironmentPlugin } = require('webpack');
 
 module.exports = {
-    entry: './src/renderer/app.tsx',
+    entry: './src/renderer/index.tsx',
     output: {
         filename: 'webview.bundle.js',
         path: path.resolve(__dirname, 'out'),
@@ -12,7 +11,10 @@ module.exports = {
         rules: [
             {
                 test: /\.(ts|tsx)$/,
-                include: path.resolve(__dirname, 'src/renderer'), // only look into the src/renderer folder
+                include: [
+                    path.resolve(__dirname, 'src/renderer'), // only look into the src/renderer folder
+                    path.resolve(__dirname, 'src/types.ts'), // types
+                ],
                 exclude: /node_modules/,
                 use: [
                     {

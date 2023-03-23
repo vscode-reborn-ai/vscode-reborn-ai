@@ -33,4 +33,5 @@
     "[css]": {
         "editor.defaultFormatter": "vscode.css-language-features"
     },
+    "cmake.configureOnOpen": false,
 }

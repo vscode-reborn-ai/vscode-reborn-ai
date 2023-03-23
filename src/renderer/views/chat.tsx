@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
+import { Conversation, Role } from "../../types";
 import CodeBlock from "../components/CodeBlock";
 import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
-import { Author, Conversation } from "../renderer-types";
 
 export default function Chat({
   vscode,
@@ -139,9 +139,17 @@ export default function Chat({
           <br />
           Conversation Title: {conversation?.title}
           <br />
-          Conversation Datetime: {conversation?.datetime}
+          Conversation Datetime:{" "}
+          {new Date(conversation?.createdAt ?? "").toLocaleString("en-US", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })}
           <br />
-          Conversation inProgress: {conversation?.inProgress}
+          Conversation inProgress: {conversation?.inProgress ? "true" : "false"}
         </div>
       )}
       {/* Introduction */}
@@ -156,13 +164,13 @@ export default function Chat({
             return (
               <div
                 className={`w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative
-                  ${message.author === Author.user ? "bg-input" : "bg-sidebar"}
+                  ${message.author === Role.user ? "bg-input" : "bg-sidebar"}
                 `}
                 key={message.id}
               >
                 <header className="flex items-center">
                   <h2 className="flex-grow flex items-center">
-                    {message.author === Author.user ? (
+                    {message.author === Role.user ? (
                       <>
                         <Icon icon="user" className="w-6 h-6 mr-2" />
                         You
@@ -174,7 +182,7 @@ export default function Chat({
                       </>
                     )}
                   </h2>
-                  {message.author === Author.user && (
+                  {message.author === Role.user && (
                     <div className="flex items-center">
                       <div
                         className={`hidden send-cancel-elements-ext gap-2
@@ -254,9 +262,20 @@ export default function Chat({
                       <br />
                       Message Author: {message?.author}
                       <br />
-                      Message Timestamp: {message?.timestamp}
+                      Message createdAt:{" "}
+                      {new Date(message?.createdAt ?? "").toLocaleString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        }
+                      )}
                       <br />
-                      Message isStreaming: {message?.isStreaming}
+                      Message done: {message?.done ? "true" : "false"}
                       <br />
                     </div>
                   )}

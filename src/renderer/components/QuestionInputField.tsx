@@ -1,6 +1,6 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
-import { Author, Conversation } from "../renderer-types";
+import { Conversation, Role } from "../../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 
@@ -19,7 +19,7 @@ export default ({
         <div className="flex-1 textarea-wrapper">
           <textarea
             rows={1}
-            className="w-full text-sm rounded border border-input text-input bg-input resize-none"
+            className="text-sm rounded border border-input text-input bg-input resize-none w-[calc(100%-5rem)]"
             id="question-input"
             placeholder="Ask a question..."
             ref={questionInputRef}
@@ -52,10 +52,11 @@ export default ({
                   vscode.postMessage({
                     type: "addFreeTextQuestion",
                     value: questionInputRef.current.value,
+                    conversation: currentConversation,
                     conversationId: currentConversation.id,
                     lastBotMessageId:
                       currentConversation.messages.find(
-                        (m) => m.author === Author.bot
+                        (m) => m.role === Role.assistant
                       )?.id ?? "",
                   });
 
@@ -102,7 +103,7 @@ export default ({
                     conversationId: currentConversation.id,
                     lastBotMessageId:
                       currentConversation.messages.find(
-                        (m) => m.author === Author.bot
+                        (m) => m.role === Role.assistant
                       )?.id ?? "",
                   });
 
