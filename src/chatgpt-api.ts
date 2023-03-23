@@ -30,7 +30,7 @@ import Keyv from "keyv";
 import pTimeout from "p-timeout";
 import QuickLRU from "quick-lru";
 import { v4 as uuidv4 } from "uuid";
-import { ChatGPTError } from "./types";
+import { ChatGPTError, DeltaMessage, Message, Role } from "./types";
 
 var openai;
 ((openai2) => {
@@ -272,11 +272,11 @@ Current date: ${currentDate}`;
 
     // Create user message object
     const newMessage = {
-      role: "user",
+      role: Role.user,
       id: messageId,
       parentMessageId,
-      text
-    };
+      content: text
+    } as Message;
 
     // Upsert the message
     // await this._upsertMessage(message);
@@ -288,11 +288,11 @@ Current date: ${currentDate}`;
 
     // Create assistant result object
     const result = {
-      role: "assistant",
+      role: Role.assistant,
       id: uuidv4(),
       parentMessageId: messageId,
-      text: ""
-    } as any;
+      content: ""
+    } as DeltaMessage;
 
     const responseP = new Promise(
       async (resolve, reject) => {
@@ -311,7 +311,8 @@ Current date: ${currentDate}`;
         const body = {
           ...this._completionParams,
           ...completionParams,
-          messages,
+          // only include role and content in what is sent to OpenAI
+          messages: messages.map(({ role, content }) => ({ role, content })),
           stream
         };
 
@@ -325,7 +326,7 @@ Current date: ${currentDate}`;
               signal: abortSignal,
               onMessage: (data: string) => {
                 if (data === "[DONE]") {
-                  result.text = result.text.trim();
+                  result.content = result.content.trim();
                   return resolve(result);
                 }
                 try {
@@ -336,7 +337,9 @@ Current date: ${currentDate}`;
                   if (response.choices?.length) {
                     const delta = response.choices[0].delta;
                     result.delta = delta.content;
-                    if (delta.content) { result.text += delta.content; }
+                    if (delta.content) {
+                      result.content += delta.content;
+                    }
                     result.detail = response;
                     if (delta.role) {
                       result.role = delta.role;
@@ -382,7 +385,7 @@ Current date: ${currentDate}`;
             }
             if (response.choices?.length) {
               const message2 = response.choices[0].message;
-              result.text = message2.content;
+              result.content = message2.content;
               if (message2.role) {
                 result.role = message2.role;
               }

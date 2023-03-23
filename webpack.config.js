@@ -12,8 +12,8 @@ module.exports = {
             {
                 test: /\.(ts|tsx)$/,
                 include: [
-                    path.resolve(__dirname, 'src/renderer'), // only look into the src/renderer folder
-                    path.resolve(__dirname, 'src/types.ts'), // types
+                    // path.resolve(__dirname, 'src/renderer'), // only look into the src/renderer folder
+                    path.resolve(__dirname, 'src'), // types
                 ],
                 exclude: /node_modules/,
                 use: [

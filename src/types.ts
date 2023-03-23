@@ -34,6 +34,13 @@ export type Message = {
     createdAt: string | number;
     updatedAt?: string | number;
     done?: boolean | null;
+    parentMessageId?: string;
+};
+
+// Used for streaming, OpenAI API returns a delta message
+export type DeltaMessage = Message & {
+    delta: string;
+    detail: any;
 };
 
 export type SendMessageOptions = {
