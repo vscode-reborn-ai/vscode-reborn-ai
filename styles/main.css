@@ -43,140 +43,59 @@ a:active {
     color: var(--vscode-textLink-activeForeground);
 }
 
-/*
-blockquote,
-dd,
-dl,
-figure,
-h1,
-h3,
-h4,
-h5,
-h6,
-hr,
-p {
-    margin-block-start: 1em !important;
-    margin-block-end: 1em !important;
-    margin-inline-start: 0px !important;
-    margin-inline-end: 0px !important;
+[role="tooltip"] {
+    @apply border bg-tab;
+
+    opacity: 1 !important;
 }
 
-h1 {
-    font-size: 1.17em !important;
-    margin-top: 0.67em !important;
-    margin-bottom: 0.67em !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    font-weight: bold !important;
+.message-wrapper blockquote,
+.message-wrapper dd,
+.message-wrapper dl,
+.message-wrapper ul,
+.message-wrapper ol,
+.message-wrapper figure,
+.message-wrapper h1,
+.message-wrapper h3,
+.message-wrapper h4,
+.message-wrapper h5,
+.message-wrapper h6,
+.message-wrapper hr,
+.message-wrapper p {
+    @apply my-2;
 }
 
-h2 {
-    font-size: 1em !important;
-    margin-top: 0.83em !important;
-    margin-bottom: 0.83em !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    font-weight: bold !important;
+.message-wrapper h1 {
+    @apply text-2xl;
 }
 
-h3 {
-    font-size: .93em !important;
-    margin-top: 1em !important;
-    margin-bottom: 1em !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    font-weight: bold !important;
+.message-wrapper h2 {
+    @apply text-2xl;
 }
 
-h4 {
-    font-size: .85em !important;
-    margin-top: 1.33em !important;
-    margin-bottom: 1.33em !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    font-weight: bold !important;
+.message-wrapper h3 {
+    @apply text-xl;
 }
 
-h5 {
-    font-size: .83em !important;
-    margin-top: 1.67em !important;
-    margin-bottom: 1.67em !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    font-weight: bold !important;
+.message-wrapper h4 {
+    @apply text-xl;
 }
 
-h6 {
-    font-size: .8em !important;
-    margin-top: 2.33em !important;
-    margin-bottom: 2.33em !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    font-weight: bold !important;
+.message-wrapper h5 {
+    @apply text-lg;
 }
-*/
+
+.message-wrapper h6 {
+    @apply text-lg;
+}
 
 /* horizontally indent any elements that are not code blocks */
 .message-wrapper > *:not(pre) {
     @apply mx-4;
 }
-/* space out paragraphs */
 .message-wrapper p {
     @apply my-2;
 }
-
-/* button {
-    border: none;
-    padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-    text-align: center;
-    outline: 1px solid transparent;
-    outline-offset: 2px !important;
-    color: var(--vscode-button-secondaryForeground) !important;
-    background: var(--vscode-button-secondaryBackground) !important;
-}
-
-button:hover {
-    background: var(--vscode-button-secondaryHoverBackground) !important;
-}
-
-button:hover svg {
-    stroke: var(--vscode-button-secondaryForeground) !important;
-}
-
-button:focus {
-    outline-color: var(--vscode-focusBorder);
-}
-
-button.secondary {
-    color: var(--vscode-button-secondaryForeground);
-    background: var(--vscode-button-secondaryBackground);
-}
-
-button.secondary:hover {
-    background: var(--vscode-button-secondaryHoverBackground);
-}
-
-input:not([type='checkbox']),
-textarea {
-    display: block;
-    width: 100%;
-    border: none;
-    font-family: var(--vscode-font-family);
-    padding: var(--input-padding-vertical) var(--input-padding-horizontal);
-    color: var(--vscode-input-foreground);
-    outline-color: var(--vscode-input-border);
-    background-color: var(--vscode-input-background);
-}
-
-input::placeholder,
-textarea::placeholder {
-    color: var(--vscode-input-placeholderForeground);
-}
-
-[contenteditable='true'] {
-    outline: 1px solid var(--vscode-focusBorder);
-}
-*/
 
 /* CSS Spinner */
 .spinner {
@@ -233,50 +152,6 @@ textarea::placeholder {
     }
 }
 
-/*
-.textarea-wrapper {
-    display: grid;
-    max-height: 20rem;
-    font-size: var(--vscode-font-size);
-}
-
-.textarea-wrapper::after {
-    content: attr(data-replicated-value) " ";
-    white-space: pre-wrap;
-    visibility: hidden;
-}
-
-.textarea-wrapper>textarea {
-    resize: none;
-    overflow: hidden auto;
-    max-height: 20rem;
-}
-
-.textarea-wrapper>textarea,
-.textarea-wrapper::after {
-    border: 1px solid black;
-    padding: .5rem 5rem .5rem .5rem;
-    font: inherit;
-    grid-area: 1 / 1 / 2 / 2;
-}
-
-*/
-
-.pre-code-element:not(:last-child) {
-    margin-bottom: 2rem;
-}
-
-.code-actions-wrapper {
-    opacity: 0.70;
-    font-size: 12px;
-    margin-top: 1rem;
-}
-
-.code-actions-wrapper:hover {
-    opacity: 1;
-    display: flex;
-}
-
 .typing {
     font-size: var(--vscode-font-size);
 }
@@ -313,10 +188,6 @@ textarea::placeholder {
     .features-block {
         display: none !important;
     }
-}
-
-.hidden {
-    display: hidden;
 }
 
 .answer-element-ext table {
@@ -372,6 +243,8 @@ textarea::placeholder {
 pre > code {
     color: var(--vscode-terminal-ansiBrightBlue);
 }
+
+
 .hljs-attribute,
 .hljs-selector-tag,
 .hljs-meta-keyword,
@@ -400,6 +273,7 @@ pre > code {
   color: var(--vscode-symbolIcon-stringForeground);
 }
 
+.hljs-selector-class,
 .hljs-number,
 .hljs-built_in,
 .hljs-builtin-name,
@@ -407,7 +281,11 @@ pre > code {
   color: var(--vscode-symbolIcon-numberForeground);
 }
 
-.hljs-comment,
+/* Hard-code comments color - themes don't seem to use the comment css variable */
+.hljs-comment {
+    color: #5c6370;
+}
+
 .hljs-code,
 .hljs-class .hljs-title {
   color: var(--vscode-symbolIcon-commentForeground);

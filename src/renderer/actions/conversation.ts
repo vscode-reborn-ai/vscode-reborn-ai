@@ -39,6 +39,16 @@ export const conversationSlice = createSlice({
         state.conversations[id] = action.payload;
       }
     },
+    updateConversationModel: (
+      state,
+      action: PayloadAction<{ conversationId: string; model: Model; }>
+    ) => {
+      const { conversationId, model } = action.payload;
+
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].model = model;
+      }
+    },
     addMessage: (
       state,
       action: PayloadAction<{ conversationId: string; message: Message; }>
@@ -98,6 +108,7 @@ export const conversationSlice = createSlice({
           conversation.messages[index].content = content;
           conversation.messages[index].updatedAt = Date.now();
           conversation.messages[index].done = done ?? false;
+          conversation.inProgress = done ?? false;
         }
       }
     },
@@ -169,6 +180,7 @@ export const {
   addConversation,
   removeConversation,
   updateConversation,
+  updateConversationModel,
   addMessage,
   updateMessage,
   updateMessageContent,

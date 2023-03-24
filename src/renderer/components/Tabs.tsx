@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addConversation, removeConversation } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { Conversation, Model } from "../types";
+import { Conversation } from "../types";
 import Icon from "./Icon";
 
 function classNames(...classes: string[]) {
@@ -74,7 +74,7 @@ export default function Tabs({
       messages: [],
       inProgress: false,
       createdAt: Date.now(),
-      model: Model.gpt_35_turbo,
+      model: currentConversation.model,
       autoscroll: true,
     } as Conversation;
 
@@ -139,7 +139,7 @@ export default function Tabs({
                         // navigate to the first tab
                         // if there's no more chats, create a new one
                         if (conversationList.length === 1) {
-                          // createNewConversation();
+                          createNewConversation();
                         } else {
                           navigate(
                             `/chat/${encodeURI(

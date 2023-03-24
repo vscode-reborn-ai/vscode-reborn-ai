@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import { v4 as uuidv4 } from "uuid";
 import "../../styles/main.css";
+import { setExtensionSettings } from "./actions/app";
 import {
   addMessage,
   setCurrentConversation,
@@ -23,6 +24,13 @@ export default function Layout({ vscode }: { vscode: any }) {
   const conversationList = Object.values(
     useAppSelector((state: any) => state.conversation.conversations)
   ) as Conversation[];
+
+  useEffect(() => {
+    // ask for the extension settings
+    vscode.postMessage({
+      type: "getSettings",
+    });
+  }, []);
 
   // Handle messages sent from the extension to the webview
   const handleMessages = (event: any) => {
@@ -98,7 +106,7 @@ export default function Layout({ vscode }: { vscode: any }) {
                 conversationId: data?.conversationId ?? currentConversationId,
                 messageId: data.id,
                 content: markedResponse,
-                done: data?.done ?? true,
+                done: data?.done ?? false,
               })
             );
           } else {
@@ -150,6 +158,10 @@ export default function Layout({ vscode }: { vscode: any }) {
           })
         );
         break;
+      case "settingsUpdate":
+        console.log("Renderer - Updating settings: ", data.value);
+        dispatch(setExtensionSettings({ newSettings: data.value }));
+        break;
       default:
         console.log('Renderer - Uncaught message type: "' + data.type + '"');
     }
@@ -200,7 +212,13 @@ export default function Layout({ vscode }: { vscode: any }) {
               key={conversation.id}
               path={`/chat/${conversation.id}`}
               index={conversation.id === currentConversationId}
-              element={<Chat conversation={conversation} vscode={vscode} />}
+              element={
+                <Chat
+                  conversation={conversation}
+                  vscode={vscode}
+                  conversationList={conversationList}
+                />
+              }
             />
           ))}
         <Route

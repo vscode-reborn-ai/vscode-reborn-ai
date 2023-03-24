@@ -1,17 +1,82 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
+import {
+  addConversation,
+  updateConversationModel,
+} from "../actions/conversation";
+import { useAppDispatch, useAppSelector } from "../hooks";
 import { Conversation, Model } from "../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
   currentConversation,
+  conversationList,
   vscode,
 }: {
   currentConversation: Conversation;
+  conversationList: Conversation[];
   vscode: any;
 }) {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [showModels, setShowModels] = useState(false);
-  const [currentModel, setCurrentModel] = useState("gpt-3.5-turbo");
+  const settings = useAppSelector((state: any) => state.app.extensionSettings);
+
+  const createNewConversation = () => {
+    let title = "Chat";
+    let i = 2;
+
+    while (
+      conversationList.find((conversation) => conversation.title === title)
+    ) {
+      title = `Chat ${i}`;
+      i++;
+    }
+    const newConversation = {
+      id: `${title}-${Date.now()}`,
+      title,
+      messages: [],
+      inProgress: false,
+      createdAt: Date.now(),
+      model:
+        settings?.gpt3?.model ??
+        currentConversation?.model ??
+        Model.gpt_35_turbo,
+      autoscroll: true,
+    } as Conversation;
+
+    dispatch(addConversation(newConversation));
+
+    // switch to the new conversation
+    navigate(`/chat/${encodeURI(newConversation.id)}`);
+  };
+
+  const setModel = (model: Model) => {
+    if (currentConversation.model !== model) {
+      // Update settings
+      vscode.postMessage({
+        type: "setModel",
+        value: model,
+        conversationId: currentConversation.id,
+      });
+
+      // Model can't change partway through a conversation, so we need to create a new one
+      if (currentConversation.messages.length > 0) {
+        createNewConversation();
+      } else {
+        dispatch(
+          updateConversationModel({
+            conversationId: currentConversation.id,
+            model,
+          })
+        );
+      }
+    }
+
+    // Close the menu
+    setShowModels(false);
+  };
 
   return (
     <>
@@ -24,7 +89,9 @@ export default function ModelSelect({
         }}
       >
         <Icon icon="box" className="w-3 h-3 mr-1" />
-        {currentModel}
+        {currentConversation.messages.length > 0
+          ? currentConversation.model
+          : settings?.gpt3?.model ?? "..."}
       </button>
       <Tooltip id="model-select-tooltip" place="top" delayShow={800} />
       <div
@@ -35,13 +102,7 @@ export default function ModelSelect({
         <button
           className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
           onClick={() => {
-            vscode.postMessage({
-              type: "setModel",
-              value: Model.gpt_35_turbo,
-              conversationId: currentConversation.id,
-            });
-            setCurrentModel(Model.gpt_35_turbo);
-            setShowModels(false);
+            setModel(Model.gpt_35_turbo);
           }}
         >
           GPT-3.5-TURBO (Fast, recommended)
@@ -49,13 +110,7 @@ export default function ModelSelect({
         <button
           className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
           onClick={() => {
-            vscode.postMessage({
-              type: "setModel",
-              value: Model.gpt_4,
-              conversationId: currentConversation.id,
-            });
-            setCurrentModel(Model.gpt_4);
-            setShowModels(false);
+            setModel(Model.gpt_4);
           }}
         >
           Waitlist-access - GPT-4 (Better and larger input, but slower and more
@@ -64,13 +119,7 @@ export default function ModelSelect({
         <button
           className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
           onClick={() => {
-            vscode.postMessage({
-              type: "setModel",
-              value: Model.gpt_4_32k,
-              conversationId: currentConversation.id,
-            });
-            setCurrentModel(Model.gpt_4_32k);
-            setShowModels(false);
+            setModel(Model.gpt_4_32k);
           }}
         >
           Not yet available? - GPT-4-32K (Extremely long input, but slower and
@@ -79,13 +128,7 @@ export default function ModelSelect({
         <button
           className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
           onClick={() => {
-            vscode.postMessage({
-              type: "setModel",
-              value: Model.text_davinci_003,
-              conversationId: currentConversation.id,
-            });
-            setCurrentModel(Model.text_davinci_003);
-            setShowModels(false);
+            setModel(Model.text_davinci_003);
           }}
         >
           GPT-3 davinci-003 (Cheap/fast, but not as good as GPT-3.5/4)

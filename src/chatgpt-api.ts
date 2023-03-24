@@ -310,6 +310,7 @@ Current date: ${currentDate}`;
       const body = {
         ...this._completionParams,
         ...completionParams,
+        model: conversation.model ?? this._completionParams.model,
         // only include role and content in what is sent to OpenAI
         messages: messages.map(({ role, content }) => ({ role, content })),
         stream,

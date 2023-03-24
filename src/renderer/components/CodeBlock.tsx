@@ -86,11 +86,16 @@ const CodeBlock = ({
               type: "openNew",
               value: codeTextContent,
               conversationId: currentConversationId,
-              language,
+              // Handle HLJS language names that are different from VS Code's language IDs
+              language: language
+                .replace("js", "javascript")
+                .replace("py", "python")
+                .replace("sh", "bash")
+                .replace("ts", "typescript"),
             });
           }}
         />
-        <Tooltip id="code-actions-tooltip" place="bottom" />
+        <Tooltip id="code-actions-tooltip" place="bottom" delayShow={1500} />
       </div>
       <code
         className="block px-4 py-2 overflow-x-auto bg-input font-code text-code"

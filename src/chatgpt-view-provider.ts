@@ -50,6 +50,16 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
 			}
 		});
+
+		// if any of the extension settings change, send a message to the webview for the "settingsUpdate" event
+		vscode.workspace.onDidChangeConfiguration((e) => {
+			if (e.affectsConfiguration("chatgpt")) {
+				this.sendMessage({
+					type: "settingsUpdate",
+					value: vscode.workspace.getConfiguration("chatgpt")
+				});
+			}
+		});
 	}
 
 	public resolveWebviewView(
@@ -129,6 +139,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				case "stopGenerating":
 					this.stopGenerating();
 					break;
+				case "getSettings":
+					this.sendMessage({
+						type: "settingsUpdate",
+						value: vscode.workspace.getConfiguration("chatgpt")
+					});
 				default:
 					console.log('Main Process - Uncaught message type: "' + data.type + '"');
 					break;

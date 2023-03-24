@@ -10,9 +10,11 @@ import { Conversation, Message, Role } from "../types";
 
 export default function Chat({
   conversation,
+  conversationList,
   vscode,
 }: {
   conversation: Conversation;
+  conversationList: Conversation[];
   vscode: any;
 }) {
   const dispatch = useAppDispatch();
@@ -359,29 +361,12 @@ export default function Chat({
           <Tooltip id="message-tooltip" />
         </div>
       </div>
-      {/* AI Response In Progress */}
-      {conversation.inProgress && (
-        <div id="in-progress" className="pl-4 pt-2 items-center">
-          <div className="typing">Thinking</div>
-          <div className="spinner">
-            <div className="bounce1"></div>
-            <div className="bounce2"></div>
-            <div className="bounce3"></div>
-          </div>
-
-          <button
-            className="btn btn-primary flex items-end p-1 pr-2 rounded-md ml-5"
-            onClick={() => {
-              postMessage("stopGenerating");
-            }}
-          >
-            <Icon icon="cancel" className="w-5 h-5 mr-2" />
-            Stop responding
-          </button>
-        </div>
-      )}
       {/* Question Input */}
-      <QuestionInputField conversation={conversation} vscode={vscode} />
+      <QuestionInputField
+        conversation={conversation}
+        vscode={vscode}
+        conversationList={conversationList}
+      />
     </>
   );
 }
