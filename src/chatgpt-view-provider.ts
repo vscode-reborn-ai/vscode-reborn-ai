@@ -200,19 +200,17 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 	private convertMessagesToMarkdown(conversation: Conversation): string {
-		let markdown = "";
-		conversation.messages.forEach((message: Message) => {
+		let markdown = conversation.messages.reduce((accumulator: string, message: Message) => {
 			const role = message.role === Role.user ? "You" : "ChatGPT";
 			const isError = message.isError ? "ERROR: " : "";
-
-			markdown += `<code>**${isError}[${role}]**</code>\n${message.rawContent ?? message.content}\n\n`;
+			const content = message.rawContent ?? message.content;
 
 			// Add language to code blocks using highlight.js auto-detection
-			markdown = markdown.replace(/```\n([^`]+)\n```/g, (match, codeBlockContent, offset, string) => {
-				const language = hljs.highlightAuto(codeBlockContent).language;
-				return `\`\`\`${language}\n${codeBlockContent}\n\`\`\``;
-			});
-		});
+			const wrappedContent = hljs.highlightAuto(content).value;
+			const formattedMessage = `<code>**${isError}[${role}]**</code>\n\`\`\`${wrappedContent}\`\`\`\n\n`;
+			return accumulator + formattedMessage;
+		}, "");
+
 		return markdown;
 	}
 
@@ -220,11 +218,15 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private stopGenerating(): void {
 		this.abortController?.abort?.();
 		this.inProgress = false;
+
+		// show inProgress status update
 		this.sendMessage({
 			type: 'showInProgress',
 			inProgress: this.inProgress,
 			conversationId: 'stop gen, no conversation id'
 		});
+
+		// add response
 		const responseInMarkdown = !this.isCodexModel;
 		this.sendMessage({
 			type: 'addResponse',
@@ -235,6 +237,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			responseInMarkdown,
 			conversationId: 'stop gen, no conversation id'
 		});
+
+		// log event
 		this.logEvent("stopped-generating");
 	}
 
@@ -276,13 +280,16 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			return model.id as Model;
 		});
 	}
-
 	public async prepareConversation(modelChanged = false): Promise<boolean> {
 		const state = this.context.globalState;
 		const configuration = vscode.workspace.getConfiguration("chatgpt");
 
+		// Check if chat mode is enabled
 		if (this.chatMode) {
+			// Check if an API key is required and available
 			if ((this.isGpt35Model && !this.apiGpt35) || (!this.isGpt35Model && !this.apiGpt3) || modelChanged) {
+
+				// Retrieve API key and other configuration parameters from vscode workspace settings
 				let apiKey = configuration.get("gpt3.apiKey") as string || state.get("chatgpt-gpt3-apiKey") as string;
 				const organization = configuration.get("gpt3.organization") as string;
 				const maxTokens = configuration.get("gpt3.maxTokens") as number;
@@ -290,8 +297,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				const topP = configuration.get("gpt3.top_p") as number;
 				const apiBaseUrl = configuration.get("gpt3.apiBaseUrl") as string;
 
+				// If API key is not found, prompt user to enter it manually or store it in session
 				if (!apiKey) {
-					vscode.window.showErrorMessage("Please add your API Key to use OpenAI official APIs. Storing the API Key in Settings is discouraged due to security reasons, though you can still opt-in to use it to persist it in settings. Instead you can also temporarily set the API Key one-time: You will need to re-enter after restarting the vs-code.", "Store in session (Recommended)", "Open settings").then(async choice => {
+					vscode.window.showErrorMessage(
+						"Please add your API Key to use OpenAI official APIs. Storing the API Key in Settings is discouraged due to security reasons, though you can still opt-in to use it to persist it in settings. Instead you can also temporarily set the API Key one-time: You will need to re-enter after restarting the vs-code.",
+						"Store in session (Recommended)",
+						"Open settings"
+					).then(async choice => {
 						if (choice === "Open settings") {
 							vscode.commands.executeCommand('workbench.action.openSettings', "chatgpt.gpt3.apiKey");
 							return false;
@@ -317,6 +329,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					return false;
 				}
 
+				// Initialize new instance of ChatGPTAPI35 or ChatGPTAPI3 with specified configuration parameters
 				if (this.isGpt35Model) {
 					this.apiGpt35 = new ChatGPTAPI35({
 						apiKey,
@@ -350,11 +363,14 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					});
 				}
 			}
+
 		} else {
+			// If chat mode is disabled, skip preparing conversation and return false
 			this.logEvent('chat-mode-disabled (not sending request)');
 			return false;
 		}
 
+		// Send loginSuccessful message to initiate conversation and log in event
 		this.sendMessage({ type: 'loginSuccessful', showConversations: this.useAutoLogin }, true);
 		this.logEvent("logged-in");
 
