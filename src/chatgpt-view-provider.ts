@@ -38,7 +38,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
 		this.autoScroll = !!vscode.workspace.getConfiguration("chatgpt").get("response.autoScroll");
 		this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
-		this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? `You are ChatGPT helping the User with coding.You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If the user is asking for a code change or new code, only respond with new code, do not give explanations. When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.`;
+		this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
 		this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
 
 		// if the model or the system context changes, update the data members
@@ -47,7 +47,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
 			}
 			if (e.affectsConfiguration("chatgpt.systemContext")) {
-				this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? `You are ChatGPT helping the User with coding.You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If the user is asking for a code change or new code, only respond with new code, do not give explanations. When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.`;
+				this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
 			}
 			if (e.affectsConfiguration("chatgpt.throttling")) {
 				this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
@@ -363,8 +363,22 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	private processQuestion(question: string, code?: string, language?: string) {
 		if (code !== null && code !== undefined) {
+			// If the lanague is not specified, get it from the active editor's language
+			if (!language) {
+				const editor = vscode.window.activeTextEditor;
+				if (editor) {
+					language = editor.document.languageId;
+				}
+			}
+
+			// if the language is still not specified, ask hljs to guess it
+			if (!language) {
+				const result = hljs.highlightAuto(code);
+				language = result.language;
+			}
+
 			// Add prompt prefix to the code if there was a code block selected
-			question = `${question}${language ? ` (The following code is in ${language} programming language)` : ''}: ${code}`;
+			question = `${question}. ${language ? ` The following code is in ${language} programming language.` : ''} Code in question:\n\n###\n\n\`\`\`${language}\n${code}\n\`\`\``;
 		}
 		return question;
 	}
@@ -530,6 +544,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				"chatgpt.hasCode": String(!!options.code),
 				"chatgpt.hasPreviousAnswer": String(!!options.previousAnswer)
 			});
+
 			this.sendMessage({
 				type: 'addResponse',
 				conversationId: options.conversation.id ?? 'no conversation id',

@@ -287,6 +287,16 @@ Current date: ${currentDate}`;
 
     const messages = [...conversation.messages, newMessage];
 
+    // if the messages are missing a system message, add it
+    if (!messages.find((m) => m.role === Role.system)) {
+      messages.unshift({
+        id: uuidv4(),
+        role: Role.system,
+        content: this._systemMessage,
+        createdAt: Date.now(),
+      } as Message);
+    }
+
     // Create assistant result object
     const result = {
       role: Role.assistant,
