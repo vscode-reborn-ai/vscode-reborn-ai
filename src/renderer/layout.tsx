@@ -106,7 +106,8 @@ export default function Layout({ vscode }: { vscode: any }) {
                 conversationId: data?.conversationId ?? currentConversationId,
                 messageId: data.id,
                 content: markedResponse,
-                done: data?.done ?? false,
+                rawContent: data.value,
+                done: data.done === undefined ? true : data.done,
               })
             );
           } else {
@@ -119,9 +120,10 @@ export default function Layout({ vscode }: { vscode: any }) {
             id: data.id,
             role: Role.assistant,
             content: markedResponse,
+            rawContent: data.value,
             createdAt: Date.now(),
             // Check if message.done exists, only streaming if .done exists and is false
-            done: data?.done ?? true,
+            done: data.done === undefined ? true : data.done,
           } as Message;
 
           console.log(

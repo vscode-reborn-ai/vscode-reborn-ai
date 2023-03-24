@@ -1,9 +1,10 @@
 import delay from 'delay';
+import hljs from 'highlight.js';
 import fetch from 'isomorphic-fetch';
 import * as vscode from 'vscode';
 import { ChatGPTAPI as ChatGPTAPI3 } from '../chatgpt-4.7.2/index';
 import { ChatGPTAPI as ChatGPTAPI35 } from './chatgpt-api';
-import { Conversation, DeltaMessage } from "./renderer/types";
+import { Conversation, DeltaMessage, Message, Role } from "./renderer/types";
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
@@ -144,6 +145,20 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						type: "settingsUpdate",
 						value: vscode.workspace.getConfiguration("chatgpt")
 					});
+				case "exportToMarkdown":
+					// convert all messages in the conversation to markdown and open a new document with the markdown
+					if (data?.conversation) {
+						const markdown = this.convertMessagesToMarkdown(data.conversation);
+
+						const markdownExport = await vscode.workspace.openTextDocument({
+							content: markdown,
+							language: 'markdown'
+						});
+
+						vscode.window.showTextDocument(markdownExport);
+					} else {
+						console.log("Main Process - No conversation to export to markdown");
+					}
 				default:
 					console.log('Main Process - Uncaught message type: "' + data.type + '"');
 					break;
@@ -156,6 +171,23 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			this.leftOverMessage = null;
 		}
 	}
+	private convertMessagesToMarkdown(conversation: Conversation): string {
+		let markdown = "";
+		conversation.messages.forEach((message: Message) => {
+			const role = message.role === Role.user ? "You" : "ChatGPT";
+			const isError = message.isError ? "ERROR: " : "";
+
+			markdown += `<code>**${isError}[${role}]**</code>\n${message.rawContent ?? message.content}\n\n`;
+
+			// Add language to code blocks using highlight.js auto-detection
+			markdown = markdown.replace(/```\n([^`]+)\n```/g, (match, codeBlockContent, offset, string) => {
+				const language = hljs.highlightAuto(codeBlockContent).language;
+				return `\`\`\`${language}\n${codeBlockContent}\n\`\`\``;
+			});
+		});
+		return markdown;
+	}
+
 
 	private stopGenerating(): void {
 		this.abortController?.abort?.();

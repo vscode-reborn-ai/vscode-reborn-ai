@@ -59,7 +59,10 @@ interface OpenAIChatRequest {
 // * Interfaces for this extension - built on top of OpenAI's API
 export interface Message extends OpenAIMessage {
     id: string;
+    // Formatted by HLJS + misc formatting
     content: string;
+    // Raw content from OpenAI
+    rawContent?: string;
     role: Role;
     isError?: boolean;
     createdAt: string | number;

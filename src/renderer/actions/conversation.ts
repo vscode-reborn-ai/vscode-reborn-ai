@@ -94,10 +94,11 @@ export const conversationSlice = createSlice({
         conversationId: string;
         messageId: string;
         content: string;
+        rawContent?: string;
         done?: boolean;
       }>
     ) => {
-      const { conversationId, messageId, content, done } = action.payload;
+      const { conversationId, messageId, content, rawContent, done } = action.payload;
       const conversation = state.conversations[conversationId];
 
       if (conversation) {
@@ -106,9 +107,17 @@ export const conversationSlice = createSlice({
         );
         if (index !== -1) {
           conversation.messages[index].content = content;
+
+          if (rawContent) {
+            conversation.messages[index].rawContent = rawContent;
+          }
+
           conversation.messages[index].updatedAt = Date.now();
           conversation.messages[index].done = done ?? false;
-          conversation.inProgress = done ?? false;
+
+          if (done !== undefined) {
+            conversation.inProgress = done ?? false;
+          }
         }
       }
     },
