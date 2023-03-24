@@ -25,10 +25,12 @@ export enum Role {
 }
 
 export enum Model {
+    // ChatGPT
     gpt_4 = "gpt-4",
     gpt_4_32k = "gpt-4-32k",
     gpt_35_turbo = "gpt-3.5-turbo",
     gpt_35_turbo_0301 = "gpt-3.5-turbo-0301",
+    // Prompt completion models - Not yet supported in this extension
     text_davinci_003 = "text-davinci-003",
     text_curie_001 = "text-curie-001",
     text_babbage_001 = "text-babbage-001",

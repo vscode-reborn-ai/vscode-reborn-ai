@@ -4,7 +4,8 @@ import fetch from 'isomorphic-fetch';
 import * as vscode from 'vscode';
 import { ChatGPTAPI as ChatGPTAPI3 } from '../chatgpt-4.7.2/index';
 import { ChatGPTAPI as ChatGPTAPI35 } from './chatgpt-api';
-import { Conversation, DeltaMessage, Message, Role } from "./renderer/types";
+import { Conversation, DeltaMessage, Message, Model, Role } from "./renderer/types";
+const { Configuration, OpenAIApi } = require("openai");
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
@@ -26,6 +27,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private abortController?: AbortController;
 	private currentMessageId: string = "";
 	private response: string = "";
+	private chatGPTModels: Model[] = [];
 
 	/**
 	 * Message to be rendered lazily if they haven't been rendered
@@ -50,6 +52,26 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			if (e.affectsConfiguration("chatgpt.throttling")) {
 				this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
 			}
+			// if the api key changes, update the chatgpt models
+			if (e.affectsConfiguration("chatgpt.gpt3.apiKey")) {
+				this.getChatGPTModels().then((models) => {
+					this.chatGPTModels = models;
+
+					this.sendMessage({
+						type: "chatGPTModels",
+						value: this.chatGPTModels
+					});
+				});
+			}
+		});
+
+		this.getChatGPTModels().then((models) => {
+			this.chatGPTModels = models;
+
+			this.sendMessage({
+				type: "chatGPTModels",
+				value: this.chatGPTModels
+			});
 		});
 
 		// if any of the extension settings change, send a message to the webview for the "settingsUpdate" event
@@ -159,6 +181,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					} else {
 						console.log("Main Process - No conversation to export to markdown");
 					}
+				case "getChatGPTModels":
+					this.sendMessage({
+						type: "chatGPTModels",
+						value: this.chatGPTModels
+					});
+					break;
 				default:
 					console.log('Main Process - Uncaught message type: "' + data.type + '"');
 					break;
@@ -216,6 +244,37 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	private get isGpt35Model(): boolean {
 		return !!this.model?.startsWith("gpt-");
+	}
+
+	private get apiKey(): string {
+		return vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiKey") as string;
+	}
+
+	async getModels(): Promise<any[]> {
+		const configuration = new Configuration({
+			apiKey: this.apiKey,
+		});
+
+		console.log('run getModels openai network call');
+
+		try {
+			const openai = new OpenAIApi(configuration);
+			const response = await openai.listModels();
+
+			return response.data?.data;
+		} catch (error) {
+			console.error(error);
+			return [];
+		}
+	}
+
+	async getChatGPTModels() {
+		const models = await this.getModels();
+		// console.log('models:', models);
+
+		return models.filter((model: any) => ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
+			return model.id as Model;
+		});
 	}
 
 	public async prepareConversation(modelChanged = false): Promise<boolean> {

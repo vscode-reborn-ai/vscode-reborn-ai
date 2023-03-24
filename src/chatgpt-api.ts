@@ -438,7 +438,6 @@ Current date: ${currentDate}`;
     }
   }
 
-
   get apiKey() {
     return this._apiKey;
   }

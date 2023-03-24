@@ -175,12 +175,15 @@ export default function Chat({
             second: "2-digit",
           })}
           <br />
+          Conversation Model: {conversation?.model}
+          <br />
           Conversation inProgress: {conversation?.inProgress ? "true" : "false"}
         </div>
       )}
       {/* Introduction */}
       <IntroductionSplash
         className={conversation.messages?.length > 0 ? "hidden" : ""}
+        vscode={vscode}
       />
       {/* Conversation messages */}
       <div

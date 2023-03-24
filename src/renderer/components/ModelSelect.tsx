@@ -22,6 +22,7 @@ export default function ModelSelect({
   const dispatch = useAppDispatch();
   const [showModels, setShowModels] = useState(false);
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
+  const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
 
   const createNewConversation = () => {
     let title = "Chat";
@@ -99,40 +100,60 @@ export default function ModelSelect({
             ${showModels ? "block" : "hidden"}
           `}
       >
-        <button
-          className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-          onClick={() => {
-            setModel(Model.gpt_35_turbo);
-          }}
-        >
-          GPT-3.5-TURBO (Fast, recommended)
-        </button>
-        <button
-          className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-          onClick={() => {
-            setModel(Model.gpt_4);
-          }}
-        >
-          Waitlist-access - GPT-4 (Better and larger input, but slower and more
-          pricey)
-        </button>
-        <button
-          className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-          onClick={() => {
-            setModel(Model.gpt_4_32k);
-          }}
-        >
-          Not yet available? - GPT-4-32K (Extremely long input, but slower and
-          even more pricey)
-        </button>
-        <button
-          className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-          onClick={() => {
-            setModel(Model.text_davinci_003);
-          }}
-        >
-          GPT-3 davinci-003 (Cheap/fast, but not as good as GPT-3.5/4)
-        </button>
+        {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo) && (
+          <button
+            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+            onClick={() => {
+              setModel(Model.gpt_35_turbo);
+            }}
+          >
+            GPT-3.5-TURBO (Fast, recommended)
+          </button>
+        )}
+        {chatGPTModels && chatGPTModels.includes(Model.gpt_4) ? (
+          <button
+            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+            onClick={() => {
+              setModel(Model.gpt_4);
+            }}
+          >
+            GPT-4 (Better and larger input, but slower and more pricey)
+          </button>
+        ) : (
+          <a
+            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+            href="https://openai.com/waitlist/gpt-4-api"
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => {
+              setShowModels(false);
+            }}
+          >
+            Looking for GPT-4? You need to sign up on the waitlist here
+          </a>
+        )}
+        {chatGPTModels && chatGPTModels.includes(Model.gpt_4_32k) ? (
+          <button
+            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+            onClick={() => {
+              setModel(Model.gpt_4_32k);
+            }}
+          >
+            GPT-4-32K (Extremely long input, but even more pricey than GPT-4)
+          </button>
+        ) : (
+          <a
+            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+            href="https://community.openai.com/t/how-to-get-access-to-gpt-4-32k/"
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => {
+              setShowModels(false);
+            }}
+          >
+            OpenAI hasn't made GPT-4-32K available yet.
+          </a>
+        )}
       </div>
     </>
   );

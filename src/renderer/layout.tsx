@@ -3,7 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import { v4 as uuidv4 } from "uuid";
 import "../../styles/main.css";
-import { setExtensionSettings } from "./actions/app";
+import { setChatGPTModels, setExtensionSettings } from "./actions/app";
 import {
   addMessage,
   setCurrentConversation,
@@ -12,7 +12,7 @@ import {
 } from "./actions/conversation";
 import Tabs from "./components/Tabs";
 import { useAppDispatch, useAppSelector } from "./hooks";
-import { Conversation, Message, Role } from "./types";
+import { Conversation, Message, Model, Role } from "./types";
 import { unEscapeHTML } from "./utils";
 import Chat from "./views/chat";
 
@@ -24,11 +24,16 @@ export default function Layout({ vscode }: { vscode: any }) {
   const conversationList = Object.values(
     useAppSelector((state: any) => state.conversation.conversations)
   ) as Conversation[];
+  const debug = useAppSelector((state: any) => state.app.debug);
 
   useEffect(() => {
     // ask for the extension settings
     vscode.postMessage({
       type: "getSettings",
+    });
+    // Ask for ChatGPT models
+    vscode.postMessage({
+      type: "getChatGPTModels",
     });
   }, []);
 
@@ -36,7 +41,7 @@ export default function Layout({ vscode }: { vscode: any }) {
   const handleMessages = (event: any) => {
     const data = event.data as {
       type: string;
-      value?: string;
+      value?: any;
       id?: string;
       // In the case of the addResponse event
       done?: boolean;
@@ -46,11 +51,15 @@ export default function Layout({ vscode }: { vscode: any }) {
       responseInMarkdown?: boolean;
     };
 
-    console.log("Renderer - Received message from main process: ", data);
+    if (debug) {
+      console.log("Renderer - Received message from main process: ", data);
+    }
 
     switch (data.type) {
       case "showInProgress":
-        console.log("in progress: ", data.inProgress);
+        if (debug) {
+          console.log("in progress: ", data.inProgress);
+        }
 
         dispatch(
           setInProgress({
@@ -81,7 +90,9 @@ export default function Layout({ vscode }: { vscode: any }) {
           return;
         }
 
-        console.log("Renderer - Adding response: ", data);
+        if (debug) {
+          console.log("Renderer - Adding response: ", data);
+        }
 
         let existingMessage =
           data.id &&
@@ -98,8 +109,6 @@ export default function Layout({ vscode }: { vscode: any }) {
         );
 
         if (existingMessage) {
-          console.log("Updating existing message");
-
           if (data.id) {
             dispatch(
               updateMessageContent({
@@ -126,12 +135,15 @@ export default function Layout({ vscode }: { vscode: any }) {
             done: data.done === undefined ? true : data.done,
           } as Message;
 
-          console.log(
-            "dispatching addMessage with botResponse: ",
-            botResponse,
-            "\nconversationId: ",
-            data?.conversationId
-          );
+          if (debug) {
+            console.log(
+              "dispatching addMessage with botResponse: ",
+              botResponse,
+              "\nconversationId: ",
+              data?.conversationId
+            );
+          }
+
           dispatch(
             addMessage({
               conversationId: data?.conversationId ?? currentConversationId,
@@ -161,8 +173,34 @@ export default function Layout({ vscode }: { vscode: any }) {
         );
         break;
       case "settingsUpdate":
-        console.log("Renderer - Updating settings: ", data.value);
+        if (debug) {
+          console.log("Renderer - Settings update: ", data.value);
+        }
+
         dispatch(setExtensionSettings({ newSettings: data.value }));
+
+        // Ask for ChatGPT models (api key may have changed)
+        vscode.postMessage({
+          type: "getChatGPTModels",
+        });
+        break;
+      case "chatGPTModels":
+        if (debug) {
+          console.log("Renderer - ChatGPT models: ", data.value);
+        }
+
+        //  convert model object array from OpenAI to array of Model objects
+        if (data?.value?.map) {
+          dispatch(
+            setChatGPTModels({
+              models: data?.value as Model[],
+            })
+          );
+        } else {
+          console.error(
+            "Renderer - Could not get ChatGPT models, data.value is not an array"
+          );
+        }
         break;
       default:
         console.log('Renderer - Uncaught message type: "' + data.type + '"');

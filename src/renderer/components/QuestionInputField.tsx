@@ -215,6 +215,16 @@ export default ({
           />
         </div>
         <div className="flex flex-row gap-2">
+          <a
+            className={`flex gap-1 items-center py-0.5 px-1 whitespace-nowrap hover:underline focus-within:underline`}
+            data-tooltip-id="footer-tooltip"
+            data-tooltip-content="Report a bug or suggest a feature in GitHub"
+            href="https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/issues/new/choose"
+            target="_blank"
+          >
+            <Icon icon="help" className="w-3 h-3" />
+            Feedback
+          </a>
           {process.env.NODE_ENV === "development" && (
             <button
               className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
