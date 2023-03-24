@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import ChatGptViewProvider from './chatgpt-view-provider';
+import { Conversation, Model } from "./renderer/types";
 
 const menuCommands = [
 	"addTests", "findProblems", "optimize", "explain",
@@ -9,6 +10,17 @@ const menuCommands = [
 
 export async function activate(context: vscode.ExtensionContext) {
 	let adhocCommandPrefix: string = context.globalState.get("chatgpt-adhoc-prompt") || '';
+	// TODO: This code isn't really in sync with the react state, so using a dummy conversation.
+	// Should begin allowing api requests without a conversation which will by default use the current conversation
+	// or get the current conversation from the react state as part of the api request.
+	const placeholderConversation = {
+		id: '',
+		createdAt: Date.now(),
+		inProgress: false,
+		messages: [],
+		model: Model.gpt_35_turbo,
+		autoscroll: true,
+	} as Conversation;
 
 	const provider = new ChatGptViewProvider(context);
 
@@ -28,7 +40,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		});
 
 		if (value) {
-			provider?.sendApiRequest(value, { command: "freeText" });
+			provider?.sendApiRequest(value, {
+				command: "freeText",
+				conversation: placeholderConversation,
+			});
 		}
 	});
 
@@ -41,11 +56,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	const clearSession = vscode.commands.registerCommand("vscode-chatgpt.clearSession", () => {
-		context.globalState.update("chatgpt-session-token", null);
-		context.globalState.update("chatgpt-clearance-token", null);
-		context.globalState.update("chatgpt-user-agent", null);
 		context.globalState.update("chatgpt-gpt3-apiKey", null);
-		provider?.clearSession();
 	});
 
 	const configChanged = vscode.workspace.onDidChangeConfiguration(e => {
@@ -55,34 +66,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		if (e.affectsConfiguration('chatgpt.response.autoScroll')) {
 			provider.autoScroll = !!vscode.workspace.getConfiguration("chatgpt").get("response.autoScroll");
-		}
-
-		if (e.affectsConfiguration('chatgpt.useAutoLogin')) {
-			provider.useAutoLogin = vscode.workspace.getConfiguration("chatgpt").get("useAutoLogin") || false;
-
-			context.globalState.update("chatgpt-session-token", null);
-			context.globalState.update("chatgpt-clearance-token", null);
-			context.globalState.update("chatgpt-user-agent", null);
-		}
-
-		if (e.affectsConfiguration('chatgpt.chromiumPath')) {
-			provider.setChromeExecutablePath();
-		}
-
-		if (e.affectsConfiguration('chatgpt.profilePath')) {
-			provider.setProfilePath();
-		}
-
-		if (e.affectsConfiguration('chatgpt.proxyServer')) {
-			provider.setProxyServer();
-		}
-
-		if (e.affectsConfiguration('chatgpt.method')) {
-			provider.setMethod();
-		}
-
-		if (e.affectsConfiguration('chatgpt.authenticationType')) {
-			provider.setAuthType();
 		}
 
 		if (e.affectsConfiguration('chatgpt.gpt3.model')) {
@@ -132,7 +115,11 @@ export async function activate(context: vscode.ExtensionContext) {
 				});
 
 			if (!dismissed && adhocCommandPrefix?.length > 0) {
-				provider?.sendApiRequest(adhocCommandPrefix, { command: "adhoc", code: selection });
+				provider?.sendApiRequest(adhocCommandPrefix, {
+					command: "adhoc",
+					code: selection,
+					conversation: placeholderConversation,
+				});
 			}
 		}
 	});
@@ -146,7 +133,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const selection = editor.document.getText(editor.selection);
 		if (selection) {
-			provider?.sendApiRequest(selection, { command: "generateCode", language: editor.document.languageId });
+			provider?.sendApiRequest(selection, {
+				command: "generateCode",
+				language: editor.document.languageId,
+				conversation: placeholderConversation,
+			});
 		}
 	});
 
@@ -161,7 +152,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const selection = editor.document.getText(editor.selection);
 		if (selection && prompt) {
-			provider?.sendApiRequest(prompt, { command, code: selection, language: editor.document.languageId });
+			provider?.sendApiRequest(prompt, {
+				command,
+				code: selection,
+				language: editor.document.languageId,
+				conversation: placeholderConversation,
+			});
 		}
 	}));
 

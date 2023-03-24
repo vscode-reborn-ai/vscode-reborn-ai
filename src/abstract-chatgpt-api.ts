@@ -24,7 +24,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
-import * as types from './types';
+import { ChatResponse, Conversation, SendMessageOptions } from './renderer/types';
 
 export abstract class AChatGPTAPI {
     /**
@@ -55,45 +55,13 @@ export abstract class AChatGPTAPI {
      */
     abstract sendMessage(
         message: string,
-        opts?: types.SendMessageOptions
-    ): Promise<types.ChatResponse>;
+        conversation: Conversation,
+        opts?: SendMessageOptions
+    ): Promise<ChatResponse>;
 
     /**
      * @returns `true` if the client is authenticated with a valid session or `false`
      * otherwise.
      */
     abstract getIsAuthenticated(): Promise<boolean>;
-
-    /**
-     * Refreshes the current ChatGPT session.
-     *
-     * Useful for bypassing 403 errors when Cloudflare clearance tokens expire.
-     *
-     * @returns Access credentials for the new session.
-     * @throws An error if it fails.
-     */
-    abstract refreshSession(): Promise<any>;
-
-    /**
-     * Closes the current ChatGPT session and starts a new one.
-     *
-     * Useful for bypassing 401 errors when sessions expire.
-     *
-     * @returns Access credentials for the new session.
-     * @throws An error if it fails.
-     */
-    async resetSession(): Promise<any> {
-        await this.closeSession();
-        return this.initSession();
-    }
-
-    /**
-     * Closes the active session.
-     *
-     * @throws An error if it fails.
-     */
-    abstract closeSession(): Promise<void>;
-
-    abstract getConversations(offset?: number, limit?: number): Promise<types.ConversationsResponse | undefined>;
-    abstract getConversation(id: string): Promise<types.ConversationResponse | undefined>;
 }

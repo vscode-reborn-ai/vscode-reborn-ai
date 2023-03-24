@@ -1,20 +1,32 @@
 # ChatGPT Reborn
 
+ChatGPT Reborn is a Visual Studio Code extension that allows you to use the ChatGPT API to write, refactor, and improve your code.
+
 ## Get for VSCode
 
 Search for "ChatGPT Reborn" in the VSCode extension search.
 
 or install it directly from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn).
 
-## About
+## About this fork
 
-ChatGPT Reborn is a Visual Studio Code extension that allows you to use GPT-3/4 to refactor and improve your code.
+This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it. Note that this version is API-only, the browser code was not open-sourced by Gencay (due to OpenAI ToS issue), and I have no intention of violating OpenAI's ToS either.
 
-Note: This version is API only, you create an OpenAI API key to use it.
+### The new "ChatGPT: Genie AI" extension
 
-This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it.
+Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work in an API-only format: <https://github.com/ai-genie/chatgpt-vscode>
 
-## GPT-4
+### What does that mean for this fork?
+
+I'll be continuing work on this extension, I have some ideas for features that focus on automation. A major react refactor will be releasing soon, which sets the groundwork for a more powerful UI experience.
+
+### FOSS
+
+As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it may allow Genie AI to become far more powerful and useful to users. But, you can expect "Reborn" to stay FOSS for as long as I am maintainer, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
+
+### GPT-4
+
+**Note:** You must have access to GPT-4 via API key to use GPT-4. You would've signed up on the GPT-4 waitlist and received an email that you now have GPT-4 API access. This is **not** the same as having access to GPT-4 at chat.openai.com, that is not considered "API access".
 
 To use GPT-4 use an API key that has access to GPT-4, if you're part of an organization that has access to GPT-4, set the organization ID in the settings. Note that GPT-4 is noticeably slower than GPT-3.5-turbo. Change the `chatgpt.gpt3.model` setting to `gpt-4` to use GPT-4, or set it to `gpt-3.5-turbo` to use GPT-3.5-turbo. You don't have to "Start new chat" to use a different model, the next message you send will use the new model.
 
@@ -24,9 +36,9 @@ This extension has an option for `gpt-4-32k`, but at this moment users that have
 
 To set up the project, first clone the repository:
 
-bashCopy code
-
-`git clone https://github.com/christopher-hayes/vscode-chatgpt-reborn.git`
+```bash
+git clone https://github.com/christopher-hayes/vscode-chatgpt-reborn.git
+```
 
 Next, change into the project directory and install the dependencies using Yarn:
 
@@ -39,25 +51,25 @@ yarn install
 
 You can run the following scripts using Yarn:
 
-- Build the extension:
+### Build the extension
 
 ```bash
 yarn run build
 ```
 
-- Watch for changes and rebuild automatically:
+### Watch for changes and rebuild automatically
 
 ```bash
 yarn run watch
 ```
 
-- Format the code using Prettier and run tests with fixes:
+### Format the code using Prettier and run tests with fixes
 
 ```bash
 yarn run fmt
 ```
 
-- Run tests using ESLint and TypeScript:
+### Run tests using ESLint and TypeScript
 
 ```bash
 yarn run test
@@ -84,11 +96,36 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [x] Short-term - Publish to VSCode Marketplace.
 - [x] Short-term - Add model dropdown to ChatGPT UI.
 - [x] Short-term - Allow more custom prompts.
+- [x] Short-term - Add setting for a custom system message.
+- [ ] Short-term - Move API key from settings config to secure storage.
+- [x] Short-term - Use API list API to show user what models they have access to.
 - [ ] Short-term - Add way to manage custom prompts in UI.
 - [ ] Long-term - Add option to stream directly into the editor.
+- [ ] Long-term - Inline diff
+- [ ] Long-term - "Smart" actions based on the type of file open.
+- [ ] Long-term - "Smart" actions on that run at a project level.
+- [ ] Long-term - AI-generated git commit messages
+- [ ] TBD - Support davinci models in place of ChatGPT
 
 ## Contributing
 
 If you want to contribute to the vscode-chatgpt-reborn project, follow the project's contribution guidelines and submit pull requests or open issues on the GitHub repository:
 
 [https://github.com/christopher-hayes/vscode-chatgpt-reborn](https://github.com/christopher-hayes/vscode-chatgpt-reborn)
+
+## Tech
+
+- [TypeScript](https://www.typescriptlang.org/)
+- [VSCode Extension API](https://code.visualstudio.com/api)
+
+### UI
+
+- [React](https://reactjs.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+- The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
+- This does not use VSCode's [WebView UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit/tree/main/src). But, I'm open to switching to the WebView UI toolkit since it better aligns with VSCode's UI.
+
+## License
+
+This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
