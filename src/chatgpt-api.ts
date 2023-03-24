@@ -25,12 +25,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-// src/chatgpt-api.ts
 import Keyv from "keyv";
 import pTimeout from "p-timeout";
 import QuickLRU from "quick-lru";
 import { v4 as uuidv4 } from "uuid";
-import { ChatGPTError, DeltaMessage, Message, Role } from "./types";
+import { ChatGPTError, DeltaMessage, Message, Role } from "./renderer/types";
 
 var openai;
 ((openai2) => {
@@ -41,7 +40,7 @@ var fetch = globalThis.fetch;
 
 // src/fetch-sse.ts
 import { createParser } from "eventsource-parser";
-import { Conversation } from "./types";
+import { Conversation } from "./renderer/types";
 
 // src/stream-async-iterable.t./types
 async function* streamAsyncIterable(stream: ReadableStream<Uint8Array> | null) {
@@ -130,8 +129,8 @@ class ChatGPTAPI {
   _systemMessage: string;
   _maxModelTokens: number;
   _maxResponseTokens: number;
-  _getMessageById: any;
-  _upsertMessage: any;
+  _getMessageById: (id: string) => Promise<Message>;
+  _upsertMessage: (message: DeltaMessage) => Promise<void>;
   _messageStore: any;
 
   /**
@@ -153,11 +152,11 @@ class ChatGPTAPI {
     apiKey: string;
     systemMessage: string;
     completionParams?: any;
-    upsertMessage?: any;
     maxModelTokens?: 4000 | undefined;
     maxResponseTokens?: 1000 | undefined;
     apiBaseUrl?: string | undefined;
-    getMessageById?: string;
+    getMessageById?: (id: string) => Promise<Message>;
+    upsertMessage?: (message: DeltaMessage) => Promise<void>;
     organizationId?: string;
     debug?: true | undefined;
     messageStore?: any;
@@ -262,6 +261,8 @@ Current date: ${currentDate}`;
       completionParams
     } = opts;
 
+    console.debug("sendMessage", { text, conversation, opts });
+
     // Initialize abort controller and signal
     let { abortSignal } = opts;
     let abortController: AbortController | null = null;
@@ -279,7 +280,7 @@ Current date: ${currentDate}`;
     } as Message;
 
     // Upsert the message
-    // await this._upsertMessage(message);
+    await this._upsertMessage(newMessage);
 
     // Build messages array
     // const { messages } = await this._buildMessages(text, opts);
@@ -293,31 +294,30 @@ Current date: ${currentDate}`;
       parentMessageId: messageId,
       content: ""
     } as DeltaMessage;
+    const responseP = (new Promise(async (resolve, reject) => {
+      const url = `${this._apiBaseUrl}/v1/chat/completions`;
+      const headers = {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        "Content-Type": "application/json",
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        Authorization: `Bearer ${this._apiKey}`,
+      } as any;
 
-    const responseP = new Promise(
-      async (resolve, reject) => {
-        const url = `${this._apiBaseUrl}/v1/chat/completions`;
-        const headers = {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          "Content-Type": "application/json",
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          Authorization: `Bearer ${this._apiKey}`
-        } as any;
+      if (this._organizationId) {
+        headers["OpenAI-Organization"] = this._organizationId;
+      }
 
-        if (this._organizationId) {
-          headers["OpenAI-Organization"] = this._organizationId;
-        }
+      const body = {
+        ...this._completionParams,
+        ...completionParams,
+        // only include role and content in what is sent to OpenAI
+        messages: messages.map(({ role, content }) => ({ role, content })),
+        stream,
+      };
 
-        const body = {
-          ...this._completionParams,
-          ...completionParams,
-          // only include role and content in what is sent to OpenAI
-          messages: messages.map(({ role, content }) => ({ role, content })),
-          stream
-        };
-
-        if (stream) {
-          fetchSSE(
+      if (stream) {
+        try {
+          await fetchSSE(
             url,
             {
               method: "POST",
@@ -327,7 +327,12 @@ Current date: ${currentDate}`;
               onMessage: (data: string) => {
                 if (data === "[DONE]") {
                   result.content = result.content.trim();
-                  return resolve(result);
+                  return resolve({
+                    ...result,
+                    cancel: () => {
+                      abortController?.abort();
+                    },
+                  });
                 }
                 try {
                   const response = JSON.parse(data);
@@ -347,74 +352,82 @@ Current date: ${currentDate}`;
                     onProgress?.(result);
                   }
                 } catch (err) {
-                  console.warn("Open AI has an unexpected error during streaming", err);
+                  console.warn(
+                    "Open AI has an unexpected error during streaming",
+                    err
+                  );
                   return reject(err);
                 }
-              }
+              },
             },
             this._fetch
-          ).catch(reject);
-        } else {
-          try {
-            const res = await this._fetch(url, {
-              method: "POST",
-              headers,
-              body: JSON.stringify(body),
-              signal: abortSignal
-            });
+          );
+          // We want to resolve the Promise when fetchSSE resolves, so nothing to do here.
+        } catch (err) {
+          return reject(err);
+        }
+      } else {
+        try {
+          const res = await this._fetch(url, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(body),
+            signal: abortSignal,
+          });
 
-            if (!res.ok) {
-              const reason = await res.text();
+          if (!res.ok) {
+            const reason = await res.text();
 
-              const error = {
-                response: res,
-                statusCode: res.status,
-                statusText: res.statusText,
-                reason,
-              } as ChatGPTError;
+            const error = {
+              response: res,
+              statusCode: res.status,
+              statusText: res.statusText,
+              reason,
+            } as ChatGPTError;
 
-              return reject(error);
-            }
-
-            const response = await res.json();
-            if (this._debug) {
-              console.log(response);
-            }
-            if (response.id) {
-              result.id = response.id;
-            }
-            if (response.choices?.length) {
-              const message2 = response.choices[0].message;
-              result.content = message2.content;
-              if (message2.role) {
-                result.role = message2.role;
-              }
-            } else {
-              const errorResponse = response;
-              return reject(
-                new Error(
-                  `OpenAI has an error: ${errorResponse?.detail?.message || errorResponse?.detail || "unknown"}`
-                )
-              );
-            }
-
-            result.detail = response;
-            return resolve(result);
-          } catch (err) {
-            return reject(err);
+            return reject(error);
           }
+
+          const response = await res.json();
+          if (this._debug) {
+            console.log(response);
+          }
+          if (response.id) {
+            result.id = response.id;
+          }
+          if (response.choices?.length) {
+            const message2 = response.choices[0].message;
+            result.content = message2.content;
+            if (message2.role) {
+              result.role = message2.role;
+            }
+          } else {
+            const errorResponse = response;
+            return reject(
+              new Error(
+                `OpenAI has an error: ${errorResponse?.detail?.message || errorResponse?.detail || "unknown"
+                }`
+              )
+            );
+          }
+
+          result.detail = response;
+          return resolve({
+            ...result,
+            cancel: () => {
+              abortController?.abort();
+            },
+          });
+        } catch (err) {
+          return reject(err);
         }
       }
-    ).then((message2) => {
+    }) as Promise<DeltaMessage>).then((message2: DeltaMessage) => {
       return this._upsertMessage(message2).then(() => message2);
-    }) as any;
+    });
+
 
     if (timeoutMs) {
-      if (abortController) {
-        responseP.cancel = () => {
-          abortController?.abort();
-        };
-      }
       return pTimeout(responseP, {
         milliseconds: timeoutMs,
         message: "OpenAI timed out waiting for response"
@@ -444,31 +457,34 @@ Current date: ${currentDate}`;
     }
   }
 
-  async _buildMessages(text: any, opts: { name?: any; systemMessage?: any; parentMessageId?: any; }) {
+  async _buildMessages(content: any, opts: { /* name?: any; */ systemMessage?: any; parentMessageId?: any; }) {
     const { systemMessage = this._systemMessage } = opts;
     let { parentMessageId } = opts;
 
     const userLabel = USER_LABEL_DEFAULT;
     const assistantLabel = ASSISTANT_LABEL_DEFAULT;
-    let messages = [] as any;
+    let messages = [] as Message[];
 
     // Add system message if present
     if (systemMessage) {
       messages.push({
-        role: "system",
+        id: uuidv4(),
+        role: Role.system,
         content: systemMessage,
+        createdAt: Date.now(),
       });
     }
 
     const systemMessageOffset = messages.length;
 
     // Create new array with added user message or use original messages array
-    let nextMessages = text
+    let nextMessages: Message[] = content
       ? messages.concat([
         {
-          role: "user",
-          content: text,
-          name: opts.name,
+          id: uuidv4(),
+          role: Role.user,
+          content,
+          createdAt: Date.now(),
         },
       ])
       : messages;
@@ -500,17 +516,18 @@ Current date: ${currentDate}`;
         break;
       }
 
-      const parentMessageRole = parentMessage.role || "user";
+      // const parentMessageRole = parentMessage.role || "user";
 
       // Include the parent message and update the nextMessages array
       nextMessages = nextMessages
         .slice(0, systemMessageOffset)
         .concat([
-          {
-            role: parentMessageRole,
-            content: parentMessage.text,
-            name: parentMessage.name,
-          },
+          // {
+          //   role: parentMessageRole,
+          //   content: parentMessage.content,
+          //   name: parentMessage.name,
+          // },
+          parentMessage,
           ...nextMessages.slice(systemMessageOffset),
         ]);
 
@@ -534,4 +551,3 @@ export {
   ChatGPTError,
   openai
 };
-//# sourceMappingURL=index.js.map

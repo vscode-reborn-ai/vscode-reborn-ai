@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tooltip } from "react-tooltip";
-import { Conversation, Model } from "../../types";
+import { Conversation, Model } from "../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({

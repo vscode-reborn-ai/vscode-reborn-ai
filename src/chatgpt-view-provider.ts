@@ -3,7 +3,7 @@ import fetch from 'isomorphic-fetch';
 import * as vscode from 'vscode';
 import { ChatGPTAPI as ChatGPTAPI3 } from '../chatgpt-4.7.2/index';
 import { ChatGPTAPI as ChatGPTAPI35 } from './chatgpt-api';
-import { Conversation } from "./types";
+import { Conversation, DeltaMessage } from "./renderer/types";
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
@@ -11,17 +11,17 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	public subscribeToResponse: boolean;
 	public autoScroll: boolean;
 	public useAutoLogin?: boolean;
-	public useGpt3?: boolean;
 	public model?: string;
 
 	private apiGpt3?: ChatGPTAPI3;
 	private apiGpt35?: ChatGPTAPI35;
+	private chatMode?: boolean = true;
 	private conversationId?: string;
 	private messageId?: string;
 	private systemContext: string;
 
-	private questionCounter: number = 0;
 	private inProgress: boolean = false;
+	private throttling: number = 100;
 	private abortController?: AbortController;
 	private currentMessageId: string = "";
 	private response: string = "";
@@ -36,6 +36,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		this.autoScroll = !!vscode.workspace.getConfiguration("chatgpt").get("response.autoScroll");
 		this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
 		this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? `You are ChatGPT helping the User with coding.You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If the user is asking for a code change or new code, only respond with new code, do not give explanations. When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.`;
+		this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
 
 		// if the model or the system context changes, update the data members
 		vscode.workspace.onDidChangeConfiguration((e) => {
@@ -44,6 +45,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			}
 			if (e.affectsConfiguration("chatgpt.systemContext")) {
 				this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? `You are ChatGPT helping the User with coding.You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If the user is asking for a code change or new code, only respond with new code, do not give explanations. When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for things like headings, lists, colored text, code blocks, highlights etc. Make sure not to mention markdown or styling in your actual response.`;
+			}
+			if (e.affectsConfiguration("chatgpt.throttling")) {
+				this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
 			}
 		});
 	}
@@ -166,15 +170,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	public async prepareConversation(modelChanged = false): Promise<boolean> {
-		if (modelChanged && this.useAutoLogin) {
-			// no need to reinitialize in autologin when model changes
-			return false;
-		}
-
 		const state = this.context.globalState;
 		const configuration = vscode.workspace.getConfiguration("chatgpt");
 
-		if (this.useGpt3) {
+		if (this.chatMode) {
 			if ((this.isGpt35Model && !this.apiGpt35) || (!this.isGpt35Model && !this.apiGpt3) || modelChanged) {
 				let apiKey = configuration.get("gpt3.apiKey") as string || state.get("chatgpt-gpt3-apiKey") as string;
 				const organization = configuration.get("gpt3.organization") as string;
@@ -243,6 +242,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					});
 				}
 			}
+		} else {
+			this.logEvent('chat-mode-disabled (not sending request)');
+			return false;
 		}
 
 		this.sendMessage({ type: 'loginSuccessful', showConversations: this.useAutoLogin }, true);
@@ -271,17 +273,19 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			// The AI is still thinking... Do not accept more questions.
 			this.logEvent('api-request-rejected', {
 				"chatgpt.command": options.command,
+				"chatgpt.conversation": options.conversation,
+				"chatgpt.lastBotMessageId": options.lastBotMessageId,
 				"chatgpt.hasCode": String(!!options.code),
 				"chatgpt.hasPreviousAnswer": String(!!options.previousAnswer)
 			});
 			return;
 		}
 
-		this.questionCounter++;
-
 		this.logEvent("api-request-sent", { "chatgpt.command": options.command, "chatgpt.hasCode": String(!!options.code), "chatgpt.hasPreviousAnswer": String(!!options.previousAnswer) });
 
+		// TODO: this seems to rebuild the api object, consider not doing this on every request
 		if (!await this.prepareConversation()) {
+			this.logEvent('prepare-conversation-failed, exiting');
 			return;
 		}
 
@@ -301,8 +305,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		this.sendMessage({
 			type: 'showInProgress',
 			inProgress: this.inProgress,
-			showStopButton: this.useGpt3,
-			conversationId: options.conversation.id ?? 'no conversation id',
+			showStopButton: true,
+			conversationId: options.conversation?.id ?? 'no conversation id',
 		});
 		this.currentMessageId = this.getRandomId();
 
@@ -319,106 +323,74 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			return value !== null && (type === 'object' || type === 'function');
 		};
 
-		const debounce = (func: (arg0: any) => void, delay: number | undefined, { leading }: any) => {
-			let timerId: string | number | NodeJS.Timeout | undefined;
-
-			return (...args: any) => {
-				if (!timerId && leading) {
-					// @ts-ignore
-					func(...args);
-				}
-				clearTimeout(timerId);
-
-				// @ts-ignore
-				timerId = setTimeout(() => func(...args), delay);
-			};
-		};
-
-		const throttle = function (func: any, wait: number, options?: { leading: any; trailing: any; maxWait: any; } | undefined) {
-			var leading = true,
-				trailing = true;
-
-			if (typeof func !== 'function') {
-				throw new TypeError('Expected a function');
-			}
-			if (options && isObject(options)) {
-				leading = 'leading' in options ? !!options.leading : leading;
-				trailing = 'trailing' in options ? !!options.trailing : trailing;
-			}
-			return debounce(func, wait, {
-				leading: leading,
-				// @ts-ignore
-				maxWait: wait,
-				trailing: trailing
-			});
-		};
-
-
+		this.logEvent('sending-message', {
+			"chatgpt.command": options.command,
+			"chatgpt.conversation": options.conversation,
+			"chatgpt.lastBotMessageId": options.lastBotMessageId,
+			"chatgpt.hasCode": String(!!options.code),
+			"chatgpt.hasPreviousAnswer": String(!!options.previousAnswer)
+		});
 		try {
-			if (this.useGpt3) {
-				const throttledSendMessage = throttle(function (data: any) {
-					// @ts-ignore
-					data.sendMessage({
-						type: 'addResponse',
-						value: data.response,
-						id: data.currentMessageId,
-						autoScroll: data.autoScroll,
-						responseInMarkdown: data.responseInMarkdown,
-						conversationId: data.conversationId,
-					});
-				}, 100);
+			if (this.chatMode) {
+				let lastMessageTime = 0;
 
 				if (this.isGpt35Model && this.apiGpt35) {
-					console.log('sending message to GPT-3.5', question, options.lastBotMessageId, this.conversationId, this.messageId, this.isGpt35Model);
 					this.sendMessage({
 						type: 'debug',
 						value: `sending message to GPT-3.5 ${question} ${options.lastBotMessageId} ${this.conversationId} ${this.messageId} ${this.isGpt35Model}`,
 					});
-					({ text: this.response, id: this.conversationId, parentMessageId: this.messageId } = await this.apiGpt35.sendMessage(question, options.conversation, {
+					({ content: this.response, id: this.conversationId, parentMessageId: this.messageId } = await this.apiGpt35.sendMessage(question, options.conversation, {
 						systemMessage: `${this.systemContext}`,
 						messageId: this.conversationId,
 						parentMessageId: options.lastBotMessageId, // this.messageId,
 						abortSignal: this.abortController.signal,
-						onProgress: (partialResponse: any) => {
-							this.response = partialResponse.text;
-							// throttledSendMessage({
-							// 	sendMessage: this.sendMessage,
-							// 	value: this.response,
-							// 	id: this.currentMessageId,
-							// 	autoScroll: this.autoScroll,
-							// 	responseInMarkdown: responseInMarkdown,
-							// 	conversationId: options.conversationId,
-							// });
+						onProgress: (partialResponse: DeltaMessage) => {
+							this.response = partialResponse.content;
 
-							// @ts-ignore
-							this.sendMessage({
-								type: 'addResponse',
-								value: this.response,
-								id: this.currentMessageId,
-								autoScroll: this.autoScroll,
-								responseInMarkdown: responseInMarkdown,
-								conversationId: options.conversation.id,
-							});
+							// Throttle sending messages to the webview
+							const now = Date.now();
+							if (now - lastMessageTime > this.throttling) {
+								// @ts-ignore
+								this.sendMessage({
+									type: 'addResponse',
+									value: this.response,
+									id: this.currentMessageId,
+									responseInMarkdown: responseInMarkdown,
+									conversationId: options.conversation.id,
+								});
+
+								lastMessageTime = now;
+							}
 						},
 					}));
 				} else if (!this.isGpt35Model && this.apiGpt3) {
+					this.logEvent('sending message to GPT-3.0 (not 3.5)');
 					({ text: this.response, conversationId: this.conversationId, parentMessageId: this.messageId } = await this.apiGpt3.sendMessage(question, {
 						promptPrefix: `${this.systemContext}`,
 						abortSignal: this.abortController.signal,
 						parentMessageId: options.lastBotMessageId,
 						onProgress: (partialResponse) => {
 							this.response = partialResponse.text;
-							throttledSendMessage({
-								sendMessage: this.sendMessage,
-								value: this.response,
-								id: this.currentMessageId,
-								autoScroll: this.autoScroll,
-								responseInMarkdown: responseInMarkdown,
-								conversationId: options.conversation.id,
-							});
+
+							// Throttle sending messages to the webview
+							const now = Date.now();
+							if (now - lastMessageTime > this.throttling) {
+								// @ts-ignore
+								this.sendMessage({
+									type: 'addResponse',
+									value: this.response,
+									id: this.currentMessageId,
+									responseInMarkdown: responseInMarkdown,
+									conversationId: options.conversation.id,
+								});
+
+								lastMessageTime = now;
+							}
 						},
 					}));
 				}
+			} else {
+				this.logEvent('chat-mode-off (not sending message)');
 			}
 
 			if (options.previousAnswer !== null && options.previousAnswer !== undefined) {
@@ -442,6 +414,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					});
 			}
 
+			this.logEvent('sending-add-response-message', {
+				"chatgpt.response": this.response,
+				"chatgpt.conversation": options.conversation,
+				"chatgpt.lastBotMessageId": options.lastBotMessageId,
+				"chatgpt.hasCode": String(!!options.code),
+				"chatgpt.hasPreviousAnswer": String(!!options.previousAnswer)
+			});
 			this.sendMessage({
 				type: 'addResponse',
 				conversationId: options.conversation.id ?? 'no conversation id',
@@ -538,8 +517,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			// eslint-disable-next-line @typescript-eslint/naming-convention
 			"chatgpt.model": this.model || "unknown", ...properties
 		}, {
-			// eslint-disable-next-line @typescript-eslint/naming-convention
-			"chatgpt.questionCounter": this.questionCounter
+			"chatgpt.properties": properties,
 		});
 	}
 
@@ -549,9 +527,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		console.error(eventName, {
 			// eslint-disable-next-line @typescript-eslint/naming-convention
 			"chatgpt.model": this.model || "unknown"
-		}, {
-			// eslint-disable-next-line @typescript-eslint/naming-convention
-			"chatgpt.questionCounter": this.questionCounter
 		});
 	}
 

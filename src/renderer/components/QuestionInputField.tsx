@@ -1,14 +1,18 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
-import { Conversation, Role } from "../../types";
+import { Conversation, Role } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 
 export default ({
   vscode,
+  debug,
+  setDebug,
   currentConversation,
 }: {
   vscode: any;
+  debug: boolean;
+  setDebug: React.Dispatch<React.SetStateAction<boolean>>;
   currentConversation: Conversation;
 }) => {
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
@@ -23,7 +27,7 @@ export default ({
             id="question-input"
             placeholder="Ask a question..."
             ref={questionInputRef}
-            // disabled={currentConversation.inProgress} TODO: fix this, not working predictably
+            // disabled={currentConversation.inProgress}
             onInput={(e) => {
               const target = e.target as any;
               if (target) {
@@ -101,6 +105,7 @@ export default ({
                     type: "addFreeTextQuestion",
                     value: questionInputRef.current.value,
                     conversationId: currentConversation.id,
+                    conversation: currentConversation,
                     lastBotMessageId:
                       currentConversation.messages.find(
                         (m) => m.role === Role.assistant
@@ -140,6 +145,25 @@ export default ({
           />
         </div>
         <div className="flex flex-row gap-2">
+          {process.env.NODE_ENV === "development" && (
+            <button
+              className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
+                ${
+                  debug
+                    ? "bg-red-900 text-white"
+                    : "hover:bg-button-secondary focus:bg-button-secondary"
+                }
+              `}
+              data-tooltip-id="footer-tooltip"
+              data-tooltip-content="Export the conversation to a markdown file"
+              onClick={() => {
+                setDebug(!debug);
+              }}
+            >
+              <Icon icon="box" className="w-3 h-3" />
+              Debug
+            </button>
+          )}
           <button
             className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
             onClick={() => {

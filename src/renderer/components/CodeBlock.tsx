@@ -1,6 +1,6 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
-import { Conversation } from "../../types";
+import { Conversation } from "../types.js";
 import CodeBlockActionsButton from "./CodeBlockActionsButton";
 
 interface CodeBlockProps {
@@ -14,7 +14,7 @@ const CodeBlock = ({
   vscode,
   currentConversation,
   code,
-  className,
+  className = "",
 }: CodeBlockProps) => {
   const [codeTextContent, setCodeTextContent] = React.useState("");
   const [language, setLanguage] = React.useState("");
@@ -32,6 +32,7 @@ const CodeBlock = ({
 
     // set language based on hljs class
     const detectedLanguage = code.match(/language-(\w+)/)?.[1] || "";
+    console.log("detected language", detectedLanguage, "from code", code);
     setLanguage(detectedLanguage);
   }, [code]);
 

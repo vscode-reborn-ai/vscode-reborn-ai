@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Conversation, Model } from "../../types";
+import { Conversation, Model } from "../types";
 import Icon from "./Icon";
 
 function classNames(...classes: string[]) {
@@ -58,6 +58,7 @@ export default function Tabs({
       inProgress: false,
       createdAt: Date.now(),
       model: Model.gpt_35_turbo,
+      autoscroll: true,
     } as Conversation;
 
     setConversationList((prev: Conversation[]) => {

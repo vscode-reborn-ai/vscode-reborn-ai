@@ -1,22 +1,26 @@
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
-import { Conversation, Role } from "../../types";
 import CodeBlock from "../components/CodeBlock";
 import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
+import { Conversation, Message, Role } from "../types";
 
 export default function Chat({
   vscode,
   debug,
+  setDebug,
   conversation,
   setConversationList,
 }: {
   vscode: any;
   debug: boolean;
+  setDebug: React.Dispatch<React.SetStateAction<boolean>>;
   conversation: Conversation;
   setConversationList: React.Dispatch<React.SetStateAction<Conversation[]>>;
 }) {
+  // div ref for scrolling to bottom
+  const conversationListRef = React.useRef<HTMLDivElement>(null);
   const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
     null
   );
@@ -36,16 +40,48 @@ export default function Chat({
   });
 
   useEffect(() => {
-    const list = document.getElementById("conversation-list");
-
-    if (list) {
-      (list.lastChild as any)?.scrollIntoView({
-        behavior: "smooth",
-        block: "end",
-        inline: "nearest",
+    if (conversation.autoscroll) {
+      conversationListRef.current?.scrollTo({
+        top: conversationListRef.current.scrollHeight,
+        behavior: "auto",
       });
     }
   }, [conversation.messages]);
+
+  // if the user scrolls up while in progress, disable autoscroll
+  const handleScroll = () => {
+    if (conversationListRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } =
+        conversationListRef.current;
+      if (scrollTop < scrollHeight - clientHeight) {
+        // disable autoscroll if the user scrolls up
+        setConversationList((prev) => {
+          return prev.map((conversation) => {
+            if (conversation.id === conversation.id) {
+              return {
+                ...conversation,
+                autoscroll: false,
+              };
+            }
+            return conversation;
+          });
+        });
+      } else {
+        // re-enable autoscroll if the user scrolls to the bottom
+        setConversationList((prev) => {
+          return prev.map((conversation) => {
+            if (conversation.id === conversation.id) {
+              return {
+                ...conversation,
+                autoscroll: true,
+              };
+            }
+            return conversation;
+          });
+        });
+      }
+    }
+  };
 
   // TODO:
   // document.addEventListener("click", (e: any) => {
@@ -158,19 +194,23 @@ export default function Chat({
         vscode={vscode}
       />
       {/* Conversation messages */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="flex flex-col pb-40" id="conversation-list">
-          {conversation.messages.map((message: any) => {
+      <div
+        className="flex-1 overflow-y-auto"
+        ref={conversationListRef}
+        onScroll={handleScroll}
+      >
+        <div className="flex flex-col pb-20">
+          {conversation.messages.map((message: Message) => {
             return (
               <div
                 className={`w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative
-                  ${message.author === Role.user ? "bg-input" : "bg-sidebar"}
+                  ${message.role === Role.user ? "bg-input" : "bg-sidebar"}
                 `}
                 key={message.id}
               >
                 <header className="flex items-center">
                   <h2 className="flex-grow flex items-center">
-                    {message.author === Role.user ? (
+                    {message.role === Role.user ? (
                       <>
                         <Icon icon="user" className="w-6 h-6 mr-2" />
                         You
@@ -182,10 +222,10 @@ export default function Chat({
                       </>
                     )}
                   </h2>
-                  {message.author === Role.user && (
+                  {message.role === Role.user && (
                     <div className="flex items-center">
                       <div
-                        className={`hidden send-cancel-elements-ext gap-2
+                        className={`send-cancel-elements-ext gap-2
                         ${editingMessageID === message.id ? "" : "hidden"}
                       `}
                       >
@@ -222,11 +262,11 @@ export default function Chat({
                 <div
                   className={`
                     ${message.isError ? "text-red-400" : ""}
-                    ${message.isStreaming ? "result-streaming" : ""}
+                    ${message?.done ?? false ? "" : "result-streaming"}
                   `}
                 >
                   <div className="message-wrapper">
-                    {message.text
+                    {message.content
                       .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
                       .reduce((acc: any[], item: any) => {
                         if (item) {
@@ -260,7 +300,7 @@ export default function Chat({
                     <div className="text-xs text-gray-500">
                       Message ID: {message?.id}
                       <br />
-                      Message Author: {message?.author}
+                      Message Author: {message?.role}
                       <br />
                       Message createdAt:{" "}
                       {new Date(message?.createdAt ?? "").toLocaleString(
@@ -288,7 +328,7 @@ export default function Chat({
       </div>
       {/* AI Response In Progress */}
       {conversation.inProgress && (
-        <div id="in-progress" className="pl-4 pt-2 items-center hidden">
+        <div id="in-progress" className="pl-4 pt-2 items-center">
           <div className="typing">Thinking</div>
           <div className="spinner">
             <div className="bounce1"></div>
@@ -308,7 +348,12 @@ export default function Chat({
         </div>
       )}
       {/* Question Input */}
-      <QuestionInputField vscode={vscode} currentConversation={conversation} />
+      <QuestionInputField
+        vscode={vscode}
+        currentConversation={conversation}
+        debug={debug}
+        setDebug={setDebug}
+      />
     </>
   );
 }

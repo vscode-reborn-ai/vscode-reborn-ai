@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Conversation } from "../../types";
+import { Conversation } from "../types";
 import Icon from "./Icon";
 
 export default function MoreActionsSelect({

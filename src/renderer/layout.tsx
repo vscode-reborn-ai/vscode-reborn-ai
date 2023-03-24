@@ -4,16 +4,18 @@ import "react-tooltip/dist/react-tooltip.css";
 import "../../styles/main.css";
 import Tabs from "./components/Tabs";
 // import { Author, Conversation, Message } from "./renderer-types";
-import { Conversation, Message, Model, Role } from "../types";
+import { Conversation, Message, Model, Role } from "./types";
 import { addMessage, unEscapeHTML, updateMessage } from "./utils";
 import Chat from "./views/chat";
 
 export default function Layout({
   vscode,
   debug,
+  setDebug,
 }: {
   vscode: any;
   debug: boolean;
+  setDebug: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const initialConversation = {
     id: `Chat-${Date.now()}`,
@@ -22,6 +24,7 @@ export default function Layout({
     createdAt: Date.now(),
     inProgress: false,
     model: Model.gpt_35_turbo,
+    autoscroll: true,
   } as Conversation;
 
   const [conversationList, setConversationList] = useState<Conversation[]>([
@@ -29,64 +32,97 @@ export default function Layout({
   ]);
   const [currentConversation, setCurrentConversation] =
     useState(initialConversation);
+  setCurrentConversation({
+    ...currentConversation,
+    setConversation: setCurrentConversation,
+  });
 
   // Handle messages sent from the extension to the webview
   const handleMessages = (event: any) => {
-    const message = event.data;
+    const data = event.data as {
+      type: string;
+      value?: string;
+      id?: string;
+      // In the case of the addResponse event
+      done?: boolean;
+      // In the case of the showInProgress event
+      inProgress?: boolean;
+      conversationId?: string;
+      responseInMarkdown?: boolean;
+    };
 
-    console.log("Renderer - Received message from main process: ", message);
+    console.log("Renderer - Received message from main process: ", data);
 
-    const conversation =
+    const relevantConversation =
       conversationList.find(
-        (conversation) => conversation.id === message.conversationId
+        (conversation) => conversation.id === data.conversationId
       ) ?? currentConversation;
 
-    switch (message.type) {
+    switch (data.type) {
       case "showInProgress":
-        const updatedConversationList = conversationList.map((c) =>
-          c.id === conversation.id
-            ? {
+        console.log("in progress: ", data.inProgress);
+        setConversationList((prev) => {
+          return prev.map((conversation) => {
+            if (conversation.id === relevantConversation.id) {
+              const updatedConversation = {
                 ...conversation,
-                inProgress: message.inProgress,
+                inProgress: data?.inProgress ?? true,
+              };
+              // Use the latest conversation object to avoid stale data
+              const latestConversation = conversationList.find(
+                (c) => c.id === conversation.id
+              );
+              if (latestConversation) {
+                Object.assign(updatedConversation, latestConversation);
               }
-            : c
-        );
 
-        setConversationList(updatedConversationList);
+              console.log(
+                "showInProgress - updatedConversation: ",
+                updatedConversation
+              );
+
+              return updatedConversation;
+            }
+            return conversation;
+          });
+        });
+
         break;
       case "addQuestion":
         const question = {
           id:
-            message.id ??
-            `${conversation.messages.length}-${Math.floor(
+            data.id ??
+            `${relevantConversation.messages.length}-${Math.floor(
               Math.random() * 1000
             )}`,
           role: Role.user,
-          content: message.value,
+          content: data.value,
           createdAt: Date.now(),
+          done: true,
         } as Message;
 
-        addMessage(question, conversation, setConversationList);
+        addMessage(question, relevantConversation.id, setConversationList);
 
         break;
       case "addResponse":
-        if (message.value === "") {
+        if (data.value === "") {
           return;
         }
 
-        console.log("Renderer - Adding response: ", message);
+        console.log("Renderer - Adding response: ", data);
 
         let existingMessage =
-          message.id && conversation.messages.find((m) => m.id === message.id);
+          data.id &&
+          relevantConversation.messages.find((m) => m.id === data.id);
         let updatedValue = "";
 
-        if (!message.responseInMarkdown) {
-          updatedValue = "```\r\n" + unEscapeHTML(message.value) + " \r\n ```";
-        } else {
+        if (!data.responseInMarkdown) {
+          updatedValue = "```\r\n" + unEscapeHTML(data.value) + " \r\n ```";
+        } else if (data.value) {
           updatedValue =
-            message.value.split("```").length % 2 === 1
-              ? message.value
-              : message.value + "\n\n```\n\n";
+            data.value.split("```").length % 2 === 1
+              ? data.value
+              : data.value + "\n\n```\n\n";
         }
 
         const markedResponse = (window as any)?.marked.parse(updatedValue);
@@ -96,9 +132,9 @@ export default function Layout({
           console.log("Updating existing message");
           // get the message from the conversation with the matching id
           botResponse =
-            conversation.messages.find((m) => m.id === message.id) ??
+            relevantConversation.messages.find((m) => m.id === data.id) ??
             ({
-              id: message.id,
+              id: data.id,
               role: Role.assistant,
               content: markedResponse,
               createdAt: Date.now(),
@@ -108,54 +144,67 @@ export default function Layout({
             botResponse.content = markedResponse;
             botResponse.updatedAt = Date.now();
 
-            updateMessage(botResponse, conversation, setConversationList);
+            updateMessage(
+              botResponse,
+              relevantConversation.id,
+              setConversationList
+            );
           } else {
             console.error(
-              `Could not find message with id ${message.id} in conversation.`
+              `Could not find message with id ${data.id} in conversation.`
             );
           }
         } else {
           botResponse = {
-            id: message.id,
+            id: data.id,
             role: Role.assistant,
             content: markedResponse,
             createdAt: Date.now(),
             // Check if message.done exists, only streaming if .done exists and is false
-            done: message?.done ?? true,
+            done: data?.done ?? true,
           } as Message;
 
-          addMessage(botResponse, conversation, setConversationList);
+          addMessage(botResponse, relevantConversation.id, setConversationList);
         }
 
-        if (message.done) {
+        if (data.done) {
           updateMessage(
             {
               ...botResponse,
               done: true,
             } as Message,
-            conversation,
+            relevantConversation.id,
             setConversationList
           );
         }
 
+        console.log(
+          "Renderer - Added response: ",
+          botResponse,
+          "messages: ",
+          relevantConversation.messages,
+          "conversation: ",
+          relevantConversation
+        );
+
         break;
       case "addError":
         const messageValue =
-          message.value ||
+          data.value ||
           "An error occurred. If this issue persists please clear your session token with `ChatGPT: Reset session` command and/or restart your Visual Studio Code. If you still experience issues, it may be due to an OpenAI outage. Take a look at https://status.openai.com to see if there's an OpenAI outage.";
 
         const errorMessage = {
-          id: message.id,
+          id: data.id,
           role: Role.assistant,
           content: messageValue,
           createdAt: Date.now(),
           isError: true,
         } as Message;
 
-        addMessage(errorMessage, conversation, setConversationList);
+        addMessage(errorMessage, relevantConversation.id, setConversationList);
         break;
       default:
-        console.log('Renderer - Uncaught message type: "' + message.type + '"');
+        console.log('Renderer - Uncaught message type: "' + data.type + '"');
     }
   };
 
@@ -207,6 +256,7 @@ export default function Layout({
                 conversation={conversation}
                 setConversationList={setConversationList}
                 debug={debug}
+                setDebug={setDebug}
               />
             }
           />

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import ChatGptViewProvider from './chatgpt-view-provider';
-import { Conversation, Model } from "./types";
+import { Conversation, Model } from "./renderer/types";
 
 const menuCommands = [
 	"addTests", "findProblems", "optimize", "explain",
@@ -19,6 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		inProgress: false,
 		messages: [],
 		model: Model.gpt_35_turbo,
+		autoscroll: true,
 	} as Conversation;
 
 	const provider = new ChatGptViewProvider(context);
