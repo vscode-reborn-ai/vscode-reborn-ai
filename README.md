@@ -98,13 +98,14 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [x] Short-term - Allow more custom prompts.
 - [x] Short-term - Add setting for a custom system message.
 - [ ] Short-term - Move API key from settings config to secure storage.
-- [ ] Short-term - Use API list API to show user what models they have access to.
+- [x] Short-term - Use API list API to show user what models they have access to.
 - [ ] Short-term - Add way to manage custom prompts in UI.
 - [ ] Long-term - Add option to stream directly into the editor.
 - [ ] Long-term - Inline diff
 - [ ] Long-term - "Smart" actions based on the type of file open.
 - [ ] Long-term - "Smart" actions on that run at a project level.
 - [ ] Long-term - AI-generated git commit messages
+- [ ] TBD - Support davinci models in place of ChatGPT
 
 ## Contributing
 
