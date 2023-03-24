@@ -51,6 +51,11 @@ export default function Layout({ vscode }: { vscode: any }) {
       responseInMarkdown?: boolean;
     };
 
+    // Handle requests from editor
+    if (data.conversationId === "") {
+      data.conversationId = currentConversationId;
+    }
+
     if (debug) {
       console.log("Renderer - Received message from main process: ", data);
     }
@@ -95,10 +100,11 @@ export default function Layout({ vscode }: { vscode: any }) {
         }
 
         let existingMessage =
-          data.id &&
-          conversationList
-            .find((conversation) => conversation.id === currentConversationId)
-            ?.messages.find((message) => message.id === data.id);
+          (data.id &&
+            conversationList
+              .find((conversation) => conversation.id === currentConversationId)
+              ?.messages.find((message) => message.id === data.id)) ??
+          null;
 
         const markedResponse = (window as any)?.marked.parse(
           !data.responseInMarkdown
@@ -120,8 +126,27 @@ export default function Layout({ vscode }: { vscode: any }) {
               })
             );
           } else {
-            console.error(
+            console.warn(
               "Renderer - Cannot updated message - No message id found"
+            );
+
+            // Attempt graceful fallback -
+            // Try adding a new message to the current conversation
+            const botResponse = {
+              id: uuidv4(),
+              role: Role.assistant,
+              content: markedResponse,
+              rawContent: data.value,
+              createdAt: Date.now(),
+              // Check if message.done exists, only streaming if .done exists and is false
+              done: data.done === undefined ? true : data.done,
+            } as Message;
+
+            dispatch(
+              addMessage({
+                conversationId: data?.conversationId ?? currentConversationId,
+                message: botResponse,
+              })
             );
           }
         } else {
