@@ -57,18 +57,6 @@ interface OpenAIChatRequest {
 }
 
 // * Interfaces for this extension - built on top of OpenAI's API
-export interface Conversation {
-    id: string;
-    createdAt: string | number;
-    inProgress: boolean;
-    messages: Message[];
-    model: Model;
-    title?: string;
-    autoscroll: boolean;
-    setConversation?: React.Dispatch<React.SetStateAction<Conversation>>;
-}
-
-// Loosely based on OpenAI's API: https://platform.openai.com/docs/api-reference/chat/create
 export interface Message extends OpenAIMessage {
     id: string;
     content: string;
@@ -86,6 +74,19 @@ export interface DeltaMessage extends Message {
     cancel?: Function;
     detail?: any;
 }
+
+export interface Conversation {
+    id: string;
+    createdAt: string | number;
+    inProgress: boolean;
+    messages: Message[];
+    model: Model;
+    title?: string;
+    autoscroll: boolean;
+    // allow the user to switch tabs while working on a prompt
+    userInput?: string;
+}
+
 
 export interface SendMessageOptions {
     conversation: Conversation;

@@ -24,7 +24,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
-import * as types from './renderer/types';
+import { ChatResponse, Conversation, SendMessageOptions } from './renderer/types';
 
 export abstract class AChatGPTAPI {
     /**
@@ -55,8 +55,9 @@ export abstract class AChatGPTAPI {
      */
     abstract sendMessage(
         message: string,
-        opts?: types.SendMessageOptions
-    ): Promise<types.ChatResponse>;
+        conversation: Conversation,
+        opts?: SendMessageOptions
+    ): Promise<ChatResponse>;
 
     /**
      * @returns `true` if the client is authenticated with a valid session or `false`

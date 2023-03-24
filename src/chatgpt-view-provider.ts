@@ -77,6 +77,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					this.sendApiRequest(data.value, {
 						command: "freeText",
 						conversation: data.conversation ?? null,
+						questionId: data.questionId ?? null,
+						messageId: data.messageId ?? null,
 						lastBotMessageId: data.lastBotMessageId,
 					});
 					break;
@@ -254,17 +256,19 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private processQuestion(question: string, code?: string, language?: string) {
-		if (code !== null) {
+		if (code !== null && code !== undefined) {
 			// Add prompt prefix to the code if there was a code block selected
 			question = `${question}${language ? ` (The following code is in ${language} programming language)` : ''}: ${code}`;
 		}
-		return question + "\r\n";
+		return question;
 	}
 
 	public async sendApiRequest(prompt: string, options: {
 		command: string,
 		conversation: Conversation,
 		lastBotMessageId?: string,
+		questionId?: string,
+		messageId?: string,
 		code?: string,
 		previousAnswer?: string,
 		language?: string;
@@ -308,20 +312,19 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			showStopButton: true,
 			conversationId: options.conversation?.id ?? 'no conversation id',
 		});
-		this.currentMessageId = this.getRandomId();
+		this.currentMessageId = options.messageId ?? this.getRandomId();
 
-		this.sendMessage({
-			type: 'addQuestion',
-			value: prompt,
-			code: options.code,
-			autoScroll: this.autoScroll,
-			conversationId: options.conversation.id ?? 'no conversation id',
-			lastBotMessageId: options.lastBotMessageId ?? 'no last bot message id',
-		});
-		const isObject = function (value: any) {
-			var type = typeof value;
-			return value !== null && (type === 'object' || type === 'function');
-		};
+		// Only if the question doesn't already exist in the conversation
+		if (!options.questionId) {
+			this.sendMessage({
+				type: 'addQuestion',
+				value: prompt,
+				code: options.code,
+				autoScroll: this.autoScroll,
+				conversationId: options.conversation.id ?? 'no conversation id',
+				lastBotMessageId: options.lastBotMessageId ?? 'no last bot message id',
+			});
+		}
 
 		this.logEvent('sending-message', {
 			"chatgpt.command": options.command,

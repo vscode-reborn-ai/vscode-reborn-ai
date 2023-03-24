@@ -1,15 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import "../../styles/main.css";
 import Layout from "./layout";
+import { store } from "./store";
 
 let vscode = acquireVsCodeApi();
 
 const App = () => {
-  const [debug, setDebug] = React.useState(false);
-
   if (!vscode) {
     try {
       vscode = acquireVsCodeApi();
@@ -20,9 +20,11 @@ const App = () => {
 
   return (
     <React.StrictMode>
-      <Router basename="/index.html">
-        <Layout vscode={vscode} debug={debug} setDebug={setDebug} />
-      </Router>
+      <Provider store={store}>
+        <Router basename="/index.html">
+          <Layout vscode={vscode} />
+        </Router>
+      </Provider>
     </React.StrictMode>
   );
 };

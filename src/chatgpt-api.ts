@@ -239,7 +239,7 @@ Current date: ${currentDate}`;
    *
    * @returns The response from ChatGPT
    */
-  async sendMessage(text: any,
+  async sendMessage(content: any,
     conversation: Conversation,
     opts: {
       parentMessageId?: any;
@@ -261,7 +261,7 @@ Current date: ${currentDate}`;
       completionParams
     } = opts;
 
-    console.debug("sendMessage", { text, conversation, opts });
+    console.debug("sendMessage", { content, conversation, opts });
 
     // Initialize abort controller and signal
     let { abortSignal } = opts;
@@ -276,7 +276,7 @@ Current date: ${currentDate}`;
       role: Role.user,
       id: messageId,
       parentMessageId,
-      content: text
+      content,
     } as Message;
 
     // Upsert the message

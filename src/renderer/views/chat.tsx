@@ -1,29 +1,27 @@
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
+import { setAutoscroll, updateMessageContent } from "../actions/conversation";
 import CodeBlock from "../components/CodeBlock";
 import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
+import { useAppDispatch, useAppSelector } from "../hooks";
 import { Conversation, Message, Role } from "../types";
 
 export default function Chat({
-  vscode,
-  debug,
-  setDebug,
   conversation,
-  setConversationList,
+  vscode,
 }: {
-  vscode: any;
-  debug: boolean;
-  setDebug: React.Dispatch<React.SetStateAction<boolean>>;
   conversation: Conversation;
-  setConversationList: React.Dispatch<React.SetStateAction<Conversation[]>>;
+  vscode: any;
 }) {
-  // div ref for scrolling to bottom
+  const dispatch = useAppDispatch();
+  const debug = useAppSelector((state: any) => state.app.debug);
   const conversationListRef = React.useRef<HTMLDivElement>(null);
   const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
     null
   );
+  const editingMessageRef = React.useRef<HTMLTextAreaElement>(null);
 
   (window as any).marked.setOptions({
     renderer: new (window as any).marked.Renderer(),
@@ -55,30 +53,20 @@ export default function Chat({
         conversationListRef.current;
       if (scrollTop < scrollHeight - clientHeight) {
         // disable autoscroll if the user scrolls up
-        setConversationList((prev) => {
-          return prev.map((conversation) => {
-            if (conversation.id === conversation.id) {
-              return {
-                ...conversation,
-                autoscroll: false,
-              };
-            }
-            return conversation;
-          });
-        });
+        dispatch(
+          setAutoscroll({
+            conversationId: conversation.id,
+            autoscroll: false,
+          })
+        );
       } else {
         // re-enable autoscroll if the user scrolls to the bottom
-        setConversationList((prev) => {
-          return prev.map((conversation) => {
-            if (conversation.id === conversation.id) {
-              return {
-                ...conversation,
-                autoscroll: true,
-              };
-            }
-            return conversation;
-          });
-        });
+        dispatch(
+          setAutoscroll({
+            conversationId: conversation.id,
+            autoscroll: true,
+          })
+        );
       }
     }
   };
@@ -170,7 +158,7 @@ export default function Chat({
   return (
     <>
       {debug && (
-        <div className="text-xs text-gray-500">
+        <div className="text-gray-500 text-[10px] font-mono">
           Conversation ID: {conversation?.id}
           <br />
           Conversation Title: {conversation?.title}
@@ -191,7 +179,6 @@ export default function Chat({
       {/* Introduction */}
       <IntroductionSplash
         className={conversation.messages?.length > 0 ? "hidden" : ""}
-        vscode={vscode}
       />
       {/* Conversation messages */}
       <div
@@ -199,8 +186,8 @@ export default function Chat({
         ref={conversationListRef}
         onScroll={handleScroll}
       >
-        <div className="flex flex-col pb-20">
-          {conversation.messages.map((message: Message) => {
+        <div className="flex flex-col pb-24">
+          {conversation.messages.map((message: Message, index: number) => {
             return (
               <div
                 className={`w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative
@@ -233,6 +220,35 @@ export default function Chat({
                           className="send-element-ext p-1 pr-2 flex items-center"
                           data-tooltip-id="message-tooltip"
                           data-tooltip-content="Send this prompt"
+                          onClick={() => {
+                            const newQuestion =
+                              editingMessageRef.current?.value;
+
+                            vscode.postMessage({
+                              type: "addFreeTextQuestion",
+                              value: newQuestion,
+                              questionId: message.id,
+                              // get message that comes after this one
+                              messageId:
+                                conversation.messages[index + 1]?.id ?? "",
+                              lastBotMessageId:
+                                conversation.messages.find(
+                                  (m) => m.role === Role.assistant
+                                )?.id ?? "",
+                              conversation,
+                            });
+
+                            dispatch(
+                              updateMessageContent({
+                                conversationId: conversation.id,
+                                messageId: message.id,
+                                content: newQuestion ?? message.content,
+                                done: true,
+                              })
+                            );
+
+                            setEditingMessageID("");
+                          }}
                         >
                           <Icon icon="send" className="w-3 h-3 mr-1" />
                           Send
@@ -241,6 +257,9 @@ export default function Chat({
                           className="cancel-element-ext p-1 pr-2 flex items-center"
                           data-tooltip-id="message-tooltip"
                           data-tooltip-content="Cancel"
+                          onClick={() => {
+                            setEditingMessageID("");
+                          }}
                         >
                           <Icon icon="cancel" className="w-3 h-3 mr-1" />
                           Cancel
@@ -262,40 +281,54 @@ export default function Chat({
                 <div
                   className={`
                     ${message.isError ? "text-red-400" : ""}
-                    ${message?.done ?? false ? "" : "result-streaming"}
+                    ${message?.done ?? true ? "" : "result-streaming"}
                   `}
                 >
-                  <div className="message-wrapper">
-                    {message.content
-                      .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
-                      .reduce((acc: any[], item: any) => {
-                        if (item) {
-                          acc.push(item);
-                        }
-                        return acc;
-                      }, [])
-                      .map(
-                        (item: string, index: React.Key | null | undefined) => {
-                          if (item.startsWith("<pre><code")) {
-                            return (
-                              <CodeBlock
-                                code={item}
-                                vscode={vscode}
-                                key={index}
-                                currentConversation={conversation}
-                              />
-                            );
-                          } else {
-                            return (
-                              <div
-                                key={index}
-                                dangerouslySetInnerHTML={{ __html: item }}
-                              />
-                            );
+                  {message.id === editingMessageID ? (
+                    // show textarea to edit message
+                    <div className="flex flex-col gap-y-2">
+                      <textarea
+                        className="w-full h-24 resize-none bg-input rounded p-2"
+                        defaultValue={message.content}
+                        ref={editingMessageRef}
+                      />
+                    </div>
+                  ) : (
+                    <div className="message-wrapper">
+                      {message.content
+                        .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
+                        .reduce((acc: any[], item: any) => {
+                          if (item) {
+                            acc.push(item);
                           }
-                        }
-                      )}
-                  </div>
+                          return acc;
+                        }, [])
+                        .map(
+                          (
+                            item: string,
+                            index: React.Key | null | undefined
+                          ) => {
+                            if (item.startsWith("<pre><code")) {
+                              return (
+                                <CodeBlock
+                                  code={item}
+                                  key={index}
+                                  conversationId={conversation.id}
+                                  vscode={vscode}
+                                />
+                              );
+                            } else {
+                              return (
+                                <div
+                                  key={index}
+                                  dangerouslySetInnerHTML={{ __html: item }}
+                                />
+                              );
+                            }
+                          }
+                        )}
+                    </div>
+                  )}
                   {debug && (
                     <div className="text-xs text-gray-500">
                       Message ID: {message?.id}
@@ -348,12 +381,7 @@ export default function Chat({
         </div>
       )}
       {/* Question Input */}
-      <QuestionInputField
-        vscode={vscode}
-        currentConversation={conversation}
-        debug={debug}
-        setDebug={setDebug}
-      />
+      <QuestionInputField conversation={conversation} vscode={vscode} />
     </>
   );
 }

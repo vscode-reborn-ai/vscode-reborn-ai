@@ -1,12 +1,6 @@
 import React from "react";
 
-export default function ({
-  vscode,
-  className,
-}: {
-  vscode: any;
-  className?: string;
-}) {
+export default function ({ className }: { className?: string }) {
   return (
     <div
       className={`flex flex-col gap-3.5 h-full justify-center items-center px-6 pb-24 w-full relative login-screen overflow-auto ${className}`}

@@ -4,11 +4,11 @@ import { Conversation, Model } from "../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
-  vscode,
   currentConversation,
+  vscode,
 }: {
-  vscode: any;
   currentConversation: Conversation;
+  vscode: any;
 }) {
   const [showModels, setShowModels] = useState(false);
   const [currentModel, setCurrentModel] = useState("gpt-3.5-turbo");

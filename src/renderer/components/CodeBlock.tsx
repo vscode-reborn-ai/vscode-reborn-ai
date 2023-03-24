@@ -1,20 +1,19 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
-import { Conversation } from "../types.js";
 import CodeBlockActionsButton from "./CodeBlockActionsButton";
 
 interface CodeBlockProps {
-  vscode: any;
   code: string;
   className?: string;
-  currentConversation: Conversation;
+  conversationId: string;
+  vscode: any;
 }
 
 const CodeBlock = ({
-  vscode,
-  currentConversation,
+  conversationId: currentConversationId,
   code,
   className = "",
+  vscode,
 }: CodeBlockProps) => {
   const [codeTextContent, setCodeTextContent] = React.useState("");
   const [language, setLanguage] = React.useState("");
@@ -71,7 +70,7 @@ const CodeBlock = ({
             vscode.postMessage({
               type: "editCode",
               value: codeTextContent,
-              conversationId: currentConversation.id,
+              conversationId: currentConversationId,
             });
           }}
         />
@@ -86,7 +85,7 @@ const CodeBlock = ({
             vscode.postMessage({
               type: "openNew",
               value: codeTextContent,
-              conversationId: currentConversation.id,
+              conversationId: currentConversationId,
               language,
             });
           }}

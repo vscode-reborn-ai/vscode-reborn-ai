@@ -1,41 +1,28 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
+import { v4 as uuidv4 } from "uuid";
 import "../../styles/main.css";
+import {
+  addMessage,
+  setCurrentConversation,
+  setInProgress,
+  updateMessageContent,
+} from "./actions/conversation";
 import Tabs from "./components/Tabs";
-// import { Author, Conversation, Message } from "./renderer-types";
-import { Conversation, Message, Model, Role } from "./types";
-import { addMessage, unEscapeHTML, updateMessage } from "./utils";
+import { useAppDispatch, useAppSelector } from "./hooks";
+import { Conversation, Message, Role } from "./types";
+import { unEscapeHTML } from "./utils";
 import Chat from "./views/chat";
 
-export default function Layout({
-  vscode,
-  debug,
-  setDebug,
-}: {
-  vscode: any;
-  debug: boolean;
-  setDebug: React.Dispatch<React.SetStateAction<boolean>>;
-}) {
-  const initialConversation = {
-    id: `Chat-${Date.now()}`,
-    title: "Chat",
-    messages: [],
-    createdAt: Date.now(),
-    inProgress: false,
-    model: Model.gpt_35_turbo,
-    autoscroll: true,
-  } as Conversation;
-
-  const [conversationList, setConversationList] = useState<Conversation[]>([
-    initialConversation,
-  ]);
-  const [currentConversation, setCurrentConversation] =
-    useState(initialConversation);
-  setCurrentConversation({
-    ...currentConversation,
-    setConversation: setCurrentConversation,
-  });
+export default function Layout({ vscode }: { vscode: any }) {
+  const dispatch = useAppDispatch();
+  const currentConversationId = useAppSelector(
+    (state: any) => state.conversation.currentConversationId
+  );
+  const conversationList = Object.values(
+    useAppSelector((state: any) => state.conversation.conversations)
+  ) as Conversation[];
 
   // Handle messages sent from the extension to the webview
   const handleMessages = (event: any) => {
@@ -53,55 +40,32 @@ export default function Layout({
 
     console.log("Renderer - Received message from main process: ", data);
 
-    const relevantConversation =
-      conversationList.find(
-        (conversation) => conversation.id === data.conversationId
-      ) ?? currentConversation;
-
     switch (data.type) {
       case "showInProgress":
         console.log("in progress: ", data.inProgress);
-        setConversationList((prev) => {
-          return prev.map((conversation) => {
-            if (conversation.id === relevantConversation.id) {
-              const updatedConversation = {
-                ...conversation,
-                inProgress: data?.inProgress ?? true,
-              };
-              // Use the latest conversation object to avoid stale data
-              const latestConversation = conversationList.find(
-                (c) => c.id === conversation.id
-              );
-              if (latestConversation) {
-                Object.assign(updatedConversation, latestConversation);
-              }
 
-              console.log(
-                "showInProgress - updatedConversation: ",
-                updatedConversation
-              );
-
-              return updatedConversation;
-            }
-            return conversation;
-          });
-        });
-
+        dispatch(
+          setInProgress({
+            conversationId: data?.conversationId ?? currentConversationId,
+            inProgress: data?.inProgress ?? true,
+          })
+        );
         break;
       case "addQuestion":
         const question = {
-          id:
-            data.id ??
-            `${relevantConversation.messages.length}-${Math.floor(
-              Math.random() * 1000
-            )}`,
+          id: uuidv4(),
           role: Role.user,
           content: data.value,
           createdAt: Date.now(),
           done: true,
         } as Message;
 
-        addMessage(question, relevantConversation.id, setConversationList);
+        dispatch(
+          addMessage({
+            conversationId: data?.conversationId ?? currentConversationId,
+            message: question,
+          })
+        );
 
         break;
       case "addResponse":
@@ -113,49 +77,37 @@ export default function Layout({
 
         let existingMessage =
           data.id &&
-          relevantConversation.messages.find((m) => m.id === data.id);
-        let updatedValue = "";
+          conversationList
+            .find((conversation) => conversation.id === currentConversationId)
+            ?.messages.find((message) => message.id === data.id);
 
-        if (!data.responseInMarkdown) {
-          updatedValue = "```\r\n" + unEscapeHTML(data.value) + " \r\n ```";
-        } else if (data.value) {
-          updatedValue =
-            data.value.split("```").length % 2 === 1
-              ? data.value
-              : data.value + "\n\n```\n\n";
-        }
-
-        const markedResponse = (window as any)?.marked.parse(updatedValue);
-        let botResponse: Message;
+        const markedResponse = (window as any)?.marked.parse(
+          !data.responseInMarkdown
+            ? "```\r\n" + unEscapeHTML(data.value) + " \r\n ```"
+            : (data?.value ?? "").split("```").length % 2 === 1
+            ? data.value
+            : data.value + "\n\n```\n\n"
+        );
 
         if (existingMessage) {
           console.log("Updating existing message");
-          // get the message from the conversation with the matching id
-          botResponse =
-            relevantConversation.messages.find((m) => m.id === data.id) ??
-            ({
-              id: data.id,
-              role: Role.assistant,
-              content: markedResponse,
-              createdAt: Date.now(),
-            } as Message);
 
-          if (botResponse) {
-            botResponse.content = markedResponse;
-            botResponse.updatedAt = Date.now();
-
-            updateMessage(
-              botResponse,
-              relevantConversation.id,
-              setConversationList
+          if (data.id) {
+            dispatch(
+              updateMessageContent({
+                conversationId: data?.conversationId ?? currentConversationId,
+                messageId: data.id,
+                content: markedResponse,
+                done: data?.done ?? true,
+              })
             );
           } else {
             console.error(
-              `Could not find message with id ${data.id} in conversation.`
+              "Renderer - Cannot updated message - No message id found"
             );
           }
         } else {
-          botResponse = {
+          const botResponse = {
             id: data.id,
             role: Role.assistant,
             content: markedResponse,
@@ -164,29 +116,19 @@ export default function Layout({
             done: data?.done ?? true,
           } as Message;
 
-          addMessage(botResponse, relevantConversation.id, setConversationList);
-        }
-
-        if (data.done) {
-          updateMessage(
-            {
-              ...botResponse,
-              done: true,
-            } as Message,
-            relevantConversation.id,
-            setConversationList
+          console.log(
+            "dispatching addMessage with botResponse: ",
+            botResponse,
+            "\nconversationId: ",
+            data?.conversationId
+          );
+          dispatch(
+            addMessage({
+              conversationId: data?.conversationId ?? currentConversationId,
+              message: botResponse,
+            })
           );
         }
-
-        console.log(
-          "Renderer - Added response: ",
-          botResponse,
-          "messages: ",
-          relevantConversation.messages,
-          "conversation: ",
-          relevantConversation
-        );
-
         break;
       case "addError":
         const messageValue =
@@ -201,7 +143,12 @@ export default function Layout({
           isError: true,
         } as Message;
 
-        addMessage(errorMessage, relevantConversation.id, setConversationList);
+        dispatch(
+          addMessage({
+            conversationId: data?.conversationId ?? currentConversationId,
+            message: errorMessage,
+          })
+        );
         break;
       default:
         console.log('Renderer - Uncaught message type: "' + data.type + '"');
@@ -210,12 +157,15 @@ export default function Layout({
 
   const location = useLocation();
   React.useEffect(() => {
-    if (location.pathname.startsWith("/chat/")) {
-      setCurrentConversation(
-        conversationList.find(
-          (conversation) =>
-            location.pathname === `/chat/${encodeURI(conversation.id)}`
-        ) ?? initialConversation
+    if (location.pathname.startsWith("/chat/") && conversationList?.find) {
+      dispatch(
+        setCurrentConversation({
+          conversationId:
+            conversationList?.find(
+              (conversation: Conversation) =>
+                location.pathname === `/chat/${encodeURI(conversation.id)}`
+            )?.id ?? conversationList[0]?.id,
+        })
       );
     }
   }, [location.pathname]);
@@ -232,39 +182,34 @@ export default function Layout({
       // unmount cleanup function
       window.removeEventListener("message", handleMessages);
     };
-  }, [conversationList, currentConversation]); // These are important or the handler uses outdated state data
+  }, [conversationList, currentConversationId]); // These are important or the handler uses outdated state data
 
   return (
     <>
       <Tabs
-        vscode={vscode}
         conversationList={conversationList}
-        setConversationList={setConversationList}
-        currentConversation={currentConversation}
+        currentConversationId={currentConversationId}
       />
       <Routes>
         {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
         {/* <Route path="/actions" element={<Actions vscode={vscode} />} /> */}
-        {conversationList.map((conversation) => (
-          <Route
-            key={conversation.id}
-            path={`/chat/${conversation.id}`}
-            index={conversation.id === initialConversation.id}
-            element={
-              <Chat
-                vscode={vscode}
-                conversation={conversation}
-                setConversationList={setConversationList}
-                debug={debug}
-                setDebug={setDebug}
-              />
-            }
-          />
-        ))}
+        {conversationList &&
+          conversationList.map &&
+          conversationList.map((conversation: Conversation) => (
+            <Route
+              key={conversation.id}
+              path={`/chat/${conversation.id}`}
+              index={conversation.id === currentConversationId}
+              element={<Chat conversation={conversation} vscode={vscode} />}
+            />
+          ))}
         <Route
           path="/"
           element={
-            <Navigate to={`/chat/${initialConversation.id}`} replace={true} />
+            <Navigate
+              to={`/chat/${conversationList[0]?.id ?? "chat"}`}
+              replace={true}
+            />
           }
         />
         {/* <Route path="/options" element={<Options vscode={vscode} />} /> */}

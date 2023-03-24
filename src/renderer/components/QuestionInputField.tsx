@@ -1,21 +1,30 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
+import { setDebug } from "../actions/app";
+import { updateUserInput } from "../actions/conversation";
+import { useAppDispatch, useAppSelector } from "../hooks";
 import { Conversation, Role } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 
 export default ({
+  conversation: currentConversation,
   vscode,
-  debug,
-  setDebug,
-  currentConversation,
 }: {
+  conversation: Conversation;
   vscode: any;
-  debug: boolean;
-  setDebug: React.Dispatch<React.SetStateAction<boolean>>;
-  currentConversation: Conversation;
 }) => {
+  const dispatch = useAppDispatch();
+  const debug = useAppSelector((state: any) => state.app.debug);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // on conversation change, focus on the question input, set the questoin input value to the user input
+  React.useEffect(() => {
+    if (questionInputRef.current) {
+      questionInputRef.current.focus();
+      questionInputRef.current.value = currentConversation?.userInput ?? "";
+    }
+  }, [currentConversation]);
 
   return (
     <footer className="fixed bottom-0 w-full flex flex-col gap-y-1 pt-2 bg">
@@ -45,13 +54,21 @@ export default ({
               }
             }}
             onKeyUp={(event: any) => {
+              const question = questionInputRef?.current?.value;
+
+              // update the state
+              dispatch(
+                updateUserInput({
+                  conversationId: currentConversation.id,
+                  userInput: question ?? "",
+                })
+              );
+
               if (
                 event.key === "Enter" &&
                 !event.shiftKey &&
                 !event.isComposing
               ) {
-                const question = questionInputRef?.current?.value;
-
                 if (question && question.length > 0) {
                   vscode.postMessage({
                     type: "addFreeTextQuestion",
@@ -66,6 +83,14 @@ export default ({
 
                   questionInputRef.current.value = "";
                   questionInputRef.current.rows = 1;
+
+                  // update the state
+                  dispatch(
+                    updateUserInput({
+                      conversationId: currentConversation.id,
+                      userInput: "",
+                    })
+                  );
 
                   // reset the textarea height
                   const target = event.target as any;
@@ -115,6 +140,14 @@ export default ({
                   questionInputRef.current.value = "";
                   questionInputRef.current.rows = 1;
 
+                  // update the state
+                  dispatch(
+                    updateUserInput({
+                      conversationId: currentConversation.id,
+                      userInput: "",
+                    })
+                  );
+
                   // reset the textarea height
                   if (
                     questionInputRef.current &&
@@ -137,11 +170,11 @@ export default ({
           </div>
         )}
       </div>
-      <div className="flex flex-row justify-between gap-2 py-1 px-4">
+      <div className="flex flex-row justify-between gap-2 pb-1 px-4">
         <div className="flex flex-row gap-2">
           <ModelSelect
-            vscode={vscode}
             currentConversation={currentConversation}
+            vscode={vscode}
           />
         </div>
         <div className="flex flex-row gap-2">
@@ -157,7 +190,7 @@ export default ({
               data-tooltip-id="footer-tooltip"
               data-tooltip-content="Export the conversation to a markdown file"
               onClick={() => {
-                setDebug(!debug);
+                dispatch(setDebug(!debug));
               }}
             >
               <Icon icon="box" className="w-3 h-3" />

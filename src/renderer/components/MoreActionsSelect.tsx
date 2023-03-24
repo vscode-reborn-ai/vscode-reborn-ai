@@ -3,11 +3,11 @@ import { Conversation } from "../types";
 import Icon from "./Icon";
 
 export default function MoreActionsSelect({
-  vscode,
   currentConversation,
+  vscode,
 }: {
-  vscode: any;
   currentConversation: Conversation;
+  vscode: any;
 }) {
   const [showMoreActions, setShowMoreActions] = useState(false);
 
