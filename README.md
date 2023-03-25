@@ -9,7 +9,7 @@ Search for "ChatGPT Reborn" in the VSCode extension search.
 Or install directly:
 
 - [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn)
-- [Open VSX Marketplace](https://open-vsx.org/extension/chris-hayes/chatgpt-reborn)
+- [Open VSX Registry](https://open-vsx.org/extension/chris-hayes/chatgpt-reborn)
 
 Or build this extension yourself (see below).
 
