@@ -6,7 +6,12 @@ ChatGPT Reborn is a Visual Studio Code extension that allows you to use the Chat
 
 Search for "ChatGPT Reborn" in the VSCode extension search.
 
-or install it directly from the [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn).
+Or install directly:
+
+- [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn)
+- [Open VSX Marketplace](https://open-vsx.org/extension/chris-hayes/chatgpt-reborn)
+
+Or build this extension yourself (see below).
 
 ## About this fork
 
