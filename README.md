@@ -110,12 +110,6 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [ ] Long-term - AI-generated git commit messages
 - [ ] TBD - Support davinci models in place of ChatGPT
 
-## Contributing
-
-If you want to contribute to the vscode-chatgpt-reborn project, follow the project's contribution guidelines and submit pull requests or open issues on the GitHub repository:
-
-[https://github.com/christopher-hayes/vscode-chatgpt-reborn](https://github.com/christopher-hayes/vscode-chatgpt-reborn)
-
 ## Tech
 
 - [TypeScript](https://www.typescriptlang.org/)
