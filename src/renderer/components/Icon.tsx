@@ -19,6 +19,8 @@ export enum IconName {
   download = "download",
   chat = "chat",
   help = "help",
+  caretDown = "caret-down",
+  zap = "zap",
   // Spinners
   ripples = "ripples",
 }
@@ -375,6 +377,37 @@ export default (props: { icon: string; className: string }) => {
           <circle cx="12" cy="12" r="10" />
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
           <line x1="12" y1="17" x2="12.01" y2="17" />
+        </svg>
+      )}
+      {icon === IconName.caretDown && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`feather feather-chevron-down ${css}`}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      )}
+      {icon === IconName.zap && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          aria-hidden="true"
+          className={`w-6 h-6 ${css}`}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+          ></path>
         </svg>
       )}
     </>
