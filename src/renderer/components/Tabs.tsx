@@ -110,11 +110,11 @@ export default function Tabs({
           />
           {/* button for new chat */}
           <button
-            className="flex items-center bg-tab-inactive-unfocused text-tab-inactive-unfocused hover:bg-tab-inactive hover:text-tab-inactive whitespace-nowrap p-2 text-xs"
+            className="flex gap-x-2 items-center bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap rounded p-2 pr-3 text-xs"
             onClick={createNewConversation}
           >
-            <Icon icon="plus" className="w-3 h-3" />
-            <span className="ml-2">New Chat</span>
+            <Icon icon="plus" className="w-4 h-4" />
+            New Chat
           </button>
         </div>
       </div>
@@ -180,10 +180,10 @@ export default function Tabs({
             {/* create new chat button */}
             <li className="flex items-center">
               <button
-                className="bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover flex whitespace-nowrap py-2 px-2 text-xs rounded"
+                className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-xs rounded"
                 onClick={createNewConversation}
               >
-                <Icon icon="plus" className="w-4 h-4 mr-1" />
+                <Icon icon="plus" className="w-4 h-4" />
                 New Chat
               </button>
             </li>
