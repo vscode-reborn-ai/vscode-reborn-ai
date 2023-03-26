@@ -456,11 +456,6 @@
           "description": "Enable the prompt prefix used for adhoc command for the selected code in the context menu",
           "order": 32
         },
-        "chatgpt.gpt3.apiKey": {
-          "type": "string",
-          "markdownDescription": "OpenAI API key. [Get your API Key from OpenAI](https://beta.openai.com/account/api-keys). \n\n**Please enable OpenAI API Key method to use this setting.**",
-          "order": 33
-        },
         "chatgpt.gpt3.apiBaseUrl": {
           "type": "string",
           "default": "https://api.openai.com",
