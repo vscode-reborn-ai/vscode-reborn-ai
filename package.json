@@ -561,6 +561,30 @@
           "default": false,
           "description": "If enabled, this will disable the ability to have multiple conversations at the same time. This reduces the UI clutter of chat tabs.",
           "order": 45
+        },
+        "chatgpt.verbosity": {
+          "type": "string",
+          "enum": [
+            "code",
+            "concise",
+            "normal",
+            "full"
+          ],
+          "default": "normal",
+          "description": "How verbose should ChatGPT's response be?",
+          "order": 46,
+          "enumItemLabels": [
+            "Code",
+            "Concise",
+            "Normal",
+            "Full"
+          ],
+          "markdownEnumDescriptions": [
+            "Only replies with code",
+            "Explanations are concise",
+            "Normal explanations",
+            "Detailed, full explanations"
+          ]
         }
       }
     }

@@ -7,7 +7,7 @@ import {
   updateConversationModel,
 } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { Conversation, Model } from "../types";
+import { Conversation, Model, Verbosity } from "../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
@@ -46,6 +46,10 @@ export default function ModelSelect({
         currentConversation?.model ??
         Model.gpt_35_turbo,
       autoscroll: true,
+      verbosity:
+        settings?.verbosity ??
+        currentConversation?.verbosity ??
+        Verbosity.normal,
     } as Conversation;
 
     dispatch(addConversation(newConversation));

@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "../hooks";
 import { Conversation, Role } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
+import VerbositySelect from "./VerbositySelect";
 
 export default ({
   conversation: currentConversation,
@@ -231,6 +232,10 @@ export default ({
               currentConversation={currentConversation}
               vscode={vscode}
               conversationList={conversationList}
+            />
+            <VerbositySelect
+              currentConversation={currentConversation}
+              vscode={vscode}
             />
           </div>
           {/* floating menu */}

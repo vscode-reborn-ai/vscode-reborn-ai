@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { ChatGPTAPI as ChatGPTAPI3 } from '../chatgpt-4.7.2/index';
 import Auth from "./auth";
 import { ChatGPTAPI as ChatGPTAPI35 } from './chatgpt-api';
-import { Conversation, DeltaMessage, Message, Model, Role } from "./renderer/types";
+import { Conversation, DeltaMessage, Message, Model, Role, Verbosity } from "./renderer/types";
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
@@ -242,6 +242,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				case "resetApiKey":
 					this.resetApiKey();
 					break;
+				case "setVerbosity":
+					const verbosity = data?.value ?? Verbosity.normal;
+					vscode.workspace.getConfiguration("chatgpt").update("verbosity", verbosity, vscode.ConfigurationTarget.Global);
+					break;
 				default:
 					console.log('Main Process - Uncaught message type: "' + data.type + '"');
 					break;
@@ -393,6 +397,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	public async prepareConversation(modelChanged = false): Promise<boolean> {
 		const state = this.context.globalState;
 		const configuration = vscode.workspace.getConfiguration("chatgpt");
+		const apiKey = await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') as string;
 
 		// Check if chat mode is enabled
 		if (this.chatMode) {
@@ -400,7 +405,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			if ((this.isGpt35Model && !this.apiGpt35) || (!this.isGpt35Model && !this.apiGpt3) || modelChanged) {
 
 				// Retrieve API key and other configuration parameters from vscode workspace settings
-				let apiKey = configuration.get("gpt3.apiKey") as string || state.get("chatgpt-gpt3-apiKey") as string;
 				const organization = configuration.get("gpt3.organization") as string;
 				const maxTokens = configuration.get("gpt3.maxTokens") as number;
 				const temperature = configuration.get("gpt3.temperature") as number;
@@ -409,6 +413,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 				// If API key is not found, prompt user to enter it manually or store it in session
 				if (!apiKey) {
+					// Not sure what happened to get to this point, but try resetting the API key
+					this.resetApiKey();
+
+					/*
 					vscode.window.showErrorMessage(
 						"Please add your API Key to use OpenAI official APIs. Storing the API Key in Settings is discouraged due to security reasons, though you can still opt-in to use it to persist it in settings. Instead you can also temporarily set the API Key one-time: You will need to re-enter after restarting the vs-code.",
 						"Store in session (Recommended)",
@@ -434,7 +442,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 									}
 								});
 						}
-					});
+					});*/
 
 					return false;
 				}
@@ -442,7 +450,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				// Initialize new instance of ChatGPTAPI35 or ChatGPTAPI3 with specified configuration parameters
 				if (this.isGpt35Model) {
 					this.apiGpt35 = new ChatGPTAPI35({
-						apiKey: await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') ?? '',
+						apiKey,
 						fetch,
 						apiBaseUrl: apiBaseUrl?.trim() || undefined,
 						organizationId: organization,
@@ -458,7 +466,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					});
 				} else {
 					this.apiGpt3 = new ChatGPTAPI3({
-						apiKey: await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') ?? '',
+						apiKey,
 						fetch: fetch,
 						apiBaseUrl: apiBaseUrl?.trim() || undefined,
 						organization,
@@ -487,7 +495,20 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		return true;
 	}
 
-	private processQuestion(question: string, code?: string, language?: string) {
+	private processQuestion(question: string, conversation: Conversation, code?: string, language?: string): string {
+		let verbosity = '';
+		switch (conversation.verbosity) {
+			case Verbosity.code:
+				verbosity = 'Do not include any explanations in your answer. Only respond with the code.';
+				break;
+			case Verbosity.concise:
+				verbosity = 'Your explanations should be as concise and to the point as possible.';
+				break;
+			case Verbosity.full:
+				verbosity = 'You should give full explanations that are as detailed as possible.';
+				break;
+		}
+
 		if (code !== null && code !== undefined) {
 			// If the lanague is not specified, get it from the active editor's language
 			if (!language) {
@@ -504,8 +525,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			}
 
 			// Add prompt prefix to the code if there was a code block selected
-			question = `${question}. ${language ? ` The following code is in ${language} programming language.` : ''} Code in question:\n\n###\n\n\`\`\`${language}\n${code}\n\`\`\``;
+			question = `${question}. ${verbosity} ${language ? ` The following code is in ${language} programming language.` : ''} Code in question:\n\n###\n\n\`\`\`${language}\n${code}\n\`\`\``;
+		} else {
+			question = `${question}. ${verbosity}`;
 		}
+
 		return question;
 	}
 
@@ -540,7 +564,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		this.response = '';
-		let question = this.processQuestion(prompt, options.code, options.language);
+		let question = this.processQuestion(prompt, options.conversation, options.code, options.language);
 		const responseInMarkdown = !this.isCodexModel;
 
 		// If the ChatGPT view is not in focus/visible; focus on it to render Q&A
