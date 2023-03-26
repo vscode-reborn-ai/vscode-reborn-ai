@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Tooltip } from "react-tooltip";
 import {
   addConversation,
   removeConversation,
@@ -14,10 +13,14 @@ export default function ModelSelect({
   currentConversation,
   conversationList,
   vscode,
+  className,
+  dropdownClassName,
 }: {
   currentConversation: Conversation;
   conversationList: Conversation[];
   vscode: any;
+  className?: string;
+  dropdownClassName?: string;
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -68,25 +71,26 @@ export default function ModelSelect({
   };
 
   const setModel = (model: Model) => {
-    if (currentConversation.model !== model) {
-      // Update settings
-      vscode.postMessage({
-        type: "setModel",
-        value: model,
-        conversationId: currentConversation.id,
-      });
+    // Update settings
+    vscode.postMessage({
+      type: "setModel",
+      value: model,
+      conversationId: currentConversation.id,
+    });
 
-      // Model can't change partway through a conversation, so we need to create a new one
-      if (currentConversation.messages.length > 0) {
-        createNewConversation();
-      } else {
-        dispatch(
-          updateConversationModel({
-            conversationId: currentConversation.id,
-            model,
-          })
-        );
-      }
+    // Model can't change partway through a conversation, so we need to create a new one
+    if (
+      currentConversation.model !== model &&
+      currentConversation.messages.length > 0
+    ) {
+      createNewConversation();
+    } else {
+      dispatch(
+        updateConversationModel({
+          conversationId: currentConversation.id,
+          model,
+        })
+      );
     }
 
     // Close the menu
@@ -95,79 +99,81 @@ export default function ModelSelect({
 
   return (
     <>
-      <button
-        data-tooltip-id="model-select-tooltip"
-        data-tooltip-content="Change the model being used"
-        className="rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap"
-        onClick={() => {
-          setShowModels(!showModels);
-        }}
-      >
-        <Icon icon="box" className="w-3 h-3 mr-1" />
-        {currentConversation.messages.length > 0
-          ? currentConversation.model
-          : settings?.gpt3?.model ?? "..."}
-      </button>
-      <Tooltip id="model-select-tooltip" place="top" delayShow={800} />
-      <div
-        className={`absolute bottom-8 items-center more-menu left-4 border text-menu bg-menu border-menu shadow-xl text-xs rounded
+      <div className={`${className}`}>
+        <button
+          className={`rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap`}
+          onClick={() => {
+            setShowModels(!showModels);
+          }}
+          data-tooltip-id="footer-tooltip"
+          data-tooltip-content="Change the AI model being used"
+        >
+          <Icon icon="box" className="w-3 h-3 mr-1" />
+          {currentConversation.messages.length > 0
+            ? currentConversation.model
+            : settings?.gpt3?.model ?? "..."}
+        </button>
+        <div
+          className={`absolute items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
+            ${dropdownClassName ? dropdownClassName : "bottom-8 left-4"}
           `}
-      >
-        {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo) && (
-          <button
-            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-            onClick={() => {
-              setModel(Model.gpt_35_turbo);
-            }}
-          >
-            GPT-3.5-TURBO (Fast, recommended)
-          </button>
-        )}
-        {chatGPTModels && chatGPTModels.includes(Model.gpt_4) ? (
-          <button
-            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-            onClick={() => {
-              setModel(Model.gpt_4);
-            }}
-          >
-            GPT-4 (Better and larger input, but slower and more pricey)
-          </button>
-        ) : (
-          <a
-            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-            href="https://openai.com/waitlist/gpt-4-api"
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => {
-              setShowModels(false);
-            }}
-          >
-            Looking for GPT-4? You need to sign up on the waitlist here
-          </a>
-        )}
-        {chatGPTModels && chatGPTModels.includes(Model.gpt_4_32k) ? (
-          <button
-            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-            onClick={() => {
-              setModel(Model.gpt_4_32k);
-            }}
-          >
-            GPT-4-32K (Extremely long input, but even more pricey than GPT-4)
-          </button>
-        ) : (
-          <a
-            className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-            href="https://community.openai.com/t/how-to-get-access-to-gpt-4-32k/"
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => {
-              setShowModels(false);
-            }}
-          >
-            OpenAI hasn't made GPT-4-32K available yet.
-          </a>
-        )}
+        >
+          {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo) && (
+            <button
+              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              onClick={() => {
+                setModel(Model.gpt_35_turbo);
+              }}
+            >
+              GPT-3.5-TURBO (Fast, recommended)
+            </button>
+          )}
+          {chatGPTModels && chatGPTModels.includes(Model.gpt_4) ? (
+            <button
+              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              onClick={() => {
+                setModel(Model.gpt_4);
+              }}
+            >
+              GPT-4 (Better and larger input, but slower and more pricey)
+            </button>
+          ) : (
+            <a
+              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              href="https://openai.com/waitlist/gpt-4-api"
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => {
+                setShowModels(false);
+              }}
+            >
+              Looking for GPT-4? You need to sign up on the waitlist here
+            </a>
+          )}
+          {chatGPTModels && chatGPTModels.includes(Model.gpt_4_32k) ? (
+            <button
+              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              onClick={() => {
+                setModel(Model.gpt_4_32k);
+              }}
+            >
+              GPT-4-32K (Extremely long input, but even more pricey than GPT-4)
+            </button>
+          ) : (
+            <a
+              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              href="https://community.openai.com/t/how-to-get-access-to-gpt-4-32k/"
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => {
+                setShowModels(false);
+              }}
+            >
+              OpenAI hasn't made GPT-4-32K available yet.
+            </a>
+          )}
+        </div>
       </div>
     </>
   );

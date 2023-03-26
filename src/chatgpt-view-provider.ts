@@ -8,6 +8,17 @@ import Auth from "./auth";
 import { ChatGPTAPI as ChatGPTAPI35 } from './chatgpt-api';
 import { Conversation, DeltaMessage, Message, Model, Role, Verbosity } from "./renderer/types";
 
+export interface ApiRequestOptions {
+	command: string,
+	conversation: Conversation,
+	lastBotMessageId?: string,
+	questionId?: string,
+	messageId?: string,
+	code?: string,
+	previousAnswer?: string,
+	language?: string;
+}
+
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
 
@@ -151,13 +162,22 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			console.log("Main Process - Received message from webview: ", data);
 			switch (data.type) {
 				case 'addFreeTextQuestion':
-					this.sendApiRequest(data.value, {
+					const apiRequestOptions = {
 						command: "freeText",
 						conversation: data.conversation ?? null,
 						questionId: data.questionId ?? null,
 						messageId: data.messageId ?? null,
 						lastBotMessageId: data.lastBotMessageId,
-					});
+					} as ApiRequestOptions;
+
+					// if includeEditorSelection is true, add the code snippet to the question
+					if (data?.includeEditorSelection) {
+						const selection = this.getActiveEditorSelection();
+						apiRequestOptions.code = selection?.content ?? "";
+						apiRequestOptions.language = selection?.language ?? "";
+					}
+
+					this.sendApiRequest(data.value, apiRequestOptions);
 					break;
 				case 'editCode':
 					const escapedString = (data.value as string).replace(/\$/g, '\\$');;
@@ -533,16 +553,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		return question;
 	}
 
-	public async sendApiRequest(prompt: string, options: {
-		command: string,
-		conversation: Conversation,
-		lastBotMessageId?: string,
-		questionId?: string,
-		messageId?: string,
-		code?: string,
-		previousAnswer?: string,
-		language?: string;
-	}) {
+	public async sendApiRequest(prompt: string, options: ApiRequestOptions) {
 		if (this.inProgress) {
 			// The AI is still thinking... Do not accept more questions.
 			this.logEvent('api-request-rejected', {
@@ -593,6 +604,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				autoScroll: this.autoScroll,
 				conversationId: options.conversation.id ?? 'no conversation id',
 				lastBotMessageId: options.lastBotMessageId ?? 'no last bot message id',
+				editorLanguage: options.language,
 			});
 		}
 
@@ -838,5 +850,26 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			text += possible.charAt(Math.floor(Math.random() * possible.length));
 		}
 		return text;
+	}
+
+
+	private getActiveEditorSelection(): {
+		content: string;
+		language: string;
+	}
+		| undefined {
+		const editor = vscode.window.activeTextEditor;
+
+		if (!editor) {
+			return;
+		}
+
+		const selection = editor.document.getText(editor.selection);
+		const language = editor.document.languageId;
+
+		return {
+			content: selection,
+			language
+		};
 	}
 }

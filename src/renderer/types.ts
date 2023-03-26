@@ -69,6 +69,8 @@ export interface Message extends OpenAIMessage {
     isError?: boolean;
     createdAt: string | number;
     updatedAt?: string | number;
+    // If this is a user message that uses code selected from the editor
+    questionCode?: string;
     // For continuing conversations
     parentMessageId?: string;
     // For streaming responses

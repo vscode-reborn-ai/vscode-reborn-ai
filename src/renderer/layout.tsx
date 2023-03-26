@@ -64,6 +64,9 @@ export default function Layout({ vscode }: { vscode: any }) {
       type: string;
       value?: any;
       id?: string;
+      // For questions
+      code?: string;
+      editorLanguage?: string;
       // In the case of the addResponse event
       done?: boolean;
       // In the case of the showInProgress event
@@ -115,6 +118,11 @@ export default function Layout({ vscode }: { vscode: any }) {
           content: data.value,
           createdAt: Date.now(),
           done: true,
+          questionCode: data?.code
+            ? (window as any)?.marked.parse(
+                `\`\`\`${data?.editorLanguage}\n${data.code}\n\`\`\``
+              )
+            : "",
         } as Message;
 
         dispatch(

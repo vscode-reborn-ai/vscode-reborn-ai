@@ -26,6 +26,7 @@ export default ({
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
+  const [includeEditorSelection, setIncludeEditorSelection] = useState(false);
 
   // on conversation change, focus on the question input, set the questoin input value to the user input
   React.useEffect(() => {
@@ -34,6 +35,54 @@ export default ({
       questionInputRef.current.value = currentConversation?.userInput ?? "";
     }
   }, [currentConversation]);
+
+  const askQuestion = () => {
+    const question = questionInputRef?.current?.value;
+
+    if (question && question.length > 0) {
+      vscode.postMessage({
+        type: "addFreeTextQuestion",
+        value: questionInputRef.current.value,
+        conversation: currentConversation,
+        conversationId: currentConversation.id,
+        lastBotMessageId:
+          currentConversation.messages.find((m) => m.role === Role.assistant)
+            ?.id ?? "",
+        includeEditorSelection,
+      });
+
+      questionInputRef.current.value = "";
+      questionInputRef.current.rows = 1;
+
+      // update the state
+      dispatch(
+        updateUserInput({
+          conversationId: currentConversation.id,
+          userInput: "",
+        })
+      );
+
+      // re-enable autoscroll to send the user to the bottom of the conversation
+      dispatch(
+        setAutoscroll({
+          conversationId: currentConversation.id,
+          autoscroll: true,
+        })
+      );
+
+      // If includeEditorSelection is enabled, disable it after the question is asked
+      if (includeEditorSelection) {
+        setIncludeEditorSelection(false);
+      }
+
+      // reset the textarea height
+      if (questionInputRef?.current?.parentNode) {
+        (
+          questionInputRef.current.parentNode as HTMLElement
+        ).dataset.replicatedValue = "";
+      }
+    }
+  };
 
   return (
     <footer
@@ -90,45 +139,7 @@ export default ({
                   !event.shiftKey &&
                   !event.isComposing
                 ) {
-                  if (question && question.length > 0) {
-                    vscode.postMessage({
-                      type: "addFreeTextQuestion",
-                      value: questionInputRef.current.value,
-                      conversation: currentConversation,
-                      conversationId: currentConversation.id,
-                      lastBotMessageId:
-                        currentConversation.messages.find(
-                          (m) => m.role === Role.assistant
-                        )?.id ?? "",
-                    });
-
-                    questionInputRef.current.value = "";
-                    questionInputRef.current.rows = 1;
-
-                    // update the state
-                    dispatch(
-                      updateUserInput({
-                        conversationId: currentConversation.id,
-                        userInput: "",
-                      })
-                    );
-
-                    // re-enable autoscroll to send the user to the bottom of the conversation
-                    dispatch(
-                      setAutoscroll({
-                        conversationId: currentConversation.id,
-                        autoscroll: true,
-                      })
-                    );
-
-                    // reset the textarea height
-                    const target = event.target as any;
-                    if (target) {
-                      target.parentNode.dataset.replicatedValue = "";
-                    }
-                  } else {
-                    console.warn("Ask - No target or target value");
-                  }
+                  askQuestion();
                 } else if (
                   event.key === "Enter" &&
                   event.shiftKey &&
@@ -177,46 +188,8 @@ export default ({
             <button
               title="Submit prompt"
               className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover"
-              onClick={(e) => {
-                const question = questionInputRef?.current?.value;
-
-                if (question && question.length > 0) {
-                  vscode.postMessage({
-                    type: "addFreeTextQuestion",
-                    value: questionInputRef.current.value,
-                    conversationId: currentConversation.id,
-                    conversation: currentConversation,
-                    lastBotMessageId:
-                      currentConversation.messages.find(
-                        (m) => m.role === Role.assistant
-                      )?.id ?? "",
-                  });
-
-                  questionInputRef.current.value = "";
-                  questionInputRef.current.rows = 1;
-
-                  // update the state
-                  dispatch(
-                    updateUserInput({
-                      conversationId: currentConversation.id,
-                      userInput: "",
-                    })
-                  );
-
-                  // reset the textarea height
-                  if (
-                    questionInputRef.current &&
-                    (questionInputRef.current?.parentNode as any)?.dataset
-                  ) {
-                    (
-                      questionInputRef.current.parentNode as any
-                    ).dataset.replicatedValue = "";
-                  }
-                } else {
-                  console.warn(
-                    "QuestionInputField - No target or target value"
-                  );
-                }
+              onClick={() => {
+                askQuestion();
               }}
             >
               Ask
@@ -232,11 +205,32 @@ export default ({
               currentConversation={currentConversation}
               vscode={vscode}
               conversationList={conversationList}
+              className="hidden xs:block"
             />
             <VerbositySelect
               currentConversation={currentConversation}
               vscode={vscode}
+              className="hidden xs:block"
             />
+            {/* include editor selection toggle */}
+            <button
+              className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
+                ${
+                  includeEditorSelection
+                    ? "bg-button text-button hover:bg-button-hover focus:bg-button-hover"
+                    : "hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary"
+                }
+              `}
+              data-tooltip-id="footer-tooltip"
+              data-tooltip-content="Include the code selected in your editor in the prompt?"
+              onClick={() => {
+                setIncludeEditorSelection(!includeEditorSelection);
+              }}
+            >
+              <Icon icon="plus" className="w-3 h-3" />
+              Use editor selection
+            </button>
+            <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
           {/* floating menu */}
           <div
@@ -248,7 +242,7 @@ export default ({
               <li>
                 <a
                   className={`flex gap-1 items-center py-0.5 px-1 whitespace-nowrap hover:underline focus-within:underline`}
-                  data-tooltip-id="footer-tooltip"
+                  data-tooltip-id="more-actions-tooltip"
                   data-tooltip-content="Report a bug or suggest a feature in GitHub"
                   href="https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/issues/new/choose"
                   target="_blank"
@@ -267,7 +261,7 @@ export default ({
                     : "hover:bg-button-secondary focus:bg-button-secondary"
                 }
               `}
-                    data-tooltip-id="footer-tooltip"
+                    data-tooltip-id="more-actions-tooltip"
                     data-tooltip-content="Toggle debug mode"
                     onClick={() => {
                       dispatch(setDebug(!debug));
@@ -287,7 +281,7 @@ export default ({
                       conversationId: currentConversation.id,
                     });
                   }}
-                  data-tooltip-id="footer-tooltip"
+                  data-tooltip-id="more-actions-tooltip"
                   data-tooltip-content="Open extension settings"
                 >
                   <Icon icon="cog" className="w-3 h-3" />
@@ -297,7 +291,7 @@ export default ({
               <li>
                 <button
                   className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
-                  data-tooltip-id="footer-tooltip"
+                  data-tooltip-id="more-actions-tooltip"
                   data-tooltip-content="Export the conversation to a markdown file"
                   onClick={() => {
                     vscode.postMessage({
@@ -314,7 +308,7 @@ export default ({
               <li>
                 <button
                   className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
-                  data-tooltip-id="footer-tooltip"
+                  data-tooltip-id="more-actions-tooltip"
                   data-tooltip-content="Reset your OpenAI API key"
                   onClick={() => {
                     vscode.postMessage({
@@ -326,7 +320,23 @@ export default ({
                   Reset API Key
                 </button>
               </li>
+              <li className="block xs:hidden">
+                <ModelSelect
+                  currentConversation={currentConversation}
+                  vscode={vscode}
+                  conversationList={conversationList}
+                  dropdownClassName="-right-[1px] w-[calc(100vw-2rem)] bottom-8"
+                />
+              </li>
+              <li className="block xs:hidden">
+                <VerbositySelect
+                  currentConversation={currentConversation}
+                  vscode={vscode}
+                  dropdownClassName="-right-[1px] w-[calc(100vw-2rem)] bottom-8"
+                />
+              </li>
             </ul>
+            <Tooltip id="more-actions-tooltip" place="left" delayShow={800} />
           </div>
           <div className="flex flex-row gap-2">
             <button
@@ -339,7 +349,6 @@ export default ({
               More Actions
             </button>
           </div>
-          <Tooltip id="footer-tooltip" place="left" delayShow={800} />
         </div>
       )}
     </footer>
