@@ -206,11 +206,13 @@ export default ({
               vscode={vscode}
               conversationList={conversationList}
               className="hidden xs:block"
+              tooltipId="footer-tooltip"
             />
             <VerbositySelect
               currentConversation={currentConversation}
               vscode={vscode}
               className="hidden xs:block"
+              tooltipId="footer-tooltip"
             />
             {/* include editor selection toggle */}
             <button
@@ -309,7 +311,7 @@ export default ({
                 <button
                   className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
                   data-tooltip-id="more-actions-tooltip"
-                  data-tooltip-content="Reset your OpenAI API key"
+                  data-tooltip-content="Reset your OpenAI API key."
                   onClick={() => {
                     vscode.postMessage({
                       type: "resetApiKey",
@@ -326,6 +328,7 @@ export default ({
                   vscode={vscode}
                   conversationList={conversationList}
                   dropdownClassName="-right-[1px] w-[calc(100vw-2rem)] bottom-8"
+                  tooltipId="more-actions-tooltip"
                 />
               </li>
               <li className="block xs:hidden">
@@ -333,11 +336,12 @@ export default ({
                   currentConversation={currentConversation}
                   vscode={vscode}
                   dropdownClassName="-right-[1px] w-[calc(100vw-2rem)] bottom-8"
+                  tooltipId="more-actions-tooltip"
                 />
               </li>
             </ul>
-            <Tooltip id="more-actions-tooltip" place="left" delayShow={800} />
           </div>
+          <Tooltip id="more-actions-tooltip" place="left" delayShow={800} />
           <div className="flex flex-row gap-2">
             <button
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"

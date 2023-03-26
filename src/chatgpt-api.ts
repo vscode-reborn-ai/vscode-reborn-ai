@@ -96,19 +96,30 @@ async function fetchSSE(url: RequestInfo | URL, options: {
       onMessage(event.data);
     }
   });
+
+  // Check if "getReader" function is available in "res?.body"
   if (!res?.body?.getReader) {
+    // If not, then the response body is probably a stream or something else that we need to handle differently
+    // First check if "on" and "read" functions are available in the body object
     const body = res.body as any;
     if (!body?.on || !body?.read) {
+      // Throw an error because the "fetch" implementation is unsupported
       throw new ChatGPTError('unsupported "fetch" implementation');
     }
+    // If "on" and "read" are both available, then listen for the "readable" event on the body object
     body.on("readable", () => {
+      // Read chunks of data from the body using the "read" function
       let chunk;
       while (null !== (chunk = body.read())) {
+        // Convert the chunk to a string and feed it to a parser
         parser.feed(chunk.toString());
       }
     });
   } else {
+    // If "getReader" function is available in "res?.body", then create an asynchronous iterator for reading the data
+    // This method works for readable streams and blob responses
     for await (const chunk of streamAsyncIterable(res.body)) {
+      // Convert each chunk to a string and feed it to the parser
       const str = new TextDecoder().decode(chunk);
       parser.feed(str);
     }

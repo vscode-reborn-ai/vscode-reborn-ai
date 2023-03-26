@@ -18,7 +18,7 @@ const initialState: ConversationState = {
       inProgress: false,
       model: Model.gpt_35_turbo,
       autoscroll: true,
-      verbosity: Verbosity.normal,
+      verbosity: Verbosity.normal, // TODO: this should use the user setting, probably need to do this in layout.tsx
     },
   },
   currentConversationId: `Chat-${Date.now()}`,
