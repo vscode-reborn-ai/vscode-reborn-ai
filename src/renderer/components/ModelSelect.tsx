@@ -114,7 +114,7 @@ export default function ModelSelect({
             : settings?.gpt3?.model ?? "..."}
         </button>
         <div
-          className={`absolute items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+          className={`absolute items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "bottom-8 left-4"}
           `}

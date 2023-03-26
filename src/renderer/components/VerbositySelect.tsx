@@ -63,7 +63,7 @@ export default function VerbositySelect({
           )}
         </button>
         <div
-          className={`fixed border text-menu bg-menu border-menu shadow-xl text-xs rounded
+          className={`fixed border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10
           ${showOptions ? "block" : "hidden"}
           ${dropdownClassName ? dropdownClassName : "bottom-8 -ml-11"}
         `}
