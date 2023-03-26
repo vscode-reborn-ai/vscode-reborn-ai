@@ -7,9 +7,13 @@ import Icon from "./Icon";
 export default function VerbositySelect({
   vscode,
   currentConversation,
+  className,
+  dropdownClassName,
 }: {
   vscode: any;
   currentConversation: Conversation;
+  className?: string;
+  dropdownClassName?: string;
 }) {
   const dispatch = useAppDispatch();
   const [showOptions, setShowOptions] = useState(false);
@@ -42,7 +46,11 @@ export default function VerbositySelect({
 
   return (
     <>
-      <div className="relative">
+      <div
+        className={`relative ${className}`}
+        data-tooltip-id="footer-tooltip"
+        data-tooltip-content="Change the verbosity of the AI's responses"
+      >
         <button
           className="rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap"
           onClick={() => {
@@ -55,8 +63,9 @@ export default function VerbositySelect({
           )}
         </button>
         <div
-          className={`fixed bottom-8 -ml-11 border text-menu bg-menu border-menu shadow-xl text-xs rounded
+          className={`fixed border text-menu bg-menu border-menu shadow-xl text-xs rounded
           ${showOptions ? "block" : "hidden"}
+          ${dropdownClassName ? dropdownClassName : "bottom-8 -ml-11"}
         `}
         >
           {Object.values(Verbosity).map((option) => (

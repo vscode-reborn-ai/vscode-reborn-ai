@@ -74,90 +74,6 @@ export default function Chat({
     }
   };
 
-  // TODO:
-  // document.addEventListener("click", (e: any) => {
-  //   const targetButton = e.target.closest("button");
-
-  //   if (targetButton?.classList?.contains("resend-element-ext")) {
-  //     e.preventDefault();
-  //     const question = targetButton.closest(".question-element-ext");
-  //     const elements = targetButton.nextElementSibling;
-
-  //     if (elements) {
-  //       elements.classList.remove("hidden");
-  //     }
-
-  //     if (question.lastElementChild) {
-  //       question.lastElementChild.setAttribute("contenteditable", true);
-  //     }
-
-  //     targetButton.classList.add("hidden");
-
-  //     return;
-  //   }
-
-  //   if (targetButton?.classList?.contains("send-element-ext")) {
-  //     e.preventDefault();
-
-  //     const question = targetButton.closest(".question-element-ext");
-  //     const elements = targetButton.closest(".send-cancel-elements-ext");
-  //     if (elements) {
-  //       const resendElement =
-  //         targetButton.parentElement.parentElement.firstElementChild;
-  //       elements.classList.add("hidden");
-  //       if (resendElement) {
-  //         resendElement.classList.remove("hidden");
-  //       }
-  //     }
-  //     if (question?.lastElementChild) {
-  //       question.lastElementChild.setAttribute("contenteditable", false);
-  //       const textContent = question.lastElementChild.textContent;
-  //       if (textContent?.length > 0) {
-  //         vscode.postMessage({
-  //           type: "addFreeTextQuestion",
-  //           value: textContent,
-  //         });
-  //       }
-  //     }
-
-  //     return;
-  //   }
-
-  //   if (targetButton?.classList?.contains("cancel-element-ext")) {
-  //     e.preventDefault();
-  //     const question = targetButton.closest(".question-element-ext");
-  //     const elements = targetButton.closest(".send-cancel-elements-ext");
-  //     const resendElement =
-  //       targetButton.parentElement.parentElement.firstElementChild;
-  //     if (elements && resendElement && question.lastElementChild) {
-  //       elements.classList.add("hidden");
-  //       resendElement.classList.remove("hidden");
-  //       question.lastElementChild.setAttribute("contenteditable", false);
-  //     }
-
-  //     return;
-  //   }
-  // });
-
-  const exportConversation = () => {
-    if ((window as any).turndownService) {
-      const turndownService = new (window as any).turndownService({
-        codeBlockStyle: "fenced",
-      });
-      turndownService.remove("no-export");
-      let markdown = turndownService.turndown(
-        document.getElementById("qa-list")
-      );
-
-      vscode.postMessage({
-        type: "openNew",
-        value: markdown,
-        language: "markdown",
-        conversationId: conversation.id,
-      });
-    }
-  };
-
   return (
     <>
       {debug && (
@@ -337,6 +253,14 @@ export default function Chat({
                             }
                           }
                         )}
+                      {message.questionCode && (
+                        <CodeBlock
+                          code={message.questionCode}
+                          conversationId={conversation.id}
+                          vscode={vscode}
+                          startCollapsed={true}
+                        />
+                      )}
                     </div>
                   )}
                   {debug && (
