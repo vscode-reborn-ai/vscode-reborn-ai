@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
+import { Role } from "../types";
 import CodeBlockActionsButton from "./CodeBlockActionsButton";
 
 interface CodeBlockProps {
@@ -8,6 +9,7 @@ interface CodeBlockProps {
   conversationId: string;
   vscode: any;
   startCollapsed?: boolean; // This is meant to be a literal that is passed in, and not a state variable
+  role?: Role;
 }
 
 export default ({
@@ -16,6 +18,7 @@ export default ({
   className = "",
   vscode,
   startCollapsed = false,
+  role,
 }: CodeBlockProps) => {
   const [codeTextContent, setCodeTextContent] = React.useState("");
   const [language, setLanguage] = React.useState("");
@@ -54,7 +57,7 @@ export default ({
       )}
       {/* Added hover styles for the collapsed UI */}
       {expanded && (
-        <div className="absolute top-[0.4em] right-2 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+        <div className="absolute z-10 top-[0.4em] right-2 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
           <CodeBlockActionsButton
             vscode={vscode}
             codeTextContent={codeTextContent}
@@ -108,31 +111,36 @@ export default ({
       )}
       {/* Render a collapsed UI if the prop is set to true */}
       {!expanded && (
-        <div className="absolute inset-0 p-2 flex items-end justify-center">
-          <button
-            className="flex gap-x-1 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
-            onClick={() => setExpanded(!expanded)}
-          >
-            {/* <Icon icon="caretDown" className="w-4 h-4" /> */}
-            Expand
-          </button>
+        <div className="opacity-0 group-hover:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
+          <div className="bg-input rounded">
+            <button
+              className="flex gap-x-1 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {/* <Icon icon="caretDown" className="w-4 h-4" /> */}
+              Expand
+            </button>
+          </div>
         </div>
       )}
       {startCollapsed && expanded && (
-        <div className="absolute inset-0 p-2 flex items-end justify-center">
-          <button
-            className="flex gap-x-1 top-0 right-0 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
-            onClick={() => setExpanded(!expanded)}
-          >
-            {/* <Icon icon="caretDown" className="w-4 h-4 transform rotate-180" /> */}
-            Collapse
-          </button>
+        <div className="opacity-0 group-hover:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
+          <div className="bg-input rounded">
+            <button
+              className="flex gap-x-1 top-0 right-0 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
+              onClick={() => setExpanded(!expanded)}
+            >
+              {/* <Icon icon="caretDown" className="w-4 h-4 transform rotate-180" /> */}
+              Collapse
+            </button>
+          </div>
         </div>
       )}
       <code
-        className={`block px-4 py-2 overflow-x-auto font-code text-code ${
-          expanded ? "" : "h-14"
-        }`}
+        className={`block px-4 py-2 overflow-x-auto font-code text-code
+          ${expanded ? "" : "h-14 collapsed-code-block"}
+          ${role === Role.user ? "bg-sidebar" : ""}
+        `}
         ref={codeRef}
         dangerouslySetInnerHTML={{
           __html: code

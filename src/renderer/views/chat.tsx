@@ -258,7 +258,10 @@ export default function Chat({
                           code={message.questionCode}
                           conversationId={conversation.id}
                           vscode={vscode}
-                          startCollapsed={true}
+                          startCollapsed={
+                            message.questionCode.split("\n").length > 3
+                          }
+                          role={Role.user}
                         />
                       )}
                     </div>

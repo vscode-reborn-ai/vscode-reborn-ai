@@ -218,7 +218,7 @@ export default ({
                 ${
                   includeEditorSelection
                     ? "bg-button text-button"
-                    : "text-button-secondary button-secondary hover:bg-button-secondary focus:bg-button-secondary"
+                    : "hover:text-button-secondary focus:text-button-secondary"
                 }
               `}
               data-tooltip-id="footer-tooltip"
