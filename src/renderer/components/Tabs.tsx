@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addConversation, removeConversation } from "../actions/conversation";
-import { useAppDispatch } from "../hooks";
-import { Conversation } from "../types";
+import { useAppDispatch, useAppSelector } from "../hooks";
+import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
 import TabsDropdown from "./TabsDropdown";
 
@@ -19,6 +19,7 @@ export default function Tabs({
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const [tabs, setTabs] = useState(
     [] as {
       name: string;
@@ -84,6 +85,10 @@ export default function Tabs({
       createdAt: Date.now(),
       model: currentConversation.model,
       autoscroll: true,
+      verbosity:
+        settings?.verbosity ??
+        currentConversation?.verbosity ??
+        Verbosity.normal,
     } as Conversation;
 
     dispatch(addConversation(newConversation));

@@ -1,15 +1,21 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useLayoutEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import { v4 as uuidv4 } from "uuid";
 import "../../styles/main.css";
-import { setChatGPTModels, setExtensionSettings } from "./actions/app";
+import {
+  ApiKeyStatus,
+  setApiKeyStatus,
+  setChatGPTModels,
+  setExtensionSettings,
+} from "./actions/app";
 import {
   addMessage,
   setCurrentConversation,
   setInProgress,
   updateMessageContent,
 } from "./actions/conversation";
+import ApiKeySetup from "./components/ApiKeySetup";
 import Tabs from "./components/Tabs";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { Conversation, Message, Model, Role } from "./types";
@@ -27,16 +33,28 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const debug = useAppSelector((state: any) => state.app.debug);
+  const apiKeyStatus = useAppSelector((state: any) => state.app?.apiKeyStatus);
+  const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
 
-  useEffect(() => {
-    // ask for the extension settings
-    vscode.postMessage({
-      type: "getSettings",
-    });
+  useLayoutEffect(() => {
+    // Ask for the extension settings
+    if (Object.keys(settings).length === 0) {
+      vscode.postMessage({
+        type: "getSettings",
+      });
+    }
     // Ask for ChatGPT models
-    vscode.postMessage({
-      type: "getChatGPTModels",
-    });
+    if (chatGPTModels.length === 0) {
+      vscode.postMessage({
+        type: "getChatGPTModels",
+      });
+    }
+    if (apiKeyStatus === ApiKeyStatus.Unknown) {
+      // Ask for the API key status
+      vscode.postMessage({
+        type: "getApiKeyStatus",
+      });
+    }
   }, []);
 
   // Handle messages sent from the extension to the webview
@@ -205,11 +223,6 @@ export default function Layout({ vscode }: { vscode: any }) {
         }
 
         dispatch(setExtensionSettings({ newSettings: data.value }));
-
-        // Ask for ChatGPT models (api key may have changed)
-        vscode.postMessage({
-          type: "getChatGPTModels",
-        });
         break;
       case "chatGPTModels":
         if (debug) {
@@ -228,6 +241,27 @@ export default function Layout({ vscode }: { vscode: any }) {
             "Renderer - Could not get ChatGPT models, data.value is not an array"
           );
         }
+        break;
+      case "updateApiKeyStatus":
+        let keyStatus: ApiKeyStatus;
+
+        if (data.value) {
+          keyStatus = ApiKeyStatus.Valid;
+        } else if (apiKeyStatus === ApiKeyStatus.Unknown) {
+          keyStatus = ApiKeyStatus.Unset;
+        } else if (apiKeyStatus === ApiKeyStatus.Pending) {
+          keyStatus = ApiKeyStatus.Invalid;
+        } else if (apiKeyStatus === ApiKeyStatus.Valid) {
+          keyStatus = ApiKeyStatus.Unset;
+        } else {
+          keyStatus = apiKeyStatus;
+        }
+
+        if (debug) {
+          console.log("Renderer - API key status:", keyStatus);
+        }
+
+        dispatch(setApiKeyStatus(keyStatus));
         break;
       default:
         console.log('Renderer - Uncaught message type: "' + data.type + '"');
@@ -265,42 +299,49 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   return (
     <>
-      {!settings?.minimalUI && !settings?.disableMultipleConversations && (
-        <Tabs
-          conversationList={conversationList}
-          currentConversationId={currentConversationId}
-        />
-      )}
-      <Routes>
-        {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
-        {/* <Route path="/actions" element={<Actions vscode={vscode} />} /> */}
-        {conversationList &&
-          conversationList.map &&
-          conversationList.map((conversation: Conversation) => (
+      {apiKeyStatus === ApiKeyStatus.Unknown ||
+      apiKeyStatus === ApiKeyStatus.Valid ? (
+        <>
+          {!settings?.minimalUI && !settings?.disableMultipleConversations && (
+            <Tabs
+              conversationList={conversationList}
+              currentConversationId={currentConversationId}
+            />
+          )}
+          <Routes>
+            {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
+            {/* <Route path="/actions" element={<Actions vscode={vscode} />} /> */}
+            {conversationList &&
+              conversationList.map &&
+              conversationList.map((conversation: Conversation) => (
+                <Route
+                  key={conversation.id}
+                  path={`/chat/${conversation.id}`}
+                  index={conversation.id === currentConversationId}
+                  element={
+                    <Chat
+                      conversation={conversation}
+                      vscode={vscode}
+                      conversationList={conversationList}
+                    />
+                  }
+                />
+              ))}
             <Route
-              key={conversation.id}
-              path={`/chat/${conversation.id}`}
-              index={conversation.id === currentConversationId}
+              path="/"
               element={
-                <Chat
-                  conversation={conversation}
-                  vscode={vscode}
-                  conversationList={conversationList}
+                <Navigate
+                  to={`/chat/${conversationList[0]?.id ?? "chat"}`}
+                  replace={true}
                 />
               }
             />
-          ))}
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to={`/chat/${conversationList[0]?.id ?? "chat"}`}
-              replace={true}
-            />
-          }
-        />
-        {/* <Route path="/options" element={<Options vscode={vscode} />} /> */}
-      </Routes>
+            {/* <Route path="/options" element={<Options vscode={vscode} />} /> */}
+          </Routes>
+        </>
+      ) : (
+        <ApiKeySetup vscode={vscode} />
+      )}
     </>
   );
 }

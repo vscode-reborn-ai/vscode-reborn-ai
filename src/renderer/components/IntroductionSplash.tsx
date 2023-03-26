@@ -23,7 +23,7 @@ export default function ({
 
   return (
     <div
-      className={`flex flex-col justify-start gap-3.5 h-full items-center px-6 pt-6 pb-24 w-full relative login-screen overflow-auto ${className}`}
+      className={`flex flex-col justify-start gap-3.5 h-full items-center px-6 pt-2 pb-24 w-full relative login-screen overflow-auto ${className}`}
     >
       {!ignoreWarningScreen && chatGPTModels.length === 0 ? (
         <>
@@ -51,8 +51,8 @@ export default function ({
       ) : (
         <>
           <div className="flex flex-row items-center gap-2">
-            <Icon icon="zap" className="w-16 h-16" />
-            <h2>Features</h2>
+            <Icon icon="zap" className="w-8 h-8" />
+            <h2 className="text-lg font-bold">Features</h2>
           </div>
           <ul className="w-full max-w-lg grid grid-cols-1 xs:grid-cols-2 gap-3.5 text-xs">
             <li className="features-li w-full border p-3 rounded-md text-center">

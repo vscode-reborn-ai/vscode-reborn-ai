@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { setDebug } from "../actions/app";
 import {
@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "../hooks";
 import { Conversation, Role } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
+import VerbositySelect from "./VerbositySelect";
 
 export default ({
   conversation: currentConversation,
@@ -24,6 +25,7 @@ export default ({
   const debug = useAppSelector((state: any) => state.app.debug);
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
+  const [showMoreActions, setShowMoreActions] = useState(false);
 
   // on conversation change, focus on the question input, set the questoin input value to the user input
   React.useEffect(() => {
@@ -231,68 +233,113 @@ export default ({
               vscode={vscode}
               conversationList={conversationList}
             />
+            <VerbositySelect
+              currentConversation={currentConversation}
+              vscode={vscode}
+            />
           </div>
-          <div className="flex flex-row gap-2">
-            <a
-              className={`flex gap-1 items-center py-0.5 px-1 whitespace-nowrap hover:underline focus-within:underline`}
-              data-tooltip-id="footer-tooltip"
-              data-tooltip-content="Report a bug or suggest a feature in GitHub"
-              href="https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/issues/new/choose"
-              target="_blank"
-            >
-              <Icon icon="help" className="w-3 h-3" />
-              Feedback
-            </a>
-            {process.env.NODE_ENV === "development" && (
-              <button
-                className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
+          {/* floating menu */}
+          <div
+            className={`fixed bottom-8 right-4 p-2 bg-menu rounded border border-menu ${
+              showMoreActions ? "" : "hidden"
+            }`}
+          >
+            <ul className="flex flex-col gap-2">
+              <li>
+                <a
+                  className={`flex gap-1 items-center py-0.5 px-1 whitespace-nowrap hover:underline focus-within:underline`}
+                  data-tooltip-id="footer-tooltip"
+                  data-tooltip-content="Report a bug or suggest a feature in GitHub"
+                  href="https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/issues/new/choose"
+                  target="_blank"
+                >
+                  <Icon icon="help" className="w-3 h-3" />
+                  Feedback
+                </a>
+              </li>
+              <li>
+                {process.env.NODE_ENV === "development" && (
+                  <button
+                    className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
                 ${
                   debug
                     ? "bg-red-900 text-white"
                     : "hover:bg-button-secondary focus:bg-button-secondary"
                 }
               `}
-                data-tooltip-id="footer-tooltip"
-                data-tooltip-content="Toggle debug mode"
-                onClick={() => {
-                  dispatch(setDebug(!debug));
-                }}
-              >
-                <Icon icon="box" className="w-3 h-3" />
-                Debug
-              </button>
-            )}
+                    data-tooltip-id="footer-tooltip"
+                    data-tooltip-content="Toggle debug mode"
+                    onClick={() => {
+                      dispatch(setDebug(!debug));
+                    }}
+                  >
+                    <Icon icon="box" className="w-3 h-3" />
+                    Debug
+                  </button>
+                )}
+              </li>
+              <li>
+                <button
+                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
+                  onClick={() => {
+                    vscode.postMessage({
+                      type: "openSettings",
+                      conversationId: currentConversation.id,
+                    });
+                  }}
+                  data-tooltip-id="footer-tooltip"
+                  data-tooltip-content="Open extension settings"
+                >
+                  <Icon icon="cog" className="w-3 h-3" />
+                  Settings
+                </button>
+              </li>
+              <li>
+                <button
+                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
+                  data-tooltip-id="footer-tooltip"
+                  data-tooltip-content="Export the conversation to a markdown file"
+                  onClick={() => {
+                    vscode.postMessage({
+                      type: "exportToMarkdown",
+                      conversationId: currentConversation.id,
+                      conversation: currentConversation,
+                    });
+                  }}
+                >
+                  <Icon icon="download" className="w-3 h-3" />
+                  Export
+                </button>
+              </li>
+              <li>
+                <button
+                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
+                  data-tooltip-id="footer-tooltip"
+                  data-tooltip-content="Reset your OpenAI API key"
+                  onClick={() => {
+                    vscode.postMessage({
+                      type: "resetApiKey",
+                    });
+                  }}
+                >
+                  <Icon icon="cancel" className="w-3 h-3" />
+                  Reset API Key
+                </button>
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-row gap-2">
             <button
-              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
+              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
               onClick={() => {
-                vscode.postMessage({
-                  type: "openSettings",
-                  conversationId: currentConversation.id,
-                });
-              }}
-              data-tooltip-id="footer-tooltip"
-              data-tooltip-content="Open extension settings"
-            >
-              <Icon icon="cog" className="w-3 h-3" />
-              Settings
-            </button>
-            <button
-              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
-              data-tooltip-id="footer-tooltip"
-              data-tooltip-content="Export the conversation to a markdown file"
-              onClick={() => {
-                vscode.postMessage({
-                  type: "exportToMarkdown",
-                  conversationId: currentConversation.id,
-                  conversation: currentConversation,
-                });
+                setShowMoreActions(!showMoreActions);
               }}
             >
-              <Icon icon="download" className="w-3 h-3" />
-              Export
+              <Icon icon="zap" className="w-3.5 h-3.5" />
+              More Actions
             </button>
           </div>
-          <Tooltip id="footer-tooltip" place="top" delayShow={800} />
+          <Tooltip id="footer-tooltip" place="left" delayShow={800} />
         </div>
       )}
     </footer>

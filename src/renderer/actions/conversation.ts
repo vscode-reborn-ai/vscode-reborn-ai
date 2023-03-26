@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Conversation, Message, Model } from "../types";
+import { Conversation, Message, Model, Verbosity } from "../types";
 
 export interface ConversationState {
   conversations: {
@@ -18,6 +18,7 @@ const initialState: ConversationState = {
       inProgress: false,
       model: Model.gpt_35_turbo,
       autoscroll: true,
+      verbosity: Verbosity.normal,
     },
   },
   currentConversationId: `Chat-${Date.now()}`,
@@ -171,6 +172,17 @@ export const conversationSlice = createSlice({
 
       state.conversations[conversationId].autoscroll = autoscroll;
     },
+    setVerbosity: (
+      state,
+      action: PayloadAction<{
+        conversationId: string;
+        verbosity: Verbosity;
+      }>
+    ) => {
+      const { conversationId, verbosity } = action.payload;
+
+      state.conversations[conversationId].verbosity = verbosity;
+    },
     updateUserInput: (
       state,
       action: PayloadAction<{
@@ -181,7 +193,7 @@ export const conversationSlice = createSlice({
       const { conversationId, userInput } = action.payload;
 
       state.conversations[conversationId].userInput = userInput;
-    }
+    },
   },
 });
 
@@ -197,6 +209,7 @@ export const {
   setCurrentConversation,
   setInProgress,
   setAutoscroll,
+  setVerbosity,
   updateUserInput,
 } = conversationSlice.actions;
 

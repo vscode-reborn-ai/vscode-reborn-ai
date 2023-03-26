@@ -80,6 +80,13 @@ export interface DeltaMessage extends Message {
     detail?: any;
 }
 
+export enum Verbosity {
+    code = "code",
+    concise = "concise",
+    normal = "normal",
+    full = "full"
+}
+
 export interface Conversation {
     id: string;
     createdAt: string | number;
@@ -88,6 +95,7 @@ export interface Conversation {
     model: Model;
     title?: string;
     autoscroll: boolean;
+    verbosity?: Verbosity;
     // allow the user to switch tabs while working on a prompt
     userInput?: string;
 }

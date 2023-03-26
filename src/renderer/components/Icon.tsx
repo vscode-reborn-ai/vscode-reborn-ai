@@ -315,7 +315,7 @@ export default (props: { icon: string; className: string }) => {
           className={`${css}`}
         >
           {/* By Sam Herbert (@sherb), for everyone. More @ http://goo.gl/7AJzbL */}
-          <g fill="none" fill-rule="evenodd" stroke-width="2">
+          <g fill="none" fillRule="evenodd" strokeWidth="2">
             <circle cx="22" cy="22" r="1">
               <animate
                 attributeName="r"
@@ -401,7 +401,7 @@ export default (props: { icon: string; className: string }) => {
           strokeWidth="1.5"
           stroke="currentColor"
           aria-hidden="true"
-          className={`w-6 h-6 ${css}`}
+          className={`${css}`}
         >
           <path
             strokeLinecap="round"

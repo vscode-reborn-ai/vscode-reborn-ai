@@ -7,7 +7,7 @@ import {
   updateConversationModel,
 } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { Conversation, Model } from "../types";
+import { Conversation, Model, Verbosity } from "../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
@@ -46,6 +46,10 @@ export default function ModelSelect({
         currentConversation?.model ??
         Model.gpt_35_turbo,
       autoscroll: true,
+      verbosity:
+        settings?.verbosity ??
+        currentConversation?.verbosity ??
+        Verbosity.normal,
     } as Conversation;
 
     dispatch(addConversation(newConversation));
@@ -106,7 +110,7 @@ export default function ModelSelect({
       </button>
       <Tooltip id="model-select-tooltip" place="top" delayShow={800} />
       <div
-        className={`absolute bottom-12 items-center more-menu left-4 border text-menu bg-menu border-menu shadow-xl text-xs
+        className={`absolute bottom-8 items-center more-menu left-4 border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
           `}
       >
