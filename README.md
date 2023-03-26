@@ -31,7 +31,7 @@ As a FOSS advocate, I feel compelled to note that Genie AI is not open-source an
 
 ### GPT-4
 
-**Required** - You must have access to GPT-4 via API. OpenAI's waitlist for GPT-4 API access is here: https://openai.com/waitlist/gpt-4-api
+**Required** - You must have access to GPT-4 via API. OpenAI's waitlist for GPT-4 API access is here: <https://openai.com/waitlist/gpt-4-api>
 
 If you're part of an organization account that has GPT-4 access, be sure to set the `Organization ID`. (This will also charge the organization account). If you're wondering about the 32,000 token version of GPT-4, OpenAI hasn't made that model available yet.
 
@@ -112,12 +112,12 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## Tech
 
+- [Yarn](https://yarnpkg.com/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [VSCode Extension API](https://code.visualstudio.com/api)
-
-### UI
-
 - [React](https://reactjs.org/)
+- [Redux](https://redux.js.org/)
+- [React Router](https://reactrouter.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
 
 - The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
@@ -129,20 +129,31 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### March 26, 2023
+
+**Quality of Life:**
+
+- Added the "Disable Multiple Conversations" setting. This hides the chat tabs and only a single chat will be used.
+- Added the "Minimal UI" setting. This will hide both the chat tabs and the smaller buttons below the chat input. Future UI additions will also be hidden with this toggle on.
+
 ### March 25, 2023 (combination of several updates this week)
 
 **UI**
+
 - General UI look/feel updates were made. Note that these UI upates have a heavy focus on VSCode's UI guidelines and respecting each theme's color palette.
 - Multiple chats has been added.
 - Added a model selector. This will only show the models your API key has access to and links to the GPT-4 waitlist if your key does not have access.
 
 **Behind the scenes**
+
 - A major refactor to use React+Redux for the UI has been completed. This will make it easier to build a dynamic UI.
 
 **Quality of Life:**
+
 - Updated scroll behavior - you can now scroll up as code is being generated, or scroll back to the bottom to "re-lock" the auto-scroll.
 - When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
 - Configuring the "System message" is now an extension setting option.
 
 **Bug Fixes:**
+
 - Right-click copying code blocks should work now.
