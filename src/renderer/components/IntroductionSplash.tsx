@@ -10,6 +10,7 @@ export default function ({
   className?: string;
 }) {
   const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
+  const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const [ignoreWarningScreen, setIgnoreWarningScreen] = React.useState(true);
 
   // Ignore warning screen for 3 seconds as the extension gets what models are available
@@ -67,16 +68,18 @@ export default function ({
               Run multiple chats at once
             </li>
           </ul>
-          <p className="max-w-sm text-center text-[0.7rem] self-center">
-            This is an API-only fork of{" "}
-            <a href="https://github.com/gencay">@gencay's</a> discontinued{" "}
-            <a
-              className="whitespace-nowrap"
-              href="https://github.com/gencay/vscode-chatgpt"
-            >
-              VSCode-ChatGPT extension.
-            </a>
-          </p>
+          {!settings?.minimalUI && (
+            <p className="max-w-sm text-center text-[0.7rem] self-center">
+              This is an API-only fork of{" "}
+              <a href="https://github.com/gencay">@gencay's</a> discontinued{" "}
+              <a
+                className="whitespace-nowrap"
+                href="https://github.com/gencay/vscode-chatgpt"
+              >
+                VSCode-ChatGPT extension.
+              </a>
+            </p>
+          )}
         </>
       )}
     </div>

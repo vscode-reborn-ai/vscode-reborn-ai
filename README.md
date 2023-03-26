@@ -15,7 +15,7 @@ Or build this extension yourself (see below).
 
 ## About this fork
 
-This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it. Note that this version is API-only, the browser code was not open-sourced by Gencay (due to OpenAI ToS issue), and I have no intention of violating OpenAI's ToS either.
+This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it. Note that this version is API-only, the browser code was not open-sourced by Gencay (due to OpenAI ToS issue).
 
 ### The new "ChatGPT: Genie AI" extension
 
@@ -23,19 +23,17 @@ Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuati
 
 ### What does that mean for this fork?
 
-I'll be continuing work on this extension, I have some ideas for features that focus on automation. This means there's fairly major changes on the horizon in the name of a better dev experience. I suggest building from [gencay/vscode-gencay](https://github.com/gencay/vscode-chatgpt) source if you do not want an extension that may occasionally break as it evolves.
+I will be continuing work on this extension, I have some ideas for features that focus on automation. Please understand that this means there are fairly major changes on the horizon in the name of a better dev experience. I suggest building from [gencay/vscode-gencay](https://github.com/gencay/vscode-chatgpt) source if you do not want an extension that may occasionally break as it evolves.
 
 ### FOSS
 
-As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it may allow Genie AI to become far more powerful and useful to users. But, you can expect "Reborn" to stay FOSS for as long as I am maintainer, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
+As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it will allow the Genie AI team to spend more time improving their extension. But, you can expect "Reborn" to stay FOSS, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
 
 ### GPT-4
 
-**Note:** You must have access to GPT-4 via API key to use GPT-4. You would've signed up on the GPT-4 waitlist and received an email that you now have GPT-4 API access. This is **not** the same as having access to GPT-4 at chat.openai.com, that is not considered "API access".
+**Required** - You must have access to GPT-4 via API. OpenAI's waitlist for GPT-4 API access is here: <https://openai.com/waitlist/gpt-4-api>
 
-To use GPT-4 use an API key that has access to GPT-4, if you're part of an organization that has access to GPT-4, set the organization ID in the settings. Note that GPT-4 is noticeably slower than GPT-3.5-turbo. Change the `chatgpt.gpt3.model` setting to `gpt-4` to use GPT-4, or set it to `gpt-3.5-turbo` to use GPT-3.5-turbo. You don't have to "Start new chat" to use a different model, the next message you send will use the new model.
-
-This extension has an option for `gpt-4-32k`, but at this moment users that have access to `gpt-4` don't seem to have access to `gpt-4-32k` yet. It's still an option to allow users to use the 32k version the moment it's made available by OpenAI.
+If you're part of an organization account that has GPT-4 access, be sure to set the `Organization ID`. (This will also charge the organization account). If you're wondering about the 32,000 token version of GPT-4, OpenAI hasn't made that model available yet.
 
 ## Installation
 
@@ -112,20 +110,14 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [ ] Long-term - AI-generated git commit messages
 - [ ] TBD - Support davinci models in place of ChatGPT
 
-## Contributing
-
-If you want to contribute to the vscode-chatgpt-reborn project, follow the project's contribution guidelines and submit pull requests or open issues on the GitHub repository:
-
-[https://github.com/christopher-hayes/vscode-chatgpt-reborn](https://github.com/christopher-hayes/vscode-chatgpt-reborn)
-
 ## Tech
 
+- [Yarn](https://yarnpkg.com/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [VSCode Extension API](https://code.visualstudio.com/api)
-
-### UI
-
 - [React](https://reactjs.org/)
+- [Redux](https://redux.js.org/)
+- [React Router](https://reactrouter.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
 
 - The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
@@ -134,3 +126,34 @@ If you want to contribute to the vscode-chatgpt-reborn project, follow the proje
 ## License
 
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+### March 26, 2023
+
+**Quality of Life:**
+
+- Added the "Disable Multiple Conversations" setting. This hides the chat tabs and only a single chat will be used.
+- Added the "Minimal UI" setting. This will hide both the chat tabs and the smaller buttons below the chat input. Future UI additions will also be hidden with this toggle on.
+
+### March 25, 2023 (combination of several updates this week)
+
+**UI**
+
+- General UI look/feel updates were made. Note that these UI upates have a heavy focus on VSCode's UI guidelines and respecting each theme's color palette.
+- Multiple chats has been added.
+- Added a model selector. This will only show the models your API key has access to and links to the GPT-4 waitlist if your key does not have access.
+
+**Behind the scenes**
+
+- A major refactor to use React+Redux for the UI has been completed. This will make it easier to build a dynamic UI.
+
+**Quality of Life:**
+
+- Updated scroll behavior - you can now scroll up as code is being generated, or scroll back to the bottom to "re-lock" the auto-scroll.
+- When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
+- Configuring the "System message" is now an extension setting option.
+
+**Bug Fixes:**
+
+- Right-click copying code blocks should work now.

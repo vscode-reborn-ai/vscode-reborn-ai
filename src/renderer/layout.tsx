@@ -24,6 +24,8 @@ export default function Layout({ vscode }: { vscode: any }) {
   const conversationList = Object.values(
     useAppSelector((state: any) => state.conversation.conversations)
   ) as Conversation[];
+
+  const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const debug = useAppSelector((state: any) => state.app.debug);
 
   useEffect(() => {
@@ -263,10 +265,12 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   return (
     <>
-      <Tabs
-        conversationList={conversationList}
-        currentConversationId={currentConversationId}
-      />
+      {!settings?.minimalUI && !settings?.disableMultipleConversations && (
+        <Tabs
+          conversationList={conversationList}
+          currentConversationId={currentConversationId}
+        />
+      )}
       <Routes>
         {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
         {/* <Route path="/actions" element={<Actions vscode={vscode} />} /> */}

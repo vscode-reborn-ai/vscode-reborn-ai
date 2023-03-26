@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import {
   addConversation,
+  removeConversation,
   updateConversationModel,
 } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -51,6 +52,15 @@ export default function ModelSelect({
 
     // switch to the new conversation
     navigate(`/chat/${encodeURI(newConversation.id)}`);
+
+    // If multiple conversations are disabled, remove all but the new conversation
+    if (settings?.disableMultipleConversations) {
+      for (const conversation of conversationList) {
+        if (conversation.id !== newConversation.id) {
+          dispatch(removeConversation(conversation.id));
+        }
+      }
+    }
   };
 
   const setModel = (model: Model) => {

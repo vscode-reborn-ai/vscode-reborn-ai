@@ -22,6 +22,7 @@ export default ({
 }) => {
   const dispatch = useAppDispatch();
   const debug = useAppSelector((state: any) => state.app.debug);
+  const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
 
   // on conversation change, focus on the question input, set the questoin input value to the user input
@@ -33,7 +34,11 @@ export default ({
   }, [currentConversation]);
 
   return (
-    <footer className="fixed bottom-0 w-full flex flex-col gap-y-1 pt-2 bg">
+    <footer
+      className={`fixed bottom-0 w-full flex flex-col gap-y-1 pt-2 bg
+      ${settings?.minimalUI ? "pb-2" : "pb-1"}
+    `}
+    >
       <div className="px-4 flex items-center">
         <div className="flex-1 textarea-wrapper">
           {currentConversation.inProgress && (
@@ -218,97 +223,78 @@ export default ({
           )}
         </div>
       </div>
-      <div className="flex flex-row justify-between gap-2 pb-1 px-4 overflow-x-auto">
-        <div className="flex flex-row gap-2">
-          <ModelSelect
-            currentConversation={currentConversation}
-            vscode={vscode}
-            conversationList={conversationList}
-          />
-        </div>
-        <div className="flex flex-row gap-2">
-          <a
-            className={`flex gap-1 items-center py-0.5 px-1 whitespace-nowrap hover:underline focus-within:underline`}
-            data-tooltip-id="footer-tooltip"
-            data-tooltip-content="Report a bug or suggest a feature in GitHub"
-            href="https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/issues/new/choose"
-            target="_blank"
-          >
-            <Icon icon="help" className="w-3 h-3" />
-            Feedback
-          </a>
-          {process.env.NODE_ENV === "development" && (
-            <button
-              className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
+      {!settings?.minimalUI && (
+        <div className="flex flex-row justify-between gap-2 px-4 overflow-x-auto">
+          <div className="flex flex-row gap-2">
+            <ModelSelect
+              currentConversation={currentConversation}
+              vscode={vscode}
+              conversationList={conversationList}
+            />
+          </div>
+          <div className="flex flex-row gap-2">
+            <a
+              className={`flex gap-1 items-center py-0.5 px-1 whitespace-nowrap hover:underline focus-within:underline`}
+              data-tooltip-id="footer-tooltip"
+              data-tooltip-content="Report a bug or suggest a feature in GitHub"
+              href="https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/issues/new/choose"
+              target="_blank"
+            >
+              <Icon icon="help" className="w-3 h-3" />
+              Feedback
+            </a>
+            {process.env.NODE_ENV === "development" && (
+              <button
+                className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
                 ${
                   debug
                     ? "bg-red-900 text-white"
                     : "hover:bg-button-secondary focus:bg-button-secondary"
                 }
               `}
-              data-tooltip-id="footer-tooltip"
-              data-tooltip-content="Toggle debug mode"
+                data-tooltip-id="footer-tooltip"
+                data-tooltip-content="Toggle debug mode"
+                onClick={() => {
+                  dispatch(setDebug(!debug));
+                }}
+              >
+                <Icon icon="box" className="w-3 h-3" />
+                Debug
+              </button>
+            )}
+            <button
+              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
               onClick={() => {
-                dispatch(setDebug(!debug));
+                vscode.postMessage({
+                  type: "openSettings",
+                  conversationId: currentConversation.id,
+                });
+              }}
+              data-tooltip-id="footer-tooltip"
+              data-tooltip-content="Open extension settings"
+            >
+              <Icon icon="cog" className="w-3 h-3" />
+              Settings
+            </button>
+            <button
+              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
+              data-tooltip-id="footer-tooltip"
+              data-tooltip-content="Export the conversation to a markdown file"
+              onClick={() => {
+                vscode.postMessage({
+                  type: "exportToMarkdown",
+                  conversationId: currentConversation.id,
+                  conversation: currentConversation,
+                });
               }}
             >
-              <Icon icon="box" className="w-3 h-3" />
-              Debug
+              <Icon icon="download" className="w-3 h-3" />
+              Export
             </button>
-          )}
-          <button
-            className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
-            onClick={() => {
-              vscode.postMessage({
-                type: "openSettings",
-                conversationId: currentConversation.id,
-              });
-            }}
-            data-tooltip-id="footer-tooltip"
-            data-tooltip-content="Open extension settings"
-          >
-            <Icon icon="cog" className="w-3 h-3" />
-            Settings
-          </button>
-          <button
-            className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
-            data-tooltip-id="footer-tooltip"
-            data-tooltip-content="Export the conversation to a markdown file"
-            onClick={() => {
-              vscode.postMessage({
-                type: "exportToMarkdown",
-                conversationId: currentConversation.id,
-                conversation: currentConversation,
-              });
-            }}
-          >
-            <Icon icon="download" className="w-3 h-3" />
-            Export
-          </button>
-        </div>
-        <Tooltip id="footer-tooltip" place="top" delayShow={800} />
-      </div>
-      {/* AI Response In Progress
-      {currentConversation.inProgress && (
-        <div id="in-progress" className="fixed bottom-8 pl-4 pt-2 items-center">
-          <div className="typing">Thinking</div>
-          <div className="spinner">
-            <div className="bounce1"></div>
-            <div className="bounce2"></div>
-            <div className="bounce3"></div>
           </div>
-
-          <button
-            className="btn btn-primary flex items-end p-1 pr-2 rounded-md ml-5"
-            onClick={() => {
-              postMessage("stopGenerating");
-            }}
-          >
-            <Icon icon="cancel" className="w-5 h-5 mr-2" />
-            Stop responding
-          </button>
+          <Tooltip id="footer-tooltip" place="top" delayShow={800} />
         </div>
-      )} */}
+      )}
     </footer>
   );
 };
