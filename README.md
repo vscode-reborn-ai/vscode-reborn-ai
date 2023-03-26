@@ -15,7 +15,7 @@ Or build this extension yourself (see below).
 
 ## About this fork
 
-This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it. Note that this version is API-only, the browser code was not open-sourced by Gencay (due to OpenAI ToS issue), and I have no intention of violating OpenAI's ToS either.
+This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it. Note that this version is API-only, the browser code was not open-sourced by Gencay (due to OpenAI ToS issue).
 
 ### The new "ChatGPT: Genie AI" extension
 
@@ -23,19 +23,17 @@ Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuati
 
 ### What does that mean for this fork?
 
-I'll be continuing work on this extension, I have some ideas for features that focus on automation. This means there's fairly major changes on the horizon in the name of a better dev experience. I suggest building from [gencay/vscode-gencay](https://github.com/gencay/vscode-chatgpt) source if you do not want an extension that may occasionally break as it evolves.
+I will be continuing work on this extension, I have some ideas for features that focus on automation. Please understand that this means there are fairly major changes on the horizon in the name of a better dev experience. I suggest building from [gencay/vscode-gencay](https://github.com/gencay/vscode-chatgpt) source if you do not want an extension that may occasionally break as it evolves.
 
 ### FOSS
 
-As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it may allow Genie AI to become far more powerful and useful to users. But, you can expect "Reborn" to stay FOSS for as long as I am maintainer, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
+As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it will allow the Genie AI team to spend more time improving their extension. But, you can expect "Reborn" to stay FOSS, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
 
 ### GPT-4
 
-**Note:** You must have access to GPT-4 via API key to use GPT-4. You would've signed up on the GPT-4 waitlist and received an email that you now have GPT-4 API access. This is **not** the same as having access to GPT-4 at chat.openai.com, that is not considered "API access".
+**Required** - You must have access to GPT-4 via API. OpenAI's waitlist for GPT-4 API access is here: https://openai.com/waitlist/gpt-4-api
 
-To use GPT-4 use an API key that has access to GPT-4, if you're part of an organization that has access to GPT-4, set the organization ID in the settings. Note that GPT-4 is noticeably slower than GPT-3.5-turbo. Change the `chatgpt.gpt3.model` setting to `gpt-4` to use GPT-4, or set it to `gpt-3.5-turbo` to use GPT-3.5-turbo. You don't have to "Start new chat" to use a different model, the next message you send will use the new model.
-
-This extension has an option for `gpt-4-32k`, but at this moment users that have access to `gpt-4` don't seem to have access to `gpt-4-32k` yet. It's still an option to allow users to use the 32k version the moment it's made available by OpenAI.
+If you're part of an organization account that has GPT-4 access, be sure to set the `Organization ID`. (This will also charge the organization account). If you're wondering about the 32,000 token version of GPT-4, OpenAI hasn't made that model available yet.
 
 ## Installation
 
