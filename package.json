@@ -356,7 +356,7 @@
         },
         "chatgpt.promptPrefix.addComments": {
           "type": "string",
-          "default": "Add comments for the following code",
+          "default": "Insert code comments into the following code to make the code easier to follow",
           "description": "The prompt prefix used for adding comments for the selected code",
           "order": 16
         },
