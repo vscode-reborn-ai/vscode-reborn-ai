@@ -96,19 +96,20 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## TODO
 
-- [x] Short-term - Publish to VSCode Marketplace.
-- [x] Short-term - Add model dropdown to ChatGPT UI.
-- [x] Short-term - Allow more custom prompts.
-- [x] Short-term - Add setting for a custom system message.
-- [x] Short-term - Move API key from settings config to secure storage.
-- [x] Short-term - Use API list API to show user what models they have access to.
-- [ ] Short-term - Add way to manage custom prompts in UI.
-- [ ] Long-term - Add option to stream directly into the editor.
-- [ ] Long-term - Inline diff
-- [ ] Long-term - "Smart" actions based on the type of file open.
-- [ ] Long-term - "Smart" actions on that run at a project level.
-- [ ] Long-term - AI-generated git commit messages
-- [ ] TBD - Support davinci models in place of ChatGPT
+- [x] Publish to VSCode Marketplace.
+- [x] Add model dropdown to ChatGPT UI.
+- [x] Allow more custom prompts.
+- [x] Add setting for a custom system message.
+- [x] Move API key from settings config to secure storage.
+- [x] Use API list API to show user what models they have access to.
+- [ ] Improve language localization.
+- [ ] Add way to manage custom prompts in UI.
+- [ ] Add option to stream directly into the editor.
+- [ ] Inline diff
+- [ ] "Smart" actions based on the type of file open.
+- [ ] "Smart" actions on that run at a project level.
+- [ ] AI-generated git commit messages
+- [ ] Support davinci models in place of ChatGPT models
 
 ## Tech
 
