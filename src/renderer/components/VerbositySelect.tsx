@@ -30,9 +30,9 @@ export default function VerbositySelect({
   const getHumanFriendlyDescription = (verbosity: Verbosity) => {
     switch (verbosity) {
       case Verbosity.code:
-        return "Only replies with code";
+        return "Only reply with code";
       case Verbosity.concise:
-        return "Explanations are concise";
+        return "Concise explanations";
       case Verbosity.normal:
         return "Normal explanations";
       case Verbosity.full:
