@@ -46,7 +46,7 @@ const CodeBlock = ({
           {language}
         </div>
       )}
-      <div className="absolute top-[0.4em] right-2 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100">
+      <div className="absolute top-[0.4em] right-2 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
         <CodeBlockActionsButton
           vscode={vscode}
           codeTextContent={codeTextContent}

@@ -68,7 +68,7 @@ const Tabs: React.FC<Props> = ({
         <Icon icon="caret-down" className="w-6 h-6 p-1" />
         <button
           type="button"
-          className="block p-1 hover:text-white focus:outline-none hover:bg-opacity-40 hover:bg-red-900 focus:bg-menu-selection rounded-md"
+          className="block p-1 hover:text-white focus:outline-none hover:bg-opacity-40 hover:bg-red-900 focus:bg-red-900 rounded-md"
           // Close the tab and remove it from the list
           onClick={(e) => {
             // Prevent the dropdown from opening

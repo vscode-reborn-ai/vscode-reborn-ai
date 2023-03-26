@@ -30,10 +30,6 @@ form>* {
     margin-block-end: var(--input-margin-vertical);
 }
 
-*:focus {
-    outline-color: var(--vscode-focusBorder) !important;
-}
-
 a {
     color: var(--vscode-textLink-foreground);
 }

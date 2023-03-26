@@ -120,23 +120,23 @@ export default function Tabs({
       </div>
       {/* Wider tab layout */}
       <div className={`${tabs.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
-        <nav className="border-b">
+        <nav>
           <ul
-            className="flex divide-tab bg-tab-inactive-unfocused"
+            className="flex gap-2 bg-tab-inactive-unfocused p-1 overflow-x-auto"
             aria-label="Tabs"
           >
             {tabs &&
               tabs.map((tab) => (
-                <li
-                  className={classNames(
-                    currentConversation.title === tab.name
-                      ? "group bg-tab border-tab"
-                      : "bg-tab-inactive-unfocused border-tab-inactive-border hover:bg-tab-inactive hover:text-tab-inactive",
-                    "flex whitespace-nowrap pt-2 pb-1 pl-4 pr-1 text-xs items-center"
-                  )}
-                  key={tab.id}
-                >
+                <li key={tab.id}>
                   <Link
+                    // className="flex items-center pb-1 pt-1.5 px-2 text-inherit rounded"
+
+                    className={classNames(
+                      currentConversation.title === tab.name
+                        ? "bg-tab-active border-secondary text-tab-active-unfocused hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
+                        : "border-transparent hover:bg-tab-selection hover:text-tab-inactive text-tab-inactive-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
+                      "flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap border text-xs rounded focus:outline-none"
+                    )}
                     to={tab.href}
                     aria-current={
                       currentConversation.title === tab.name
@@ -144,41 +144,43 @@ export default function Tabs({
                         : undefined
                     }
                   >
-                    {tab.name}
-                  </Link>
-                  {/* close tab button */}
-                  {tab.name !== "Prompts" && tab.name !== "Actions" && (
-                    <button
-                      className="ml-2 opacity-0 group-hover:opacity-40 hover:opacity-100 hover:text-red focus-within:opacity-100 focus-within:text-red"
-                      onClick={() => {
-                        // navigate to the first tab
-                        // if there's no more chats, create a new one
-                        if (conversationList.length === 1) {
-                          createNewConversation();
-                        } else {
-                          navigate(
-                            `/chat/${encodeURI(
-                              conversationList[0].id === tab.id
-                                ? conversationList[1].id
-                                : conversationList[0].id
-                            )}`
-                          );
-                        }
+                    <span className="pt-0.5">{tab.name}</span>
+                    {/* close tab button */}
+                    {tab.name !== "Prompts" && tab.name !== "Actions" && (
+                      <button
+                        className="ml-2 p-1 opacity-40 group-hover:opacity-100 group-focus-within:opacity-100 focus:outline-none hover:bg-opacity-40 hover:bg-red-900 focus:bg-red-900 rounded-md"
+                        onClick={(e) => {
+                          e.preventDefault();
 
-                        // remove the tab from the list
-                        dispatch(removeConversation(tab.id));
-                      }}
-                    >
-                      <Icon icon="close" className="w-3 h-3" />
-                      <span className="sr-only">Close tab</span>
-                    </button>
-                  )}
+                          // navigate to the first tab
+                          // if there's no more chats, create a new one
+                          if (conversationList.length === 1) {
+                            createNewConversation();
+                          } else {
+                            navigate(
+                              `/chat/${encodeURI(
+                                conversationList[0].id === tab.id
+                                  ? conversationList[1].id
+                                  : conversationList[0].id
+                              )}`
+                            );
+                          }
+
+                          // remove the tab from the list
+                          dispatch(removeConversation(tab.id));
+                        }}
+                      >
+                        <Icon icon="close" className="w-4 h-4" />
+                        <span className="sr-only">Close tab</span>
+                      </button>
+                    )}
+                  </Link>
                 </li>
               ))}
             {/* create new chat button */}
-            <li>
+            <li className="flex items-center">
               <button
-                className="bg-tab-inactive-unfocused text-tab-inactive-unfocused hover:bg-tab-inactive hover:text-tab-inactive flex whitespace-nowrap py-2 px-4 text-xs"
+                className="bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover flex whitespace-nowrap py-2 px-2 text-xs rounded"
                 onClick={createNewConversation}
               >
                 <Icon icon="plus" className="w-4 h-4 mr-1" />
