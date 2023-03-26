@@ -126,3 +126,23 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 ## License
 
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+### March 25, 2023 (combination of several updates this week)
+
+**UI**
+- General UI look/feel updates were made. Note that these UI upates have a heavy focus on VSCode's UI guidelines and respecting each theme's color palette.
+- Multiple chats has been added.
+- Added a model selector. This will only show the models your API key has access to and links to the GPT-4 waitlist if your key does not have access.
+
+**Behind the scenes**
+- A major refactor to use React+Redux for the UI has been completed. This will make it easier to build a dynamic UI.
+
+**Quality of Life:**
+- Updated scroll behavior - you can now scroll up as code is being generated, or scroll back to the bottom to "re-lock" the auto-scroll.
+- When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
+- Configuring the "System message" is now an extension setting option.
+
+**Bug Fixes:**
+- Right-click copying code blocks should work now.
