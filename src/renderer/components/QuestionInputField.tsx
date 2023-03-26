@@ -1,7 +1,11 @@
 import React from "react";
 import { Tooltip } from "react-tooltip";
 import { setDebug } from "../actions/app";
-import { setInProgress, updateUserInput } from "../actions/conversation";
+import {
+  setAutoscroll,
+  setInProgress,
+  updateUserInput,
+} from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { Conversation, Role } from "../types";
 import Icon from "./Icon";
@@ -99,6 +103,14 @@ export default ({
                       updateUserInput({
                         conversationId: currentConversation.id,
                         userInput: "",
+                      })
+                    );
+
+                    // re-enable autoscroll to send the user to the bottom of the conversation
+                    dispatch(
+                      setAutoscroll({
+                        conversationId: currentConversation.id,
+                        autoscroll: true,
                       })
                     );
 

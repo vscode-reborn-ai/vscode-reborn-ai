@@ -121,10 +121,7 @@ export default function Tabs({
       {/* Wider tab layout */}
       <div className={`${tabs.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
         <nav>
-          <ul
-            className="flex gap-2 bg-tab-inactive-unfocused p-1 overflow-x-auto"
-            aria-label="Tabs"
-          >
+          <ul className="flex gap-2 p-1 overflow-x-auto" aria-label="Tabs">
             {tabs &&
               tabs.map((tab) => (
                 <li key={tab.id}>
