@@ -257,8 +257,8 @@ export default ({
                   Feedback
                 </a>
               </li>
-              <li>
-                {process.env.NODE_ENV === "development" && (
+              {process.env.NODE_ENV === "development" && (
+                <li>
                   <button
                     className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
                 ${
@@ -276,8 +276,8 @@ export default ({
                     <Icon icon="box" className="w-3 h-3" />
                     Debug
                   </button>
-                )}
-              </li>
+                </li>
+              )}
               <li>
                 <button
                   className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"

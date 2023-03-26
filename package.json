@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.12.0",
+  "version": "3.12.1",
   "aiKey": "",
   "license": "ISC",
   "repository": {
@@ -356,7 +356,7 @@
         },
         "chatgpt.promptPrefix.addComments": {
           "type": "string",
-          "default": "Add comments for the following code",
+          "default": "Insert code comments into the following code to make the code easier to follow",
           "description": "The prompt prefix used for adding comments for the selected code",
           "order": 16
         },

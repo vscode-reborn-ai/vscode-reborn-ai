@@ -11,6 +11,7 @@ import {
 } from "./actions/app";
 import {
   addMessage,
+  setAutoscroll,
   setCurrentConversation,
   setInProgress,
   updateMessageContent,
@@ -74,6 +75,20 @@ export default function Layout({ vscode }: { vscode: any }) {
     // Handle requests from editor
     if (data.conversationId === "") {
       data.conversationId = currentConversationId;
+      // if the request is from the editor, turn on auto-scroll
+      // only run if the conversation is not already in progress
+      if (
+        !conversationList.find(
+          (conversation) => conversation.id === data.conversationId
+        )?.inProgress
+      ) {
+        dispatch(
+          setAutoscroll({
+            conversationId: data?.conversationId ?? currentConversationId,
+            autoscroll: true,
+          })
+        );
+      }
     }
 
     if (debug) {

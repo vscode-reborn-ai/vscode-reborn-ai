@@ -100,7 +100,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [x] Short-term - Add model dropdown to ChatGPT UI.
 - [x] Short-term - Allow more custom prompts.
 - [x] Short-term - Add setting for a custom system message.
-- [ ] Short-term - Move API key from settings config to secure storage.
+- [x] Short-term - Move API key from settings config to secure storage.
 - [x] Short-term - Use API list API to show user what models they have access to.
 - [ ] Short-term - Add way to manage custom prompts in UI.
 - [ ] Long-term - Add option to stream directly into the editor.
@@ -131,11 +131,11 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ### March 26, 2023
 
-**Security**
+**Security:**
 
 - API key is now stored in VSCode secure storage. It will automatically put your API key in secure storage if you have it in your settings config and then remove it from your settings config.
 
-**UI**
+**UI:**
 
 - Added a "Verbosity" config setting and UI select. This will allow you to set the verbosity of the ChatGPT's responses, including just asking for the code and no explanation.
 - Moved "Feedback", "Settings" and "Export" in a "More Actions" menu to reduce clutter.
@@ -146,15 +146,20 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - Added the "Disable Multiple Conversations" setting. This hides the chat tabs and only a single chat will be used.
 - Added the "Minimal UI" setting. This will hide both the chat tabs and the smaller buttons below the chat input. Future UI additions will also be hidden with this toggle on.
 
+**Fixes:**
+
+- When using the context menu actions, chat should now scroll to the bottom.
+- Modified the default prompt for adding code comments due to ChatGPT frequently misunderstanding "add comments".
+
 ### March 25, 2023 (combination of several updates this week)
 
-**UI**
+**UI:**
 
 - General UI look/feel updates were made. Note that these UI upates have a heavy focus on VSCode's UI guidelines and respecting each theme's color palette.
 - Multiple chats has been added.
 - Added a model selector. This will only show the models your API key has access to and links to the GPT-4 waitlist if your key does not have access.
 
-**Behind the scenes**
+**Behind the scenes:**
 
 - A major refactor to use React+Redux for the UI has been completed. This will make it easier to build a dynamic UI.
 
