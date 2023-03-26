@@ -94,12 +94,12 @@ export default function Tabs({
 
   return (
     <div>
-      <div className="2xs:hidden py-1 px-2">
+      {/* Tab layout specifically for a skinny UI (switches to dropdown) or when the tab count exceeds 5 */}
+      <div className={`py-1 px-2 ${tabs.length > 5 ? "" : "2xs:hidden"}`}>
         <label htmlFor="tabs" className="sr-only">
           Select a tab
         </label>
         <div className="flex flex-row gap-x-2">
-          {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
           <TabsDropdown
             tabs={tabs}
             currentConversation={currentConversation}
@@ -108,27 +108,6 @@ export default function Tabs({
             createNewConversation={createNewConversation}
             className="flex-grow"
           />
-          {/* <select
-            id="tabs"
-            ref={selectRef}
-            name="tabs"
-            className="block flex-grow rounded-md py-2 pl-3 pr-10 bg-tab-inactive-unfocused border-tab-inactive-border text-tab-inactive-unfocused  focus:border-tab-active focus:outline-none focus:ring-tab-active text-xs"
-            defaultValue={
-              tabs.find((tab) => currentConversation.title === tab.name)?.name
-            }
-            onChange={(e) => {
-              const selectedTab = tabs.find(
-                (tab) => tab.name === e.target.value
-              );
-              if (selectedTab) {
-                navigate(selectedTab.href);
-              }
-            }}
-          >
-            {tabs.map((tab) => (
-              <option key={tab.name}>{tab.name}</option>
-            ))}
-          </select> */}
           {/* button for new chat */}
           <button
             className="flex items-center bg-tab-inactive-unfocused text-tab-inactive-unfocused hover:bg-tab-inactive hover:text-tab-inactive whitespace-nowrap p-2 text-xs"
@@ -139,7 +118,8 @@ export default function Tabs({
           </button>
         </div>
       </div>
-      <div className="hidden 2xs:block">
+      {/* Wider tab layout */}
+      <div className={`${tabs.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
         <nav className="border-b">
           <ul
             className="flex divide-tab bg-tab-inactive-unfocused"
