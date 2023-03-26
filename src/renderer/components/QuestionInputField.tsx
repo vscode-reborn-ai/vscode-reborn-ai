@@ -217,8 +217,8 @@ export default ({
               className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
                 ${
                   includeEditorSelection
-                    ? "bg-button text-button"
-                    : "hover:text-button-secondary focus:text-button-secondary"
+                    ? "bg-button text-button hover:bg-button-hover focus:bg-button-hover"
+                    : "hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary"
                 }
               `}
               data-tooltip-id="footer-tooltip"
