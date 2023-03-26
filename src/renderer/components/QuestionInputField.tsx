@@ -34,7 +34,7 @@ export default ({
         <div className="flex-1 textarea-wrapper">
           {currentConversation.inProgress && (
             // show the text "Thinking..." when the conversation is in progress in place of the question input
-            <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-[calc(100%-5rem)]">
+            <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-[calc(100%-6rem)]">
               <Icon icon="ripples" className="w-5 h-5 mr-2" />
               <span>Thinking...</span>
             </div>
@@ -42,7 +42,7 @@ export default ({
           {!currentConversation.inProgress && (
             <textarea
               rows={1}
-              className="text-sm rounded border border-input text-input bg-input resize-none w-[calc(100%-5rem)]"
+              className="text-sm rounded border border-input text-input bg-input resize-none w-[calc(100%-6rem)] outline-0"
               id="question-input"
               placeholder="Ask a question..."
               ref={questionInputRef}
@@ -128,7 +128,7 @@ export default ({
 
         <div
           id="question-input-buttons"
-          className="right-6 absolute -mt-1 ml-5"
+          className="right-6 absolute -mt-[6px] ml-5"
         >
           {currentConversation.inProgress && (
             // show the "stop" button when the conversation is in progress
@@ -157,7 +157,7 @@ export default ({
           {!currentConversation.inProgress && (
             <button
               title="Submit prompt"
-              className="ask-button rounded-lg px-2 py-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary"
+              className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover"
               onClick={(e) => {
                 const question = questionInputRef?.current?.value;
 
@@ -206,7 +206,7 @@ export default ({
           )}
         </div>
       </div>
-      <div className="flex flex-row justify-between gap-2 pb-1 px-4">
+      <div className="flex flex-row justify-between gap-2 pb-1 px-4 overflow-x-auto">
         <div className="flex flex-row gap-2">
           <ModelSelect
             currentConversation={currentConversation}
