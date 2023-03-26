@@ -23,7 +23,7 @@ Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuati
 
 ### What does that mean for this fork?
 
-I'll be continuing work on this extension, I have some ideas for features that focus on automation. A major react refactor will be releasing soon, which sets the groundwork for a more powerful UI experience.
+I'll be continuing work on this extension, I have some ideas for features that focus on automation. This means there's fairly major changes on the horizon in the name of a better dev experience. I suggest building from [gencay/vscode-gencay](https://github.com/gencay/vscode-chatgpt) source if you do not want an extension that may occasionally break as it evolves.
 
 ### FOSS
 
