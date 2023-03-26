@@ -22,7 +22,7 @@ export default function ({
 
   return (
     <div
-      className={`flex flex-col gap-3.5 h-full justify-center items-center px-6 pb-24 w-full relative login-screen overflow-auto ${className}`}
+      className={`flex flex-col justify-start gap-3.5 h-full items-center px-6 pt-6 pb-24 w-full relative login-screen overflow-auto ${className}`}
     >
       {!ignoreWarningScreen && chatGPTModels.length === 0 ? (
         <>
@@ -49,22 +49,10 @@ export default function ({
         </>
       ) : (
         <>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            aria-hidden="true"
-            className="w-6 h-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
-            ></path>
-          </svg>
-          <h2>Features</h2>
+          <div className="flex flex-row items-center gap-2">
+            <Icon icon="zap" className="w-16 h-16" />
+            <h2>Features</h2>
+          </div>
           <ul className="w-full max-w-lg grid grid-cols-1 xs:grid-cols-2 gap-3.5 text-xs">
             <li className="features-li w-full border p-3 rounded-md text-center">
               Optimize, refactor, and debug your code

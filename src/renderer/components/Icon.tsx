@@ -20,6 +20,7 @@ export enum IconName {
   chat = "chat",
   help = "help",
   caretDown = "caret-down",
+  zap = "zap",
   // Spinners
   ripples = "ripples",
 }
@@ -390,6 +391,23 @@ export default (props: { icon: string; className: string }) => {
           className={`feather feather-chevron-down ${css}`}
         >
           <polyline points="6 9 12 15 18 9" />
+        </svg>
+      )}
+      {icon === IconName.zap && (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          aria-hidden="true"
+          className={`w-6 h-6 ${css}`}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"
+          ></path>
         </svg>
       )}
     </>
