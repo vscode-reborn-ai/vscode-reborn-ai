@@ -554,6 +554,18 @@
           "default": 100,
           "description": "Stream throttling. Time in milliseconds between UI updates. Higher = ai responds in bigger chunks, but UI is more performant. Lower = ai responds in smaller chunks, but UI will look better, but is less performant. 0 will update the UI with every network request from OpenAI",
           "order": 43
+        },
+        "chatgpt.minimalUI": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, the buttons below the question input field and the chat tab is hidden.",
+          "order": 44
+        },
+        "chatgpt.disableMultipleConversations": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, this will disable the ability to have multiple conversations at the same time. This reduces the UI clutter of chat tabs.",
+          "order": 45
         }
       }
     }

@@ -19,6 +19,7 @@ export default function Chat({
 }) {
   const dispatch = useAppDispatch();
   const debug = useAppSelector((state: any) => state.app.debug);
+  const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const conversationListRef = React.useRef<HTMLDivElement>(null);
   const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
     null
@@ -191,7 +192,11 @@ export default function Chat({
         ref={conversationListRef}
         onScroll={handleScroll}
       >
-        <div className="flex flex-col pb-24">
+        <div
+          className={`flex flex-col 
+          ${settings?.minimalUI ? "pb-20" : "pb-24"}
+        `}
+        >
           {conversation.messages.map((message: Message, index: number) => {
             return (
               <div
