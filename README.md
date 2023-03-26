@@ -131,6 +131,16 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ### March 26, 2023
 
+**Security**
+
+- API key is now stored in VSCode secure storage. It will automatically put your API key in secure storage if you have it in your settings config and then remove it from your settings config.
+
+**UI**
+
+- Added a "Verbosity" config setting and UI select. This will allow you to set the verbosity of the ChatGPT's responses, including just asking for the code and no explanation.
+- Moved "Feedback", "Settings" and "Export" in a "More Actions" menu to reduce clutter.
+- With the API key secure storage update, new users are now greeted with a "Getting started" page and an api key input.
+
 **Quality of Life:**
 
 - Added the "Disable Multiple Conversations" setting. This hides the chat tabs and only a single chat will be used.
