@@ -129,46 +129,24 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### March 26, 2023
+### March 26, 2023 (`v3.12.0`, `v3.12.1`, `v3.13.0`)
 
-**Security:**
+- 🔐 [Security] API key is now stored in VSCode secure storage. It will automatically put your API key in secure storage if you have it in your settings config and then remove it from your settings config.
+- 🖥️ [UI] Added a "Verbosity" config setting and UI select.
+- 🖥️ [UI] User messages will now include a code block if editor text selection is sent.
+- 🖥️ [UI] Moved "Feedback", "Settings" and "Export" to "More Actions" menu.
+- 🖥️ [UI] New users greeted with a "Getting started" page and API key input.
+- 🎮 [QoL] Added "Disable Multiple Conversations" setting.
+- 🎮 [QoL] Added "Minimal UI" setting.
+- 🔧 [Fixes] Chat now scrolls to the bottom after context menu actions.
+- 🔧 [Fixes] Modified default prompt for adding code comments.
 
-- API key is now stored in VSCode secure storage. It will automatically put your API key in secure storage if you have it in your settings config and then remove it from your settings config.
+### March 25, 2023 (`v3.11.0` - `v3.11.5`)
 
-**UI:**
-
-- Added a "Verbosity" config setting and UI select. This will allow you to set the verbosity of the ChatGPT's responses, including just asking for the code and no explanation.
-- Moved "Feedback", "Settings" and "Export" in a "More Actions" menu to reduce clutter.
-- With the API key secure storage update, new users are now greeted with a "Getting started" page and an api key input.
-
-**Quality of Life:**
-
-- Added the "Disable Multiple Conversations" setting. This hides the chat tabs and only a single chat will be used.
-- Added the "Minimal UI" setting. This will hide both the chat tabs and the smaller buttons below the chat input. Future UI additions will also be hidden with this toggle on.
-
-**Fixes:**
-
-- When using the context menu actions, chat should now scroll to the bottom.
-- Modified the default prompt for adding code comments due to ChatGPT frequently misunderstanding "add comments".
-
-### March 25, 2023 (combination of several updates this week)
-
-**UI:**
-
-- General UI look/feel updates were made. Note that these UI upates have a heavy focus on VSCode's UI guidelines and respecting each theme's color palette.
-- Multiple chats has been added.
-- Added a model selector. This will only show the models your API key has access to and links to the GPT-4 waitlist if your key does not have access.
-
-**Behind the scenes:**
-
-- A major refactor to use React+Redux for the UI has been completed. This will make it easier to build a dynamic UI.
-
-**Quality of Life:**
-
-- Updated scroll behavior - you can now scroll up as code is being generated, or scroll back to the bottom to "re-lock" the auto-scroll.
-- When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
-- Configuring the "System message" is now an extension setting option.
-
-**Bug Fixes:**
-
-- Right-click copying code blocks should work now.
+- 🖥️ [UI] General UI look/feel updates. Note that these UI upates have a heavy focus on VSCode's UI guidelines and respecting each theme's color palette.
+- 🖥️ [UI] Added multiple chats and model selector.
+- 🖥️ [UI] Added a model selector. This will only show the models your API key has access to and links to the GPT-4 waitlist if your key does not have access.
+- 🔩 [Behind the scenes] Refactor to use React+Redux for the UI. This will make it easier to build a dynamic UI.
+- 🎮 [QoL] Updated scroll behavior. You can now scroll up as code is being generated, or scroll back to the bottom to "re-lock" the auto-scroll.
+- 🎮 [QoL] When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
+- 🎮 [QoL] Configuring "System message" is now an extension setting.
