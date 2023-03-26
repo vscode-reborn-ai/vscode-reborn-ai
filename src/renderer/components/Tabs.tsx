@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addConversation, removeConversation } from "../actions/conversation";
-import { useAppDispatch, useAppSelector } from "../hooks";
+import { useAppDispatch } from "../hooks";
 import { Conversation } from "../types";
 import Icon from "./Icon";
+import TabsDropdown from "./TabsDropdown";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -18,7 +19,6 @@ export default function Tabs({
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const debug = useAppSelector((state: any) => state.app.debug);
   const [tabs, setTabs] = useState(
     [] as {
       name: string;
@@ -29,6 +29,7 @@ export default function Tabs({
   const [currentConversation, setCurrentConversation] = useState(
     {} as Conversation
   );
+  const selectRef = React.useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (conversationList && conversationList.find) {
@@ -41,6 +42,13 @@ export default function Tabs({
       console.log("conversationList is null", JSON.stringify(conversationList));
     }
   }, [currentConversationId, conversationList]);
+
+  useEffect(() => {
+    // update the select element
+    if (selectRef?.current) {
+      selectRef.current.value = currentConversation.title ?? "Chat";
+    }
+  }, [currentConversation]);
 
   useEffect(() => {
     if (conversationList && conversationList.map) {
@@ -90,19 +98,46 @@ export default function Tabs({
         <label htmlFor="tabs" className="sr-only">
           Select a tab
         </label>
-        {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
-        <select
-          id="tabs"
-          name="tabs"
-          className="block w-full rounded-md py-2 pl-3 pr-10 bg-tab-inactive-unfocused border-tab-inactive-border text-tab-inactive-unfocused  focus:border-tab-active focus:outline-none focus:ring-tab-active text-xs"
-          defaultValue={
-            tabs.find((tab) => currentConversation.title === tab.name)?.name
-          }
-        >
-          {tabs.map((tab) => (
-            <option key={tab.name}>{tab.name}</option>
-          ))}
-        </select>
+        <div className="flex flex-row gap-x-2">
+          {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
+          <TabsDropdown
+            tabs={tabs}
+            currentConversation={currentConversation}
+            conversationList={conversationList}
+            navigate={navigate}
+            createNewConversation={createNewConversation}
+            className="flex-grow"
+          />
+          {/* <select
+            id="tabs"
+            ref={selectRef}
+            name="tabs"
+            className="block flex-grow rounded-md py-2 pl-3 pr-10 bg-tab-inactive-unfocused border-tab-inactive-border text-tab-inactive-unfocused  focus:border-tab-active focus:outline-none focus:ring-tab-active text-xs"
+            defaultValue={
+              tabs.find((tab) => currentConversation.title === tab.name)?.name
+            }
+            onChange={(e) => {
+              const selectedTab = tabs.find(
+                (tab) => tab.name === e.target.value
+              );
+              if (selectedTab) {
+                navigate(selectedTab.href);
+              }
+            }}
+          >
+            {tabs.map((tab) => (
+              <option key={tab.name}>{tab.name}</option>
+            ))}
+          </select> */}
+          {/* button for new chat */}
+          <button
+            className="flex items-center bg-tab-inactive-unfocused text-tab-inactive-unfocused hover:bg-tab-inactive hover:text-tab-inactive whitespace-nowrap p-2 text-xs"
+            onClick={createNewConversation}
+          >
+            <Icon icon="plus" className="w-3 h-3" />
+            <span className="ml-2">New Chat</span>
+          </button>
+        </div>
       </div>
       <div className="hidden 2xs:block">
         <nav className="border-b">
