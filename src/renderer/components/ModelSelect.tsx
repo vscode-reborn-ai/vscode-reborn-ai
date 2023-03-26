@@ -15,12 +15,14 @@ export default function ModelSelect({
   vscode,
   className,
   dropdownClassName,
+  tooltipId,
 }: {
   currentConversation: Conversation;
   conversationList: Conversation[];
   vscode: any;
   className?: string;
   dropdownClassName?: string;
+  tooltipId?: string;
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -105,7 +107,7 @@ export default function ModelSelect({
           onClick={() => {
             setShowModels(!showModels);
           }}
-          data-tooltip-id="footer-tooltip"
+          data-tooltip-id={tooltipId ?? "footer-tooltip"}
           data-tooltip-content="Change the AI model being used"
         >
           <Icon icon="box" className="w-3 h-3 mr-1" />
