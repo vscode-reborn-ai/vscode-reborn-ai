@@ -129,7 +129,7 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### March 26, 2023 (`v3.12.0`, `v3.12.1`, `v3.13.0`)
+### March 26, 2023 (`v3.12.0`, `v3.12.1`, `v3.13.0`, `v3.13.1`)
 
 - 🔐 [Security] API key is now stored in VSCode secure storage. It will automatically put your API key in secure storage if you have it in your settings config and then remove it from your settings config.
 - 🖥️ [UI] Added a "Verbosity" config setting and UI select.
@@ -140,6 +140,7 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - 🎮 [QoL] Added "Minimal UI" setting.
 - 🔧 [Fixes] Chat now scrolls to the bottom after context menu actions.
 - 🔧 [Fixes] Modified default prompt for adding code comments.
+- 🔧 [Fixes] Overlapping issues with tooltips fixed.
 
 ### March 25, 2023 (`v3.11.0` - `v3.11.5`)
 
