@@ -1,6 +1,6 @@
 // Convenience functions for the renderer code
 
-import { Conversation, Message, Role } from "./types";
+import { Conversation, Message } from "./types";
 
 export const unEscapeHTML = (unsafe: any) => {
     return unsafe
@@ -60,7 +60,6 @@ export const addMessage = (
                         (message: Message, index: number, self: Message[]) =>
                             index === self.findIndex((m: Message) => m.id === message.id)
                     ),
-                    inProgress: newMessage.role === Role.user ? true : conversation.inProgress,
                 }
                 : conversation
         )

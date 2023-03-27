@@ -145,8 +145,7 @@ export default ({
         dangerouslySetInnerHTML={{
           __html: code
             .replace(/<pre><code[^>]*>/, "")
-            .replace(/<\/code><\/pre>/, "")
-            .replace(/\n$/, ""),
+            .replace(/<\/code><\/pre>/, ""),
         }}
       />
     </pre>

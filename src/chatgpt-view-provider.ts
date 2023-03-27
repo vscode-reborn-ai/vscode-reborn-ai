@@ -1,21 +1,20 @@
 import delay from 'delay';
 import hljs from 'highlight.js';
-import fetch from 'isomorphic-fetch';
+import { marked } from "marked";
 import { Configuration, OpenAIApi } from "openai";
+import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
-import { ChatGPTAPI as ChatGPTAPI3 } from '../chatgpt-4.7.2/index';
+import ApiProvider from "./api-provider";
 import Auth from "./auth";
-import { ChatGPTAPI as ChatGPTAPI35 } from './chatgpt-api';
-import { Conversation, DeltaMessage, Message, Model, Role, Verbosity } from "./renderer/types";
+import { Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
+import { unEscapeHTML } from "./renderer/utils";
 
 export interface ApiRequestOptions {
 	command: string,
 	conversation: Conversation,
-	lastBotMessageId?: string,
 	questionId?: string,
 	messageId?: string,
 	code?: string,
-	previousAnswer?: string,
 	language?: string;
 }
 
@@ -23,24 +22,21 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
 
 	public subscribeToResponse: boolean;
-	public autoScroll: boolean;
-	public useAutoLogin?: boolean;
 	public model?: string;
 
-	private apiGpt3?: ChatGPTAPI3;
-	private apiGpt35?: ChatGPTAPI35;
+	private api: ApiProvider = new ApiProvider('');
 	private chatMode?: boolean = true;
-	private conversationId?: string;
-	private messageId?: string;
 	private systemContext: string;
 
-	private inProgress: boolean = false;
 	private throttling: number = 100;
-	private abortController?: AbortController;
-	private currentMessageId: string = "";
-	private response: string = "";
+	private abortControllers: {
+		conversationId: string,
+		controller: AbortController;
+	}[] = [];
 	private chatGPTModels: Model[] = [];
 	private authStore?: Auth;
+
+	public currentConversation?: Conversation;
 
 	/**
 	 * Message to be rendered lazily if they haven't been rendered
@@ -49,7 +45,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private leftOverMessage?: any;
 	constructor(private context: vscode.ExtensionContext) {
 		this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
-		this.autoScroll = !!vscode.workspace.getConfiguration("chatgpt").get("response.autoScroll");
 		this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
 		this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
 		this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
@@ -80,6 +75,18 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			this.authStore.storeAuthData(apiKey);
 			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiKey", undefined, true);
 		}
+
+		// Initialize the API
+		this.authStore.getAuthData().then((apiKey) => {
+			this.api = new ApiProvider(
+				apiKey ?? "",
+				{
+					organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organizationId") as string,
+					maxTokens: vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number,
+					temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
+					topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
+				});
+		});
 
 		// if the model or the system context changes, update the data members
 		vscode.workspace.onDidChangeConfiguration((e) => {
@@ -167,7 +174,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						conversation: data.conversation ?? null,
 						questionId: data.questionId ?? null,
 						messageId: data.messageId ?? null,
-						lastBotMessageId: data.lastBotMessageId,
 					} as ApiRequestOptions;
 
 					// if includeEditorSelection is true, add the code snippet to the question
@@ -199,19 +205,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 					this.logEvent(data.language === "markdown" ? "code-exported" : "code-opened");
 					break;
-				case 'clearConversation':
-					this.messageId = undefined;
-					this.conversationId = undefined;
-
-					this.logEvent("conversation-cleared");
-					break;
 				case 'cleargpt3':
-					this.apiGpt3 = undefined;
+					// this.apiGpt3 = undefined;
 
 					this.logEvent("gpt3-cleared");
-					break;
-				case 'login':
-					this.prepareConversation();
 					break;
 				case 'openSettings':
 					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn chatgpt.");
@@ -224,7 +221,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					this.logEvent("settings-prompt-opened");
 					break;
 				case "stopGenerating":
-					this.stopGenerating();
+					if (data?.conversationId) {
+						this.stopGenerating(data.conversationId);
+					} else {
+						console.log("Main Process - No conversationId provided to stop generating");
+					}
 					break;
 				case "getSettings":
 					this.sendMessage({
@@ -266,6 +267,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					const verbosity = data?.value ?? Verbosity.normal;
 					vscode.workspace.getConfiguration("chatgpt").update("verbosity", verbosity, vscode.ConfigurationTarget.Global);
 					break;
+				case "setCurrentConversation":
+					this.currentConversation = data.conversation;
+					break;
 				default:
 					console.log('Main Process - Uncaught message type: "' + data.type + '"');
 					break;
@@ -293,40 +297,22 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		return markdown;
 	}
 
-
-	private stopGenerating(): void {
-		this.abortController?.abort?.();
-		this.inProgress = false;
+	private stopGenerating(conversationId: string): void {
+		// Send the abort signal to the corresponding controller
+		this.abortControllers.find((controller) => controller.conversationId === conversationId)?.controller.abort();
+		// Remove abort controller from array
+		this.abortControllers = this.abortControllers.filter((controller) => controller.conversationId !== conversationId);
 
 		// show inProgress status update
 		this.sendMessage({
 			type: 'showInProgress',
-			inProgress: this.inProgress,
-			conversationId: 'stop gen, no conversation id'
+			inProgress: false,
+			conversationId,
 		});
-
-		// add response
-		const responseInMarkdown = !this.isCodexModel;
-		this.sendMessage({
-			type: 'addResponse',
-			value: this.response,
-			done: true,
-			id: this.currentMessageId,
-			autoScroll: this.autoScroll,
-			responseInMarkdown,
-			conversationId: 'stop gen, no conversation id'
-		});
-
-		// log event
-		this.logEvent("stopped-generating");
 	}
 
 	private get isCodexModel(): boolean {
 		return !!this.model?.startsWith("code-");
-	}
-
-	private get isGpt35Model(): boolean {
-		return !!this.model?.startsWith("gpt-");
 	}
 
 	private async getApiKey(): Promise<string> {
@@ -388,8 +374,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			configuration.organization = organizationId;
 		}
 
-		console.log('run getModels openai network call');
-
 		try {
 			const openai = new OpenAIApi(configuration);
 			const response = await openai.listModels();
@@ -413,106 +397,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				return model.id as Model;
 			});
 		}
-	}
-	public async prepareConversation(modelChanged = false): Promise<boolean> {
-		const state = this.context.globalState;
-		const configuration = vscode.workspace.getConfiguration("chatgpt");
-		const apiKey = await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') as string;
-
-		// Check if chat mode is enabled
-		if (this.chatMode) {
-			// Check if an API key is required and available
-			if ((this.isGpt35Model && !this.apiGpt35) || (!this.isGpt35Model && !this.apiGpt3) || modelChanged) {
-
-				// Retrieve API key and other configuration parameters from vscode workspace settings
-				const organization = configuration.get("gpt3.organization") as string;
-				const maxTokens = configuration.get("gpt3.maxTokens") as number;
-				const temperature = configuration.get("gpt3.temperature") as number;
-				const topP = configuration.get("gpt3.top_p") as number;
-				const apiBaseUrl = configuration.get("gpt3.apiBaseUrl") as string;
-
-				// If API key is not found, prompt user to enter it manually or store it in session
-				if (!apiKey) {
-					// Not sure what happened to get to this point, but try resetting the API key
-					this.resetApiKey();
-
-					/*
-					vscode.window.showErrorMessage(
-						"Please add your API Key to use OpenAI official APIs. Storing the API Key in Settings is discouraged due to security reasons, though you can still opt-in to use it to persist it in settings. Instead you can also temporarily set the API Key one-time: You will need to re-enter after restarting the vs-code.",
-						"Store in session (Recommended)",
-						"Open settings"
-					).then(async choice => {
-						if (choice === "Open settings") {
-							vscode.commands.executeCommand('workbench.action.openSettings', "chatgpt.gpt3.apiKey");
-							return false;
-						} else if (choice === "Store in session (Recommended)") {
-							await vscode.window
-								.showInputBox({
-									title: "Store OpenAI API Key in session",
-									prompt: "Please enter your OpenAI API Key to store in your session only. This option won't persist the token on your settings.json file. You may need to re-enter after restarting your VS-Code",
-									ignoreFocusOut: true,
-									placeHolder: "API Key",
-									value: apiKey || ""
-								})
-								.then((value) => {
-									if (value) {
-										apiKey = value;
-										state.update("chatgpt-gpt3-apiKey", apiKey);
-										this.sendMessage({ type: 'loginSuccessful', showConversations: this.useAutoLogin }, true);
-									}
-								});
-						}
-					});*/
-
-					return false;
-				}
-
-				// Initialize new instance of ChatGPTAPI35 or ChatGPTAPI3 with specified configuration parameters
-				if (this.isGpt35Model) {
-					this.apiGpt35 = new ChatGPTAPI35({
-						apiKey,
-						fetch,
-						apiBaseUrl: apiBaseUrl?.trim() || undefined,
-						organizationId: organization,
-						systemMessage: this.systemContext,
-						completionParams: {
-							model: this.model,
-							// eslint-disable-next-line @typescript-eslint/naming-convention
-							max_tokens: maxTokens,
-							temperature,
-							// eslint-disable-next-line @typescript-eslint/naming-convention
-							top_p: topP,
-						},
-					});
-				} else {
-					this.apiGpt3 = new ChatGPTAPI3({
-						apiKey,
-						fetch: fetch,
-						apiBaseUrl: apiBaseUrl?.trim() || undefined,
-						organization,
-						completionParams: {
-							model: this.model,
-							// eslint-disable-next-line @typescript-eslint/naming-convention
-							max_tokens: maxTokens,
-							temperature,
-							// eslint-disable-next-line @typescript-eslint/naming-convention
-							top_p: topP,
-						}
-					});
-				}
-			}
-
-		} else {
-			// If chat mode is disabled, skip preparing conversation and return false
-			this.logEvent('chat-mode-disabled (not sending request)');
-			return false;
-		}
-
-		// Send loginSuccessful message to initiate conversation and log in event
-		this.sendMessage({ type: 'loginSuccessful', showConversations: this.useAutoLogin }, true);
-		this.logEvent("logged-in");
-
-		return true;
 	}
 
 	private processQuestion(question: string, conversation: Conversation, code?: string, language?: string): string {
@@ -553,30 +437,67 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		return question;
 	}
 
+	formatMessageContent(rawContent: string, markdown: boolean): string {
+		return marked.parse(
+			!markdown
+				? "```\r\n" + unEscapeHTML(rawContent) + " \r\n ```"
+				: (rawContent ?? "").split("```").length % 2 === 1
+					? rawContent
+					: rawContent + "\n\n```\n\n"
+		);
+	}
+
+
 	public async sendApiRequest(prompt: string, options: ApiRequestOptions) {
-		if (this.inProgress) {
-			// The AI is still thinking... Do not accept more questions.
-			this.logEvent('api-request-rejected', {
-				"chatgpt.command": options.command,
-				"chatgpt.conversation": options.conversation,
-				"chatgpt.lastBotMessageId": options.lastBotMessageId,
-				"chatgpt.hasCode": String(!!options.code),
-				"chatgpt.hasPreviousAnswer": String(!!options.previousAnswer)
-			});
-			return;
-		}
-
-		this.logEvent("api-request-sent", { "chatgpt.command": options.command, "chatgpt.hasCode": String(!!options.code), "chatgpt.hasPreviousAnswer": String(!!options.previousAnswer) });
-
-		// TODO: this seems to rebuild the api object, consider not doing this on every request
-		if (!await this.prepareConversation()) {
-			this.logEvent('prepare-conversation-failed, exiting');
-			return;
-		}
-
-		this.response = '';
-		let question = this.processQuestion(prompt, options.conversation, options.code, options.language);
+		this.logEvent("api-request-sent", { "chatgpt.command": options.command, "chatgpt.hasCode": String(!!options.code) });
 		const responseInMarkdown = !this.isCodexModel;
+
+		// 1. First check if the conversation has any messages, if not add the system message
+		if (options.conversation?.messages.length === 0) {
+			options.conversation?.messages.push({
+				id: uuidv4(),
+				content: this.systemContext,
+				rawContent: this.systemContext,
+				role: Role.system,
+				createdAt: Date.now(),
+			});
+		}
+
+		// 2. Add the user's question to the conversation
+		const formattedPrompt = this.processQuestion(prompt, options.conversation, options.code, options.language);
+		if (options?.questionId) {
+			// find the question in the conversation and update it
+			const question = options.conversation?.messages.find((message) => message.id === options.questionId);
+			if (question) {
+				question.content = this.formatMessageContent(formattedPrompt, responseInMarkdown);
+				question.rawContent = formattedPrompt;
+				question.questionCode = options?.code
+					? marked.parse(
+						`\`\`\`${options?.language}\n${options.code}\n\`\`\``
+					)
+					: "";
+			}
+		} else {
+			options.conversation?.messages.push({
+				id: uuidv4(),
+				content: formattedPrompt,
+				rawContent: prompt,
+				questionCode: options?.code
+					? marked.parse(
+						`\`\`\`${options?.language}\n${options.code}\n\`\`\``
+					)
+					: "",
+				role: Role.user,
+				createdAt: Date.now(),
+			});
+		}
+
+		// 3. Tell the webview about the new messages
+		this.sendMessage({
+			type: 'messagesUpdated',
+			messages: options.conversation?.messages,
+			conversationId: options.conversation?.id ?? '',
+		});
 
 		// If the ChatGPT view is not in focus/visible; focus on it to render Q&A
 		if (this.webView === null) {
@@ -585,107 +506,83 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			this.webView?.show?.(true);
 		}
 
-		this.inProgress = true;
-		this.abortController = new AbortController();
+		// Tell the webview that this conversation is in progress
 		this.sendMessage({
 			type: 'showInProgress',
-			inProgress: this.inProgress,
-			showStopButton: true,
-			conversationId: options.conversation?.id ?? 'no conversation id',
+			inProgress: true,
+			conversationId: options.conversation?.id ?? '',
 		});
-		this.currentMessageId = options.messageId ?? this.getRandomId();
 
-		// Only if the question doesn't already exist in the conversation
-		if (!options.questionId) {
-			this.sendMessage({
-				type: 'addQuestion',
-				value: prompt,
-				code: options.code,
-				autoScroll: this.autoScroll,
-				conversationId: options.conversation.id ?? 'no conversation id',
-				lastBotMessageId: options.lastBotMessageId ?? 'no last bot message id',
-				editorLanguage: options.language,
-			});
-		}
-
-		this.logEvent('sending-message', {
-			"chatgpt.command": options.command,
-			"chatgpt.conversation": options.conversation,
-			"chatgpt.lastBotMessageId": options.lastBotMessageId,
-			"chatgpt.hasCode": String(!!options.code),
-			"chatgpt.hasPreviousAnswer": String(!!options.previousAnswer)
-		});
 		try {
+			const message: Message = {
+				// Normally random ID is generated, but when editing a question, the response update the same message
+				id: options?.messageId ?? uuidv4(),
+				content: '',
+				rawContent: '',
+				role: Role.assistant,
+				createdAt: Date.now(),
+			};
+
+			// Initialize message in webview. Now event streaming only needs to update the message content
+			if (options?.messageId) {
+				this.sendMessage({
+					type: 'updateMessage',
+					message: message,
+					conversationId: options.conversation?.id ?? '',
+				});
+			} else {
+				this.sendMessage({
+					type: 'addMessage',
+					message: message,
+				});
+			}
+
 			if (this.chatMode) {
 				let lastMessageTime = 0;
+				const controller = new AbortController();
+				this.abortControllers.push({ conversationId: options.conversation?.id ?? '', controller });
 
-				if (this.isGpt35Model && this.apiGpt35) {
-					this.sendMessage({
-						type: 'debug',
-						value: `sending message to GPT-3.5 ${question} ${options.lastBotMessageId} ${this.conversationId} ${this.messageId} ${this.isGpt35Model}`,
-					});
-					({ content: this.response, id: this.conversationId, parentMessageId: this.messageId } = await this.apiGpt35.sendMessage(question, options.conversation, {
-						systemMessage: `${this.systemContext}`,
-						messageId: this.conversationId,
-						parentMessageId: options.lastBotMessageId, // this.messageId,
-						abortSignal: this.abortController.signal,
-						onProgress: (partialResponse: DeltaMessage) => {
-							this.response = partialResponse.content;
+				// Stream ChatGPT response (this is using an async iterator)
+				for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal)) {
+					message.rawContent += token;
 
-							// Throttle sending messages to the webview
-							const now = Date.now();
-							if (now - lastMessageTime > this.throttling) {
-								// @ts-ignore
-								this.sendMessage({
-									type: 'addResponse',
-									value: this.response,
-									id: this.currentMessageId,
-									responseInMarkdown: responseInMarkdown,
-									conversationId: options.conversation.id,
-								});
+					const now = Date.now();
+					// Throttle the number of messages sent to the webview
+					if (now - lastMessageTime > this.throttling) {
+						message.content = this.formatMessageContent((message.rawContent ?? ''), responseInMarkdown);
 
-								lastMessageTime = now;
-							}
-						},
-					}));
-				} else if (!this.isGpt35Model && this.apiGpt3) {
-					this.logEvent('sending message to GPT-3.0 (not 3.5)');
-					({ text: this.response, conversationId: this.conversationId, parentMessageId: this.messageId } = await this.apiGpt3.sendMessage(question, {
-						promptPrefix: `${this.systemContext}`,
-						abortSignal: this.abortController.signal,
-						parentMessageId: options.lastBotMessageId,
-						onProgress: (partialResponse) => {
-							this.response = partialResponse.text;
+						// Send webview updated message content
+						this.sendMessage({
+							type: 'streamMessage',
+							conversationId: options.conversation.id ?? '',
+							messageId: message.id,
+							content: message.content,
+						});
 
-							// Throttle sending messages to the webview
-							const now = Date.now();
-							if (now - lastMessageTime > this.throttling) {
-								// @ts-ignore
-								this.sendMessage({
-									type: 'addResponse',
-									value: this.response,
-									id: this.currentMessageId,
-									responseInMarkdown: responseInMarkdown,
-									conversationId: options.conversation.id,
-								});
-
-								lastMessageTime = now;
-							}
-						},
-					}));
+						lastMessageTime = now;
+					}
 				}
+
+				// remove the abort controller
+				this.abortControllers = this.abortControllers.filter((controller) => controller.conversationId !== options.conversation?.id);
+
+				message.done = true;
+				message.content = this.formatMessageContent(message.rawContent ?? "", responseInMarkdown);
+
+				// Send webview full updated message
+				this.sendMessage({
+					type: 'updateMessage',
+					conversationId: options.conversation.id ?? '',
+					message: message,
+				});
 			} else {
 				this.logEvent('chat-mode-off (not sending message)');
 			}
 
-			if (options.previousAnswer !== null && options.previousAnswer !== undefined) {
-				this.response = options.previousAnswer + this.response;
-			}
-
-			const hasContinuation = ((this.response.split("```").length) % 2) === 0;
+			const hasContinuation = ((message.content.split("```").length) % 2) === 0;
 
 			if (hasContinuation) {
-				this.response = this.response + " \r\n ```\r\n";
+				message.content = message.content + " \r\n ```\r\n";
 				vscode.window.showInformationMessage("It looks like ChatGPT didn't complete their answer for your coding question. You can ask it to continue and combine the answers.", "Continue and combine answers")
 					.then(async (choice) => {
 						if (choice === "Continue and combine answers") {
@@ -693,29 +590,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 								command: options.command,
 								conversation: options.conversation,
 								code: undefined,
-								previousAnswer: this.response
 							});
 						}
 					});
 			}
-
-			this.logEvent('sending-add-response-message', {
-				"chatgpt.response": this.response,
-				"chatgpt.conversation": options.conversation,
-				"chatgpt.lastBotMessageId": options.lastBotMessageId,
-				"chatgpt.hasCode": String(!!options.code),
-				"chatgpt.hasPreviousAnswer": String(!!options.previousAnswer)
-			});
-
-			this.sendMessage({
-				type: 'addResponse',
-				conversationId: options.conversation.id ?? 'no conversation id',
-				value: this.response,
-				done: true,
-				id: this.currentMessageId,
-				autoScroll: this.autoScroll,
-				responseInMarkdown
-			});
 
 			if (this.subscribeToResponse) {
 				vscode.window.showInformationMessage("ChatGPT responded to your question.", "Open conversation").then(async () => {
@@ -737,7 +615,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						await delay(250);
 						this.sendApiRequest(prompt, {
 							conversation: options.conversation,
-							lastBotMessageId: options.lastBotMessageId,
 							command: options.command,
 							code: options.code
 						});
@@ -766,18 +643,17 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 			this.sendMessage({
 				type: 'addError',
+				id: uuidv4(),
 				conversationId: options.conversation.id,
 				value: message,
-				autoScroll: this.autoScroll
 			});
 
 			return;
 		} finally {
-			this.inProgress = false;
 			this.sendMessage({
 				type: 'showInProgress',
 				conversationId: options.conversation.id,
-				inProgress: this.inProgress
+				inProgress: false,
 			});
 		}
 	}

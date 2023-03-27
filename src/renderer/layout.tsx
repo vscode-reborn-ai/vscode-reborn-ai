@@ -14,6 +14,10 @@ import {
   setAutoscroll,
   setCurrentConversation,
   setInProgress,
+  setModel,
+  setVerbosity,
+  updateConversationMessages,
+  updateMessage,
   updateMessageContent,
 } from "./actions/conversation";
 import ApiKeySetup from "./components/ApiKeySetup";
@@ -58,17 +62,33 @@ export default function Layout({ vscode }: { vscode: any }) {
     }
   }, []);
 
+  // When the current conversation changes, send a message to the extension to let it know
+  useEffect(() => {
+    if (currentConversationId) {
+      vscode.postMessage({
+        type: "setCurrentConversation",
+        conversation: conversationList.find(
+          (conversation) => conversation.id === currentConversationId
+        ),
+      });
+    }
+  }, [currentConversationId]);
+
   // Handle messages sent from the extension to the webview
   const handleMessages = (event: any) => {
     const data = event.data as {
       type: string;
       value?: any;
       id?: string;
+      messages?: Message[];
+      messageId?: string;
+      message?: Message;
       // For questions
       code?: string;
       editorLanguage?: string;
-      // In the case of the addResponse event
+      // Streaming
       done?: boolean;
+      content?: string;
       // In the case of the showInProgress event
       inProgress?: boolean;
       conversationId?: string;
@@ -129,6 +149,55 @@ export default function Layout({ vscode }: { vscode: any }) {
           addMessage({
             conversationId: data?.conversationId ?? currentConversationId,
             message: question,
+          })
+        );
+
+        break;
+      // Update a single message
+      case "updateMessage":
+        if (data?.message) {
+          dispatch(
+            updateMessage({
+              conversationId: data?.conversationId ?? currentConversationId,
+              messageId: data?.message?.id ?? "",
+              message: data?.message,
+            })
+          );
+        } else {
+          console.error("updateMessage event: No message provided");
+        }
+
+        break;
+      // Update all messages in a conversation
+      case "messagesUpdated":
+        dispatch(
+          updateConversationMessages({
+            conversationId: data?.conversationId ?? currentConversationId,
+            messages: data.messages ?? [],
+          })
+        );
+
+        break;
+      case "addMessage":
+        if (data?.message) {
+          dispatch(
+            addMessage({
+              conversationId: data?.conversationId ?? currentConversationId,
+              message: data.message,
+            })
+          );
+        } else {
+          console.error("addMessage event: No message to add");
+        }
+
+        break;
+      case "streamMessage":
+        dispatch(
+          updateMessageContent({
+            conversationId: data?.conversationId ?? currentConversationId,
+            messageId: data?.messageId ?? "",
+            content: data?.content ?? "",
+            done: false,
           })
         );
 
@@ -246,6 +315,26 @@ export default function Layout({ vscode }: { vscode: any }) {
         }
 
         dispatch(setExtensionSettings({ newSettings: data.value }));
+
+        const currentConversation = conversationList.find(
+          (conversation) => conversation.id === currentConversationId
+        );
+
+        // if the current conversation verbosity and model haven't been set yet, set them based on the settings
+        if (!currentConversation?.model || !currentConversation?.verbosity) {
+          dispatch(
+            setModel({
+              conversationId: currentConversationId,
+              model: data.value.gpt3?.model,
+            })
+          );
+          dispatch(
+            setVerbosity({
+              conversationId: currentConversationId,
+              verbosity: data.value.verbosity,
+            })
+          );
+        }
         break;
       case "chatGPTModels":
         if (debug) {

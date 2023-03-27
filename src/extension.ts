@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import ChatGptViewProvider from './chatgpt-view-provider';
-import { Conversation, Model } from "./renderer/types";
 
 const menuCommands = [
 	"addTests", "findProblems", "optimize", "explain",
@@ -10,18 +9,6 @@ const menuCommands = [
 
 export async function activate(context: vscode.ExtensionContext) {
 	let adhocCommandPrefix: string = context.globalState.get("chatgpt-adhoc-prompt") || '';
-	// TODO: This code isn't really in sync with the react state, so using a dummy conversation.
-	// Should begin allowing api requests without a conversation which will by default use the current conversation
-	// or get the current conversation from the react state as part of the api request.
-	const placeholderConversation = {
-		id: '',
-		createdAt: Date.now(),
-		inProgress: false,
-		messages: [],
-		model: Model.gpt_35_turbo,
-		autoscroll: true,
-	} as Conversation;
-
 	const provider = new ChatGptViewProvider(context);
 
 	const view = vscode.window.registerWebviewViewProvider(
@@ -40,10 +27,17 @@ export async function activate(context: vscode.ExtensionContext) {
 		});
 
 		if (value) {
-			provider?.sendApiRequest(value, {
-				command: "freeText",
-				conversation: placeholderConversation,
-			});
+			const currentConversation = provider.currentConversation;
+
+			if (currentConversation) {
+				provider?.sendApiRequest(value, {
+					command: "freeText",
+					conversation: currentConversation,
+					language: vscode.window.activeTextEditor?.document.languageId,
+				});
+			} else {
+				console.error("freeText - No current conversation found");
+			}
 		}
 	});
 
@@ -64,21 +58,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			provider.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
 		}
 
-		if (e.affectsConfiguration('chatgpt.response.autoScroll')) {
-			provider.autoScroll = !!vscode.workspace.getConfiguration("chatgpt").get("response.autoScroll");
-		}
-
 		if (e.affectsConfiguration('chatgpt.gpt3.model')) {
 			provider.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model");
-		}
-
-		if (e.affectsConfiguration('chatgpt.gpt3.apiBaseUrl')
-			|| e.affectsConfiguration('chatgpt.gpt3.model')
-			|| e.affectsConfiguration('chatgpt.gpt3.organization')
-			|| e.affectsConfiguration('chatgpt.gpt3.maxTokens')
-			|| e.affectsConfiguration('chatgpt.gpt3.temperature')
-			|| e.affectsConfiguration('chatgpt.gpt3.top_p')) {
-			provider.prepareConversation(true);
 		}
 
 		if (e.affectsConfiguration('chatgpt.promptPrefix') || e.affectsConfiguration('chatgpt.gpt3.generateCode-enabled') || e.affectsConfiguration('chatgpt.gpt3.model') || e.affectsConfiguration('chatgpt.method')) {
@@ -115,11 +96,18 @@ export async function activate(context: vscode.ExtensionContext) {
 				});
 
 			if (!dismissed && adhocCommandPrefix?.length > 0) {
-				provider?.sendApiRequest(adhocCommandPrefix, {
-					command: "adhoc",
-					code: selection,
-					conversation: placeholderConversation,
-				});
+				const currentConversation = provider.currentConversation;
+
+				if (currentConversation) {
+					provider?.sendApiRequest(adhocCommandPrefix, {
+						command: "adhoc",
+						code: selection,
+						conversation: currentConversation,
+						language: editor.document.languageId,
+					});
+				} else {
+					console.error("adhoc - No current conversation found");
+				}
 			}
 		}
 	});
@@ -133,11 +121,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const selection = editor.document.getText(editor.selection);
 		if (selection) {
-			provider?.sendApiRequest(selection, {
-				command: "generateCode",
-				language: editor.document.languageId,
-				conversation: placeholderConversation,
-			});
+			const currentConversation = provider.currentConversation;
+
+			if (currentConversation) {
+				provider?.sendApiRequest(selection, {
+					command: "generateCode",
+					language: editor.document.languageId,
+					conversation: currentConversation,
+				});
+			} else {
+				console.error("generateCode - No current conversation found");
+			}
 		}
 	});
 
@@ -152,12 +146,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const selection = editor.document.getText(editor.selection);
 		if (selection && prompt) {
-			provider?.sendApiRequest(prompt, {
-				command,
-				code: selection,
-				language: editor.document.languageId,
-				conversation: placeholderConversation,
-			});
+			const currentConversation = provider.currentConversation;
+
+			if (currentConversation) {
+				provider?.sendApiRequest(prompt, {
+					command,
+					code: selection,
+					language: editor.document.languageId,
+					conversation: currentConversation,
+				});
+			} else {
+				console.error(`${command} - No current conversation found`);
+			}
 		}
 	}));
 

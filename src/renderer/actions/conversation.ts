@@ -16,9 +16,9 @@ const initialState: ConversationState = {
       messages: [],
       createdAt: Date.now(),
       inProgress: false,
-      model: Model.gpt_35_turbo,
+      model: undefined,
       autoscroll: true,
-      verbosity: Verbosity.normal, // TODO: this should use the user setting, probably need to do this in layout.tsx
+      verbosity: undefined,
     },
   },
   currentConversationId: `Chat-${Date.now()}`,
@@ -38,6 +38,16 @@ export const conversationSlice = createSlice({
       const { id } = action.payload;
       if (state.conversations[id]) {
         state.conversations[id] = action.payload;
+      }
+    },
+    updateConversationMessages: (
+      state,
+      action: PayloadAction<{ conversationId: string; messages: Message[]; }>
+    ) => {
+      const { conversationId, messages } = action.payload;
+
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].messages = messages;
       }
     },
     updateConversationModel: (
@@ -117,7 +127,7 @@ export const conversationSlice = createSlice({
           conversation.messages[index].done = done ?? false;
 
           if (done !== undefined) {
-            conversation.inProgress = done ?? false;
+            conversation.inProgress = !done ?? false;
           }
         }
       }
@@ -157,7 +167,7 @@ export const conversationSlice = createSlice({
     ) => {
       const { conversationId, inProgress } = action.payload;
 
-      if (state.conversations[conversationId] && state.conversations[conversationId]?.inProgress) {
+      if (state.conversations[conversationId]) {
         state.conversations[conversationId].inProgress = inProgress;
       }
     },
@@ -170,7 +180,9 @@ export const conversationSlice = createSlice({
     ) => {
       const { conversationId, autoscroll } = action.payload;
 
-      state.conversations[conversationId].autoscroll = autoscroll;
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].autoscroll = autoscroll;
+      }
     },
     setVerbosity: (
       state,
@@ -182,6 +194,17 @@ export const conversationSlice = createSlice({
       const { conversationId, verbosity } = action.payload;
 
       state.conversations[conversationId].verbosity = verbosity;
+    },
+    setModel: (
+      state,
+      action: PayloadAction<{
+        conversationId: string;
+        model: Model;
+      }>
+    ) => {
+      const { conversationId, model } = action.payload;
+
+      state.conversations[conversationId].model = model;
     },
     updateUserInput: (
       state,
@@ -201,6 +224,7 @@ export const {
   addConversation,
   removeConversation,
   updateConversation,
+  updateConversationMessages,
   updateConversationModel,
   addMessage,
   updateMessage,
@@ -210,6 +234,7 @@ export const {
   setInProgress,
   setAutoscroll,
   setVerbosity,
+  setModel,
   updateUserInput,
 } = conversationSlice.actions;
 

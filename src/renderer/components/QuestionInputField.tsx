@@ -7,7 +7,7 @@ import {
   updateUserInput,
 } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { Conversation, Role } from "../types";
+import { Conversation } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 import VerbositySelect from "./VerbositySelect";
@@ -28,26 +28,30 @@ export default ({
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [includeEditorSelection, setIncludeEditorSelection] = useState(false);
 
-  // on conversation change, focus on the question input, set the questoin input value to the user input
+  // on conversation change, focus on the question input, set the question input value to the user input
   React.useEffect(() => {
-    if (questionInputRef.current) {
+    if (questionInputRef.current && conversationList.length > 1) {
       questionInputRef.current.focus();
       questionInputRef.current.value = currentConversation?.userInput ?? "";
     }
-  }, [currentConversation]);
+  }, [currentConversation.id]);
 
   const askQuestion = () => {
     const question = questionInputRef?.current?.value;
 
     if (question && question.length > 0) {
+      // Set the conversation to in progress
+      dispatch(
+        setInProgress({
+          conversationId: currentConversation.id,
+          inProgress: true,
+        })
+      );
+
       vscode.postMessage({
         type: "addFreeTextQuestion",
         value: questionInputRef.current.value,
         conversation: currentConversation,
-        conversationId: currentConversation.id,
-        lastBotMessageId:
-          currentConversation.messages.find((m) => m.role === Role.assistant)
-            ?.id ?? "",
         includeEditorSelection,
       });
 
@@ -86,7 +90,7 @@ export default ({
 
   return (
     <footer
-      className={`fixed bottom-0 w-full flex flex-col gap-y-1 pt-2 bg
+      className={`fixed z-20 bottom-0 w-full flex flex-col gap-y-1 pt-2 bg
       ${settings?.minimalUI ? "pb-2" : "pb-1"}
     `}
     >
@@ -225,7 +229,14 @@ export default ({
               `}
               data-tooltip-id="footer-tooltip"
               data-tooltip-content="Include the code selected in your editor in the prompt?"
+              onMouseDown={(e) => {
+                // Prevent flashing from textarea briefly losing focus
+                e.preventDefault();
+              }}
               onClick={() => {
+                // focus the textarea
+                questionInputRef?.current?.focus();
+
                 setIncludeEditorSelection(!includeEditorSelection);
               }}
             >

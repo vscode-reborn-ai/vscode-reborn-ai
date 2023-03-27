@@ -30,7 +30,7 @@ export default function ModelSelect({
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
 
-  const createNewConversation = () => {
+  const createNewConversation = (model: Model) => {
     let title = "Chat";
     let i = 2;
 
@@ -46,10 +46,7 @@ export default function ModelSelect({
       messages: [],
       inProgress: false,
       createdAt: Date.now(),
-      model:
-        settings?.gpt3?.model ??
-        currentConversation?.model ??
-        Model.gpt_35_turbo,
+      model,
       autoscroll: true,
       verbosity:
         settings?.verbosity ??
@@ -81,19 +78,19 @@ export default function ModelSelect({
     });
 
     // Model can't change partway through a conversation, so we need to create a new one
-    if (
-      currentConversation.model !== model &&
-      currentConversation.messages.length > 0
-    ) {
-      createNewConversation();
-    } else {
-      dispatch(
-        updateConversationModel({
-          conversationId: currentConversation.id,
-          model,
-        })
-      );
-    }
+    // if (
+    //   currentConversation.model !== model &&
+    //   currentConversation.messages.length > 0
+    // ) {
+    //   createNewConversation(model);
+    // } else {
+    dispatch(
+      updateConversationModel({
+        conversationId: currentConversation.id,
+        model,
+      })
+    );
+    // }
 
     // Close the menu
     setShowModels(false);

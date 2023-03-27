@@ -1,5 +1,6 @@
 // * Interfaces for OpenAI's API
 // For network requests - based on OpenAI API docs - https://platform.openai.com/docs/api-reference/
+// TODO: just import directly from openai types
 interface OpenAIPromptRequest {
     model: string;
     prompt?: string | string[] | number[] | number[][];
@@ -64,7 +65,7 @@ export interface Message extends OpenAIMessage {
     // Formatted by HLJS + misc formatting
     content: string;
     // Raw content from OpenAI
-    rawContent?: string;
+    rawContent: string;
     role: Role;
     isError?: boolean;
     createdAt: string | number;
@@ -94,10 +95,10 @@ export interface Conversation {
     createdAt: string | number;
     inProgress: boolean;
     messages: Message[];
-    model: Model;
+    model: Model | undefined;
     title?: string;
     autoscroll: boolean;
-    verbosity?: Verbosity;
+    verbosity?: Verbosity | undefined;
     // allow the user to switch tabs while working on a prompt
     userInput?: string;
 }

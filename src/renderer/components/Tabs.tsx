@@ -158,7 +158,7 @@ export default function Tabs({
                           // if there's no more chats, create a new one
                           if (conversationList.length === 1) {
                             createNewConversation();
-                          } else {
+                          } else if (currentConversation.title === tab.name) {
                             navigate(
                               `/chat/${encodeURI(
                                 conversationList[0].id === tab.id
