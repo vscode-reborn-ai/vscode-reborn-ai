@@ -130,6 +130,14 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### March 28, 2023 (`v3.14.0`)
+
+- 🖥️ [UI] Add token count UI
+- 🖥️ [UI] "Clear" button added for clearning the conversation. Highly recommend using it to avoid expensive token usage with long conversations.
+- 🖥️ [UI] Minor tweaks to mini buttons below input box to prefer wrapping on smaller windows.
+- 🔧 [Fixes] Token counting issues causing `4096` maxTokens config setting to fail.
+- 🔩 [Behind the scenes] API provider refactor. Moving towards using the `OpenAI` library and its SDK for better maintainability. Note that `baseUrl` setting should now end in `/v1`, which matches OpenAI's SDK for `basePath`.
+
 ### March 26, 2023 (`v3.12.0`, `v3.12.1`, `v3.13.0`, `v3.13.1`)
 
 - 🔐 [Security] API key is now stored in VSCode secure storage. It will automatically put your API key in secure storage if you have it in your settings config and then remove it from your settings config.
