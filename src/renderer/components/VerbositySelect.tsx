@@ -10,12 +10,14 @@ export default function VerbositySelect({
   className,
   dropdownClassName,
   tooltipId,
+  showParentMenu,
 }: {
   vscode: any;
   currentConversation: Conversation;
   className?: string;
   dropdownClassName?: string;
   tooltipId?: string;
+  showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
   const [showOptions, setShowOptions] = useState(false);
@@ -90,6 +92,11 @@ export default function VerbositySelect({
 
                 // Close the menu
                 setShowOptions(false);
+
+                // Close parent menu if it exists
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
               }}
             >
               {getHumanFriendlyDescription(option)}

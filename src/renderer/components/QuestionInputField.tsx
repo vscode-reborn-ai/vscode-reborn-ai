@@ -316,7 +316,7 @@ export default ({
           </div>
           {/* floating menu */}
           <div
-            className={`fixed bottom-8 right-4 p-2 bg-menu rounded border border-menu ${
+            className={`fixed z-20 bottom-8 right-4 p-2 bg-menu rounded border border-menu ${
               showMoreActions ? "" : "hidden"
             }`}
           >
@@ -362,6 +362,8 @@ export default ({
                       type: "openSettings",
                       conversationId: currentConversation.id,
                     });
+                    // close menu
+                    setShowMoreActions(false);
                   }}
                   data-tooltip-id="more-actions-tooltip"
                   data-tooltip-content="Open extension settings"
@@ -381,6 +383,8 @@ export default ({
                       conversationId: currentConversation.id,
                       conversation: currentConversation,
                     });
+                    // close menu
+                    setShowMoreActions(false);
                   }}
                 >
                   <Icon icon="download" className="w-3 h-3" />
@@ -396,6 +400,8 @@ export default ({
                     vscode.postMessage({
                       type: "resetApiKey",
                     });
+                    // close menu
+                    setShowMoreActions(false);
                   }}
                 >
                   <Icon icon="cancel" className="w-3 h-3" />
@@ -407,21 +413,28 @@ export default ({
                   currentConversation={currentConversation}
                   vscode={vscode}
                   conversationList={conversationList}
-                  dropdownClassName="-right-[1px] w-[calc(100vw-2rem)] bottom-8"
+                  dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
                   tooltipId="more-actions-tooltip"
+                  showParentMenu={setShowMoreActions}
                 />
               </li>
               <li className="block xs:hidden">
                 <VerbositySelect
                   currentConversation={currentConversation}
                   vscode={vscode}
-                  dropdownClassName="-right-[1px] w-[calc(100vw-2rem)] bottom-8"
+                  dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
                   tooltipId="more-actions-tooltip"
+                  showParentMenu={setShowMoreActions}
                 />
               </li>
             </ul>
           </div>
-          <Tooltip id="more-actions-tooltip" place="left" delayShow={800} />
+          <Tooltip
+            id="more-actions-tooltip"
+            className="z-10"
+            place="left"
+            delayShow={800}
+          />
           <div className="flex flex-row items-start gap-2">
             <div
               className="rounded flex gap-1 items-center justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
