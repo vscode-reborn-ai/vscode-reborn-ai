@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect } from "react";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import { v4 as uuidv4 } from "uuid";
@@ -12,11 +12,12 @@ import {
 import {
   addMessage,
   setAutoscroll,
-  setCurrentConversation,
+  setCurrentConversationId,
   setInProgress,
   setModel,
   setVerbosity,
   updateConversationMessages,
+  updateConversationTokenCount,
   updateMessage,
   updateMessageContent,
 } from "./actions/conversation";
@@ -31,6 +32,9 @@ export default function Layout({ vscode }: { vscode: any }) {
   const dispatch = useAppDispatch();
   const currentConversationId = useAppSelector(
     (state: any) => state.conversation.currentConversationId
+  );
+  const currentConversation = useAppSelector(
+    (state: any) => state.conversation.currentConversation
   );
   const conversationList = Object.values(
     useAppSelector((state: any) => state.conversation.conversations)
@@ -62,17 +66,35 @@ export default function Layout({ vscode }: { vscode: any }) {
     }
   }, []);
 
-  // When the current conversation changes, send a message to the extension to let it know
   useEffect(() => {
-    if (currentConversationId) {
-      vscode.postMessage({
-        type: "setCurrentConversation",
-        conversation: conversationList.find(
-          (conversation) => conversation.id === currentConversationId
-        ),
-      });
-    }
+    // When the current conversation changes, send a message to the extension to let it know
+    vscode.postMessage({
+      type: "setCurrentConversation",
+      conversation: currentConversation,
+    });
   }, [currentConversationId]);
+
+  // Debounce token count updates
+  const debounceTimeout = useRef<any>(null);
+  useEffect(() => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      // Get new token count
+      vscode.postMessage({
+        type: "getTokenCount",
+        conversation: currentConversation,
+      });
+    }, 500); // Debounce delay in milliseconds
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [currentConversation.userInput, currentConversation.messages]);
 
   // Handle messages sent from the extension to the webview
   const handleMessages = (event: any) => {
@@ -83,6 +105,12 @@ export default function Layout({ vscode }: { vscode: any }) {
       messages?: Message[];
       messageId?: string;
       message?: Message;
+      tokenCount?: {
+        messages: number;
+        userInput: number;
+        maxTotal: number;
+        minTotal: number;
+      };
       // For questions
       code?: string;
       editorLanguage?: string;
@@ -375,6 +403,23 @@ export default function Layout({ vscode }: { vscode: any }) {
 
         dispatch(setApiKeyStatus(keyStatus));
         break;
+      case "tokenCount":
+        if (debug) {
+          console.log("Renderer - Conversation token count:", data.tokenCount);
+        }
+
+        dispatch(
+          updateConversationTokenCount({
+            conversationId: data.conversationId ?? currentConversationId,
+            tokenCount: data.tokenCount ?? {
+              messages: 0,
+              userInput: 0,
+              maxTotal: 0,
+              minTotal: 0,
+            },
+          })
+        );
+        break;
       default:
         console.log('Renderer - Uncaught message type: "' + data.type + '"');
     }
@@ -384,7 +429,7 @@ export default function Layout({ vscode }: { vscode: any }) {
   React.useEffect(() => {
     if (location.pathname.startsWith("/chat/") && conversationList?.find) {
       dispatch(
-        setCurrentConversation({
+        setCurrentConversationId({
           conversationId:
             conversationList?.find(
               (conversation: Conversation) =>
@@ -399,8 +444,6 @@ export default function Layout({ vscode }: { vscode: any }) {
   useEffect(() => {
     // Remove in case it's already added, re-adding the event listener will cause the handler to be called twice
     window.removeEventListener("message", handleMessages);
-
-    console.log("Renderer - Adding message event listener");
     window.addEventListener("message", handleMessages);
 
     return () => {

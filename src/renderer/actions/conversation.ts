@@ -5,23 +5,28 @@ export interface ConversationState {
   conversations: {
     [id: string]: Conversation;
   };
-  currentConversationId: string | null;
+  currentConversationId: string | undefined;
+  currentConversation: Conversation | undefined;
 }
+
+const initialConversationID = `Chat-${Date.now()}`;
+const initialConversation = {
+  id: initialConversationID,
+  title: "Chat",
+  messages: [],
+  createdAt: Date.now(),
+  inProgress: false,
+  model: undefined,
+  autoscroll: true,
+  verbosity: undefined,
+};
 
 const initialState: ConversationState = {
   conversations: {
-    [`Chat-${Date.now()}`]: {
-      id: `Chat-${Date.now()}`,
-      title: "Chat",
-      messages: [],
-      createdAt: Date.now(),
-      inProgress: false,
-      model: undefined,
-      autoscroll: true,
-      verbosity: undefined,
-    },
+    [initialConversationID]: initialConversation
   },
   currentConversationId: `Chat-${Date.now()}`,
+  currentConversation: initialConversation,
 };
 
 export const conversationSlice = createSlice({
@@ -38,6 +43,10 @@ export const conversationSlice = createSlice({
       const { id } = action.payload;
       if (state.conversations[id]) {
         state.conversations[id] = action.payload;
+
+        if (id === state.currentConversationId) {
+          state.currentConversation = action.payload;
+        }
       }
     },
     updateConversationMessages: (
@@ -48,6 +57,10 @@ export const conversationSlice = createSlice({
 
       if (state.conversations[conversationId]) {
         state.conversations[conversationId].messages = messages;
+
+        if (conversationId === state.currentConversationId && state.currentConversation) {
+          state.currentConversation.messages = messages;
+        }
       }
     },
     updateConversationModel: (
@@ -58,6 +71,23 @@ export const conversationSlice = createSlice({
 
       if (state.conversations[conversationId]) {
         state.conversations[conversationId].model = model;
+      }
+    },
+    updateConversationTokenCount: (
+      state,
+      action: PayloadAction<{
+        conversationId: string; tokenCount: {
+          messages: number; // All messages combined
+          userInput: number; // User input
+          maxTotal: number; // Maximum tokens that can be used (same as config.maxTokens)
+          minTotal: number; // Minimum tokens to be used (messages + userInput)
+        };
+      }>
+    ) => {
+      const { conversationId, tokenCount } = action.payload;
+
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].tokenCount = tokenCount;
       }
     },
     addMessage: (
@@ -79,6 +109,10 @@ export const conversationSlice = createSlice({
           // Update message
           state.conversations[conversationId].messages[index] = message;
         }
+
+        if (conversationId === state.currentConversationId && state.currentConversation) {
+          state.currentConversation.messages = state.conversations[conversationId].messages;
+        }
       } else {
         console.error('addMessage - Conversation not found', conversationId);
       }
@@ -96,6 +130,10 @@ export const conversationSlice = createSlice({
         );
         if (index !== -1) {
           conversation.messages.splice(index, 1, message);
+        }
+
+        if (conversationId === state.currentConversationId && state.currentConversation) {
+          state.currentConversation.messages = conversation.messages;
         }
       }
     },
@@ -129,6 +167,23 @@ export const conversationSlice = createSlice({
           if (done !== undefined) {
             conversation.inProgress = !done ?? false;
           }
+
+          if (conversationId === state.currentConversationId && state.currentConversation) {
+            state.currentConversation.messages = conversation.messages;
+          }
+        }
+      }
+    },
+    clearMessages: (state, action: PayloadAction<{
+      conversationId: string;
+    }>) => {
+      const { conversationId } = action.payload;
+
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].messages = [];
+
+        if (conversationId === state.currentConversationId && state.currentConversation) {
+          state.currentConversation.messages = [];
         }
       }
     },
@@ -147,16 +202,21 @@ export const conversationSlice = createSlice({
         );
         if (index !== -1) {
           conversation.messages.splice(index, 1);
+
+          if (conversationId === state.currentConversationId && state.currentConversation) {
+            state.currentConversation.messages = conversation.messages;
+          }
         }
       }
     },
-    setCurrentConversation: (
+    setCurrentConversationId: (
       state,
       action: PayloadAction<{
         conversationId: string;
       }>
     ) => {
       state.currentConversationId = action.payload.conversationId;
+      state.currentConversation = state.conversations[action.payload.conversationId];
     },
     setInProgress: (
       state,
@@ -204,7 +264,9 @@ export const conversationSlice = createSlice({
     ) => {
       const { conversationId, model } = action.payload;
 
-      state.conversations[conversationId].model = model;
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].model = model;
+      }
     },
     updateUserInput: (
       state,
@@ -216,6 +278,10 @@ export const conversationSlice = createSlice({
       const { conversationId, userInput } = action.payload;
 
       state.conversations[conversationId].userInput = userInput;
+
+      if (conversationId === state.currentConversationId && state.currentConversation) {
+        state.currentConversation.userInput = userInput;
+      }
     },
   },
 });
@@ -226,11 +292,13 @@ export const {
   updateConversation,
   updateConversationMessages,
   updateConversationModel,
+  updateConversationTokenCount,
   addMessage,
   updateMessage,
   updateMessageContent,
+  clearMessages,
   removeMessage,
-  setCurrentConversation,
+  setCurrentConversationId,
   setInProgress,
   setAutoscroll,
   setVerbosity,

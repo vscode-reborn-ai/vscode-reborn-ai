@@ -1,55 +1,70 @@
+import { encoding_for_model, Tiktoken, TiktokenModel } from "@dqbd/tiktoken";
 import { ChatCompletionResponseMessage, Configuration, OpenAIApi } from 'openai';
 import { v4 as uuidv4 } from "uuid";
 import { Conversation, Message, Model, Role } from "./renderer/types";
 
 export default class ApiProvider {
-  private openai: OpenAIApi;
-  private apiConfig: Configuration;
-  private maxTokens: number;
-  private temperature: number;
-  private topP: number;
+  private _openai: OpenAIApi;
+  private _apiConfig: Configuration;
+  private _maxTokens: number;
+  private _maxResponseTokens: number;
+  private _temperature: number;
+  private _topP: number;
 
   constructor(apiKey: string, {
     organizationId = '',
+    apiBaseUrl = 'https://api.openai.com/v1',
     maxTokens = 2048,
+    maxResponseTokens,
     temperature = 0.9,
     topP = 1,
   }: {
     organizationId?: string;
+    apiBaseUrl?: string;
     maxTokens?: number;
+    maxResponseTokens?: number;
     temperature?: number;
     topP?: number;
   } = {}) {
-    this.apiConfig = new Configuration({
+    this._apiConfig = new Configuration({
       apiKey: apiKey,
       organization: organizationId,
+      basePath: apiBaseUrl,
     });
-    this.openai = new OpenAIApi(this.apiConfig);
-    this.maxTokens = maxTokens;
-    this.temperature = temperature;
-    this.topP = topP;
-  }
-
-  updateApiKey(apiKey: string) {
-    this.apiConfig.apiKey = apiKey;
-  }
-
-  updateOrganizationId(organizationId: string) {
-    this.apiConfig.organization = organizationId;
+    this._openai = new OpenAIApi(this._apiConfig);
+    this._maxTokens = maxTokens;
+    this._maxResponseTokens = maxResponseTokens ?? maxTokens;
+    this._temperature = temperature;
+    this._topP = topP;
   }
 
   // OpenAI's library doesn't support streaming, but great workaround from @danneu - https://github.com/openai/openai-node/issues/18#issuecomment-1483808526
-  async* streamChatCompletion(conversation: Conversation, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
-    const response = await this.openai.createChatCompletion(
+  async* streamChatCompletion(conversation: Conversation, abortSignal: AbortSignal, {
+    maxTokens = this._maxTokens,
+    temperature = this._temperature,
+    topP = this._topP,
+    maxResponseTokens = this._maxResponseTokens,
+  }: {
+    maxTokens?: number;
+    maxResponseTokens?: number;
+    temperature?: number;
+    topP?: number;
+  } = {}): AsyncGenerator<any, any, unknown> {
+    const model = conversation.model ?? Model.gpt_35_turbo;
+    const tokensUsed = ApiProvider.countConversationTokens(conversation);
+    const tokensLeft = Math.min(maxTokens - tokensUsed, maxResponseTokens);
+    console.log(`Tokens used: ${tokensUsed}`);
+    console.log(`Tokens left: ${tokensLeft}`);
+    const response = await this._openai.createChatCompletion(
       {
-        model: conversation.model ?? Model.gpt_35_turbo,
+        model,
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
         })),
-        max_tokens: this.maxTokens,
-        temperature: this.temperature,
-        top_p: this.topP,
+        max_tokens: tokensLeft,
+        temperature,
+        top_p: topP,
         // Note - this alone won't make streaming work, OpenAI's SDK generator doesn't implement streaming
         stream: true,
       },
@@ -63,6 +78,7 @@ export default class ApiProvider {
     const dataStream = response.data as unknown as AsyncIterable<Buffer>;
 
     for await (const chunk of dataStream) {
+      // For whatever reason triggering abort() with the signal above doesn't work, so checking the abortSignal manually
       if (abortSignal.aborted) {
         return;
       }
@@ -88,15 +104,30 @@ export default class ApiProvider {
     }
   }
 
-  async getChatCompletion(conversation: Conversation): Promise<ChatCompletionResponseMessage | undefined> {
-    const response = await this.openai.createChatCompletion(
+  async getChatCompletion(conversation: Conversation, {
+    maxTokens = this._maxTokens,
+    temperature = this._temperature,
+    topP = this._topP,
+    maxResponseTokens = this._maxResponseTokens,
+  }: {
+    maxTokens?: number;
+    temperature?: number;
+    topP?: number;
+    maxResponseTokens?: number;
+  } = {}): Promise<ChatCompletionResponseMessage | undefined> {
+    const model = conversation.model ?? Model.gpt_35_turbo;
+    const tokensLeft = Math.min(maxTokens - ApiProvider.countConversationTokens(conversation), maxResponseTokens);
+    const response = await this._openai.createChatCompletion(
       {
-        model: conversation.model ?? Model.gpt_35_turbo,
+        model,
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
         })),
         stream: false,
+        max_tokens: tokensLeft,
+        temperature,
+        top_p: topP,
       },
       {
         responseEncoding: 'utf8',
@@ -109,19 +140,23 @@ export default class ApiProvider {
   // Using prompt as a param instead of the last message in the conversation to
   // allow for special formatting of the prompt before sending it to OpenAI
   async getPromptCompletion(prompt: string, conversation: Conversation, {
-    maxTokens = this.maxTokens,
-    temperature = this.temperature,
-    topP = this.topP,
+    maxTokens = this._maxTokens,
+    temperature = this._temperature,
+    topP = this._topP,
+    maxResponseTokens = this._maxResponseTokens,
   }: {
-    maxTokens: number;
-    temperature: number;
-    topP: number;
-  }): Promise<Message | undefined> {
-    const response = await this.openai.createCompletion(
+    maxTokens?: number;
+    temperature?: number;
+    topP?: number;
+    maxResponseTokens?: number;
+  } = {}): Promise<Message | undefined> {
+    const model = conversation.model ?? Model.gpt_35_turbo;
+    const tokensLeft = Math.min(maxTokens - ApiProvider.countConversationTokens(conversation), maxResponseTokens);
+    const response = await this._openai.createCompletion(
       {
-        model: conversation.model ?? Model.gpt_35_turbo,
+        model,
         prompt,
-        max_tokens: maxTokens,
+        max_tokens: tokensLeft,
         temperature,
         top_p: topP,
         stream: false,
@@ -137,4 +172,82 @@ export default class ApiProvider {
     };
   }
 
+  // * Utility token counting methods
+  public static countConversationTokens(conversation: Conversation): number {
+    const enc = encoding_for_model((conversation.model ?? Model.gpt_35_turbo) as TiktokenModel);
+    let tokensUsed = 0;
+
+    for (const message of conversation.messages) {
+      tokensUsed += ApiProvider.countMessageTokens(message, conversation.model ?? Model.gpt_35_turbo, enc);
+    }
+
+    tokensUsed += 2; // every reply is primed with <im_start>assistant
+
+    enc.free();
+    return tokensUsed;
+  }
+
+  public static countMessageTokens(message: Message, model: Model, encoder?: Tiktoken): number {
+    let enc = encoder ?? encoding_for_model(model as TiktokenModel);
+    let tokensUsed = 4; // every message follows <im_start>{role/name}\n{content}<im_end>\n
+
+    const openAIMessage = {
+      role: message.role ?? Role.user,
+      content: message.content ?? '',
+      // name: message.name,
+    };
+
+    for (const [key, value] of Object.entries(openAIMessage)) {
+      // Assuming encoding is available and has an encode method
+      const tokens = enc.encode(value);
+      tokensUsed += tokens ? tokens.length : 0;
+
+      if (key === "name") { // if there's a name, the role is omitted
+        tokensUsed -= 1; // role is always required and always 1 token
+      }
+    }
+
+    if (!encoder) {
+      enc.free();
+    }
+    return tokensUsed;
+  }
+
+  // Calculate tokens remaining for OpenAI's response
+  public static getRemainingPromptTokens(maxTokens: number, prompt: string, model: Model): number {
+    return maxTokens - ApiProvider.countPromptTokens(prompt, model);
+  }
+
+  public static countPromptTokens(prompt: string, model: Model): number {
+    const enc = encoding_for_model(model as TiktokenModel);
+    const tokens = enc.encode(prompt).length;
+
+    enc.free();
+    return tokens;
+  }
+
+  // * Getters and setters
+  set maxTokens(value: number) {
+    this._maxTokens = value;
+  }
+
+  set temperature(value: number) {
+    this._temperature = value;
+  }
+
+  set topP(value: number) {
+    this._topP = value;
+  }
+
+  updateApiKey(apiKey: string) {
+    this._apiConfig.apiKey = apiKey;
+  }
+
+  updateOrganizationId(organizationId: string) {
+    this._apiConfig.organization = organizationId;
+  }
+
+  updateApiBaseUrl(apiBaseUrl: string) {
+    this._apiConfig.basePath = apiBaseUrl;
+  }
 }

@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { setDebug } from "../actions/app";
 import {
+  clearMessages,
   setAutoscroll,
   setInProgress,
   updateUserInput,
 } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { Conversation } from "../types";
+import { Conversation, Model } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 import VerbositySelect from "./VerbositySelect";
@@ -27,9 +28,41 @@ export default ({
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [includeEditorSelection, setIncludeEditorSelection] = useState(false);
+  const [tokenText, setTokenText] = useState("");
+
+  useEffect(() => {
+    let minTokens = currentConversation.tokenCount?.minTotal ?? 0;
+    let maxTokens = currentConversation.tokenCount?.maxTotal ?? 0;
+    // on tokenCount change, set the cost
+    let rate = 0;
+    switch (currentConversation.model) {
+      case Model.gpt_35_turbo:
+        rate = 0.0002;
+        break;
+      case Model.gpt_4:
+        rate = 0.006;
+        break;
+      default:
+        rate = -1;
+    }
+    let minCost = (minTokens / 1000) * rate;
+    let maxCost = (maxTokens / 1000) * rate;
+
+    if (minCost > 0 && maxCost > 0) {
+      // TODO i18n
+      // setTokenText(
+      //   `${minTokens}-${maxTokens} ($${minCost.toFixed(4)}-$${maxCost.toFixed(
+      //     4
+      //   )})`
+      // );
+      setTokenText(`min ${minTokens} tokens ($${minCost.toFixed(4)})`);
+    } else {
+      setTokenText("");
+    }
+  }, [currentConversation.tokenCount]);
 
   // on conversation change, focus on the question input, set the question input value to the user input
-  React.useEffect(() => {
+  useEffect(() => {
     if (questionInputRef.current && conversationList.length > 1) {
       questionInputRef.current.focus();
       questionInputRef.current.value = currentConversation?.userInput ?? "";
@@ -218,9 +251,8 @@ export default ({
               className="hidden xs:block"
               tooltipId="footer-tooltip"
             />
-            {/* include editor selection toggle */}
             <button
-              className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full
+              className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap
                 ${
                   includeEditorSelection
                     ? "bg-button text-button hover:bg-button-hover focus:bg-button-hover"
@@ -242,6 +274,22 @@ export default ({
             >
               <Icon icon="plus" className="w-3 h-3" />
               Use editor selection
+            </button>
+            <button
+              className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary`}
+              data-tooltip-id="footer-tooltip"
+              data-tooltip-content="Include the code selected in your editor in the prompt?"
+              onClick={() => {
+                // clear all messages from the current conversation
+                dispatch(
+                  clearMessages({
+                    conversationId: currentConversation.id,
+                  })
+                );
+              }}
+            >
+              <Icon icon="cancel" className="w-3 h-3" />
+              Clear
             </button>
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
@@ -354,6 +402,9 @@ export default ({
           </div>
           <Tooltip id="more-actions-tooltip" place="left" delayShow={800} />
           <div className="flex flex-row gap-2">
+            <div className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap opacity-50">
+              {tokenText}
+            </div>
             <button
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
               onClick={() => {

@@ -117,7 +117,7 @@ export default function Chat({
         `}
         >
           {conversation.messages
-            .filter((message: Message) => message.role !== Role.system)
+            .filter((message: Message) => debug || message.role !== Role.system)
             .map((message: Message, index: number) => {
               return (
                 <div

@@ -16,6 +16,9 @@ export interface ApiRequestOptions {
 	messageId?: string,
 	code?: string,
 	language?: string;
+	topP?: number;
+	temperature?: number;
+	maxTokens?: number;
 }
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
@@ -25,6 +28,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	public model?: string;
 
 	private api: ApiProvider = new ApiProvider('');
+	private _maxTokens: number = 2048;
+	private _temperature: number = 0.9;
+	private _topP: number = 1;
 	private chatMode?: boolean = true;
 	private systemContext: string;
 
@@ -76,28 +82,58 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiKey", undefined, true);
 		}
 
+		// If apiBaseUrl is in old "https://api.openai.com" format, update to format "https://api.openai.com/v1"
+		// This update puts "apiBaseUrl" in line with the "basePath" format used by the OpenAI's official SDK
+		if (vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") === "https://api.openai.com") {
+			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", "https://api.openai.com/v1", true);
+		}
+
 		// Initialize the API
 		this.authStore.getAuthData().then((apiKey) => {
 			this.api = new ApiProvider(
 				apiKey ?? "",
 				{
-					organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organizationId") as string,
+					organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string,
+					apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
 					maxTokens: vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number,
 					temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
 					topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
 				});
 		});
 
-		// if the model or the system context changes, update the data members
+		// Update data members when the config settings change
 		vscode.workspace.onDidChangeConfiguration((e) => {
+			// Model
 			if (e.affectsConfiguration("chatgpt.gpt3.model")) {
 				this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
 			}
+			// System Context
 			if (e.affectsConfiguration("chatgpt.systemContext")) {
 				this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
 			}
+			// Throttling
 			if (e.affectsConfiguration("chatgpt.throttling")) {
-				this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
+				this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") ?? 100;
+			}
+			// organization
+			if (e.affectsConfiguration("chatgpt.gpt3.organization")) {
+				this.api.updateOrganizationId(vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") ?? "");
+			}
+			// Api Base Url
+			if (e.affectsConfiguration("chatgpt.gpt3.apiBaseUrl")) {
+				this.api.updateApiBaseUrl(vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") ?? "");
+			}
+			// maxTokens
+			if (e.affectsConfiguration("chatgpt.gpt3.maxTokens")) {
+				this.api.maxTokens = this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number ?? 2048;
+			}
+			// temperature
+			if (e.affectsConfiguration("chatgpt.gpt3.temperature")) {
+				this.api.temperature = this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number ?? 0.9;
+			}
+			// topP
+			if (e.affectsConfiguration("chatgpt.gpt3.top_p")) {
+				this.api.topP = this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number ?? 1;
 			}
 		});
 
@@ -269,6 +305,23 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					break;
 				case "setCurrentConversation":
 					this.currentConversation = data.conversation;
+					break;
+				case 'getTokenCount':
+					const convTokens = ApiProvider.countConversationTokens(data.conversation);
+					const userInputTokens = ApiProvider.countMessageTokens({
+						role: Role.user,
+						content: data.conversation.userInput
+					} as Message, data.conversation?.model ?? this.model ?? Model.gpt_35_turbo);
+
+					this.sendMessage({
+						type: "tokenCount",
+						tokenCount: {
+							messages: convTokens,
+							userInput: userInputTokens,
+							maxTotal: this._maxTokens,
+							minTotal: convTokens + userInputTokens,
+						},
+					});
 					break;
 				default:
 					console.log('Main Process - Uncaught message type: "' + data.type + '"');
@@ -543,7 +596,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				this.abortControllers.push({ conversationId: options.conversation?.id ?? '', controller });
 
 				// Stream ChatGPT response (this is using an async iterator)
-				for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal)) {
+				for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal, {
+					maxTokens: options.maxTokens ?? this._maxTokens,
+					temperature: options.temperature ?? this._temperature,
+					topP: options.topP ?? this._topP,
+				})) {
 					message.rawContent += token;
 
 					const now = Date.now();

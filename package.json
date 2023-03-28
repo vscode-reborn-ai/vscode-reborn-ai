@@ -285,21 +285,6 @@
     "configuration": {
       "title": "ChatGPT",
       "properties": {
-        "chatgpt.method": {
-          "type": "string",
-          "enum": [
-            "GPT3 OpenAI API Key"
-          ],
-          "default": "GPT3 OpenAI API Key",
-          "markdownDescription": "Choose your integration preference.",
-          "order": 1,
-          "enumItemLabels": [
-            "Use OpenAI API key integration"
-          ],
-          "markdownEnumDescriptions": [
-            "Various text & code completion models are supported including ChatGPT Turbo models. \n\n- GPT3.5 -> i.e. `'chatgpt.gpt3.model': 'gpt-3.5-turbo'`\n\n- GPT3 -> i.e. `'chatgpt.gpt3.model': 'text-davinci-003'`\n\n- Codex -> i.e.`'chatgpt.gpt3.model': 'code-davinci-002'`"
-          ]
-        },
         "chatgpt.gpt3.generateCode-enabled": {
           "type": "boolean",
           "default": true,
@@ -464,7 +449,7 @@
         },
         "chatgpt.gpt3.organization": {
           "type": "string",
-          "markdownDescription": "OpenAI Organization ID. [Documentation](https://beta.openai.com/docs/api-reference/requesting-organization). \n\n**Please enable OpenAI API Key method to use this setting.**",
+          "markdownDescription": "OpenAI Organization ID. [Documentation](https://beta.openai.com/docs/api-reference/requesting-organization).",
           "order": 35
         },
         "chatgpt.gpt3.model": {
@@ -506,19 +491,19 @@
         "chatgpt.gpt3.maxTokens": {
           "type": "number",
           "default": 1024,
-          "markdownDescription": "The maximum number of tokens to generate in the completion. \n\nThe token count of your prompt plus max_tokens cannot exceed the model's context length. Most models have a context length of 2048 tokens (except for the newest models, which support 4096). [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-max_tokens) \n\n**Please enable OpenAI API Key method to use this setting.**",
+          "markdownDescription": "The maximum number of tokens to generate in the completion. \n\nThe token count of your prompt plus max_tokens cannot exceed the model's context length. Most models have a context length of 2048 tokens (except for the newest models, which support 4096). [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-max_tokens)",
           "order": 37
         },
         "chatgpt.gpt3.temperature": {
           "type": "number",
           "default": 1,
-          "markdownDescription": "What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer.\n\nIt is recommended altering this or top_p but not both. [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-temperature) \n\n**Please enable OpenAI API Key method to use this setting.**",
+          "markdownDescription": "What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer.\n\nIt is recommended altering this or top_p but not both. [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-temperature)",
           "order": 38
         },
         "chatgpt.gpt3.top_p": {
           "type": "number",
           "default": 1,
-          "markdownDescription": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. \n\nIt is recommended altering this or temperature but not both. [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p) \n\n**Please enable OpenAI API Key method to use this setting.**",
+          "markdownDescription": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. \n\nIt is recommended altering this or temperature but not both. [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
           "order": 39
         },
         "chatgpt.response.showNotification": {
@@ -629,6 +614,7 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
+    "@dqbd/tiktoken": "^1.0.2",
     "@reduxjs/toolkit": "^1.9.3",
     "autoprefixer": "^10.4.14",
     "css-loader": "^6.7.3",

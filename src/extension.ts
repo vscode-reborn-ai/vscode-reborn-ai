@@ -62,7 +62,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			provider.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model");
 		}
 
-		if (e.affectsConfiguration('chatgpt.promptPrefix') || e.affectsConfiguration('chatgpt.gpt3.generateCode-enabled') || e.affectsConfiguration('chatgpt.gpt3.model') || e.affectsConfiguration('chatgpt.method')) {
+		if (e.affectsConfiguration('chatgpt.promptPrefix') || e.affectsConfiguration('chatgpt.gpt3.generateCode-enabled') || e.affectsConfiguration('chatgpt.gpt3.model')) {
 			setContext();
 		}
 	});
