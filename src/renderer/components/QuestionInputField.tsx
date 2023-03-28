@@ -299,7 +299,7 @@ export default ({
             <button
               className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary`}
               data-tooltip-id="footer-tooltip"
-              data-tooltip-content="Include the code selected in your editor in the prompt?"
+              data-tooltip-content="Clear all messages from conversation"
               onClick={() => {
                 // clear all messages from the current conversation
                 dispatch(
