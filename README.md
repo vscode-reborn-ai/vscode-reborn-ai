@@ -134,7 +134,7 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 - 🖥️ [UI] Add token count UI
 - 🖥️ [UI] "Clear" button added for clearning the conversation. Highly recommend using it to avoid expensive token usage with long conversations.
-- 🖥️ [UI] Minor tweaks to mini buttons below input box to prefer wrapping on smaller windows.
+- 🖥️ [UI] Minor tweaks to mini buttons below input box to prefer wrapping on smaller windows and ui fixes to actions menu on smaller windows.
 - 🔧 [Fixes] Token counting issues causing `4096` maxTokens config setting to fail.
 - 🔩 [Behind the scenes] API provider refactor. Moving towards using the `OpenAI` library and its SDK for better maintainability. Note that `baseUrl` setting should now end in `/v1`, which matches OpenAI's SDK for `basePath`.
 
