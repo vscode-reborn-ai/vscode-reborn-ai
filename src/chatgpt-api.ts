@@ -288,6 +288,7 @@ Current date: ${currentDate}`;
       id: messageId,
       parentMessageId,
       content,
+      rawContent: content,
     } as Message;
 
     // Upsert the message
@@ -304,6 +305,7 @@ Current date: ${currentDate}`;
         id: uuidv4(),
         role: Role.system,
         content: this._systemMessage,
+        rawContent: this._systemMessage,
         createdAt: Date.now(),
       } as Message);
     }
@@ -313,7 +315,8 @@ Current date: ${currentDate}`;
       role: Role.assistant,
       id: uuidv4(),
       parentMessageId: messageId,
-      content: ""
+      content: "",
+      rawContent: "",
     } as DeltaMessage;
     const responseP = (new Promise(async (resolve, reject) => {
       const url = `${this._apiBaseUrl}/v1/chat/completions`;
@@ -492,6 +495,7 @@ Current date: ${currentDate}`;
         id: uuidv4(),
         role: Role.system,
         content: systemMessage,
+        rawContent: systemMessage,
         createdAt: Date.now(),
       });
     }
@@ -505,6 +509,7 @@ Current date: ${currentDate}`;
           id: uuidv4(),
           role: Role.user,
           content,
+          rawContent: content,
           createdAt: Date.now(),
         },
       ])

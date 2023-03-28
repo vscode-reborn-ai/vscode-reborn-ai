@@ -16,6 +16,7 @@ export default function ModelSelect({
   className,
   dropdownClassName,
   tooltipId,
+  showParentMenu,
 }: {
   currentConversation: Conversation;
   conversationList: Conversation[];
@@ -23,6 +24,7 @@ export default function ModelSelect({
   className?: string;
   dropdownClassName?: string;
   tooltipId?: string;
+  showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -30,7 +32,7 @@ export default function ModelSelect({
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
 
-  const createNewConversation = () => {
+  const createNewConversation = (model: Model) => {
     let title = "Chat";
     let i = 2;
 
@@ -46,10 +48,7 @@ export default function ModelSelect({
       messages: [],
       inProgress: false,
       createdAt: Date.now(),
-      model:
-        settings?.gpt3?.model ??
-        currentConversation?.model ??
-        Model.gpt_35_turbo,
+      model,
       autoscroll: true,
       verbosity:
         settings?.verbosity ??
@@ -81,19 +80,19 @@ export default function ModelSelect({
     });
 
     // Model can't change partway through a conversation, so we need to create a new one
-    if (
-      currentConversation.model !== model &&
-      currentConversation.messages.length > 0
-    ) {
-      createNewConversation();
-    } else {
-      dispatch(
-        updateConversationModel({
-          conversationId: currentConversation.id,
-          model,
-        })
-      );
-    }
+    // if (
+    //   currentConversation.model !== model &&
+    //   currentConversation.messages.length > 0
+    // ) {
+    //   createNewConversation(model);
+    // } else {
+    dispatch(
+      updateConversationModel({
+        conversationId: currentConversation.id,
+        model,
+      })
+    );
+    // }
 
     // Close the menu
     setShowModels(false);
@@ -116,9 +115,9 @@ export default function ModelSelect({
             : settings?.gpt3?.model ?? "..."}
         </button>
         <div
-          className={`absolute items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10
+          className={`fixed items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
-            ${dropdownClassName ? dropdownClassName : "bottom-8 left-4"}
+            ${dropdownClassName ? dropdownClassName : "bottom-8 left-4 z-10"}
           `}
         >
           {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo) && (
@@ -126,6 +125,9 @@ export default function ModelSelect({
               className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
               onClick={() => {
                 setModel(Model.gpt_35_turbo);
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
               }}
             >
               GPT-3.5-TURBO (Fast, recommended)
@@ -136,6 +138,9 @@ export default function ModelSelect({
               className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
               onClick={() => {
                 setModel(Model.gpt_4);
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
               }}
             >
               GPT-4 (Better and larger input, but slower and more pricey)
@@ -148,6 +153,9 @@ export default function ModelSelect({
               rel="noreferrer"
               onClick={(e) => {
                 setShowModels(false);
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
               }}
             >
               Looking for GPT-4? You need to sign up on the waitlist here
@@ -170,6 +178,9 @@ export default function ModelSelect({
               rel="noreferrer"
               onClick={(e) => {
                 setShowModels(false);
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
               }}
             >
               OpenAI hasn't made GPT-4-32K available yet.

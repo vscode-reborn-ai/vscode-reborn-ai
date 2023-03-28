@@ -96,19 +96,20 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## TODO
 
-- [x] Short-term - Publish to VSCode Marketplace.
-- [x] Short-term - Add model dropdown to ChatGPT UI.
-- [x] Short-term - Allow more custom prompts.
-- [x] Short-term - Add setting for a custom system message.
-- [x] Short-term - Move API key from settings config to secure storage.
-- [x] Short-term - Use API list API to show user what models they have access to.
-- [ ] Short-term - Add way to manage custom prompts in UI.
-- [ ] Long-term - Add option to stream directly into the editor.
-- [ ] Long-term - Inline diff
-- [ ] Long-term - "Smart" actions based on the type of file open.
-- [ ] Long-term - "Smart" actions on that run at a project level.
-- [ ] Long-term - AI-generated git commit messages
-- [ ] TBD - Support davinci models in place of ChatGPT
+- [x] Publish to VSCode Marketplace.
+- [x] Add model dropdown to ChatGPT UI.
+- [x] Allow more custom prompts.
+- [x] Add setting for a custom system message.
+- [x] Move API key from settings config to secure storage.
+- [x] Use API list API to show user what models they have access to.
+- [ ] Improve language localization.
+- [ ] Add way to manage custom prompts in UI.
+- [ ] Add option to stream directly into the editor.
+- [ ] Inline diff
+- [ ] "Smart" actions based on the type of file open.
+- [ ] "Smart" actions on that run at a project level.
+- [ ] AI-generated git commit messages
+- [ ] Support davinci models in place of ChatGPT models
 
 ## Tech
 
@@ -128,6 +129,14 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
+
+### March 28, 2023 (`v3.14.0`)
+
+- 🖥️ [UI] Add token count UI
+- 🖥️ [UI] "Clear" button added for clearning the conversation. Highly recommend using it to avoid expensive token usage with long conversations.
+- 🖥️ [UI] Minor tweaks to mini buttons below input box to prefer wrapping on smaller windows and ui fixes to actions menu on smaller windows.
+- 🔧 [Fixes] Token counting issues causing `4096` maxTokens config setting to fail.
+- 🔩 [Behind the scenes] API provider refactor. Moving towards using the `OpenAI` library and its SDK for better maintainability. Note that `baseUrl` setting should now end in `/v1`, which matches OpenAI's SDK for `basePath`.
 
 ### March 26, 2023 (`v3.12.0`, `v3.12.1`, `v3.13.0`, `v3.13.1`)
 

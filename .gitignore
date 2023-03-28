@@ -1,4 +1,5 @@
-out
+out/**/*.js
+out/**/*.map
 dist
 node_modules
 .vscode-test/
