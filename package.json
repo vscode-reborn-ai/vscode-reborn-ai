@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.14.0",
+  "version": "3.14.1",
   "aiKey": "",
   "license": "ISC",
   "repository": {
@@ -575,7 +575,7 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "rimraf out && npm run esbuild-base -- --minify && npm run build-webview",
+    "vscode:prepublish": "rimraf out && npm run esbuild-base -- --minify && npm run build-webview && cp ./node_modules/@dqbd/tiktoken/tiktoken_bg.wasm ./out/tiktoken_bg.wasm",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "build": "npm run -S esbuild-base -- --sourcemap && npm run build-webview",
     "watch": "npm-run-all -p watch:*",
