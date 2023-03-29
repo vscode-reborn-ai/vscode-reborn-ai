@@ -14,7 +14,7 @@ export default class ApiProvider {
   constructor(apiKey: string, {
     organizationId = '',
     apiBaseUrl = 'https://api.openai.com/v1',
-    maxTokens = 2048,
+    maxTokens = 4096,
     maxResponseTokens,
     temperature = 0.9,
     topP = 1,
@@ -53,8 +53,6 @@ export default class ApiProvider {
     const model = conversation.model ?? Model.gpt_35_turbo;
     const tokensUsed = ApiProvider.countConversationTokens(conversation);
     const tokensLeft = Math.min(maxTokens - tokensUsed, maxResponseTokens);
-    console.log(`Tokens used: ${tokensUsed}`);
-    console.log(`Tokens left: ${tokensLeft}`);
     const response = await this._openai.createChatCompletion(
       {
         model,

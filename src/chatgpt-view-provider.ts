@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
 import ApiProvider from "./api-provider";
 import Auth from "./auth";
+import { loadTranslations } from './localization';
 import { Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
 import { unEscapeHTML } from "./renderer/utils";
 
@@ -145,6 +146,17 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					value: vscode.workspace.getConfiguration("chatgpt")
 				});
 			}
+		});
+
+		// Load translations
+		loadTranslations(context.extensionPath).then((translations) => {
+			// Serialize and send translations to the webview
+			const serializedTranslations = JSON.stringify(translations);
+			console.log("Loaded translations", serializedTranslations);
+
+			this.sendMessage({ type: 'setTranslations', value: serializedTranslations });
+		}).catch((err) => {
+			console.error("Failed to load translations", err);
 		});
 	}
 

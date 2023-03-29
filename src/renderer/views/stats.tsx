@@ -1,5 +1,8 @@
 import React from "react";
+import { useAppSelector } from "../hooks";
 
 export default function Stats({ vscode }: { vscode: any }) {
-  return <div>Stats</div>;
+  const t = useAppSelector((state: any) => state.app.translations);
+
+  return <div>{t?.stats?.title ?? "Stats"}</div>;
 }

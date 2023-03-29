@@ -25,6 +25,7 @@ export default ({
   const dispatch = useAppDispatch();
   const debug = useAppSelector((state: any) => state.app.debug);
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
+  const t = useAppSelector((state: any) => state.app.translations);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [includeEditorSelection, setIncludeEditorSelection] = useState(false);
@@ -64,18 +65,10 @@ export default ({
     setMaxCost(maxCost);
 
     if (minCost > 0 && maxCost > 0) {
-      // TODO i18n
-      // setTokenText(
-      //   `${minTokens}-${maxTokens} ($${minCost.toFixed(4)}-$${maxCost.toFixed(
-      //     4
-      //   )})`
-      // );
       setTokenText(
-        `${
-          tokenMessages + tokenPrompt
-        } <> ${maxTokens} tokens ($${minCost.toFixed(4)} <> ${maxCost.toFixed(
-          4
-        )})`
+        `${tokenMessages + tokenPrompt} <> ${maxTokens} ${
+          t?.questionInputField?.tokens ?? "tokens"
+        } ($${minCost.toFixed(4)} <> ${maxCost.toFixed(4)})`
       );
     } else {
       setTokenText("");
@@ -154,7 +147,7 @@ export default ({
             // show the text "Thinking..." when the conversation is in progress in place of the question input
             <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-[calc(100%-6rem)]">
               <Icon icon="ripples" className="w-5 h-5 mr-2" />
-              <span>Thinking...</span>
+              <span>T{t?.questionInputField?.thinking ?? "Thinking..."}</span>
             </div>
           )}
           {!currentConversation.inProgress && (
@@ -239,7 +232,7 @@ export default ({
               }}
             >
               <Icon icon="cancel" className="w-3 h-3 mr-1" />
-              Stop
+              {t?.questionInputField?.stop ?? "Stop"}
             </button>
           )}
           {!currentConversation.inProgress && (
@@ -250,7 +243,7 @@ export default ({
                 askQuestion();
               }}
             >
-              Ask
+              {t?.questionInputField?.ask ?? "Ask"}
               <Icon icon="send" className="w-5 h-5 ml-1" />
             </button>
           )}
@@ -294,7 +287,8 @@ export default ({
               }}
             >
               <Icon icon="plus" className="w-3 h-3" />
-              Use editor selection
+              {t?.questionInputField?.useEditorSelection ??
+                "Use editor selection"}
             </button>
             <button
               className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary`}
@@ -310,7 +304,7 @@ export default ({
               }}
             >
               <Icon icon="cancel" className="w-3 h-3" />
-              Clear
+              {t?.questionInputField?.clear ?? "Clear"}
             </button>
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
@@ -330,7 +324,7 @@ export default ({
                   target="_blank"
                 >
                   <Icon icon="help" className="w-3 h-3" />
-                  Feedback
+                  {t?.questionInputField?.feedback ?? "Feedback"}
                 </a>
               </li>
               {process.env.NODE_ENV === "development" && (
@@ -350,7 +344,7 @@ export default ({
                     }}
                   >
                     <Icon icon="box" className="w-3 h-3" />
-                    Debug
+                    {t?.questionInputField?.debug ?? "Debug"}
                   </button>
                 </li>
               )}
@@ -369,7 +363,7 @@ export default ({
                   data-tooltip-content="Open extension settings"
                 >
                   <Icon icon="cog" className="w-3 h-3" />
-                  Settings
+                  {t?.questionInputField?.settings ?? "Settings"}
                 </button>
               </li>
               <li>
@@ -388,7 +382,7 @@ export default ({
                   }}
                 >
                   <Icon icon="download" className="w-3 h-3" />
-                  Export
+                  {t?.questionInputField?.markdown ?? "Markdown"}
                 </button>
               </li>
               <li>
@@ -405,7 +399,7 @@ export default ({
                   }}
                 >
                   <Icon icon="cancel" className="w-3 h-3" />
-                  Reset API Key
+                  {t?.questionInputField?.resetAPIKey ?? "Reset API Key"}
                 </button>
               </li>
               <li className="block xs:hidden">
@@ -461,33 +455,54 @@ export default ({
               >
                 {/* Show a breakdown of the token count with min tokens, max tokens, min cost, and max cost */}
                 <div className="p-4 flex flex-col gap-2 whitespace-pre-wrap">
-                  <h5>Pressing "Ask" will cost...</h5>
+                  <h5>
+                    {t?.questionInputField?.tokenBreakdownHeading ??
+                      "Pressing Ask will cost..."}
+                  </h5>
                   <p>
                     <span className="block">
-                      <span className="font-bold">At least:</span>
+                      <span className="font-bold">
+                        {t?.questionInputField?.tokenBreakdownAtLeast ??
+                          "At least:"}
+                      </span>
                       <br />
                       <span className="font-italic text-[10px]">
-                        (all messages + prompt)
+                        {t?.questionInputField?.tokenBreakdownAtLeastNote ??
+                          "(no answer)"}
                       </span>
                     </span>
                     <code>{currentConversation.tokenCount?.minTotal ?? 0}</code>{" "}
-                    tokens which is <code>${minCost?.toFixed(4) ?? 0}</code>
+                    {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
+                      "tokens which is"}
+                    <code>${minCost?.toFixed(4) ?? 0}</code>
                   </p>
                   <p>
                     <span className="block">
-                      <span className="font-bold">At most:</span>
+                      <span className="font-bold">
+                        {t?.questionInputField?.tokenBreakdownAtMost ??
+                          "At most:"}
+                      </span>
                       <br />
                       <span className="font-italic text-[10px]">
-                        (all messages + prompt + longest answer)
+                        {t?.questionInputField?.tokenBreakdownAtMostNote ??
+                          "(all messages + prompt + longest answer)"}
                       </span>
                     </span>
                     <code>{currentConversation.tokenCount?.maxTotal ?? 0}</code>{" "}
-                    tokens which is <code>${maxCost?.toFixed(4) ?? 0}</code>
+                    {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
+                      "tokens which is"}
+                    <code>${maxCost?.toFixed(4) ?? 0}</code>
                   </p>
                   <p>
-                    This is calculated based on the{" "}
+                    {t?.questionInputField?.tokenBreakdownBasedOn ??
+                      "This is calculated based on the"}{" "}
                     <code>{settings?.gpt3?.maxTokens ?? "??"}</code> "
-                    <code>maxTokens</code>" config setting and{" "}
+                    <code>
+                      {t?.questionInputField?.maxTokens ?? "maxTokens"}
+                    </code>
+                    "
+                    {t?.questionInputField?.tokenBreakdownConfigSettingAnd ??
+                      "config setting and"}{" "}
                     <code>
                       {currentConversation.model ?? Model.gpt_35_turbo}
                     </code>
@@ -497,13 +512,16 @@ export default ({
                       target="_blank"
                       rel="noreferrer"
                     >
-                      pricing
+                      {t?.questionInputField?.tokenBreakdownPricing ??
+                        "pricing"}
                     </a>{" "}
-                    for prompts and completions.
+                    {t?.questionInputField
+                      ?.tokenBreakdownForPromptsAndCompletions ??
+                      "for prompts and completions."}
                   </p>
                   <p className="italic">
-                    Strongly recommended - clear the conversation routinely to
-                    keep the prompt short.
+                    {t?.questionInputField?.tokenBreakdownRecommendation ??
+                      "Strongly recommended - clear the conversation routinely to keep the prompt short."}
                   </p>
                 </div>
               </div>
@@ -515,7 +533,7 @@ export default ({
               }}
             >
               <Icon icon="zap" className="w-3.5 h-3.5" />
-              More Actions
+              {t?.questionInputField?.moreActions ?? "More Actions"}
             </button>
           </div>
         </div>

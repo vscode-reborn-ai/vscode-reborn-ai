@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { setVerbosity } from "../actions/conversation";
-import { useAppDispatch } from "../hooks";
+import { useAppDispatch, useAppSelector } from "../hooks";
 import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
 
@@ -20,31 +20,32 @@ export default function VerbositySelect({
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
+  const t = useAppSelector((state: any) => state.app.translations);
   const [showOptions, setShowOptions] = useState(false);
 
   const getHumanFriendlyLabel = (verbosity: Verbosity) => {
     switch (verbosity) {
       case Verbosity.code:
-        return "Code";
+        return t?.verbosity?.codeLabel ?? "Code";
       case Verbosity.concise:
-        return "Concise";
+        return t?.verbosity?.conciseLabel ?? "Concise";
       case Verbosity.normal:
-        return "Normal";
+        return t?.verbosity?.normalLabel ?? "Normal";
       case Verbosity.full:
-        return "Detailed";
+        return t?.verbosity?.fullLabel ?? "Detailed";
     }
   };
 
   const getHumanFriendlyDescription = (verbosity: Verbosity) => {
     switch (verbosity) {
       case Verbosity.code:
-        return "Only reply with code";
+        return t?.verbosity?.codeDescription ?? "Only reply with code";
       case Verbosity.concise:
-        return "Concise explanations";
+        return t?.verbosity?.conciseDescription ?? "Concise explanations";
       case Verbosity.normal:
-        return "Normal explanations";
+        return t?.verbosity?.normalDescription ?? "Normal explanations";
       case Verbosity.full:
-        return "Detailed, full explanations";
+        return t?.verbosity?.fullDescription ?? "Detailed, full explanations";
     }
   };
 
@@ -53,7 +54,10 @@ export default function VerbositySelect({
       <div
         className={`relative ${className}`}
         data-tooltip-id={tooltipId ?? "footer-tooltip"}
-        data-tooltip-content="Change the verbosity of the AI's responses"
+        data-tooltip-content={
+          t?.verbosity?.parentTooltip ??
+          "Change the verbosity of the AI's responses"
+        }
       >
         <button
           className="rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap"

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAppSelector } from "../hooks";
 
 const examplePrompts = [
   { category: "Greetings", prompts: ["Hello", "Hi", "Hey"] },
@@ -6,6 +7,7 @@ const examplePrompts = [
 ];
 
 function CustomPromptManager() {
+  const t = useAppSelector((state: any) => state.app.translations);
   const [prompts, setPrompts] = useState(Array(6).fill(""));
   const [showTemplatePanel, setShowTemplatePanel] = useState(false);
 
@@ -33,7 +35,7 @@ function CustomPromptManager() {
               className="absolute top-0 right-0 p-2"
               onClick={() => setShowTemplatePanel(false)}
             >
-              Close
+              {t?.customPromptPanel?.closeButton ?? "Close"}
             </button>
             {examplePrompts.map(({ category, prompts: examplePs }) => (
               <div key={category}>
@@ -79,13 +81,13 @@ function CustomPromptManager() {
         className="bg-blue-500 text-white p-2 rounded mr-2"
         onClick={() => addPrompt("")}
       >
-        New
+        {t?.customPromptPanel?.newButton ?? "New"}
       </button>
       <button
         className="bg-green-500 text-white p-2 rounded"
         onClick={() => setShowTemplatePanel(true)}
       >
-        New from Template
+        {t?.customPromptPanel?.newFromTemplateButton ?? "New from Template"}
       </button>
     </div>
   );

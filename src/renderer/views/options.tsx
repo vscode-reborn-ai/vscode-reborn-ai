@@ -1,5 +1,8 @@
 import React from "react";
+import { useAppSelector } from "../hooks";
 
 export default function Options({ vscode }: { vscode: any }) {
-  return <div>Options</div>;
+  const t = useAppSelector((state: any) => state.app.translations);
+
+  return <div>{t?.options?.title ?? "Options"}</div>;
 }

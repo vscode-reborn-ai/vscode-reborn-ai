@@ -637,7 +637,8 @@
     "remark": "^14.0.2",
     "strip-markdown": "^5.0.0",
     "style-loader": "^3.3.2",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "vscode-nls": "^5.2.0"
   },
   "resolutions": {
     "clone-deep": "^4.0.1"
