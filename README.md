@@ -124,6 +124,11 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### March 30, 2023 (`v3.15.0`)
+
+- 🌐 [i18n] Initial i18n support, localization is still a work in progress.
+- 🐛 [Fixes] Fix 400 error due to invalid API base URL.
+
 ### March 28, 2023 (`v3.14.0`)
 
 - 🖥️ [UI] Add token count UI
