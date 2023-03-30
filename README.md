@@ -96,7 +96,6 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## TODO
 
-- [ ] Improve language localization.
 - [ ] Add way to manage custom prompts in UI.
 - [ ] Add option to stream directly into the editor.
 - [ ] Inline diff
@@ -104,6 +103,10 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [ ] "Smart" actions on that run at a project level.
 - [ ] AI-generated git commit messages
 - [ ] Support davinci models in place of ChatGPT models
+
+## Internationalization
+
+Initial i18n support has been added `v3.15.0`, but I need help translating to different languages. If you're able to help at all [see this discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
 
 ## Tech
 
