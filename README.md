@@ -106,7 +106,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## Internationalization
 
-Initial i18n support has been added `v3.15.0`, but I need help translating to different languages. If you're able to help at all [see this discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
+Initial i18n support has been added in `v3.15.0`, but I need help translating to different languages. If you're able to help at all [see this discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
 
 ## Tech
 
