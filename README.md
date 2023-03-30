@@ -110,13 +110,7 @@ Initial i18n support has been added in `v3.15.0`, but I need help translating to
 
 ## Tech
 
-- [Yarn](https://yarnpkg.com/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [VSCode Extension API](https://code.visualstudio.com/api)
-- [React](https://reactjs.org/)
-- [Redux](https://redux.js.org/)
-- [React Router](https://reactrouter.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
+[Yarn](https://yarnpkg.com/) - [TypeScript](https://www.typescriptlang.org/) - [VSCode Extension API](https://code.visualstudio.com/api) - [React](https://reactjs.org/) - [Redux](https://redux.js.org/) - [React Router](https://reactrouter.com/) - [Tailwind CSS](https://tailwindcss.com/)
 
 - The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
 - This does not use VSCode's [WebView UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit/tree/main/src). But, I'm open to switching to the WebView UI toolkit since it better aligns with VSCode's UI.
