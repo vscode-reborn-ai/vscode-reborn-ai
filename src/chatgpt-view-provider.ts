@@ -83,6 +83,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiKey", undefined, true);
 		}
 
+		// Check config settings for "chatgpt.gpt3.apiBaseUrl", if it is set to "https://api.openai.com", change it to "https://api.openai.com/v1"
+		const baseUrl = vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+		if (baseUrl === "https://api.openai.com") {
+			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", "https://api.openai.com/v1", true);
+		}
+
 		// If apiBaseUrl is in old "https://api.openai.com" format, update to format "https://api.openai.com/v1"
 		// This update puts "apiBaseUrl" in line with the "basePath" format used by the OpenAI's official SDK
 		if (vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") === "https://api.openai.com") {
