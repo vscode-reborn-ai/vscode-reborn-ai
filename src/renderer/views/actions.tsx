@@ -1,4 +1,5 @@
 import React from "react";
+import { useAppSelector } from "../hooks";
 
 const aiActions = {
   javascript: [
@@ -23,6 +24,8 @@ const aiActions = {
 };
 
 export default function Actions({ vscode }: { vscode: any }) {
+  const t = useAppSelector((state: any) => state.app.translations);
+
   return (
     <nav className="h-full overflow-y-auto" aria-label="Directory">
       {Object.keys(aiActions).map((category) => (

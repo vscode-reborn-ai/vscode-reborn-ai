@@ -20,6 +20,7 @@ export default function Tabs({
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
+  const t = useAppSelector((state: any) => state.app.translations);
   const [tabs, setTabs] = useState(
     [] as {
       name: string;
@@ -102,7 +103,7 @@ export default function Tabs({
       {/* Tab layout specifically for a skinny UI (switches to dropdown) or when the tab count exceeds 5 */}
       <div className={`py-1 px-2 ${tabs.length > 5 ? "" : "2xs:hidden"}`}>
         <label htmlFor="tabs" className="sr-only">
-          Select a tab
+          {t?.tabs?.sr_label ?? "Select a tab"}
         </label>
         <div className="flex flex-row gap-x-2">
           <TabsDropdown
@@ -119,7 +120,7 @@ export default function Tabs({
             onClick={createNewConversation}
           >
             <Icon icon="plus" className="w-4 h-4" />
-            New Chat
+            {t?.tabs?.new_chat ?? "New Chat"}
           </button>
         </div>
       </div>
@@ -173,7 +174,9 @@ export default function Tabs({
                         }}
                       >
                         <Icon icon="close" className="w-4 h-4" />
-                        <span className="sr-only">Close tab</span>
+                        <span className="sr-only">
+                          {t?.tabs?.close_tab ?? "Close tab"}
+                        </span>
                       </button>
                     )}
                   </Link>
@@ -186,7 +189,7 @@ export default function Tabs({
                 onClick={createNewConversation}
               >
                 <Icon icon="plus" className="w-4 h-4" />
-                New Chat
+                {t?.tabs?.new_chat ?? "New Chat"}
               </button>
             </li>
           </ul>

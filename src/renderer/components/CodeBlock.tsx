@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
+import { useAppSelector } from "../hooks";
 import { Role } from "../types";
 import CodeBlockActionsButton from "./CodeBlockActionsButton";
 
@@ -20,6 +21,7 @@ export default ({
   startCollapsed = false,
   role,
 }: CodeBlockProps) => {
+  const t = useAppSelector((state: any) => state.app.translations);
   const [codeTextContent, setCodeTextContent] = React.useState("");
   const [language, setLanguage] = React.useState("");
   const codeRef = React.useRef<HTMLPreElement>(null);
@@ -62,9 +64,9 @@ export default ({
             vscode={vscode}
             codeTextContent={codeTextContent}
             iconName="clipboard"
-            tooltipContent="Copy to clipboard"
-            buttonText="Copy"
-            buttonSuccessText="Copied"
+            tooltipContent={t?.codeBlock?.copyTooltip ?? "Copy to clipboard"}
+            buttonText={t?.codeBlock?.copy ?? "Copy"}
+            buttonSuccessText={t?.codeBlock?.copied ?? "Copied"}
             onClick={() => {
               navigator.clipboard.writeText(codeTextContent);
             }}
@@ -74,9 +76,11 @@ export default ({
             vscode={vscode}
             codeTextContent={codeTextContent}
             iconName="pencil"
-            tooltipContent="Insert into the current file"
-            buttonText="Insert"
-            buttonSuccessText="Inserted"
+            tooltipContent={
+              t?.codeBlock?.insertTooltip ?? "Insert into the current file"
+            }
+            buttonText={t?.codeBlock?.insert ?? "Insert"}
+            buttonSuccessText={t?.codeBlock?.inserted ?? "Inserted"}
             onClick={() => {
               vscode.postMessage({
                 type: "editCode",
@@ -89,9 +93,12 @@ export default ({
             vscode={vscode}
             codeTextContent={codeTextContent}
             iconName="plus"
-            tooltipContent="Create a new file with the below code"
-            buttonText="New"
-            buttonSuccessText="Created"
+            tooltipContent={
+              t?.codeBlock?.newTooltip ??
+              "Create a new file with the below code"
+            }
+            buttonText={t?.codeBlock?.new ?? "New"}
+            buttonSuccessText={t?.codeBlock?.created ?? "Created"}
             onClick={() => {
               vscode.postMessage({
                 type: "openNew",
@@ -117,8 +124,7 @@ export default ({
               className="flex gap-x-1 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
               onClick={() => setExpanded(!expanded)}
             >
-              {/* <Icon icon="caretDown" className="w-4 h-4" /> */}
-              Expand
+              {t?.codeBlock?.expand ?? "Expand"}
             </button>
           </div>
         </div>
@@ -130,8 +136,7 @@ export default ({
               className="flex gap-x-1 top-0 right-0 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
               onClick={() => setExpanded(!expanded)}
             >
-              {/* <Icon icon="caretDown" className="w-4 h-4 transform rotate-180" /> */}
-              Collapse
+              {t?.codeBlock?.collapse ?? "Collapse"}
             </button>
           </div>
         </div>

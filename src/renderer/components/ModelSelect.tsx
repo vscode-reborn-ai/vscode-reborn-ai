@@ -28,18 +28,19 @@ export default function ModelSelect({
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const t = useAppSelector((state: any) => state.app.translations);
   const [showModels, setShowModels] = useState(false);
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
 
   const createNewConversation = (model: Model) => {
-    let title = "Chat";
+    let title = t?.modelSelect?.chat ?? "Chat";
     let i = 2;
 
     while (
       conversationList.find((conversation) => conversation.title === title)
     ) {
-      title = `Chat ${i}`;
+      title = `${t?.modelSelect?.chat ?? "Chat"} ${i}`;
       i++;
     }
     const newConversation = {
@@ -130,7 +131,8 @@ export default function ModelSelect({
                 }
               }}
             >
-              GPT-3.5-TURBO (Fast, recommended)
+              <code>gpt-3.5-turbo</code>{" "}
+              {t?.modelSelect?.gpt35TurboNote ?? "(Fast, recommended)"}
             </button>
           )}
           {chatGPTModels && chatGPTModels.includes(Model.gpt_4) ? (
@@ -143,7 +145,9 @@ export default function ModelSelect({
                 }
               }}
             >
-              GPT-4 (Better and larger input, but slower and more pricey)
+              <code>gpt-4</code>{" "}
+              {t?.modelSelect?.gpt4Note ??
+                "(Better and larger input, but slower and more pricey)"}
             </button>
           ) : (
             <a
@@ -158,7 +162,8 @@ export default function ModelSelect({
                 }
               }}
             >
-              Looking for GPT-4? You need to sign up on the waitlist here
+              {t?.modelSelect?.gpt4UnavailableNote ??
+                "Looking for GPT-4? You need to sign up on the waitlist here"}
             </a>
           )}
           {chatGPTModels && chatGPTModels.includes(Model.gpt_4_32k) ? (
@@ -168,7 +173,9 @@ export default function ModelSelect({
                 setModel(Model.gpt_4_32k);
               }}
             >
-              GPT-4-32K (Extremely long input, but even more pricey than GPT-4)
+              <code>gpt-4-32k</code>{" "}
+              {t?.modelSelect?.gpt432kNote ??
+                "(Extremely long input, but even more pricey than GPT-4)"}
             </button>
           ) : (
             <a
@@ -183,7 +190,8 @@ export default function ModelSelect({
                 }
               }}
             >
-              OpenAI hasn't made GPT-4-32K available yet.
+              {t?.modelSelect?.gpt432kUnavailableNote ??
+                "You can sign up for updates here"}
             </a>
           )}
         </div>

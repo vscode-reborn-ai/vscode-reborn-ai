@@ -18,6 +18,7 @@ export default function Chat({
   vscode: any;
 }) {
   const dispatch = useAppDispatch();
+  const t = useAppSelector((state: any) => state.app.translations);
   const debug = useAppSelector((state: any) => state.app.debug);
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const conversationListRef = React.useRef<HTMLDivElement>(null);
@@ -131,12 +132,12 @@ export default function Chat({
                       {message.role === Role.user ? (
                         <>
                           <Icon icon="user" className="w-6 h-6 mr-2" />
-                          You
+                          {t?.chat?.you ?? "You"}
                         </>
                       ) : (
                         <>
                           <Icon icon="ai" className="w-6 h-6 mr-2" />
-                          ChatGPT
+                          {t?.chat?.ai ?? "ChatGPT"}
                         </>
                       )}
                     </h2>
@@ -180,7 +181,7 @@ export default function Chat({
                             }}
                           >
                             <Icon icon="send" className="w-3 h-3 mr-1" />
-                            Send
+                            {t?.chat?.send ?? "Send"}
                           </button>
                           <button
                             className="cancel-element-ext p-1 pr-2 flex items-center"
@@ -191,7 +192,7 @@ export default function Chat({
                             }}
                           >
                             <Icon icon="cancel" className="w-3 h-3 mr-1" />
-                            Cancel
+                            {t?.chat?.cancel ?? "Cancel"}
                           </button>
                         </div>
                         <button

@@ -96,12 +96,6 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## TODO
 
-- [x] Publish to VSCode Marketplace.
-- [x] Add model dropdown to ChatGPT UI.
-- [x] Allow more custom prompts.
-- [x] Add setting for a custom system message.
-- [x] Move API key from settings config to secure storage.
-- [x] Use API list API to show user what models they have access to.
 - [ ] Improve language localization.
 - [ ] Add way to manage custom prompts in UI.
 - [ ] Add option to stream directly into the editor.
@@ -129,6 +123,11 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
+
+### March 30, 2023 (`v3.15.0`)
+
+- 🌐 [i18n] Initial i18n support, localization is still a work in progress.
+- 🐛 [Fixes] Fix 400 error due to invalid API base URL.
 
 ### March 28, 2023 (`v3.14.0`)
 

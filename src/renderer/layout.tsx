@@ -8,6 +8,7 @@ import {
   setApiKeyStatus,
   setChatGPTModels,
   setExtensionSettings,
+  setTranslations,
 } from "./actions/app";
 import {
   addMessage,
@@ -419,6 +420,14 @@ export default function Layout({ vscode }: { vscode: any }) {
             },
           })
         );
+      case "setTranslations":
+        if (debug) {
+          console.log("Renderer - Translations:", data.value);
+        }
+
+        if (data?.value) {
+          dispatch(setTranslations(JSON.parse(data.value)));
+        }
         break;
       default:
         console.log('Renderer - Uncaught message type: "' + data.type + '"');
