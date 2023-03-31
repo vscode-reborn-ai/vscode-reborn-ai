@@ -138,7 +138,7 @@
     "modelSelect.gpt4Note": "(Better and larger input, but slower and more pricey)",
     "modelSelect.gpt4UnavailableNote": "Looking for GPT-4? You need to sign up on the waitlist here",
     "modelSelect.gpt432kNote": "Extremely long input, but even more pricey than GPT-4",
-    "modelSelect.gpt432kUnavailableNote": "You can sign up for updates here",
+    "modelSelect.gpt432kUnavailableNote": "OpenAI has not yet released GPT-4 32k.",
     "stats.title": "Stats",
     "tabs.sr_label": "Select a tab",
     "tabs.sr_close_tab": "Close tab",
