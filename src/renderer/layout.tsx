@@ -17,6 +17,7 @@ import {
   setInProgress,
   setModel,
   setVerbosity,
+  updateAutocomplete,
   updateConversationMessages,
   updateConversationTokenCount,
   updateMessage,
@@ -122,6 +123,8 @@ export default function Layout({ vscode }: { vscode: any }) {
       inProgress?: boolean;
       conversationId?: string;
       responseInMarkdown?: boolean;
+      // Autocomplete
+      autocomplete?: string;
     };
 
     // Handle requests from editor
@@ -428,6 +431,25 @@ export default function Layout({ vscode }: { vscode: any }) {
         if (data?.value) {
           dispatch(setTranslations(JSON.parse(data.value)));
         }
+        break;
+      case "autocomplete":
+        console.log("autocomplete event:", data);
+        const userInput =
+          conversationList.find(
+            (conversation) => conversation.id === currentConversationId
+          )?.userInput ?? "";
+        let userAutocomplete = data.autocomplete ?? "";
+
+        if (userAutocomplete.startsWith(userInput)) {
+          userAutocomplete = userAutocomplete.substring(userInput.length);
+        }
+
+        dispatch(
+          updateAutocomplete({
+            conversationId: data.conversationId ?? currentConversationId,
+            autocomplete: `${userInput}${userAutocomplete}`,
+          })
+        );
         break;
       default:
         console.log('Renderer - Uncaught message type: "' + data.type + '"');

@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import { debounce } from "lodash";
+import React, { useEffect, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { setDebug } from "../actions/app";
 import {
   clearMessages,
   setAutoscroll,
   setInProgress,
+  updateAutocomplete,
   updateUserInput,
 } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -27,12 +29,14 @@ export default ({
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const t = useAppSelector((state: any) => state.app.translations);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
+  const autocompleteInputRef = React.useRef<HTMLTextAreaElement>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [includeEditorSelection, setIncludeEditorSelection] = useState(false);
   const [tokenText, setTokenText] = useState("");
   const [minCost, setMinCost] = useState(0);
   const [maxCost, setMaxCost] = useState(0);
   const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
 
   useEffect(() => {
     let tokenMessages = currentConversation.tokenCount?.messages ?? 0;
@@ -83,6 +87,110 @@ export default ({
     }
   }, [currentConversation.id]);
 
+  // Send a message to the extension to run autocomplete
+  const [lastAutocomplete, setLastAutocomplete] = useState("");
+  const autocomplete = (question: string) => {
+    console.log("last autocomplete", lastAutocomplete);
+    console.log("question", question);
+    if (
+      question &&
+      question?.length > 10 &&
+      question !== lastAutocomplete &&
+      ![".", "?"].includes(question[question.length - 1])
+    ) {
+      vscode.postMessage({
+        type: "getAutocomplete",
+        userInput: question,
+        conversation: currentConversation,
+      });
+    }
+  };
+  const autocompleteDebounced = useRef(debounce(autocomplete, 500));
+
+  useEffect(() => {
+    if (currentConversation.autocomplete) {
+      setShowAutocomplete(true);
+    } else {
+      setShowAutocomplete(false);
+    }
+  }, [currentConversation.autocomplete]);
+
+  const handleKeyDown = (event: any) => {
+    // avoid awkward newline before submitting question
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+    } else if (event.key === "Tab" && !event.isComposing) {
+      event.preventDefault();
+    } else {
+      // Hide autocomplete
+      setShowAutocomplete(false);
+    }
+  };
+
+  const handleInput = (event: any) => {
+    const target = event.target as any;
+    if (target) {
+      target.parentNode.dataset.replicatedValue = target?.value;
+    }
+  };
+
+  const handleKeyUp = (event: any) => {
+    const question = questionInputRef?.current?.value;
+
+    // update the state
+    dispatch(
+      updateUserInput({
+        conversationId: currentConversation.id,
+        userInput: question ?? "",
+      })
+    );
+
+    // * Autocomplete
+    // event is a letter, number, or space
+    if (event.key.match(/^[a-z0-9 ]$/i)) {
+      autocompleteDebounced.current(question ?? "");
+      setLastAutocomplete(question ?? "");
+    }
+
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      // Send question
+      askQuestion();
+    } else if (event.key === "Enter" && event.shiftKey && !event.isComposing) {
+      // update the textarea height
+      const target = event.target as any;
+      if (target) {
+        target.parentNode.dataset.replicatedValue = target?.value;
+      }
+    } else if (event.key === "Tab" && !event.isComposing) {
+      // Set the autocomplete text
+      const autocompleteText = currentConversation.autocomplete ?? "";
+      const userInput = currentConversation.userInput ?? "";
+      console.log("tab - autocompleteText", autocompleteText);
+
+      if (userInput === autocompleteText || autocompleteText === "") {
+        return;
+      }
+
+      // Prevent the tab from moving focus
+      // Probably creating some accessibility issues here
+      event.preventDefault();
+
+      // Auto-complete
+      dispatch(
+        updateUserInput({
+          conversationId: currentConversation.id,
+          userInput: currentConversation.autocomplete ?? "",
+        })
+      );
+      if (questionInputRef.current) {
+        questionInputRef.current.value =
+          autocompleteInputRef.current?.value ??
+          currentConversation.autocomplete ??
+          "";
+      }
+    }
+  };
+
   const askQuestion = () => {
     const question = questionInputRef?.current?.value;
 
@@ -132,6 +240,14 @@ export default ({
           questionInputRef.current.parentNode as HTMLElement
         ).dataset.replicatedValue = "";
       }
+
+      // Reset the autocomplete
+      dispatch(
+        updateAutocomplete({
+          conversationId: currentConversation.id,
+          autocomplete: "",
+        })
+      );
     }
   };
 
@@ -151,59 +267,30 @@ export default ({
             </div>
           )}
           {!currentConversation.inProgress && (
-            <textarea
-              rows={1}
-              className="text-sm rounded border border-input text-input bg-input resize-none w-[calc(100%-6rem)] outline-0"
-              id="question-input"
-              placeholder="Ask a question..."
-              ref={questionInputRef}
-              disabled={currentConversation.inProgress}
-              onInput={(e) => {
-                const target = e.target as any;
-                if (target) {
-                  target.parentNode.dataset.replicatedValue = target?.value;
-                }
-              }}
-              onKeyDown={(event: any) => {
-                // avoid awkward newline before submitting question
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  event.preventDefault();
-                }
-              }}
-              onKeyUp={(event: any) => {
-                const question = questionInputRef?.current?.value;
-
-                // update the state
-                dispatch(
-                  updateUserInput({
-                    conversationId: currentConversation.id,
-                    userInput: question ?? "",
-                  })
-                );
-
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  askQuestion();
-                } else if (
-                  event.key === "Enter" &&
-                  event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  // update the textarea height
-                  const target = event.target as any;
-                  if (target) {
-                    target.parentNode.dataset.replicatedValue = target?.value;
-                  }
-                }
-              }}
-            ></textarea>
+            <div className="relative bg-input">
+              <textarea
+                rows={1}
+                className="text-sm rounded border border-input text-input bg-transparent resize-none w-[calc(100%-6rem)] outline-0 relative z-10"
+                id="question-input"
+                placeholder="Ask a question..."
+                ref={questionInputRef}
+                disabled={currentConversation.inProgress}
+                onInput={handleInput}
+                onKeyDown={handleKeyDown}
+                onKeyUp={handleKeyUp}
+              ></textarea>
+              {/* autocomplete textarea behind the question input */}
+              <textarea
+                rows={1}
+                className={`text-sm rounded border border-input text-input bg-transparent resize-none w-[calc(100%-6rem)] outline-0 absolute left-0 z-0
+                  ${showAutocomplete ? "opacity-30" : "opacity-0"}
+                `}
+                id="question-input-autocomplete"
+                ref={autocompleteInputRef}
+                value={currentConversation.autocomplete}
+                disabled
+              ></textarea>
+            </div>
           )}
         </div>
 

@@ -283,6 +283,21 @@ export const conversationSlice = createSlice({
         state.currentConversation.userInput = userInput;
       }
     },
+    updateAutocomplete: (
+      state,
+      action: PayloadAction<{
+        conversationId: string;
+        autocomplete: string;
+      }>
+    ) => {
+      const { conversationId, autocomplete } = action.payload;
+
+      state.conversations[conversationId].autocomplete = autocomplete;
+
+      if (conversationId === state.currentConversationId && state.currentConversation) {
+        state.currentConversation.autocomplete = autocomplete;
+      }
+    }
   },
 });
 
@@ -304,6 +319,7 @@ export const {
   setVerbosity,
   setModel,
   updateUserInput,
+  updateAutocomplete
 } = conversationSlice.actions;
 
 export default conversationSlice.reducer;

@@ -107,6 +107,7 @@ export interface Conversation {
     maxTotal: number; // Maximum tokens that can be used (same as config.maxTokens)
     minTotal: number; // Minimum tokens to be used (messages + userInput)
   },
+  autocomplete?: string; // Autocomplete text
 }
 
 export interface SendMessageOptions {

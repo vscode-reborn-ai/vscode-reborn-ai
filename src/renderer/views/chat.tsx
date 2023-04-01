@@ -27,19 +27,21 @@ export default function Chat({
   );
   const editingMessageRef = React.useRef<HTMLTextAreaElement>(null);
 
-  (window as any).marked.setOptions({
-    renderer: new (window as any).marked.Renderer(),
-    highlight: function (code: any, _lang: any) {
-      return (window as any).hljs.highlightAuto(code).value;
-    },
-    langPrefix: "hljs language-",
-    pedantic: false,
-    gfm: true,
-    breaks: true,
-    sanitize: false,
-    smartypants: false,
-    xhtml: false,
-  });
+  if ((window as any).marked) {
+    (window as any).marked.setOptions({
+      renderer: new (window as any).marked.Renderer(),
+      highlight: function (code: any, _lang: any) {
+        return (window as any).hljs.highlightAuto(code).value;
+      },
+      langPrefix: "hljs language-",
+      pedantic: false,
+      gfm: true,
+      breaks: true,
+      sanitize: false,
+      smartypants: false,
+      xhtml: false,
+    });
+  }
 
   useEffect(() => {
     if (conversation.autoscroll) {

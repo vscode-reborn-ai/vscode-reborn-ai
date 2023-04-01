@@ -158,7 +158,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		loadTranslations(context.extensionPath).then((translations) => {
 			// Serialize and send translations to the webview
 			const serializedTranslations = JSON.stringify(translations);
-			console.log("Loaded translations", serializedTranslations);
 
 			this.sendMessage({ type: 'setTranslations', value: serializedTranslations });
 		}).catch((err) => {
@@ -341,6 +340,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						},
 					});
 					break;
+				case 'getAutocomplete':
+					this.runAutocomplete(data.userInput, data.conversation);
+					break;
 				default:
 					console.log('Main Process - Uncaught message type: "' + data.type + '"');
 					break;
@@ -353,6 +355,28 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			this.leftOverMessage = null;
 		}
 	}
+
+	private async runAutocomplete(userInput: string, conversation: Conversation): Promise<void> {
+		console.log('autocomplete convo:', conversation.messages);
+		const start = Date.now();
+		const autocomplete = await this.api.chatAutocomplete(userInput, conversation);
+		// const autocomplete = await this.api.promptAutocomplete(userInput, conversation, {
+		// 	model: Model.text_davinci_003,
+		// 	maxTokens: 150,
+		// });
+		const end = Date.now();
+		console.log('autocomplete:', autocomplete);
+		console.log('autocomplete time:', end - start, 'ms');
+
+		this.sendMessage({
+			type: "autocomplete",
+			autocomplete: autocomplete,
+			conversationId: conversation.id
+		});
+	}
+
+
+
 	private convertMessagesToMarkdown(conversation: Conversation): string {
 		let markdown = conversation.messages.reduce((accumulator: string, message: Message) => {
 			const role = message.role === Role.user ? "You" : "ChatGPT";
@@ -781,10 +805,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<script nonce="${nonce}" src="${webpackScript}"></script>
 			</head>
 			<body class="overflow-hidden">
 				<div id="root" class="flex flex-col h-screen"></div>
+				<script nonce="${nonce}" src="${webpackScript}"></script>
 				<script src="${vendorHighlightJs}" defer async></script>
 				<script src="${vendorMarkedJs}" defer async></script>
 				<link href="${vendorHighlightCss}" rel="stylesheet">
