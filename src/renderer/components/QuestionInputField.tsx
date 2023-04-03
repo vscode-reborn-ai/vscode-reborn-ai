@@ -253,19 +253,19 @@ export default ({
         </div>
       </div>
       {!settings?.minimalUI && (
-        <div className="flex flex-wrap sm:flex-nowrap flex-row justify-between gap-x-2 px-4 overflow-x-auto">
+        <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-2 px-4 overflow-x-auto">
           <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-2">
             <ModelSelect
               currentConversation={currentConversation}
               vscode={vscode}
               conversationList={conversationList}
-              className="hidden sm:block"
+              className="hidden xs:block"
               tooltipId="footer-tooltip"
             />
             <VerbositySelect
               currentConversation={currentConversation}
               vscode={vscode}
-              className="hidden sm:block"
+              className="hidden xs:block"
               tooltipId="footer-tooltip"
             />
             <button
