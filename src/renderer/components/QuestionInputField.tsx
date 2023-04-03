@@ -146,7 +146,10 @@ export default ({
           {currentConversation.inProgress && (
             // show the text "Thinking..." when the conversation is in progress in place of the question input
             <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-[calc(100%-6rem)]">
-              <Icon icon="ripples" className="w-5 h-5 mr-2" />
+              <Icon
+                icon="ripples"
+                className="w-5 h-5 mr-2 text stroke-current"
+              />
               <span>{t?.questionInputField?.thinking ?? "Thinking..."}</span>
             </div>
           )}

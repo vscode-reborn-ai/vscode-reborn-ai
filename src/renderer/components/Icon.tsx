@@ -311,7 +311,6 @@ export default (props: { icon: string; className: string }) => {
         <svg
           viewBox="0 0 44 44"
           xmlns="http://www.w3.org/2000/svg"
-          stroke="#fff"
           className={`${css}`}
         >
           {/* By Sam Herbert (@sherb), for everyone. More @ http://goo.gl/7AJzbL */}
