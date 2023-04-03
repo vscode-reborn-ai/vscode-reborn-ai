@@ -73,7 +73,7 @@ export default ({
     } else {
       setTokenText("");
     }
-  }, [currentConversation.tokenCount]);
+  }, [currentConversation.tokenCount, currentConversation.model]);
 
   // on conversation change, focus on the question input, set the question input value to the user input
   useEffect(() => {
@@ -146,7 +146,10 @@ export default ({
           {currentConversation.inProgress && (
             // show the text "Thinking..." when the conversation is in progress in place of the question input
             <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-[calc(100%-6rem)]">
-              <Icon icon="ripples" className="w-5 h-5 mr-2" />
+              <Icon
+                icon="ripples"
+                className="w-5 h-5 mr-2 text stroke-current"
+              />
               <span>{t?.questionInputField?.thinking ?? "Thinking..."}</span>
             </div>
           )}
@@ -250,19 +253,19 @@ export default ({
         </div>
       </div>
       {!settings?.minimalUI && (
-        <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-2 px-4 overflow-x-auto">
+        <div className="flex flex-wrap sm:flex-nowrap flex-row justify-between gap-x-2 px-4 overflow-x-auto">
           <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-2">
             <ModelSelect
               currentConversation={currentConversation}
               vscode={vscode}
               conversationList={conversationList}
-              className="hidden xs:block"
+              className="hidden sm:block"
               tooltipId="footer-tooltip"
             />
             <VerbositySelect
               currentConversation={currentConversation}
               vscode={vscode}
-              className="hidden xs:block"
+              className="hidden sm:block"
               tooltipId="footer-tooltip"
             />
             <button
@@ -334,7 +337,7 @@ export default ({
                 ${
                   debug
                     ? "bg-red-900 text-white"
-                    : "hover:bg-button-secondary focus:bg-button-secondary"
+                    : "hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
                 }
               `}
                     data-tooltip-id="more-actions-tooltip"
@@ -350,7 +353,7 @@ export default ({
               )}
               <li>
                 <button
-                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
+                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
                   onClick={() => {
                     vscode.postMessage({
                       type: "openSettings",
@@ -368,7 +371,7 @@ export default ({
               </li>
               <li>
                 <button
-                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary"
+                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
                   data-tooltip-id="more-actions-tooltip"
                   data-tooltip-content="Export the conversation to a markdown file"
                   onClick={() => {
@@ -387,7 +390,7 @@ export default ({
               </li>
               <li>
                 <button
-                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
+                  className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
                   data-tooltip-id="more-actions-tooltip"
                   data-tooltip-content="Reset your OpenAI API key."
                   onClick={() => {
@@ -431,7 +434,7 @@ export default ({
           />
           <div className="flex flex-row items-start gap-2">
             <div
-              className="rounded flex gap-1 items-center justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
+              className="rounded flex gap-1 items-center justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               tabIndex={0}
               // on hover showTokenBreakdown
               onMouseEnter={() => {
@@ -474,7 +477,7 @@ export default ({
                     <code>{currentConversation.tokenCount?.minTotal ?? 0}</code>{" "}
                     {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
                       "tokens which is"}
-                    <code>${minCost?.toFixed(4) ?? 0}</code>
+                    <code> ${minCost?.toFixed(4) ?? 0}</code>
                   </p>
                   <p>
                     <span className="block">
@@ -491,7 +494,7 @@ export default ({
                     <code>{currentConversation.tokenCount?.maxTotal ?? 0}</code>{" "}
                     {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
                       "tokens which is"}
-                    <code>${maxCost?.toFixed(4) ?? 0}</code>
+                    <code> ${maxCost?.toFixed(4) ?? 0}</code>
                   </p>
                   <p>
                     {t?.questionInputField?.tokenBreakdownBasedOn ??
@@ -523,11 +526,18 @@ export default ({
                     {t?.questionInputField?.tokenBreakdownRecommendation ??
                       "Strongly recommended - clear the conversation routinely to keep the prompt short."}
                   </p>
+                  {/* if gpt-4 is the model, add an additional warning about it being 30x more expensive than gpt-3.5-turbo */}
+                  {currentConversation.model === Model.gpt_4 && (
+                    <p className="font-bold">
+                      {t?.questionInputField?.tokenBreakdownGpt4Warning ??
+                        "Warning: You are currently using gpt-4, which is 30x more expensive than gpt-3.5-turbo."}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
             <button
-              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary"
+              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               onClick={() => {
                 setShowMoreActions(!showMoreActions);
               }}

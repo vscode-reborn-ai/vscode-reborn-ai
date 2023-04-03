@@ -34,7 +34,7 @@ a:active {
 }
 
 [role="tooltip"] {
-    @apply border bg-tab;
+    @apply border bg-tab text;
 
     opacity: 1 !important;
 }

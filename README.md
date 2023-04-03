@@ -96,7 +96,6 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## TODO
 
-- [ ] Improve language localization.
 - [ ] Add way to manage custom prompts in UI.
 - [ ] Add option to stream directly into the editor.
 - [ ] Inline diff
@@ -105,15 +104,13 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - [ ] AI-generated git commit messages
 - [ ] Support davinci models in place of ChatGPT models
 
+## Internationalization
+
+Initial i18n support has been added in `v3.15.0`, but I need help translating to different languages. If you're able to help at all [see this discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
+
 ## Tech
 
-- [Yarn](https://yarnpkg.com/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [VSCode Extension API](https://code.visualstudio.com/api)
-- [React](https://reactjs.org/)
-- [Redux](https://redux.js.org/)
-- [React Router](https://reactrouter.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
+[Yarn](https://yarnpkg.com/) - [TypeScript](https://www.typescriptlang.org/) - [VSCode Extension API](https://code.visualstudio.com/api) - [React](https://reactjs.org/) - [Redux](https://redux.js.org/) - [React Router](https://reactrouter.com/) - [Tailwind CSS](https://tailwindcss.com/)
 
 - The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
 - This does not use VSCode's [WebView UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit/tree/main/src). But, I'm open to switching to the WebView UI toolkit since it better aligns with VSCode's UI.
@@ -124,7 +121,13 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### March 30, 2023 (`v3.15.0`)
+### April 3, 2023 (`v3.15.2`)
+
+- 🖥️ [UI] Codeblock buttons are now sticky.
+- 🖥️ [UI] UI fixes for light themes.
+- 🖥️ [UI] Token breakdown now warns about gpt-4 pricing.
+
+### March 30, 2023 (`v3.15.0`, `v3.15.1`)
 
 - 🌐 [i18n] Initial i18n support, localization is still a work in progress.
 - 🐛 [Fixes] Fix 400 error due to invalid API base URL.

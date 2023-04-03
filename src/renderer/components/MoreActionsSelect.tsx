@@ -11,25 +11,6 @@ export default function MoreActionsSelect({
 }) {
   const [showMoreActions, setShowMoreActions] = useState(false);
 
-  const exportConversation = () => {
-    if ((window as any).turndownService) {
-      const turndownService = new (window as any).turndownService({
-        codeBlockStyle: "fenced",
-      });
-      turndownService.remove("no-export");
-      let markdown = turndownService.turndown(
-        document.getElementById("qa-list")
-      );
-
-      vscode.postMessage({
-        type: "openNew",
-        value: markdown,
-        language: "markdown",
-        conversationId: currentConversation.id,
-      });
-    }
-  };
-
   return (
     <>
       <button

@@ -27,8 +27,8 @@ export default function Chat({
   );
   const editingMessageRef = React.useRef<HTMLTextAreaElement>(null);
 
-  (window as any).marked.setOptions({
-    renderer: new (window as any).marked.Renderer(),
+  (window as any)?.marked.setOptions({
+    renderer: new ((window as any)?.marked).Renderer(),
     highlight: function (code: any, _lang: any) {
       return (window as any).hljs.highlightAuto(code).value;
     },

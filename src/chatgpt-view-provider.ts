@@ -771,7 +771,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		const vendorHighlightCss = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.css'));
 		const vendorHighlightJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.js'));
 		const vendorMarkedJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'marked.min.js'));
-		const vendorTurndownJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'turndown.js'));
 		// React code bundled by webpack, this includes styling
 		const webpackScript = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview.bundle.js'));
 
@@ -784,11 +783,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
 			</head>
 			<body class="overflow-hidden">
-				<div id="root" class="flex flex-col h-screen">
+				<div id="root" class="flex flex-col h-screen"></div>
+				<script nonce="${nonce}" src="${webpackScript}"></script>
 				<script src="${vendorHighlightJs}" defer async></script>
 				<script src="${vendorMarkedJs}" defer async></script>
-				<script src="${vendorTurndownJs}" defer async></script>
-				<script nonce="${nonce}" src="${webpackScript}" defer async></script>
 				<link href="${vendorHighlightCss}" rel="stylesheet">
 			</body>
 			</html>`;
