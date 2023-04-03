@@ -60,7 +60,7 @@ export default function VerbositySelect({
         }
       >
         <button
-          className="rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap"
+          className="rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary"
           onClick={() => {
             setShowOptions(!showOptions);
           }}
