@@ -59,61 +59,67 @@ export default ({
       )}
       {/* Added hover styles for the collapsed UI */}
       {expanded && (
-        <div className="absolute z-10 top-[0.4em] right-2 flex gap-2 flex-wrap items-center justify-end rounded transition-opacity duration-75 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
-          <CodeBlockActionsButton
-            vscode={vscode}
-            codeTextContent={codeTextContent}
-            iconName="clipboard"
-            tooltipContent={t?.codeBlock?.copyTooltip ?? "Copy to clipboard"}
-            buttonText={t?.codeBlock?.copy ?? "Copy"}
-            buttonSuccessText={t?.codeBlock?.copied ?? "Copied"}
-            onClick={() => {
-              navigator.clipboard.writeText(codeTextContent);
-            }}
-          />
+        <div className="sticky h-0 z-10 top-0 -mt-[1px] pt-2 pr-2 border-t">
+          <div className="flex flex-wrap items-center justify-end gap-2 transition-opacity duration-75 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
+            <CodeBlockActionsButton
+              vscode={vscode}
+              codeTextContent={codeTextContent}
+              iconName="clipboard"
+              tooltipContent={t?.codeBlock?.copyTooltip ?? "Copy to clipboard"}
+              buttonText={t?.codeBlock?.copy ?? "Copy"}
+              buttonSuccessText={t?.codeBlock?.copied ?? "Copied"}
+              onClick={() => {
+                navigator.clipboard.writeText(codeTextContent);
+              }}
+            />
 
-          <CodeBlockActionsButton
-            vscode={vscode}
-            codeTextContent={codeTextContent}
-            iconName="pencil"
-            tooltipContent={
-              t?.codeBlock?.insertTooltip ?? "Insert into the current file"
-            }
-            buttonText={t?.codeBlock?.insert ?? "Insert"}
-            buttonSuccessText={t?.codeBlock?.inserted ?? "Inserted"}
-            onClick={() => {
-              vscode.postMessage({
-                type: "editCode",
-                value: codeTextContent,
-                conversationId: currentConversationId,
-              });
-            }}
-          />
-          <CodeBlockActionsButton
-            vscode={vscode}
-            codeTextContent={codeTextContent}
-            iconName="plus"
-            tooltipContent={
-              t?.codeBlock?.newTooltip ??
-              "Create a new file with the below code"
-            }
-            buttonText={t?.codeBlock?.new ?? "New"}
-            buttonSuccessText={t?.codeBlock?.created ?? "Created"}
-            onClick={() => {
-              vscode.postMessage({
-                type: "openNew",
-                value: codeTextContent,
-                conversationId: currentConversationId,
-                // Handle HLJS language names that are different from VS Code's language IDs
-                language: language
-                  .replace("js", "javascript")
-                  .replace("py", "python")
-                  .replace("sh", "bash")
-                  .replace("ts", "typescript"),
-              });
-            }}
-          />
-          <Tooltip id="code-actions-tooltip" place="bottom" delayShow={1500} />
+            <CodeBlockActionsButton
+              vscode={vscode}
+              codeTextContent={codeTextContent}
+              iconName="pencil"
+              tooltipContent={
+                t?.codeBlock?.insertTooltip ?? "Insert into the current file"
+              }
+              buttonText={t?.codeBlock?.insert ?? "Insert"}
+              buttonSuccessText={t?.codeBlock?.inserted ?? "Inserted"}
+              onClick={() => {
+                vscode.postMessage({
+                  type: "editCode",
+                  value: codeTextContent,
+                  conversationId: currentConversationId,
+                });
+              }}
+            />
+            <CodeBlockActionsButton
+              vscode={vscode}
+              codeTextContent={codeTextContent}
+              iconName="plus"
+              tooltipContent={
+                t?.codeBlock?.newTooltip ??
+                "Create a new file with the below code"
+              }
+              buttonText={t?.codeBlock?.new ?? "New"}
+              buttonSuccessText={t?.codeBlock?.created ?? "Created"}
+              onClick={() => {
+                vscode.postMessage({
+                  type: "openNew",
+                  value: codeTextContent,
+                  conversationId: currentConversationId,
+                  // Handle HLJS language names that are different from VS Code's language IDs
+                  language: language
+                    .replace("js", "javascript")
+                    .replace("py", "python")
+                    .replace("sh", "bash")
+                    .replace("ts", "typescript"),
+                });
+              }}
+            />
+            <Tooltip
+              id="code-actions-tooltip"
+              place="bottom"
+              delayShow={1500}
+            />
+          </div>
         </div>
       )}
       {/* Render a collapsed UI if the prop is set to true */}
