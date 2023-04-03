@@ -121,6 +121,12 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### April 3, 2023 (`v3.15.2`)
+
+- 🖥️ [UI] Codeblock buttons are now sticky.
+- 🖥️ [UI] UI fixes for light themes.
+- 🖥️ [UI] Token breakdown now warns about gpt-4 pricing.
+
 ### March 30, 2023 (`v3.15.0`, `v3.15.1`)
 
 - 🌐 [i18n] Initial i18n support, localization is still a work in progress.
