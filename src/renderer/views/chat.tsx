@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
-import { setAutoscroll, updateMessageContent } from "../actions/conversation";
 import CodeBlock from "../components/CodeBlock";
 import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { setAutoscroll, updateMessageContent } from "../store/conversation";
 import { Conversation, Message, Role } from "../types";
 
 export default function Chat({
@@ -27,7 +27,7 @@ export default function Chat({
   );
   const editingMessageRef = React.useRef<HTMLTextAreaElement>(null);
 
-  (window as any)?.marked.setOptions({
+  (window as any)?.marked?.setOptions({
     renderer: new ((window as any)?.marked).Renderer(),
     highlight: function (code: any, _lang: any) {
       return (window as any).hljs.highlightAuto(code).value;

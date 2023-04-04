@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { ApiKeyStatus, setApiKeyStatus } from "../actions/app";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
 import Icon from "./Icon";
 
 export default function ({

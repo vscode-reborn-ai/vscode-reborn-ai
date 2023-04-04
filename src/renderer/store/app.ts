@@ -47,7 +47,7 @@ export const appSlice = createSlice({
     },
     setTranslations: (state, action: PayloadAction<any>) => {
       state.translations = action.payload;
-    },
+    }
   },
 });
 
