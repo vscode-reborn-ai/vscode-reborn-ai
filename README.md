@@ -121,8 +121,9 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### April 3, 2023 (`v3.15.2`)
+### April 3, 2023 (`v3.15.2`, `v3.16.0`)
 
+- 🖥️ [UI] "Actions" page added. A couple actions are available, more will be added in the future. Automate your workflow with AI!
 - 🖥️ [UI] Codeblock buttons are now sticky.
 - 🖥️ [UI] UI fixes for light themes.
 - 🖥️ [UI] Token breakdown now warns about gpt-4 pricing.
