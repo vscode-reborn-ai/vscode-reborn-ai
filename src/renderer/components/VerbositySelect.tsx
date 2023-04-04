@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { setVerbosity } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { setVerbosity } from "../store/conversation";
 import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
 

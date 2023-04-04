@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
-import AppReducer from './actions/app';
-import ConversationReducer from './actions/conversation';
+import ActionReducer from './store/action';
+import AppReducer from './store/app';
+import ConversationReducer from './store/conversation';
 
 export const store = configureStore({
   reducer: {
     conversation: ConversationReducer,
     app: AppReducer,
+    action: ActionReducer,
   },
 });
 

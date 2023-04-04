@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { addConversation, removeConversation } from "../actions/conversation";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { addConversation, removeConversation } from "../store/conversation";
 import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
 import TabsDropdown from "./TabsDropdown";
@@ -126,8 +126,8 @@ export default function Tabs({
       </div>
       {/* Wider tab layout */}
       <div className={`${tabs.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
-        <nav>
-          <ul className="flex gap-2 p-1 overflow-x-auto" aria-label="Tabs">
+        <nav className="flex justify-between gap-2 py-1 px-1 xs:px-4">
+          <ul className="flex gap-2 overflow-x-auto" aria-label="Tabs">
             {tabs &&
               tabs.map((tab) => (
                 <li key={tab.id}>
@@ -193,6 +193,13 @@ export default function Tabs({
               </button>
             </li>
           </ul>
+          <Link
+            className="flex items-center justify-center bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap rounded p-2 pr-3 text-xs"
+            to="/actions"
+          >
+            <Icon icon="zap" className="w-4 h-4" />
+            <span className="sr-only">Actions</span>
+          </Link>
         </nav>
       </div>
     </div>

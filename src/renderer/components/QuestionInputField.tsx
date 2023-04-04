@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Tooltip } from "react-tooltip";
-import { setDebug } from "../actions/app";
+import { useAppDispatch, useAppSelector } from "../hooks";
+import { setDebug } from "../store/app";
 import {
   clearMessages,
   setAutoscroll,
   setInProgress,
   updateUserInput,
-} from "../actions/conversation";
-import { useAppDispatch, useAppSelector } from "../hooks";
+} from "../store/conversation";
 import { Conversation, Model } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";

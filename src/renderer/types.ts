@@ -133,3 +133,9 @@ export interface ChatResponse {
   messageId: string;
   origMessageId: string;
 }
+
+export enum ActionNames {
+  createReadmeFromPackageJson = "createReadmeFromPackageJson",
+  createReadmeFromFileStructure = "createReadmeFromFileStructure",
+  createGitignore = "createGitignore",
+}
