@@ -290,8 +290,7 @@ export default ({
               }}
             >
               <Icon icon="plus" className="w-3 h-3" />
-              {t?.questionInputField?.useEditorSelection ??
-                "Use editor selection"}
+              {t?.questionInputField?.useEditorSelection ?? "Editor selection"}
             </button>
             <button
               className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary`}
@@ -503,7 +502,7 @@ export default ({
                     <code>
                       {t?.questionInputField?.maxTokens ?? "maxTokens"}
                     </code>
-                    "
+                    "{" "}
                     {t?.questionInputField?.tokenBreakdownConfigSettingAnd ??
                       "config setting and"}{" "}
                     <code>
@@ -527,10 +526,17 @@ export default ({
                       "Strongly recommended - clear the conversation routinely to keep the prompt short."}
                   </p>
                   {/* if gpt-4 is the model, add an additional warning about it being 30x more expensive than gpt-3.5-turbo */}
-                  {currentConversation.model === Model.gpt_4 && (
+                  {(currentConversation.model === Model.gpt_4 ||
+                    currentConversation.model === Model.gpt_4_32k) && (
                     <p className="font-bold">
                       {t?.questionInputField?.tokenBreakdownGpt4Warning ??
-                        "Warning: You are currently using gpt-4, which is 30x more expensive than gpt-3.5-turbo."}
+                        `Warning: You are currently using ${
+                          currentConversation.model
+                        }, which is ${
+                          currentConversation.model === Model.gpt_4
+                            ? "30x"
+                            : "60x"
+                        } more expensive than gpt-3.5-turbo.`}
                     </p>
                   )}
                 </div>

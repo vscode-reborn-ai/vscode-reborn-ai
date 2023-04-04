@@ -21,25 +21,26 @@ export interface ActionState {
   actionList: Action[];
 }
 
+// TODO: i18n
 const initialState: ActionState = {
   actionList: [
     {
       id: ActionNames.createReadmeFromPackageJson,
-      name: "Create README.md from package.json",
-      description: "Create a README.md file based on the contents of package.json",
+      name: "Generate README.md from package.json",
+      description: "Creates a README.md file based on the contents of package.json",
       tags: ["javascript"],
       state: ActionRunState.idle,
     },
     {
       id: ActionNames.createReadmeFromFileStructure,
-      name: "Create README.md from file structure",
-      description: "Create a README.md file based on the files/folders present. Does not open files.",
+      name: "Generate README.md from file structure",
+      description: "Creates a README.md file based on the files/folders present. Does not open files.",
       tags: [],
       state: ActionRunState.idle,
     },
     {
       id: ActionNames.createGitignore,
-      name: "Create .gitignore",
+      name: "Generate .gitignore",
       description: "Creates a .gitignore file based on the file structure and the package.json if present.",
       tags: ["javascript"],
       state: ActionRunState.idle,

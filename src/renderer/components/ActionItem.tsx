@@ -45,10 +45,12 @@ const ActionItem: React.FC<Props> = ({ vscode, action }) => {
 
   return (
     <div className="relative flex items-center space-x-3 px-6 py-3 focus-within:ring-2 focus-within:ring-inset hover:bg-menu">
-      <div className="min-w-0 flex-1 flex flex-row gap-x-2">
+      <div className="min-w-0 flex-1 flex sm:flex-row flex-col gap-2">
         <header className="flex flex-col flex-1">
           <h3 className="text-md font-medium text-menu my-0">{action.name}</h3>
-          <p className="truncate text-xs text my-0">{action.description}</p>
+          <p className="truncate text-xs text my-0 opacity-75">
+            {action.description}
+          </p>
           {action.error && (
             <div className="py-1 px-2 bg-red-600 bg-opacity-20 text mt-2 rounded">
               <header className="flex justify-between items-center">

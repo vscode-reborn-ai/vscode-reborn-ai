@@ -60,6 +60,7 @@ export default function ({
             className="whitespace-nowrap"
             href="https://github.com/gencay/vscode-chatgpt"
           >
+            {" "}
             {t?.introductionSplash?.discontinued2 ??
               "VSCode-ChatGPT extension."}
           </a>
