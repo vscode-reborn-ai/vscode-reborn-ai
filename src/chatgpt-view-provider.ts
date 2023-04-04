@@ -4,10 +4,11 @@ import { marked } from "marked";
 import { Configuration, OpenAIApi } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
+import { ActionRunner } from "./actionRunner";
 import ApiProvider from "./api-provider";
 import Auth from "./auth";
 import { loadTranslations } from './localization';
-import { Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
+import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
 import { unEscapeHTML } from "./renderer/utils";
 
 export interface ApiRequestOptions {
@@ -37,7 +38,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	private throttling: number = 100;
 	private abortControllers: {
-		conversationId: string,
+		conversationId?: string,
+		actionName?: string,
 		controller: AbortController;
 	}[] = [];
 	private chatGPTModels: Model[] = [];
@@ -158,7 +160,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		loadTranslations(context.extensionPath).then((translations) => {
 			// Serialize and send translations to the webview
 			const serializedTranslations = JSON.stringify(translations);
-			console.log("Loaded translations", serializedTranslations);
 
 			this.sendMessage({ type: 'setTranslations', value: serializedTranslations });
 		}).catch((err) => {
@@ -341,8 +342,43 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						},
 					});
 					break;
+				case 'runAction':
+					const actionId: ActionNames = data.actionId as ActionNames;
+					console.log("Main Process - Running action: " + actionId);
+
+					const controller = new AbortController();
+					this.abortControllers.push({
+						actionName: data.actionId,
+						controller
+					});
+
+					try {
+						await ActionRunner.runAction(actionId, this.api, this.systemContext, controller);
+						this.sendMessage({
+							type: "actionComplete",
+							actionId,
+						});
+					} catch (error: any) {
+						console.error("Main Process - Error running action: " + actionId);
+						console.error(error);
+
+						this.sendMessage({
+							type: "actionError",
+							actionId,
+							error: error?.message ?? "Unknown error"
+						});
+					}
+
+					break;
+				case "stopAction":
+					if (data?.actionId) {
+						this.stopAction(data.actionId);
+					} else {
+						console.log("Main Process - No actionName provided to stop action");
+					}
+					break;
 				default:
-					console.log('Main Process - Uncaught message type: "' + data.type + '"');
+					console.warn('Main Process - Uncaught message type: "' + data.type + '"');
 					break;
 			}
 		});
@@ -380,6 +416,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			inProgress: false,
 			conversationId,
 		});
+	}
+
+	private stopAction(actionName: string): void {
+		// Send the abort signal to the corresponding controller
+		this.abortControllers.find((controller) => controller.actionName === actionName)?.controller.abort();
+		// Remove abort controller from array
+		this.abortControllers = this.abortControllers.filter((controller) => controller.actionName !== actionName);
 	}
 
 	private get isCodexModel(): boolean {

@@ -1,83 +1,45 @@
 import React from "react";
+import ActionItem from "../components/ActionItem";
 import { useAppSelector } from "../hooks";
-
-const aiActions = {
-  javascript: [
-    {
-      name: "Create README.md based on package.json",
-      reads: ["package.json"],
-      writes: ["README.md"],
-    },
-    {
-      name: "Create .gitignore based on package.json",
-      reads: ["package.json"],
-      writes: [".gitignore"],
-    },
-  ],
-  python: [
-    {
-      name: "Create README.md based on requirements.txt",
-      reads: ["requirements.txt"],
-      writes: ["README.md"],
-    },
-  ],
-};
+import { Action } from "../store/action";
 
 export default function Actions({ vscode }: { vscode: any }) {
   const t = useAppSelector((state: any) => state.app.translations);
+  const actions = useAppSelector((state: any) => state.action.actionList);
 
   return (
-    <nav className="h-full overflow-y-auto" aria-label="Directory">
-      {Object.keys(aiActions).map((category) => (
-        <div key={category} className="relative">
-          <div className="sticky top-0 z-10 border-t border-b border-menu bg-menu-selection px-6 py-1 text-sm font-medium text-menu">
-            <h3>{category}</h3>
-          </div>
-          <ul role="list" className="relative z-0 divide-y divide-menu">
-            {/* @ts-ignore */}
-            {aiActions[category].map(
-              (
-                action: {
-                  name: string;
-                  reads: string[];
-                  writes: string[];
-                },
-                index: React.Key | null | undefined
-              ) => (
-                <li key={`action-${index}`} className="bg">
-                  <div className="relative flex items-center space-x-3 px-6 py-5 focus-within:ring-2 focus-within:ring-inset hover:bg-menu">
-                    <div className="min-w-0 flex-1 flex flex-row gap-x-2">
-                      <header className="flex flex-col flex-1">
-                        <h3 className="text-md font-medium text-menu my-0">
-                          {action.name}
-                        </h3>
-                        <p className="truncate text-xs text my-0">
-                          Reads: [{action.reads.join(", ")}] Writes: [
-                          {action.writes.join(", ")}]
-                        </p>
-                      </header>
-                      <div className="">
-                        <button
-                          type="button"
-                          className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-menu bg-menu hover:bg-menu focus:outline-none focus:ring-2 focus:ring-offset-2"
-                          onClick={() =>
-                            vscode.postMessage({
-                              type: "runAction",
-                              value: action,
-                            })
-                          }
-                        >
-                          Run
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              )
-            )}
+    <div className="h-full overflow-y-auto flex flex-col">
+      <ul role="list" className="relative z-0 divide-y divide-menu">
+        {/* @ts-ignore */}
+        {actions.map((action: Action, index: React.Key | null | undefined) => (
+          <li key={`action-${index}`} className="bg">
+            <ActionItem vscode={vscode} action={action} />
+          </li>
+        ))}
+      </ul>
+      {/*
+      {actionList errors.length > 0 && (
+        <div className="fixed bottom-0 w-full p-4 bg-red-600 bg-opacity-20 text">
+          <header className="flex justify-between items-center">
+            <h2 className="text-lg font-bold">
+              Errors <span className="text-xs">({errors.length})</span>
+            </h2>
+            <button
+              type="button"
+              className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button-secondary bg-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2"
+              onClick={() => setErrors([])}
+            >
+              Close
+            </button>
+          </header>
+          <ul>
+            {errors.map((error, index) => (
+              <li key={index}>{error}</li>
+            ))}
           </ul>
         </div>
-      ))}
-    </nav>
+      )}
+      */}
+    </div>
   );
 }

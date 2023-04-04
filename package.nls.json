@@ -113,7 +113,7 @@
     "questionInputField.tokens": "tokens",
     "questionInputField.thinking": "Thinking...",
     "questionInputField.ask": "Ask",
-    "questionInputField.useEditorSelection": "Use editor selection",
+    "questionInputField.useEditorSelection": "Editor selection",
     "questionInputField.clear": "Clear",
     "questionInputField.feedback": "Feedback",
     "questionInputField.debug": "Debug",

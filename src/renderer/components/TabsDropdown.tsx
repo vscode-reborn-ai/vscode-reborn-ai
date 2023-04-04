@@ -1,6 +1,6 @@
 import React from "react";
-import { removeConversation } from "../actions/conversation";
 import { useAppDispatch } from "../hooks";
+import { removeConversation } from "../store/conversation";
 import { Conversation } from "../types";
 import Icon from "./Icon";
 

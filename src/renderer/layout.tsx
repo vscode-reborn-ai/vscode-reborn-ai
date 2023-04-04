@@ -3,13 +3,17 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import { v4 as uuidv4 } from "uuid";
 import "../../styles/main.css";
+import ApiKeySetup from "./components/ApiKeySetup";
+import Tabs from "./components/Tabs";
+import { useAppDispatch, useAppSelector } from "./hooks";
+import { ActionRunState, setActionError, setActionState } from "./store/action";
 import {
   ApiKeyStatus,
   setApiKeyStatus,
   setChatGPTModels,
   setExtensionSettings,
   setTranslations,
-} from "./actions/app";
+} from "./store/app";
 import {
   addMessage,
   setAutoscroll,
@@ -21,12 +25,10 @@ import {
   updateConversationTokenCount,
   updateMessage,
   updateMessageContent,
-} from "./actions/conversation";
-import ApiKeySetup from "./components/ApiKeySetup";
-import Tabs from "./components/Tabs";
-import { useAppDispatch, useAppSelector } from "./hooks";
+} from "./store/conversation";
 import { Conversation, Message, Model, Role } from "./types";
 import { unEscapeHTML } from "./utils";
+import Actions from "./views/actions";
 import Chat from "./views/chat";
 
 export default function Layout({ vscode }: { vscode: any }) {
@@ -99,6 +101,7 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   // Handle messages sent from the extension to the webview
   const handleMessages = (event: any) => {
+    // TODO: Split this into separate interfaces
     const data = event.data as {
       type: string;
       value?: any;
@@ -122,6 +125,9 @@ export default function Layout({ vscode }: { vscode: any }) {
       inProgress?: boolean;
       conversationId?: string;
       responseInMarkdown?: boolean;
+      // Actions
+      error?: string;
+      actionId?: string;
     };
 
     // Handle requests from editor
@@ -429,6 +435,29 @@ export default function Layout({ vscode }: { vscode: any }) {
           dispatch(setTranslations(JSON.parse(data.value)));
         }
         break;
+      case "actionComplete":
+        if (data?.actionId) {
+          dispatch(
+            setActionState({
+              actionId: data?.actionId,
+              state: ActionRunState.idle,
+            })
+          );
+        }
+        break;
+      case "actionError":
+        const actionId = data?.actionId;
+        const actionError = data?.error;
+
+        if (debug) {
+          console.log("Renderer - Action error:", actionError);
+        }
+
+        if (actionId && actionError) {
+          dispatch(setActionError({ error: actionError, actionId }));
+        }
+
+        break;
       default:
         console.log('Renderer - Uncaught message type: "' + data.type + '"');
     }
@@ -474,7 +503,7 @@ export default function Layout({ vscode }: { vscode: any }) {
           )}
           <Routes>
             {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
-            {/* <Route path="/actions" element={<Actions vscode={vscode} />} /> */}
+            <Route path="/actions" element={<Actions vscode={vscode} />} />
             {conversationList &&
               conversationList.map &&
               conversationList.map((conversation: Conversation) => (

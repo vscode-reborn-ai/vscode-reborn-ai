@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../hooks";
 import {
   addConversation,
   removeConversation,
   updateConversationModel,
-} from "../actions/conversation";
-import { useAppDispatch, useAppSelector } from "../hooks";
+} from "../store/conversation";
 import { Conversation, Model, Verbosity } from "../types";
 import Icon from "./Icon";
 
