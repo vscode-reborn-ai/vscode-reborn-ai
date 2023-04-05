@@ -2,7 +2,7 @@ name: 🐞 Bug Report
 description: Create a bug report
 labels: ["bug"]
 body:
-  - type: dropdown
+  - type: textarea
     attributes:
       label: Describe the Bug
       description: Include the steps to reproduce this bug if applicable.
