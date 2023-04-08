@@ -2,14 +2,16 @@ import { encoding_for_model, Tiktoken, TiktokenModel } from "@dqbd/tiktoken";
 import { ChatCompletionResponseMessage, Configuration, OpenAIApi } from 'openai';
 import { v4 as uuidv4 } from "uuid";
 import { Conversation, Message, Model, Role } from "./renderer/types";
+// https://openai.1rmb.tk/v1/
 
 export default class ApiProvider {
   private _openai: OpenAIApi;
-  private _apiConfig: Configuration;
   private _maxTokens: number;
   private _maxResponseTokens: number;
   private _temperature: number;
   private _topP: number;
+
+  public apiConfig: Configuration;
 
   constructor(apiKey: string, {
     organizationId = '',
@@ -26,12 +28,15 @@ export default class ApiProvider {
     temperature?: number;
     topP?: number;
   } = {}) {
-    this._apiConfig = new Configuration({
+    // If apiBaseUrl ends with slash, remove it
+    apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
+    // OpenAI API config
+    this.apiConfig = new Configuration({
       apiKey: apiKey,
       organization: organizationId,
       basePath: apiBaseUrl,
     });
-    this._openai = new OpenAIApi(this._apiConfig);
+    this._openai = new OpenAIApi(this.apiConfig);
     this._maxTokens = maxTokens;
     this._maxResponseTokens = maxResponseTokens ?? maxTokens;
     this._temperature = temperature;
@@ -53,6 +58,8 @@ export default class ApiProvider {
     const model = conversation.model ?? Model.gpt_35_turbo;
     const tokensUsed = ApiProvider.countConversationTokens(conversation);
     const tokensLeft = Math.min(maxTokens - tokensUsed, maxResponseTokens);
+    // Only stream if not using a proxy
+    const useStream = true; // this.apiConfig.basePath === 'https://api.openai.com/v1';
     const response = await this._openai.createChatCompletion(
       {
         model,
@@ -64,16 +71,19 @@ export default class ApiProvider {
         temperature,
         top_p: topP,
         // Note - this alone won't make streaming work, OpenAI's SDK generator doesn't implement streaming
-        stream: true,
+        stream: useStream,
       },
       {
         // This is an Axios request config object - this is how streaming is made possible
-        responseType: 'stream',
+        responseType: useStream ? 'stream' : 'json',
         signal: abortSignal,
       },
     );
 
     const dataStream = response.data as unknown as AsyncIterable<Buffer>;
+
+    // Weird bug with proxies where the first chunk is broken up into two
+    let incompleteLine = '';
 
     for await (const chunk of dataStream) {
       // For whatever reason triggering abort() with the signal above doesn't work, so checking the abortSignal manually
@@ -81,22 +91,32 @@ export default class ApiProvider {
         return;
       }
 
-      const lines = chunk
-        .toString('utf8')
-        .split('\n')
-        .filter((line) => line.trim().startsWith('data: '));
+      const lines = chunk.toString('utf8').split('\n');
 
       for (const line of lines) {
-        const message = line.replace(/^data: /, '');
+        if (!line.trim().startsWith('data: ') && incompleteLine === '') {
+          continue;
+        }
+
+        const message = (incompleteLine + line).replace(/^data: /, '');
+
         if (message === '[DONE]') {
           return;
         }
 
-        const json = JSON.parse(message);
-        const token = json.choices[0].delta.content;
+        try {
+          const json = JSON.parse(message);
 
-        if (token) {
-          yield token;
+          const token = json.choices[0].delta.content;
+
+          if (token) {
+            yield token;
+          }
+
+          incompleteLine = '';
+        } catch (e) {
+          console.error('api JSON parse error. Message:', message, 'Error:', e);
+          incompleteLine += message;
         }
       }
     }
@@ -238,14 +258,34 @@ export default class ApiProvider {
   }
 
   updateApiKey(apiKey: string) {
-    this._apiConfig.apiKey = apiKey;
+    // OpenAI API config
+    this.apiConfig = new Configuration({
+      apiKey: apiKey,
+      organization: this.apiConfig.organization,
+      basePath: this.apiConfig.basePath,
+    });
+    this._openai = new OpenAIApi(this.apiConfig);
   }
 
   updateOrganizationId(organizationId: string) {
-    this._apiConfig.organization = organizationId;
+    // OpenAI API config
+    this.apiConfig = new Configuration({
+      apiKey: this.apiConfig.apiKey,
+      organization: organizationId,
+      basePath: this.apiConfig.basePath,
+    });
+    this._openai = new OpenAIApi(this.apiConfig);
   }
 
   updateApiBaseUrl(apiBaseUrl: string) {
-    this._apiConfig.basePath = apiBaseUrl;
+    // If apiBaseUrl ends with slash, remove it
+    apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
+    // OpenAI API config
+    this.apiConfig = new Configuration({
+      apiKey: this.apiConfig.apiKey,
+      organization: this.apiConfig.organization,
+      basePath: apiBaseUrl,
+    });
+    this._openai = new OpenAIApi(this.apiConfig);
   }
 }
