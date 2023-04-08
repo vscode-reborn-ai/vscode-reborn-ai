@@ -1,4 +1,3 @@
-import delay from 'delay';
 import hljs from 'highlight.js';
 import { marked } from "marked";
 import { Configuration, OpenAIApi } from "openai";
@@ -722,41 +721,40 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			let message;
 			let apiMessage = error?.response?.data?.error?.message || error?.tostring?.() || error?.message || error?.name;
 
-			this.logError("api-request-failed");
+			console.error("api-request-failed info:", JSON.stringify(error, null, 2));
+			console.error("api-request-failed error obj:", error);
 
-			if (error?.response?.status || error?.response?.statusText) {
-				message = `${error?.response?.status || ""} ${error?.response?.statusText || ""}`;
+			// For whatever reason error.status is undefined, but the below works
+			const status = JSON.parse(JSON.stringify(error)).status ?? error?.status ?? error?.response?.status ?? error?.response?.data?.error?.status;
 
-				vscode.window.showErrorMessage("An error occured. If this is due to max_token you could try `ChatGPT: Clear Conversation` command and retry sending your prompt.", "Clear conversation and retry").then(async choice => {
-					if (choice === "Clear conversation and retry") {
-						await vscode.commands.executeCommand("vscode-chatgpt.clearConversation");
-						await delay(250);
-						this.sendApiRequest(prompt, {
-							conversation: options.conversation,
-							command: options.command,
-							code: options.code
-						});
+			switch (status) {
+				case 400:
+					message = `400 Bad Request\n\nYour model: '${this.model}' may be incompatible or one of your parameters is unknown. Reset your settings to default.`;
+					break;
+				case 401:
+					message = '401 Unauthorized\n\nMake sure you are properly signed in. If you are using Browser Auto-login method, make sure the browser is open (You could refresh the browser tab manually if you face any issues, too). If you stored your API key in settings.json, make sure it is accurate. If you stored API key in session, you can reset it with `ChatGPT: Reset session` command. Potential reasons: \n- 1.Invalid Authentication\n- 2.Incorrect API key provided.\n- 3.Incorrect Organization provided. \n See https://platform.openai.com/docs/guides/error-codes for more details.';
+					break;
+				case 403:
+					message = '403 Forbidden\n\nYour token has expired. Please try authenticating again.';
+					break;
+				case 404:
+					message = `404 Not Found\n\n`;
+
+					// For certain certain proxy paths, recommand a fix
+					if (this.api.apiConfig.basePath?.includes("openai.1rmb.tk") && this.api.apiConfig.basePath !== "https://openai.1rmb.tk/v1") {
+						message += "It looks like you are using the openai.1rmb.tk proxy server, but the path might be wrong.\nThe recommended path is https://openai.1rmb.tk/v1";
+					} else {
+						message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model}' may be incompatible or you may have exhausted your ChatGPT subscription allowance.`;
 					}
-				});
-			} else if (error.statusCode === 400) {
-				message = `Your model: '${this.model}' may be incompatible or one of your parameters is unknown. Reset your settings to default. (HTTP 400 Bad Request)`;
-			} else if (error.statusCode === 401) {
-				message = 'Make sure you are properly signed in. If you are using Browser Auto-login method, make sure the browser is open (You could refresh the browser tab manually if you face any issues, too). If you stored your API key in settings.json, make sure it is accurate. If you stored API key in session, you can reset it with `ChatGPT: Reset session` command. (HTTP 401 Unauthorized) Potential reasons: \r\n- 1.Invalid Authentication\r\n- 2.Incorrect API key provided.\r\n- 3.Incorrect Organization provided. \r\n See https://platform.openai.com/docs/guides/error-codes for more details.';
-			} else if (error.statusCode === 403) {
-				message = 'Your token has expired. Please try authenticating again. (HTTP 403 Forbidden)';
-			} else if (error.statusCode === 404) {
-				message = `Your model: '${this.model}' may be incompatible or you may have exhausted your ChatGPT subscription allowance. (HTTP 404 Not Found)`;
-			} else if (error.statusCode === 429) {
-				message = "Too many requests try again later. (HTTP 429 Too Many Requests) Potential reasons: \r\n 1. You exceeded your current quota, please check your plan and billing details\r\n 2. You are sending requests too quickly \r\n 3. The engine is currently overloaded, please try again later. \r\n See https://platform.openai.com/docs/guides/error-codes for more details.";
-			} else if (error.statusCode === 500) {
-				message = "The server had an error while processing your request, please try again. (HTTP 500 Internal Server Error)\r\n See https://platform.openai.com/docs/guides/error-codes for more details.";
-			}
-
-			if (apiMessage) {
-				message = `${message ? message + " " : ""}
-
-	${apiMessage}
-`;
+					break;
+				case 429:
+					message = "429 Too Many Requests\n\nToo many requests try again later. Potential reasons: \n 1. You exceeded your current quota, please check your plan and billing details\n 2. You are sending requests too quickly \n 3. The engine is currently overloaded, please try again later. \n See https://platform.openai.com/docs/guides/error-codes for more details.";
+					break;
+				case 500:
+					message = "500 Internal Server Error\n\nThe server had an error while processing your request, please try again.\nSee https://platform.openai.com/docs/guides/error-codes for more details.";
+					break;
+				default:
+					message = `${status}\n\nAn unknown error occurred. Please check your internet connection, clear the conversation, and try again.\n\n${apiMessage}`;
 			}
 
 			this.sendMessage({
