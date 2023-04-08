@@ -118,7 +118,10 @@ export default function Chat({
         `}
         >
           {conversation.messages
-            .filter((message: Message) => debug || message.role !== Role.system)
+            .filter(
+              (message: Message) =>
+                debug || (message.role !== Role.system && message.content)
+            )
             .map((message: Message, index: number) => {
               return (
                 <div
@@ -208,104 +211,112 @@ export default function Chat({
                       </div>
                     )}
                   </header>
-                  <div
-                    className={`
-                    ${message.isError ? "text-red-400" : ""}
-                  `}
-                  >
-                    {message.id === editingMessageID ? (
-                      // show textarea to edit message
-                      <div className="flex flex-col gap-y-2">
-                        <textarea
-                          className="w-full h-24 resize-none bg-input rounded p-2"
-                          defaultValue={
-                            message.role === Role.user
-                              ? message.rawContent
-                              : message.content
-                          }
-                          ref={editingMessageRef}
-                        />
-                      </div>
-                    ) : (
-                      <div
-                        className={`message-wrapper
+                  {message.isError ? (
+                    <div className="text p-4 bg-red-700 rounded bg-opacity-10">
+                      {(message.content ?? message.rawContent)
+                        .split("\n")
+                        .map((line: string, index: number) => (
+                          <p className="py-1" key={index}>
+                            {line}
+                          </p>
+                        ))}
+                    </div>
+                  ) : (
+                    <div>
+                      {message.id === editingMessageID ? (
+                        // show textarea to edit message
+                        <div className="flex flex-col gap-y-2">
+                          <textarea
+                            className="w-full h-24 resize-none bg-input rounded p-2"
+                            defaultValue={
+                              message.role === Role.user
+                                ? message.rawContent
+                                : message.content
+                            }
+                            ref={editingMessageRef}
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          className={`message-wrapper
                           ${message?.done ?? true ? "" : "result-streaming"}
                         `}
-                      >
-                        {(message.role === Role.user
-                          ? message.rawContent
-                          : message.content
-                        )
-                          .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
-                          .reduce((acc: any[], item: any) => {
-                            if (item) {
-                              acc.push(item);
-                            }
-                            return acc;
-                          }, [])
-                          .map(
-                            (
-                              item: string,
-                              index: React.Key | null | undefined
-                            ) => {
-                              if (item.startsWith("<pre><code")) {
-                                return (
-                                  <CodeBlock
-                                    code={item}
-                                    key={index}
-                                    conversationId={conversation.id}
-                                    vscode={vscode}
-                                  />
-                                );
-                              } else {
-                                return (
-                                  <div
-                                    key={index}
-                                    dangerouslySetInnerHTML={{
-                                      __html: item,
-                                    }}
-                                  />
-                                );
+                        >
+                          {(message.role === Role.user
+                            ? message.rawContent
+                            : message.content
+                          )
+                            .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
+                            .reduce((acc: any[], item: any) => {
+                              if (item) {
+                                acc.push(item);
                               }
+                              return acc;
+                            }, [])
+                            .map(
+                              (
+                                item: string,
+                                index: React.Key | null | undefined
+                              ) => {
+                                if (item.startsWith("<pre><code")) {
+                                  return (
+                                    <CodeBlock
+                                      code={item}
+                                      key={index}
+                                      conversationId={conversation.id}
+                                      vscode={vscode}
+                                    />
+                                  );
+                                } else {
+                                  return (
+                                    <div
+                                      key={index}
+                                      dangerouslySetInnerHTML={{
+                                        __html: item,
+                                      }}
+                                    />
+                                  );
+                                }
+                              }
+                            )}
+                          {message.questionCode && (
+                            <CodeBlock
+                              code={message.questionCode}
+                              conversationId={conversation.id}
+                              vscode={vscode}
+                              startCollapsed={
+                                message.questionCode.split("\n").length > 3
+                              }
+                              role={Role.user}
+                            />
+                          )}
+                        </div>
+                      )}
+                      {debug && (
+                        <div className="text-xs text-gray-500">
+                          Message ID: {message?.id}
+                          <br />
+                          Message Author: {message?.role}
+                          <br />
+                          Message createdAt:{" "}
+                          {new Date(message?.createdAt ?? "").toLocaleString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
                             }
                           )}
-                        {message.questionCode && (
-                          <CodeBlock
-                            code={message.questionCode}
-                            conversationId={conversation.id}
-                            vscode={vscode}
-                            startCollapsed={
-                              message.questionCode.split("\n").length > 3
-                            }
-                            role={Role.user}
-                          />
-                        )}
-                      </div>
-                    )}
-                    {debug && (
-                      <div className="text-xs text-gray-500">
-                        Message ID: {message?.id}
-                        <br />
-                        Message Author: {message?.role}
-                        <br />
-                        Message createdAt:{" "}
-                        {new Date(message?.createdAt ?? "").toLocaleString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit",
-                          }
-                        )}
-                        <br />
-                        Message done: {message?.done ? "true" : "false"}
-                        <br />
-                      </div>
-                    )}
-                  </div>
+                          <br />
+                          Message done: {message?.done ? "true" : "false"}
+                          <br />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
