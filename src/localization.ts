@@ -11,7 +11,7 @@ export async function loadTranslations(extensionPath: string): Promise<Record<st
   const locale = vscode.env.language;
 
   // Load the locale-specific translations file if it exists
-  const localeTranslationsPath = path.join(extensionPath, 'supported-languages', `${locale}.json`);
+  const localeTranslationsPath = path.join(extensionPath, '', `package.nls.${locale}.json`);
   let localeTranslations = {};
 
   try {

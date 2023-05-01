@@ -192,67 +192,67 @@
       },
       {
         "command": "vscode-chatgpt.addTests",
-        "title": "ChatGPT: Add tests",
+        "title": "%vscode-chatgpt.addTests.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.findProblems",
-        "title": "ChatGPT: Find bugs",
+        "title": "%vscode-chatgpt.findProblems.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.optimize",
-        "title": "ChatGPT: Optimize",
+        "title": "%vscode-chatgpt.optimize.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.explain",
-        "title": "ChatGPT: Explain",
+        "title": "%vscode-chatgpt.explain.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.addComments",
-        "title": "ChatGPT: Add comments",
+        "title": "%vscode-chatgpt.addTests.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.completeCode",
-        "title": "ChatGPT: Complete code",
+        "title": "%vscode-chatgpt.completeCode.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.adhoc",
-        "title": "ChatGPT: Ad-hoc prompt",
+        "title": "%vscode-chatgpt.adhoc.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.customPrompt1",
-        "title": "ChatGPT: Custom prompt 1",
+        "title": "%vscode-chatgpt.customPrompt1.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.customPrompt2",
-        "title": "ChatGPT: Custom prompt 2",
+        "title": "%vscode-chatgpt.customPrompt2.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.customPrompt3",
-        "title": "ChatGPT: Custom prompt 3",
+        "title": "%vscode-chatgpt.customPrompt3.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.customPrompt4",
-        "title": "ChatGPT: Custom prompt 4",
+        "title": "%vscode-chatgpt.customPrompt4.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.customPrompt5",
-        "title": "ChatGPT: Custom prompt 5",
+        "title": "%vscode-chatgpt.customPrompt5.title%",
         "enablement": "editorHasSelection"
       },
       {
         "command": "vscode-chatgpt.customPrompt6",
-        "title": "ChatGPT: Custom prompt 6",
+        "title": "%vscode-chatgpt.customPrompt6.title%",
         "enablement": "editorHasSelection"
       },
       {
@@ -638,8 +638,7 @@
     "strip-markdown": "^5.0.0",
     "style-loader": "^3.3.2",
     "upath": "^2.0.1",
-    "uuid": "^9.0.0",
-    "vscode-nls": "^5.2.0"
+    "uuid": "^9.0.0"
   },
   "resolutions": {
     "clone-deep": "^4.0.1"
