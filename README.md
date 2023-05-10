@@ -127,9 +127,15 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### May 9, 2023 (`v3.16.3`)
+
+- 🌐 [i18n] Translation file refactor to work more predictably. Right-click menu is now translated. - _Thanks for the PR @zzy-life_
+- 🔧 [Fixes] Expanded the VSCode support to version `v1.70.0` (July 2022). Previously it was to `v1.73.0` (October 2022). Can lower more if needed. - _Thanks for the bug report @zzy-life_
+- 🖥️ [UI] Text about this being a fork has been removed since it's no longer really needed, and clutters the UI. - _Thanks for the suggestion @danyalaytekin _
+
 ### April 8, 2023 (`v3.16.1`)
 
-- 🔧 [Fixes] Using a proxy causes "unexpected end of JSON" error
+- 🔧 [Fixes] Using a proxy causes "unexpected end of JSON" error. - _Thanks for the bug report @lvii_
 - 🖥️ [UI] Made error messages a little more helpful.
 
 ### April 3, 2023 (`v3.15.2`, `v3.16.0`)
@@ -142,19 +148,19 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 ### March 30, 2023 (`v3.15.0`, `v3.15.1`)
 
 - 🌐 [i18n] Initial i18n support, localization is still a work in progress.
-- 🐛 [Fixes] Fix 400 error due to invalid API base URL.
+- 🔧 [Fixes] Fix 404 error due to invalid API base URL. - _Thanks for the bug report @hakula139_
 
 ### March 28, 2023 (`v3.14.0`)
 
 - 🖥️ [UI] Add token count UI
 - 🖥️ [UI] "Clear" button added for clearning the conversation. Highly recommend using it to avoid expensive token usage with long conversations.
 - 🖥️ [UI] Minor tweaks to mini buttons below input box to prefer wrapping on smaller windows and ui fixes to actions menu on smaller windows.
-- 🔧 [Fixes] Token counting issues causing `4096` maxTokens config setting to fail.
+- 🔧 [Fixes] Token counting issues causing `4096` maxTokens config setting to fail. - _Thanks for the bug report @PeterDaveHello_
 - 🔩 [Behind the scenes] API provider refactor. Moving towards using the `OpenAI` library and its SDK for better maintainability. Note that `baseUrl` setting should now end in `/v1`, which matches OpenAI's SDK for `basePath`.
 
 ### March 26, 2023 (`v3.12.0`, `v3.12.1`, `v3.13.0`, `v3.13.1`)
 
-- 🔐 [Security] API key is now stored in VSCode secure storage. It will automatically put your API key in secure storage if you have it in your settings config and then remove it from your settings config.
+- 🔐 [Security] API key is now stored in VSCode secure storage. It will automatically put your API key in secure storage if you have it in your settings config and then remove it from your settings config. - _Thanks for the feature request @flutterrausch_
 - 🖥️ [UI] Added a "Verbosity" config setting and UI select.
 - 🖥️ [UI] User messages will now include a code block if editor text selection is sent.
 - 🖥️ [UI] Moved "Feedback", "Settings" and "Export" to "More Actions" menu.
