@@ -131,7 +131,7 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 - 🌐 [i18n] Translation file refactor to work more predictably. Right-click menu is now translated. - _Thanks for the PR @zzy-life_
 - 🔧 [Fixes] Expanded the VSCode support to version `v1.70.0` (July 2022). Previously it was to `v1.73.0` (October 2022). Can lower more if needed. - _Thanks for the bug report @zzy-life_
-- 🖥️ [UI] Text about this being a fork has been removed since it's no longer really needed, and clutters the UI. - _Thanks for the suggestion @danyalaytekin _
+- 🖥️ [UI] Text about this being a fork has been removed since it's no longer really needed, and clutters the UI. - _Thanks for the suggestion @danyalaytekin_
 
 ### April 8, 2023 (`v3.16.1`)
 
