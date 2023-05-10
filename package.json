@@ -11,7 +11,7 @@
     "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"
   },
   "engines": {
-    "vscode": "^1.73.0"
+    "vscode": "^1.70.0"
   },
   "categories": [
     "Testing",
