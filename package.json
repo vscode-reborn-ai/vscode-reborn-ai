@@ -596,7 +596,7 @@
     "@types/react-dom": "^18.0.11",
     "@types/react-redux": "^7.1.25",
     "@types/uuid": "^9.0.0",
-    "@types/vscode": "^1.73.0",
+    "@types/vscode": "1.70.0",
     "@types/vscode-webview": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
