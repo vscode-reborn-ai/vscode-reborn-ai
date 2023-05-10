@@ -2,25 +2,8 @@ import React from "react";
 import { useAppSelector } from "../hooks";
 import Icon from "./Icon";
 
-export default function ({
-  vscode,
-  className,
-}: {
-  vscode: any;
-  className?: string;
-}) {
-  const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
+export default function ({ className }: { vscode: any; className?: string }) {
   const t = useAppSelector((state: any) => state.app.translations);
-  const [ignoreWarningScreen, setIgnoreWarningScreen] = React.useState(true);
-
-  // Ignore warning screen for 3 seconds as the extension gets what models are available
-  // and then show the warning screen if there are no models available
-  React.useEffect(() => {
-    setTimeout(() => {
-      setIgnoreWarningScreen(false);
-    }, 3000);
-  }, []);
 
   return (
     <div
@@ -50,22 +33,6 @@ export default function ({
             "Run multiple chats at once"}
         </li>
       </ul>
-      {!settings?.minimalUI && (
-        <p className="max-w-sm text-center text-[0.7rem] self-center">
-          {t?.introductionSplash?.discontinued1 ??
-            "This is an API-only fork of "}{" "}
-          <a href="https://github.com/gencay">@gencay's</a>
-          {t?.introductionSplash?.discontinued ?? "discontinued"}{" "}
-          <a
-            className="whitespace-nowrap"
-            href="https://github.com/gencay/vscode-chatgpt"
-          >
-            {" "}
-            {t?.introductionSplash?.discontinued2 ??
-              "VSCode-ChatGPT extension."}
-          </a>
-        </p>
-      )}
     </div>
   );
 }
