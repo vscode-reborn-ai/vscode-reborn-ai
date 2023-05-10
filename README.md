@@ -108,6 +108,12 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 Initial i18n support has been added in `v3.15.0`, but I need help translating to different languages. If you're able to help at all [see this discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
 
+## Proxy
+
+This extension can be used with a proxy if you put the proxy's URL path in the "Api Base Url" config setting.
+
+**Update 4.8.2023** - I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers.
+
 ## Tech
 
 [Yarn](https://yarnpkg.com/) - [TypeScript](https://www.typescriptlang.org/) - [VSCode Extension API](https://code.visualstudio.com/api) - [React](https://reactjs.org/) - [Redux](https://redux.js.org/) - [React Router](https://reactrouter.com/) - [Tailwind CSS](https://tailwindcss.com/)
@@ -120,6 +126,11 @@ Initial i18n support has been added in `v3.15.0`, but I need help translating to
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
+
+### April 8, 2023 (`v3.16.1`)
+
+- 🔧 [Fixes] Using a proxy causes "unexpected end of JSON" error
+- 🖥️ [UI] Made error messages a little more helpful.
 
 ### April 3, 2023 (`v3.15.2`, `v3.16.0`)
 
