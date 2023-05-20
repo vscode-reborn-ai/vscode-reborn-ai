@@ -458,6 +458,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			configuration.organization = organizationId;
 		}
 
+		// if the api base url is set in settings, use it
+		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("apiBaseUrl") as string;
+		if (apiBaseUrl) {
+			configuration.basePath = apiBaseUrl;
+		}
+
 		try {
 			const openai = new OpenAIApi(configuration);
 			const response = await openai.listModels();
@@ -485,6 +491,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		const organizationId = await vscode.workspace.getConfiguration("chatgpt").get("organizationId") as string;
 		if (organizationId) {
 			configuration.organization = organizationId;
+		}
+
+		// if the api base url is set in settings, use it
+		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("apiBaseUrl") as string;
+		if (apiBaseUrl) {
+			configuration.basePath = apiBaseUrl;
 		}
 
 		try {
