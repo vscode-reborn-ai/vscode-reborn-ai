@@ -459,7 +459,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		// if the api base url is set in settings, use it
-		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("apiBaseUrl") as string;
+		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+		console.log("Main Process - Using API base URL: " + apiBaseUrl);
 		if (apiBaseUrl) {
 			configuration.basePath = apiBaseUrl;
 		}
@@ -473,6 +474,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				models: response.data?.data
 			};
 		} catch (error) {
+			console.error('Main Process - Error getting models', error);
 			return {
 				valid: false,
 			};
@@ -494,7 +496,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		// if the api base url is set in settings, use it
-		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("apiBaseUrl") as string;
+		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 		if (apiBaseUrl) {
 			configuration.basePath = apiBaseUrl;
 		}
