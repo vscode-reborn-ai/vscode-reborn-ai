@@ -127,6 +127,10 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### May 30, 2023 (`v3.16.5`)
+
+- 🔧 [Fixes] Onboarding - Fix api key verification issue relating to the api url config setting. - *Thanks for the PR @zzy-life*
+
 ### May 19, 2023 (`v3.16.4`)
 
 - 🔧 [Fixes] Onboarding - Fix api key verification not working with proxy api endpoints.
