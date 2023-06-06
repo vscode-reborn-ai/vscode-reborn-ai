@@ -202,6 +202,7 @@ export default function Chat({
                           className="p-1.5 flex items-center rounded"
                           data-tooltip-id="message-tooltip"
                           data-tooltip-content="Edit and resend this prompt"
+                          title="Edit and resend"
                           onClick={() => {
                             setEditingMessageID(message.id);
                           }}
@@ -228,6 +229,7 @@ export default function Chat({
                         <div className="flex flex-col gap-y-2">
                           <textarea
                             className="w-full h-24 resize-none bg-input rounded p-2"
+                            title="Prompt text"
                             defaultValue={
                               message.role === Role.user
                                 ? message.rawContent
