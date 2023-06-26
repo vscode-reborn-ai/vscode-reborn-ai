@@ -31,6 +31,7 @@ export enum Model {
   gpt_4_32k = "gpt-4-32k",
   gpt_35_turbo = "gpt-3.5-turbo",
   gpt_35_turbo_0301 = "gpt-3.5-turbo-0301",
+  gpt_35_turbo_16k_0613 = "gpt-3.5-turbo-16k-0613",
   // Prompt completion models - Not yet supported in this extension
   text_davinci_003 = "text-davinci-003",
   text_curie_001 = "text-curie-001",
