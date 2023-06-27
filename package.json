@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.16.5",
+  "version": "3.17.0",
   "aiKey": "",
   "license": "ISC",
   "repository": {
@@ -14,25 +14,20 @@
     "vscode": "^1.70.0"
   },
   "categories": [
-    "Testing",
-    "Data Science",
-    "Formatters",
     "Programming Languages",
-    "Linters"
+    "Machine Learning",
+    "Snippets",
+    "Education"
   ],
   "keywords": [
     "chatgpt",
-    "lamda",
-    "bard",
     "gpt",
     "gpt3",
     "gpt3.5",
     "gpt4",
-    "codex",
     "openai",
     "testing",
     "find bugs",
-    "copilot",
     "ai"
   ],
   "activationEvents": [
@@ -458,7 +453,7 @@
             "gpt-4",
             "gpt-4-32k",
             "gpt-3.5-turbo",
-            "gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-16k",
             "text-davinci-003",
             "text-curie-001",
             "text-babbage-001",
@@ -473,7 +468,7 @@
             "gpt-4",
             "gpt-4-32k",
             "gpt-3.5-turbo",
-            "gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-16k",
             "text-davinci-003",
             "text-curie-001",
             "text-babbage-001",
@@ -614,7 +609,7 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.2",
+    "@dqbd/tiktoken": "^1.0.7",
     "@reduxjs/toolkit": "^1.9.3",
     "autoprefixer": "^10.4.14",
     "css-loader": "^6.7.3",
@@ -625,7 +620,7 @@
     "isomorphic-fetch": "^3.0.0",
     "keyv": "^4.5.2",
     "marked": "^4.3.0",
-    "openai": "^3.2.1",
+    "openai": "^3.3.0",
     "p-timeout": "^6.1.1",
     "postcss": "^8.4.21",
     "postcss-loader": "^7.1.0",

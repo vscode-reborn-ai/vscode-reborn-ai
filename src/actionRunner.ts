@@ -2,7 +2,7 @@ import fs from "fs";
 import upath from 'upath';
 import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
-import ApiProvider from "./api-provider";
+import { ApiProvider } from "./api-provider";
 import { ActionNames, Conversation, Message, Model, Role } from "./renderer/types";
 import { listItems } from "./utils";
 
@@ -59,8 +59,6 @@ class Action {
       autoscroll: true,
     };
 
-    console.log('conversation', conversation);
-
     for await (const token of apiProvider.streamChatCompletion(conversation, abortSignal)) {
       yield token;
     }
@@ -97,7 +95,6 @@ class ReadmeFromPackageJSONAction extends Action {
 
     // 1. Look for a package.json file in the current directory
     const packageJsonPath = upath.join(currentProjectDir, 'package.json');
-    console.log('packageJsonPath', packageJsonPath);
     if (!fs.existsSync(packageJsonPath)) {
       throw new Error('package.json not found.');
     }

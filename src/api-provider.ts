@@ -4,7 +4,20 @@ import { v4 as uuidv4 } from "uuid";
 import { Conversation, Message, Model, Role } from "./renderer/types";
 // https://openai.1rmb.tk/v1/
 
-export default class ApiProvider {
+export const MODEL_TOKEN_LIMITS: Record<Model, number> = {
+  [Model.gpt_4]: 8192,
+  [Model.gpt_4_32k]: 32768,
+  [Model.gpt_35_turbo]: 4096,
+  [Model.gpt_35_turbo_16k]: 16384,
+  [Model.text_davinci_003]: 4097,
+  [Model.text_curie_001]: 2049,
+  [Model.text_babbage_001]: 2049,
+  [Model.text_ada_001]: 2049,
+  [Model.code_davinci_002]: 4097,
+  [Model.code_cushman_001]: 2049,
+};
+
+export class ApiProvider {
   private _openai: OpenAIApi;
   private _maxTokens: number;
   private _maxResponseTokens: number;
@@ -57,7 +70,20 @@ export default class ApiProvider {
   } = {}): AsyncGenerator<any, any, unknown> {
     const model = conversation.model ?? Model.gpt_35_turbo;
     const tokensUsed = ApiProvider.countConversationTokens(conversation);
+
+    // Max tokens cannot be greater than the model's token limit
+    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model]);
+
+    // if tokensUsed > maxTokens, throw error
+    if (tokensUsed > maxTokens) {
+      throw new Error(`This conversation uses ${tokensUsed} tokens, but the "maxTokens" set in the extension settings is ${maxTokens}. Please increase the "maxTokens" setting or reduce the amount of code you are sending. To increase the limit, hit "More Actions" > "Settings" > search for "maxTokens".`);
+    }
     const tokensLeft = Math.min(maxTokens - tokensUsed, maxResponseTokens);
+
+    if (tokensLeft <= 0) {
+      throw new Error(`This conversation uses ${tokensUsed} tokens. After applying the "maxTokens" setting of ${maxTokens}, and this model's (${model}) token limit of ${MODEL_TOKEN_LIMITS[model]}, there are no tokens left to send. Either A) Clear the conversation to reduce the conversation size or B) reduce the amount of code you are sending or C) increase the sending limit on "maxTokens" by hitting "More Actions" > "Settings" > search for "maxTokens". Note that if you are hitting the model token limit of ${MODEL_TOKEN_LIMITS[model]}, you will need to switch to a different model that accepts more tokens.`);
+    }
+
     // Only stream if not using a proxy
     const useStream = true; // this.apiConfig.basePath === 'https://api.openai.com/v1';
     const response = await this._openai.createChatCompletion(
@@ -134,7 +160,21 @@ export default class ApiProvider {
     maxResponseTokens?: number;
   } = {}): Promise<ChatCompletionResponseMessage | undefined> {
     const model = conversation.model ?? Model.gpt_35_turbo;
-    const tokensLeft = Math.min(maxTokens - ApiProvider.countConversationTokens(conversation), maxResponseTokens);
+    const tokensUsed = ApiProvider.countConversationTokens(conversation);
+
+    // Max tokens cannot be greater than the model's token limit
+    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model]);
+
+    // if tokensUsed > maxTokens, throw error
+    if (tokensUsed > maxTokens) {
+      throw new Error(`Conversation uses ${tokensUsed} tokens, but the "maxTokens" set in the extension settings is ${maxTokens}. Please increase the "maxTokens" setting or reduce amount of code you're sending.`);
+    }
+    const tokensLeft = Math.min(maxTokens - tokensUsed, maxResponseTokens);
+
+    if (tokensLeft <= 0) {
+      throw new Error(`This conversation uses ${tokensUsed} tokens. After applying the "maxTokens" setting of ${maxTokens}, and this model's (${model}) token limit of ${MODEL_TOKEN_LIMITS[model]}, there are no tokens left to send. Either A) Clear the conversation to reduce the conversation size or B) reduce the amount of code you are sending or C) increase the sending limit on "maxTokens" by hitting "More Actions" > "Settings" > search for "maxTokens". Note that if you are hitting the model token limit of ${MODEL_TOKEN_LIMITS[model]}, you will need to switch to a different model that accepts more tokens.`);
+    }
+
     const response = await this._openai.createChatCompletion(
       {
         model,
@@ -169,7 +209,21 @@ export default class ApiProvider {
     maxResponseTokens?: number;
   } = {}): Promise<Message | undefined> {
     const model = conversation.model ?? Model.gpt_35_turbo;
-    const tokensLeft = Math.min(maxTokens - ApiProvider.countConversationTokens(conversation), maxResponseTokens);
+    const tokensUsed = ApiProvider.countConversationTokens(conversation);
+
+    // Max tokens cannot be greater than the model's token limit
+    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model]);
+
+    // if tokensUsed > maxTokens, throw error
+    if (tokensUsed > maxTokens) {
+      throw new Error(`Conversation uses ${tokensUsed} tokens, but the "maxTokens" set in the extension settings is ${maxTokens}. Please increase the "maxTokens" setting or reduce amount of code you're sending.`);
+    }
+    const tokensLeft = Math.min(maxTokens - tokensUsed, maxResponseTokens);
+
+    if (tokensLeft <= 0) {
+      throw new Error(`This conversation uses ${tokensUsed} tokens. After applying the "maxTokens" setting of ${maxTokens}, and this model's (${model}) token limit of ${MODEL_TOKEN_LIMITS[model]}, there are no tokens left to send. Either A) Clear the conversation to reduce the conversation size or B) reduce the amount of code you are sending or C) increase the sending limit on "maxTokens" by hitting "More Actions" > "Settings" > search for "maxTokens". Note that if you are hitting the model token limit of ${MODEL_TOKEN_LIMITS[model]}, you will need to switch to a different model that accepts more tokens.`);
+    }
+
     const response = await this._openai.createCompletion(
       {
         model,
@@ -191,22 +245,36 @@ export default class ApiProvider {
   }
 
   // * Utility token counting methods
+  // Use this.getEncodingForModel() instead of encoding_for_model() due to missing model support
+  public static getEncodingForModel(model: Model): Tiktoken {
+    let adjustedModel = model;
+
+    switch (model) {
+      case Model.gpt_35_turbo_16k:
+        // June 27, 2023 - Tiktoken@1.0.7 does not recognize the 3.5-16k model version.
+        adjustedModel = Model.gpt_35_turbo;
+        break;
+    }
+
+    return encoding_for_model(adjustedModel as TiktokenModel);
+  }
+
   public static countConversationTokens(conversation: Conversation): number {
-    const enc = encoding_for_model((conversation.model ?? Model.gpt_35_turbo) as TiktokenModel);
+    const enc = this.getEncodingForModel(conversation.model ?? Model.gpt_35_turbo);
     let tokensUsed = 0;
 
     for (const message of conversation.messages) {
       tokensUsed += ApiProvider.countMessageTokens(message, conversation.model ?? Model.gpt_35_turbo, enc);
     }
 
-    tokensUsed += 2; // every reply is primed with <im_start>assistant
+    tokensUsed += 3; // every reply is primed with <im_start>assistant
 
     enc.free();
     return tokensUsed;
   }
 
   public static countMessageTokens(message: Message, model: Model, encoder?: Tiktoken): number {
-    let enc = encoder ?? encoding_for_model(model as TiktokenModel);
+    let enc = encoder ?? this.getEncodingForModel(model);
     let tokensUsed = 4; // every message follows <im_start>{role/name}\n{content}<im_end>\n
 
     const openAIMessage = {
@@ -237,7 +305,7 @@ export default class ApiProvider {
   }
 
   public static countPromptTokens(prompt: string, model: Model): number {
-    const enc = encoding_for_model(model as TiktokenModel);
+    const enc = this.getEncodingForModel(model);
     const tokens = enc.encode(prompt).length;
 
     enc.free();

@@ -4,7 +4,7 @@ import { Configuration, OpenAIApi } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
 import { ActionRunner } from "./actionRunner";
-import ApiProvider from "./api-provider";
+import { ApiProvider, MODEL_TOKEN_LIMITS } from "./api-provider";
 import Auth from "./auth";
 import { loadTranslations } from './localization';
 import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
@@ -95,6 +95,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		if (vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") === "https://api.openai.com") {
 			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", "https://api.openai.com/v1", true);
 		}
+
+		this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number;
+		this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number;
+		this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number;
 
 		// Initialize the API
 		this.authStore.getAuthData().then((apiKey) => {
@@ -220,7 +224,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
 
 		webviewView.webview.onDidReceiveMessage(async data => {
-			console.log("Main Process - Received message from webview: ", data);
 			switch (data.type) {
 				case 'addFreeTextQuestion':
 					const apiRequestOptions = {
@@ -278,7 +281,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					if (data?.conversationId) {
 						this.stopGenerating(data.conversationId);
 					} else {
-						console.log("Main Process - No conversationId provided to stop generating");
+						console.warn("Main Process - No conversationId provided to stop generating");
 					}
 					break;
 				case "getSettings":
@@ -326,24 +329,35 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					break;
 				case 'getTokenCount':
 					const convTokens = ApiProvider.countConversationTokens(data.conversation);
-					const userInputTokens = ApiProvider.countMessageTokens({
+					let userInputTokens = ApiProvider.countMessageTokens({
 						role: Role.user,
 						content: data.conversation.userInput
 					} as Message, data.conversation?.model ?? this.model ?? Model.gpt_35_turbo);
+
+					// If "use editor selection" is enabled, add the tokens from the editor selection
+					if (data?.useEditorSelection) {
+						const selection = this.getActiveEditorSelection();
+						// Roughly approximate the number of tokens used for the instructions about using the editor selection
+						const roughApproxCodeSelectionContext = 40;
+
+						userInputTokens += ApiProvider.countMessageTokens({
+							role: Role.user,
+							content: selection?.content ?? ""
+						} as Message, data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) + roughApproxCodeSelectionContext;
+					}
 
 					this.sendMessage({
 						type: "tokenCount",
 						tokenCount: {
 							messages: convTokens,
 							userInput: userInputTokens,
-							maxTotal: this._maxTokens,
+							maxTotal: Math.min(this._maxTokens, MODEL_TOKEN_LIMITS[(data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model]),
 							minTotal: convTokens + userInputTokens,
 						},
 					});
 					break;
 				case 'runAction':
 					const actionId: ActionNames = data.actionId as ActionNames;
-					console.log("Main Process - Running action: " + actionId);
 
 					const controller = new AbortController();
 					this.abortControllers.push({
@@ -373,7 +387,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					if (data?.actionId) {
 						this.stopAction(data.actionId);
 					} else {
-						console.log("Main Process - No actionName provided to stop action");
+						console.warn("Main Process - No actionName provided to stop action");
 					}
 					break;
 				default:
@@ -460,7 +474,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		// if the api base url is set in settings, use it
 		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
-		console.log("Main Process - Using API base URL: " + apiBaseUrl);
 		if (apiBaseUrl) {
 			configuration.basePath = apiBaseUrl;
 		}
@@ -514,13 +527,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	async getChatGPTModels(fullModelList: any[] = []): Promise<Model[]> {
 		if (fullModelList?.length && fullModelList?.length > 0) {
-			return fullModelList.filter((model: any) => ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
+			return fullModelList.filter((model: any) => ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
 				return model.id as Model;
 			});
 		} else {
 			const models = await this.getModels();
 
-			return models.filter((model: any) => ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
+			return models.filter((model: any) => ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
 				return model.id as Model;
 			});
 		}
@@ -768,7 +781,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					message = "500 Internal Server Error\n\nThe server had an error while processing your request, please try again.\nSee https://platform.openai.com/docs/guides/error-codes for more details.";
 					break;
 				default:
-					message = `${status}\n\nAn unknown error occurred. Please check your internet connection, clear the conversation, and try again.\n\n${apiMessage}`;
+					if (apiMessage) {
+						message = `${status ? status + '\n\n' : ''}${apiMessage}`;
+					} else {
+						message = `${status}\n\nAn unknown error occurred. Please check your internet connection, clear the conversation, and try again.\n\n${apiMessage}`;
+					}
 			}
 
 			this.sendMessage({

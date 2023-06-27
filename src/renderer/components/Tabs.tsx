@@ -42,7 +42,10 @@ export default function Tabs({
         ) ?? conversationList[0]
       );
     } else {
-      console.log("conversationList is null", JSON.stringify(conversationList));
+      console.warn(
+        "conversationList is null",
+        JSON.stringify(conversationList)
+      );
     }
   }, [currentConversationId, conversationList]);
 
@@ -65,7 +68,10 @@ export default function Tabs({
         })),
       ]);
     } else {
-      console.log("conversationList is null", JSON.stringify(conversationList));
+      console.warn(
+        "conversationList is null",
+        JSON.stringify(conversationList)
+      );
     }
   }, [conversationList]);
 
