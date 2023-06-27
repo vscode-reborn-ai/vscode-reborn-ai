@@ -96,6 +96,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## TODO
 
+- [ ] Let users that are using `gpt-3.5-turbo-16k` know when their prompt is well below 4K tokens. To recommend using `gpt-3.5-turbo` instead to save on costs.
 - [ ] Add way to manage custom prompts in UI.
 - [ ] Add option to stream directly into the editor.
 - [ ] Inline diff
@@ -126,6 +127,12 @@ This extension can be used with a proxy if you put the proxy's URL path in the "
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
+
+### June 27, 2023 (`v3.17.0`)
+
+- 🔧 [Fixes] Token count calculation bugs fixed. Updated to reflect new OpenAI pricing.
+- ✨ [Feature] Added support for the `gpt-3.5-turbo-16k` model. This model is a 16,000 token version of GPT-3.5. It's a good option if you need more tokens than the 4,000 token version of GPT-3.5. It's ~2x more expensive than `gpt-3.5-turbo`; however, it's still much cheaper than `gpt-4`. - *Thank you for the PR @raphael2692*
+- 🌐 [i18n] Added Traditional Chinese translation for Taiwan-based users.
 
 ### May 30, 2023 (`v3.16.5`)
 
