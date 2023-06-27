@@ -17,7 +17,7 @@ export const MODEL_TOKEN_LIMITS: Record<Model, number> = {
   [Model.code_cushman_001]: 2049,
 };
 
-export default class ApiProvider {
+export class ApiProvider {
   private _openai: OpenAIApi;
   private _maxTokens: number;
   private _maxResponseTokens: number;

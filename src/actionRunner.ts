@@ -2,7 +2,7 @@ import fs from "fs";
 import upath from 'upath';
 import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
-import ApiProvider from "./api-provider";
+import { ApiProvider } from "./api-provider";
 import { ActionNames, Conversation, Message, Model, Role } from "./renderer/types";
 import { listItems } from "./utils";
 

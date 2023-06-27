@@ -15,6 +15,7 @@ export interface AppState {
   chatGPTModels: Model[];
   apiKeyStatus: ApiKeyStatus;
   translations: any;
+  useEditorSelection: boolean;
 }
 
 const initialState: AppState = {
@@ -23,6 +24,7 @@ const initialState: AppState = {
   chatGPTModels: [],
   apiKeyStatus: ApiKeyStatus.Unknown,
   translations: {},
+  useEditorSelection: false,
 };
 
 export const appSlice = createSlice({
@@ -47,6 +49,9 @@ export const appSlice = createSlice({
     },
     setTranslations: (state, action: PayloadAction<any>) => {
       state.translations = action.payload;
+    },
+    setUseEditorSelection: (state, action: PayloadAction<boolean>) => {
+      state.useEditorSelection = action.payload;
     }
   },
 });
@@ -57,6 +62,7 @@ export const {
   setChatGPTModels,
   setApiKeyStatus,
   setTranslations,
+  setUseEditorSelection,
 } = appSlice.actions;
 
 export default appSlice.reducer;

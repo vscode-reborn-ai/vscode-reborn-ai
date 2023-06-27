@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { setDebug } from "../store/app";
+import { setDebug, setUseEditorSelection } from "../store/app";
 import {
   clearMessages,
   setAutoscroll,
@@ -12,6 +12,20 @@ import { Conversation, Model } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 import VerbositySelect from "./VerbositySelect";
+
+// TODO: this is also in api-provider.ts, consolidate to avoid discrepancies..
+const MODEL_TOKEN_LIMITS: Record<Model, number> = {
+  [Model.gpt_4]: 8192,
+  [Model.gpt_4_32k]: 32768,
+  [Model.gpt_35_turbo]: 4096,
+  [Model.gpt_35_turbo_16k]: 16384,
+  [Model.text_davinci_003]: 4097,
+  [Model.text_curie_001]: 2049,
+  [Model.text_babbage_001]: 2049,
+  [Model.text_ada_001]: 2049,
+  [Model.code_davinci_002]: 4097,
+  [Model.code_cushman_001]: 2049,
+};
 
 export default ({
   conversation: currentConversation,
@@ -25,26 +39,55 @@ export default ({
   const dispatch = useAppDispatch();
   const debug = useAppSelector((state: any) => state.app.debug);
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
+  const app = useAppSelector((state: any) => state.app);
   const t = useAppSelector((state: any) => state.app.translations);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
-  const [includeEditorSelection, setIncludeEditorSelection] = useState(false);
-  const [tokenText, setTokenText] = useState("");
+  const [useEditorSelection, setIncludeEditorSelection] = useState(false);
   const [minCost, setMinCost] = useState(0);
   const [maxCost, setMaxCost] = useState(0);
+  const [minTokens, setMinTokens] = useState(
+    currentConversation.tokenCount?.minTotal ?? 0
+  );
   const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
+  const tokenCountRef = React.useRef<HTMLDivElement>(null);
+  // Animation on token count value change
+  const [tokenCountAnimation, setTokenCountAnimation] = useState(false);
+  const tokenCountAnimationTimer = useRef(null);
+
+  // when includeEditorSelection changes, update the store (needed for token calculations elsewhere), one-way binding for now
+  useEffect(() => {
+    dispatch(setUseEditorSelection(useEditorSelection));
+  }, [useEditorSelection]);
 
   useEffect(() => {
-    let tokenMessages = currentConversation.tokenCount?.messages ?? 0;
-    let tokenPrompt = currentConversation.tokenCount?.userInput ?? 0;
-    let maxTokens = currentConversation.tokenCount?.maxTotal ?? 0;
+    setMinTokens(
+      Math.min(
+        (currentConversation.tokenCount?.messages ?? 0) +
+          (currentConversation.tokenCount?.userInput ?? 0),
+        currentConversation.tokenCount?.maxTotal ?? 0
+      )
+    );
+  }, [currentConversation.tokenCount, currentConversation.model]);
+
+  useEffect(() => {
+    let maxTokens = Math.min(
+      currentConversation.tokenCount?.maxTotal ?? 0,
+      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
+    );
 
     // on tokenCount change, set the cost
+    // Based on data from: https://openai.com/pricing
     let rateComplete = 0;
     let ratePrompt = 0;
     switch (currentConversation.model) {
       case Model.gpt_35_turbo:
-        ratePrompt = rateComplete = 0.002;
+        ratePrompt = 0.0015;
+        rateComplete = 0.002;
+        break;
+      case Model.gpt_35_turbo_16k:
+        ratePrompt = 0.003;
+        rateComplete = 0.004;
         break;
       case Model.gpt_4:
         ratePrompt = 0.03;
@@ -57,23 +100,30 @@ export default ({
       default:
         rateComplete = -1;
     }
-    let minCost = ((tokenMessages + tokenPrompt) / 1000) * ratePrompt;
+    let minCost = (minTokens / 1000) * ratePrompt;
+    // maxCost is based on current convo text at ratePrompt pricing + theoretical maximum response at rateComplete pricing
     let maxCost =
-      ((maxTokens - tokenMessages - tokenPrompt) / 1000) * rateComplete;
+      minCost + (Math.max(0, maxTokens - minTokens) / 1000) * rateComplete;
 
     setMinCost(minCost);
     setMaxCost(maxCost);
 
-    if (minCost > 0 && maxCost > 0) {
-      setTokenText(
-        `${tokenMessages + tokenPrompt} <> ${maxTokens} ${
-          t?.questionInputField?.tokens ?? "tokens"
-        } ($${minCost.toFixed(4)} <> ${maxCost.toFixed(4)})`
-      );
-    } else {
-      setTokenText("");
+    setTokenCountAnimation(true);
+  }, [currentConversation.tokenCount, currentConversation.model, minTokens]);
+
+  useEffect(() => {
+    // Clear the previous timer if there is one
+    if (tokenCountAnimationTimer.current) {
+      clearTimeout(tokenCountAnimationTimer.current);
     }
-  }, [currentConversation.tokenCount, currentConversation.model]);
+
+    // Start a new timer
+    tokenCountAnimationTimer.current = setTimeout(() => {
+      setTokenCountAnimation(false);
+    }, 200) as any;
+
+    return () => clearTimeout(tokenCountAnimationTimer.current as any); // Cleanup on unmount
+  }, [tokenCountAnimation]);
 
   // on conversation change, focus on the question input, set the question input value to the user input
   useEffect(() => {
@@ -99,7 +149,7 @@ export default ({
         type: "addFreeTextQuestion",
         value: questionInputRef.current.value,
         conversation: currentConversation,
-        includeEditorSelection,
+        includeEditorSelection: useEditorSelection,
       });
 
       questionInputRef.current.value = "";
@@ -122,7 +172,7 @@ export default ({
       );
 
       // If includeEditorSelection is enabled, disable it after the question is asked
-      if (includeEditorSelection) {
+      if (useEditorSelection) {
         setIncludeEditorSelection(false);
       }
 
@@ -268,7 +318,7 @@ export default ({
             <button
               className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 whitespace-nowrap
                 ${
-                  includeEditorSelection
+                  useEditorSelection
                     ? "bg-button text-button hover:bg-button-hover focus:bg-button-hover"
                     : "hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary"
                 }
@@ -283,7 +333,7 @@ export default ({
                 // focus the textarea
                 questionInputRef?.current?.focus();
 
-                setIncludeEditorSelection(!includeEditorSelection);
+                setIncludeEditorSelection(!useEditorSelection);
               }}
             >
               <Icon icon="plus" className="w-3 h-3" />
@@ -430,7 +480,12 @@ export default ({
           />
           <div className="flex flex-row items-start gap-2">
             <div
-              className="rounded flex gap-1 items-center justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
+              className={`rounded flex gap-1 items-center justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
+                tokenCountAnimation
+                  ? "duration-200 bg-blue-300 bg-opacity-20"
+                  : "duration-500"
+              }`}
+              ref={tokenCountRef}
               tabIndex={0}
               // on hover showTokenBreakdown
               onMouseEnter={() => {
@@ -446,7 +501,7 @@ export default ({
                 setShowTokenBreakdown(false);
               }}
             >
-              {currentConversation.tokenCount?.minTotal ?? 0}
+              {minTokens}
               <div
                 className={`absolute w-[calc(100% - 3em) max-w-[25em] items-center border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10 bottom-6 right-4
                   ${showTokenBreakdown ? "block" : "hidden"}
@@ -470,7 +525,7 @@ export default ({
                           "(no answer)"}
                       </span>
                     </span>
-                    <code>{currentConversation.tokenCount?.minTotal ?? 0}</code>{" "}
+                    <code>{minTokens}</code>{" "}
                     {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
                       "tokens which is"}
                     <code> ${minCost?.toFixed(4) ?? 0}</code>
