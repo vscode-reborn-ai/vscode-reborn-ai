@@ -614,7 +614,7 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.2",
+    "@dqbd/tiktoken": "^1.0.7",
     "@reduxjs/toolkit": "^1.9.3",
     "autoprefixer": "^10.4.14",
     "css-loader": "^6.7.3",
@@ -625,7 +625,7 @@
     "isomorphic-fetch": "^3.0.0",
     "keyv": "^4.5.2",
     "marked": "^4.3.0",
-    "openai": "^3.2.1",
+    "openai": "^3.3.0",
     "p-timeout": "^6.1.1",
     "postcss": "^8.4.21",
     "postcss-loader": "^7.1.0",
