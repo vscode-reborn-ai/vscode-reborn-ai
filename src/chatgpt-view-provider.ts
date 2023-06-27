@@ -514,13 +514,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	async getChatGPTModels(fullModelList: any[] = []): Promise<Model[]> {
 		if (fullModelList?.length && fullModelList?.length > 0) {
-			return fullModelList.filter((model: any) => ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
+			return fullModelList.filter((model: any) => ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
 				return model.id as Model;
 			});
 		} else {
 			const models = await this.getModels();
 
-			return models.filter((model: any) => ['gpt-3.5-turbo', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
+			return models.filter((model: any) => ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
 				return model.id as Model;
 			});
 		}

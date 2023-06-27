@@ -135,6 +135,20 @@ export default function ModelSelect({
               {t?.modelSelect?.gpt35TurboNote ?? "(Fast, recommended)"}
             </button>
           )}
+          {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo_16k) && (
+            <button
+              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              onClick={() => {
+                setModel(Model.gpt_35_turbo_16k);
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
+              }}
+            >
+              <code>gpt-3.5-turbo-16k</code>{" "}
+              {t?.modelSelect?.gpt35Turbo16kNote ?? "(Fast, 4x longer input)"}
+            </button>
+          )}
           {chatGPTModels && chatGPTModels.includes(Model.gpt_4) ? (
             <button
               className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
