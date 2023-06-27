@@ -130,6 +130,7 @@
   "questionInputField.tokenBreakdownConfigSettingAnd ": "これはに基づいて計算されます",
   "modelSelect.chat": "チャット",
   "modelSelect.gpt35TurboNote": "(高速、推奨)",
+  "modelSelect.gpt35Turbo16kNote": "(高速、4倍の長い入力)",
   "modelSelect.gpt4Note": "(より優れた大きな入力ですが、遅くて高価です)",
   "modelSelect.gpt4UnavailableNote": "GPT-4 をお探しですか? こちらの順番待ちリストに登録する必要があります",
   "modelSelect.gpt432kNote": "非常に長い入力ですが、GPT-4 よりもさらに高価です",

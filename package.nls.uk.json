@@ -135,6 +135,7 @@
   "questionInputField.tokenBreakdownConfigSettingAnd ": "Це обчислюється на основі",
   "modelSelect.chat": "Чат",
   "modelSelect.gpt35TurboNote": "(Швидко, рекомендовано)",
+  "modelSelect.gpt35Turbo16kNote": "(Швидко, 4x більше введення)",
   "modelSelect.gpt4Note": "(Краще та більше введення, але повільніше та дорожче)",
   "modelSelect.gpt4UnavailableNote": "Шукаєте GPT-4? Вам потрібно зареєструватися в списку очікування тут",
   "modelSelect.gpt432kNote": "Надзвичайно довгий ввід, але навіть дорожчий, ніж GPT-4",
