@@ -59,8 +59,6 @@ class Action {
       autoscroll: true,
     };
 
-    console.log('conversation', conversation);
-
     for await (const token of apiProvider.streamChatCompletion(conversation, abortSignal)) {
       yield token;
     }
@@ -97,7 +95,6 @@ class ReadmeFromPackageJSONAction extends Action {
 
     // 1. Look for a package.json file in the current directory
     const packageJsonPath = upath.join(currentProjectDir, 'package.json');
-    console.log('packageJsonPath', packageJsonPath);
     if (!fs.existsSync(packageJsonPath)) {
       throw new Error('package.json not found.');
     }

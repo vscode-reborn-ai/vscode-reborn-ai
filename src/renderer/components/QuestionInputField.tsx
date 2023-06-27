@@ -141,11 +141,11 @@ export default ({
       ${settings?.minimalUI ? "pb-2" : "pb-1"}
     `}
     >
-      <div className="px-4 flex items-center">
-        <div className="flex-1 textarea-wrapper">
+      <div className="px-4 flex items-center gap-x-4">
+        <div className="flex-1 textarea-wrapper w-full flex items-center">
           {currentConversation.inProgress && (
             // show the text "Thinking..." when the conversation is in progress in place of the question input
-            <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-[calc(100%-6rem)]">
+            <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-full">
               <Icon
                 icon="ripples"
                 className="w-5 h-5 mr-2 text stroke-current"
@@ -156,7 +156,7 @@ export default ({
           {!currentConversation.inProgress && (
             <textarea
               rows={1}
-              className="text-sm rounded border border-input text-input bg-input resize-none w-[calc(100%-6rem)] outline-0"
+              className="text-sm rounded border border-input text-input bg-input resize-none w-full outline-0"
               id="question-input"
               placeholder="Ask a question..."
               ref={questionInputRef}
@@ -210,15 +210,12 @@ export default ({
           )}
         </div>
 
-        <div
-          id="question-input-buttons"
-          className="right-6 absolute -mt-[6px] ml-5"
-        >
+        <div id="question-input-buttons">
           {currentConversation.inProgress && (
             // show the "stop" button when the conversation is in progress
             <button
               title="Stop"
-              className="px-2 py-1 flex flex-row items-center border border-red-900 rounded hover:bg-button-secondary focus:bg-button-secondary"
+              className="px-2 py-1 h-full flex flex-row items-center border border-red-900 rounded hover:bg-button-secondary focus:bg-button-secondary"
               onClick={(e) => {
                 vscode.postMessage({
                   type: "stopGenerating",
