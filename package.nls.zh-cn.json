@@ -135,6 +135,7 @@
     "questionInputField.tokenBreakdownConfigSettingAnd": "这是基于配置设置和",
     "modelSelect.chat": "聊天",
     "modelSelect.gpt35TurboNote": "（快速，推荐）",
+    "modelSelect.gpt35Turbo16kNote": "（快速，4倍更长的输入）",
     "modelSelect.gpt4Note": "（输入更好、更大，但更慢、更昂贵）",
     "modelSelect.gpt4UnavailableNote": "寻找 GPT-4？您需要在此处注册等待列表",
     "modelSelect.gpt432kNote": "非常长的输入，但比 GPT-4 更昂贵",

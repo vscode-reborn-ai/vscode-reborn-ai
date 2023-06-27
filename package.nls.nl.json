@@ -135,6 +135,7 @@
   "questionInputField.tokenBreakdownConfigSettingAnd ": "Dit wordt berekend op basis van de",
   "modelSelect.chat": "Chatten",
   "modelSelect.gpt35TurboNote": "(Snel, aanbevolen)",
+  "modelSelect.gpt35Turbo16kNote": "(Snel, 4x langere invoer)",
   "modelSelect.gpt4Note": "(Betere en grotere invoer, maar trager en duurder)",
   "modelSelect.gpt4UnavailableNote": "Op zoek naar GPT-4? Je moet je hier aanmelden op de wachtlijst",
   "modelSelect.gpt432kNote": "Extreem lange invoer, maar zelfs duurder dan GPT-4",

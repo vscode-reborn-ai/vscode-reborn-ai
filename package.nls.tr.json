@@ -135,6 +135,7 @@
   "questionInputField.tokenBreakdownConfigSettingAnd": "Bu, şuna göre hesaplanır",
   "modelSelect.chat": "Sohbet",
   "modelSelect.gpt35TurboNote": "(Hızlı, önerilir)",
+  "modelSelect.gpt35Turbo16kNote": "(Hızlı, 4x daha uzun giriş)",
   "modelSelect.gpt4Note": "(Daha iyi ve daha büyük giriş, ancak daha yavaş ve daha pahalı)",
   "modelSelect.gpt4UnavailableNote": "GPT-4'ü mü arıyorsunuz? Burada bekleme listesine kaydolmanız gerekiyor",
   "modelSelect.gpt432kNote": "Son derece uzun giriş, ancak GPT-4'ten bile daha pahalı",

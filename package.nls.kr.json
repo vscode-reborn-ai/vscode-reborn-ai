@@ -135,6 +135,7 @@
   "questionInputField.tokenBreakdownConfigSettingAnd ": "다음을 기준으로 계산됩니다.",
   "modelSelect.chat": "채팅",
   "modelSelect.gpt35TurboNote": "(빠름, 권장)",
+  "modelSelect.gpt35Turbo16kNote": "(빠름, 4배 긴 입력)",
   "modelSelect.gpt4Note": "(더 좋고 더 큰 입력이지만 더 느리고 더 비쌉니다)",
   "modelSelect.gpt4UnavailableNote": "GPT-4를 찾으십니까? 여기서 대기자 명단에 등록해야 합니다.",
   "modelSelect.gpt432kNote": "매우 긴 입력이지만 GPT-4보다 훨씬 비쌉니다.",

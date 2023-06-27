@@ -135,6 +135,7 @@
   "questionInputField.tokenBreakdownConfigSettingAnd": "Esto se calcula en función de",
   "modelSelect.chat": "Chat",
   "modelSelect.gpt35TurboNote": "(Rápido, recomendado)",
+  "modelSelect.gpt35Turbo16kNote": "(Rápido, entrada 4x más larga)",
   "modelSelect.gpt4Note": "(Entrada mejor y más grande, pero más lenta y costosa)",
   "modelSelect.gpt4UnavailableNote": "¿Buscas GPT-4? Debes registrarte en la lista de espera aquí",
   "modelSelect.gpt432kNote": "Entrada extremadamente larga, pero incluso más cara que GPT-4",
