@@ -47,6 +47,9 @@ export default function Layout({ vscode }: { vscode: any }) {
   const debug = useAppSelector((state: any) => state.app.debug);
   const apiKeyStatus = useAppSelector((state: any) => state.app?.apiKeyStatus);
   const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
+  const useEditorSelection = useAppSelector(
+    (state: any) => state.app.useEditorSelection
+  );
 
   useLayoutEffect(() => {
     // Ask for the extension settings
@@ -89,6 +92,7 @@ export default function Layout({ vscode }: { vscode: any }) {
       vscode.postMessage({
         type: "getTokenCount",
         conversation: currentConversation,
+        useEditorSelection,
       });
     }, 500); // Debounce delay in milliseconds
 
@@ -97,7 +101,12 @@ export default function Layout({ vscode }: { vscode: any }) {
         clearTimeout(debounceTimeout.current);
       }
     };
-  }, [currentConversation.userInput, currentConversation.messages]);
+  }, [
+    currentConversation.userInput,
+    currentConversation.messages,
+    currentConversation.model,
+    useEditorSelection,
+  ]);
 
   // Handle messages sent from the extension to the webview
   const handleMessages = (event: any) => {

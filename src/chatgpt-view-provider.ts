@@ -4,7 +4,7 @@ import { Configuration, OpenAIApi } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
 import { ActionRunner } from "./actionRunner";
-import ApiProvider from "./api-provider";
+import { ApiProvider, MODEL_TOKEN_LIMITS } from "./api-provider";
 import Auth from "./auth";
 import { loadTranslations } from './localization';
 import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
@@ -329,17 +329,29 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					break;
 				case 'getTokenCount':
 					const convTokens = ApiProvider.countConversationTokens(data.conversation);
-					const userInputTokens = ApiProvider.countMessageTokens({
+					let userInputTokens = ApiProvider.countMessageTokens({
 						role: Role.user,
 						content: data.conversation.userInput
 					} as Message, data.conversation?.model ?? this.model ?? Model.gpt_35_turbo);
+
+					// If "use editor selection" is enabled, add the tokens from the editor selection
+					if (data?.useEditorSelection) {
+						const selection = this.getActiveEditorSelection();
+						// Roughly approximate the number of tokens used for the instructions about using the editor selection
+						const roughApproxCodeSelectionContext = 40;
+
+						userInputTokens += ApiProvider.countMessageTokens({
+							role: Role.user,
+							content: selection?.content ?? ""
+						} as Message, data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) + roughApproxCodeSelectionContext;
+					}
 
 					this.sendMessage({
 						type: "tokenCount",
 						tokenCount: {
 							messages: convTokens,
 							userInput: userInputTokens,
-							maxTotal: this._maxTokens,
+							maxTotal: Math.min(this._maxTokens, MODEL_TOKEN_LIMITS[(data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model]),
 							minTotal: convTokens + userInputTokens,
 						},
 					});
