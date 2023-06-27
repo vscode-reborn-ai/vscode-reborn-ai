@@ -96,6 +96,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", "https://api.openai.com/v1", true);
 		}
 
+		this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number;
+		this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number;
+		this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number;
+
 		// Initialize the API
 		this.authStore.getAuthData().then((apiKey) => {
 			this.api = new ApiProvider(
@@ -768,7 +772,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					message = "500 Internal Server Error\n\nThe server had an error while processing your request, please try again.\nSee https://platform.openai.com/docs/guides/error-codes for more details.";
 					break;
 				default:
-					message = `${status}\n\nAn unknown error occurred. Please check your internet connection, clear the conversation, and try again.\n\n${apiMessage}`;
+					if (apiMessage) {
+						message = `${status ? status + '\n\n' : ''}${apiMessage}`;
+					} else {
+						message = `${status}\n\nAn unknown error occurred. Please check your internet connection, clear the conversation, and try again.\n\n${apiMessage}`;
+					}
 			}
 
 			this.sendMessage({
