@@ -18,7 +18,7 @@ export async function loadTranslations(extensionPath: string): Promise<Record<st
     await fs.promises.access(localeTranslationsPath, fs.constants.F_OK);
     localeTranslations = JSON.parse(await fs.promises.readFile(localeTranslationsPath, 'utf8'));
   } catch (err: any) {
-    console.log(`Locale translations not found: ${err.message}`);
+    console.error(`Locale translations not found: ${err.message}`);
   }
 
   // Merge default translations with locale-specific translations

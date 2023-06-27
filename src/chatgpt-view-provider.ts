@@ -224,7 +224,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
 
 		webviewView.webview.onDidReceiveMessage(async data => {
-			console.log("Main Process - Received message from webview: ", data);
 			switch (data.type) {
 				case 'addFreeTextQuestion':
 					const apiRequestOptions = {
@@ -282,7 +281,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					if (data?.conversationId) {
 						this.stopGenerating(data.conversationId);
 					} else {
-						console.log("Main Process - No conversationId provided to stop generating");
+						console.warn("Main Process - No conversationId provided to stop generating");
 					}
 					break;
 				case "getSettings":
@@ -347,7 +346,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					break;
 				case 'runAction':
 					const actionId: ActionNames = data.actionId as ActionNames;
-					console.log("Main Process - Running action: " + actionId);
 
 					const controller = new AbortController();
 					this.abortControllers.push({
@@ -377,7 +375,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					if (data?.actionId) {
 						this.stopAction(data.actionId);
 					} else {
-						console.log("Main Process - No actionName provided to stop action");
+						console.warn("Main Process - No actionName provided to stop action");
 					}
 					break;
 				default:
@@ -464,7 +462,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		// if the api base url is set in settings, use it
 		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
-		console.log("Main Process - Using API base URL: " + apiBaseUrl);
 		if (apiBaseUrl) {
 			configuration.basePath = apiBaseUrl;
 		}
