@@ -115,6 +115,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		// Update data members when the config settings change
 		vscode.workspace.onDidChangeConfiguration((e) => {
+			let rebuildApiProvider = false;
+
 			// Model
 			if (e.affectsConfiguration("chatgpt.gpt3.model")) {
 				this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
@@ -130,10 +132,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			// organization
 			if (e.affectsConfiguration("chatgpt.gpt3.organization")) {
 				this.api.updateOrganizationId(vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") ?? "");
+				rebuildApiProvider = true;
 			}
 			// Api Base Url
 			if (e.affectsConfiguration("chatgpt.gpt3.apiBaseUrl")) {
 				this.api.updateApiBaseUrl(vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") ?? "");
+				rebuildApiProvider = true;
 			}
 			// maxTokens
 			if (e.affectsConfiguration("chatgpt.gpt3.maxTokens")) {
@@ -146,6 +150,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			// topP
 			if (e.affectsConfiguration("chatgpt.gpt3.top_p")) {
 				this.api.topP = this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number ?? 1;
+			}
+
+			if (rebuildApiProvider) {
+				this.rebuildApiProvider();
 			}
 		});
 
@@ -197,6 +205,39 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				});
 			});
 		}
+	}
+
+	private async rebuildApiProvider() {
+		this.api = new ApiProvider(
+			vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiKey") as string,
+			{
+				organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string,
+				apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
+				maxTokens: vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number,
+				temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
+				topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
+			});
+	}
+
+	public updateApiUrl(apiUrl: string = '') {
+		if (!apiUrl) {
+			console.error("updateApiUrl called with no apiUrl");
+			return;
+		}
+
+		if (apiUrl.endsWith("/")) {
+			// Remove trailing slash
+			apiUrl = apiUrl.slice(0, -1);
+		}
+
+		// if api url ends with /chat or /chat/completions, remove it
+		if (apiUrl.endsWith("/chat")) {
+			apiUrl = apiUrl.slice(0, -5);
+		} else if (apiUrl.endsWith("/chat/completions")) {
+			apiUrl = apiUrl.slice(0, -17);
+		}
+
+		vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", apiUrl, true);
 	}
 
 	// reset the API key to the default value
@@ -310,6 +351,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						type: "chatGPTModels",
 						value: this.chatGPTModels
 					});
+					break;
+				case "changeApiUrl":
+					this.updateApiUrl(data.value);
 					break;
 				case "changeApiKey":
 					this.updateApiKeyState(data.value);

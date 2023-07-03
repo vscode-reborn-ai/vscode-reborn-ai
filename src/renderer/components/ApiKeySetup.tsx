@@ -10,13 +10,26 @@ export default function ({
   vscode: any;
   className?: string;
 }) {
+  const apiKeyPlaceholder = "sk-...";
+  const apiUrlPlaceholder =
+    "https://example-with-azure-openai.openai.azure.com/openai/deployments/your-deployment-name";
+
   const [apiKey, setApiKey] = useState("");
+  const [apiUrl, setApiUrl] = useState("");
+  const [showApiUrl, setShowApiUrl] = useState(false);
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: any) => state.app.translations);
   const apiKeyStatus = useAppSelector((state: any) => state.app?.apiKeyStatus);
 
   function handleSubmit() {
     dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
+
+    if (showApiUrl) {
+      vscode.postMessage({
+        type: "updateApiUrl",
+        apiUrl,
+      });
+    }
 
     vscode.postMessage({
       type: "changeApiKey",
@@ -28,6 +41,7 @@ export default function ({
     <div
       className={`flex flex-col justify-start gap-3.5 h-full items-center px-6 pt-6 pb-24 w-full relative login-screen overflow-auto ${className}`}
     >
+      {/* Info: Heading */}
       <Icon icon="help" className="w-16 h-16" />
       <div className="w-full max-w-lg flex flex-col gap-3.5 text-xs">
         <div className="flex items-center gap-4">
@@ -42,6 +56,7 @@ export default function ({
             </p>
           </div>
         </div>
+        {/* Info: Instructions */}
         <div>
           <h2 className="text-lg mb-1">
             {t?.apiKeySetup?.instructions?.title ?? "Instructions:"}
@@ -81,6 +96,7 @@ export default function ({
             </li>
           </ol>
         </div>
+        {/* API key: user input */}
         <div>
           <label htmlFor="apiKey" className="block font-bold mb-2">
             {t?.apiKeySetup?.apiKeyLabel ?? "API Key"}
@@ -91,26 +107,13 @@ export default function ({
               id="apiKey"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              placeholder="sk-..."
+              placeholder={apiKeyPlaceholder}
               className="flex-grow px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
               disabled={apiKeyStatus === ApiKeyStatus.Pending}
             />
-            <button
-              onClick={handleSubmit}
-              className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover"
-              disabled={apiKeyStatus === ApiKeyStatus.Pending}
-            >
-              {apiKeyStatus === ApiKeyStatus.Pending ? (
-                <>
-                  <Icon icon="ripples" className="w-4 h-4 ml-2" />
-                  {t?.apiKeySetup?.settingApiKey ?? "Setting API Key..."}
-                </>
-              ) : (
-                <span>{t?.apiKeySetup?.setApiKey ?? "Set API Key"}</span>
-              )}
-            </button>
           </div>
         </div>
+        {/* API key: error message */}
         {apiKeyStatus === ApiKeyStatus.Invalid && (
           <div className="flex flex-col gap-2 p-4 bg-red-500 text bg-opacity-10 rounded">
             <h2 className="font-medium">
@@ -126,6 +129,57 @@ export default function ({
             </p>
           </div>
         )}
+        {/* API URL: user input */}
+        {showApiUrl && (
+          <div>
+            <label htmlFor="apiKey" className="block font-bold mb-2">
+              {t?.apiKeySetup?.altApiUrl ?? "Alternative API URL (Optional)"}
+            </label>
+            <p className="text-xs mb-2">
+              {t?.apiKeySetup?.altApiUrlDescription ??
+                "The url should start with 'https'. The API url should NOT include /chat/completions. OpenAI proxy URLs should end with /v1"}
+            </p>
+            <div className="flex gap-x-4">
+              <input
+                type="text"
+                id="apiUrl"
+                value={apiUrl}
+                onChange={(event) => setApiUrl(event.target.value)}
+                placeholder={apiUrlPlaceholder}
+                className="flex-grow px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
+                disabled={apiKeyStatus === ApiKeyStatus.Pending}
+              />
+            </div>
+          </div>
+        )}
+        {/* Buttons */}
+        <div className="flex gap-x-4 justify-end">
+          {/* "I'm using an alternative API" button */}
+          {!showApiUrl && (
+            <button
+              onClick={() => setShowApiUrl(true)}
+              className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button-secondary hover:bg-button-secondary-hover focus:bg-button-secondary-hover"
+            >
+              {t?.apiUrlSetup?.setApiUrl ?? "I'm using an alternative API"}
+            </button>
+          )}
+          {/* "Set API Key" button */}
+          <button
+            onClick={handleSubmit}
+            className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover"
+            disabled={apiKeyStatus === ApiKeyStatus.Pending}
+          >
+            {apiKeyStatus === ApiKeyStatus.Pending ? (
+              <>
+                <Icon icon="ripples" className="w-4 h-4 ml-2" />
+                {t?.apiKeySetup?.settingApiKey ?? "Setting API Key..."}
+              </>
+            ) : (
+              <span>{t?.apiKeySetup?.setApiKey ?? "Set API Key"}</span>
+            )}
+          </button>
+        </div>
+        {/* Info: openai pricing */}
         <div className="flex flex-col gap-2 p-4 bg-purple-500 text bg-opacity-10 rounded">
           <h2 className="font-medium">
             {t?.apiKeySetup?.openAIAPICosts?.title ??
