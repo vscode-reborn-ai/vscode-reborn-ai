@@ -67,6 +67,7 @@
   "chatgpt.gpt3.apiKey.markdownDescription": "OpenAI API-Schlüssel. [Holen Sie sich Ihren API-Schlüssel von OpenAI](https://beta.openai.com/account/api-keys).",
   "chatgpt.gpt3.apiBaseUrl.markdownDescription": "Optionale Überschreibung der OpenAI-API-Basis-URL. Wenn Sie es anpassen, stellen Sie bitte sicher, dass Sie das gleiche Format haben. Z.B. beginnt mit `https://` ohne abschließenden Schrägstrich. Der Vervollständigungs-Endpunktzusatz wird intern hinzugefügt, z.B. als Referenz: `${apiBaseUrl}/v1/completions`",
   "chatgpt.gpt3.organization.markdownDescription": "OpenAI-Organisations-ID. [Dokumentation](https://beta.openai.com/docs/api-reference/requesting-organization).",
+  "chatgpt.gpt3.model.markdownDescription": "OpenAI-Modelle zur Verwendung für Ihre Aufforderungen. [Dokumentation](https://beta.openai.com/docs/models/models). \n\n**Wenn Sie auf einen 400 Bad Request stoßen, stellen Sie bitte sicher, dass Sie das richtige Modell für Ihre Integrationsmethode verwenden.**",
   "chatgpt.gpt3.model.enumItemLabels1": "OpenAI-API-Schlüssel - gpt-4",
   "chatgpt.gpt3.model.enumItemLabels2": "OpenAI-API-Schlüssel - gpt-3.5-turbo",
   "chatgpt.gpt3.model.enumItemLabels3": "OpenAI-API-Schlüssel - gpt-3.5-turbo-16k",

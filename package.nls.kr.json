@@ -132,7 +132,7 @@
   "questionInputField.tokenBreakdownAtMostNote": "(모든 메시지 + 프롬프트 + 가장 긴 답변)",
   "questionInputField.tokenBreakdownBasedOn": "다음을 기준으로 계산됩니다.",
   "questionInputField.maxTokens": "최대 토큰",
-  "questionInputField.tokenBreakdownConfigSettingAnd ": "다음을 기준으로 계산됩니다.",
+  "questionInputField.tokenBreakdownConfigSettingAnd": "다음을 기준으로 계산됩니다.",
   "modelSelect.chat": "채팅",
   "modelSelect.gpt35TurboNote": "(빠름, 권장)",
   "modelSelect.gpt35Turbo16kNote": "(빠름, 4배 긴 입력)",
