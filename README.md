@@ -128,6 +128,10 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### July 3, 2023 (`v3.18.0`)
+
+- 🌐 [i18n] Taiwan localization improved with native Mandarin translations. - *This PR is highly appreciated @PeterDaveHello*
+
 ### June 27, 2023 (`v3.17.0`)
 
 - 🔧 [Fixes] Token count calculation bugs fixed. Updated to reflect new OpenAI pricing.
