@@ -121,7 +121,7 @@
   "questionInputField.exportJson": "JSON",
   "questionInputField.resetAPIKey": "Zresetuj klucz API",
   "questionInputField.tokenBreakdownHeading": "Naciśnięcie Zapytaj będzie kosztować...",
-  "questionInputField.tokenBreakdownCena": "cena",
+  "questionInputField.tokenBreakdownPricing": "cena",
   "questionInputField.tokenBreakdownForPromptsAndCompletions": "dla monitów i uzupełnień.",
   "questionInputField.tokenBreakdownRecommendation": "Zdecydowanie zalecane - rutynowo usuwaj rozmowę, aby monit był krótki.",
   "questionInputField.moreActions": "Więcej działań",

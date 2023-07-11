@@ -132,7 +132,7 @@
   "questionInputField.tokenBreakdownAtMostNote": "(усі повідомлення + підказка + найдовша відповідь)",
   "questionInputField.tokenBreakdownBasedOn": "Це обчислюється на основі",
   "questionInputField.maxTokens": "maxTokens",
-  "questionInputField.tokenBreakdownConfigSettingAnd ": "Це обчислюється на основі",
+  "questionInputField.tokenBreakdownConfigSettingAnd": "Це обчислюється на основі",
   "modelSelect.chat": "Чат",
   "modelSelect.gpt35TurboNote": "(Швидко, рекомендовано)",
   "modelSelect.gpt35Turbo16kNote": "(Швидко, 4x більше введення)",

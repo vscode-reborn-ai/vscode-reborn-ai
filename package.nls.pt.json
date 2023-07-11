@@ -132,7 +132,7 @@
   "questionInputField.tokenBreakdownAtMostNote": "(todas as mensagens + prompt + resposta mais longa)",
   "questionInputField.tokenBreakdownBasedOn": "Isso é calculado com base no",
   "questionInputField.maxTokens": "maxTokens",
-  "questionInputField.tokenBreakdownConfigSettingAnd ": "Isso é calculado com base em",
+  "questionInputField.tokenBreakdownConfigSettingAnd": "Isso é calculado com base em",
   "modelSelect.chat": "Bate-papo",
   "modelSelect.gpt35TurboNote": "(Rápido, recomendado)",
   "modelSelect.gpt35Turbo16kNote": "(Rápido, entrada 4x mais longa)",
