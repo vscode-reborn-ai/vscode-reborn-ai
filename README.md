@@ -128,6 +128,10 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### July 11, 2023 (`v3.18.1`)
+
+- 🌐 [i18n] Fix syntax errors in translation files. - *Thank you for the PR @PeterDaveHello*
+
 ### July 3, 2023 (`v3.18.0`)
 
 - 🌐 [i18n] Taiwan localization improved with native Mandarin translations. - *This PR is highly appreciated @PeterDaveHello*
