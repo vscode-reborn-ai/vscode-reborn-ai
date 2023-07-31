@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "Alternatywa dla próbkowania z temperaturą, zwana próbkowaniem jądra, gdzie model uwzględnia wyniki tokenów z masą prawdopodobieństwa top_p. Zatem 0,1 oznacza, że tylko tokeny składające się na masę 10% najwyższego prawdopodobieństwa są rozważone. \n\nZaleca się zmianę tej lub temperatury, ale nie obu. [Dokumentacja](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
   "chatgpt.response.showNotification.description": "Wybierz, czy chcesz otrzymać powiadomienie, gdy bot ChatGPT odpowie na twoje zapytanie.",
   "chatgpt.response.autoScroll.description": "Za każdym razem, gdy do okna konwersacji zostanie dodane nowe pytanie lub odpowiedź, rozszerzenie automatycznie przewinie się w dół. Możesz zmienić to zachowanie, wyłączając to ustawienie.",
-  "chatgpt.telemetry.disable.markdownDescription": "Określ, czy chcesz wyłączyć telemetrię. To rozszerzenie szanuje również domyślne ustawienie telemetrii vs-code `telemetry.telemetryLevel`. Sprawdzamy oba ustawienia pod kątem telemetrii. **Ważne**: Żadne dane użytkownika nie są śledzone, używamy tylko telemetrii, aby zobaczyć, co jest używane, a co nie. To pozwala nam podejmować trafne decyzje dotyczące tego, co dodać lub ulepszyć w rozszerzeniu.",
   "codeBlock.expand": "Rozwiń",
   "codeBlock.collapse": "Zwiń",
   "codeBlock.copy": "Kopiuj",

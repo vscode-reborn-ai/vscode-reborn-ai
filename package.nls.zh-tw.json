@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "與溫度取樣相對的一種替代方法，稱為核取樣，其中模型考慮具有 top_p 機率質量的 token 的結果。因此，0.1 表示僅考慮組成前 10％機率質量的 token。\n\n建議更改此項或溫度，但不要同時更改兩者。文件",
   "chatgpt.response.showNotification.description": "選擇是否在 ChatGPT 機器人回答您的查詢時接收通知。",
   "chatgpt.response.autoScroll.description": "每當有新的問題或回應新增到對話視窗時，擴充功能將自動捲動到底部。您可以透過停用此設定來更改該行為。",
-  "chatgpt.telemetry.disable.markdownDescription": "指定是否要停用遙測。該擴充功能還尊重您的預設 vs-code 遙測設定 telemetry.telemetryLevel。我們檢查遙測的兩個設定。 重要提示：不追蹤使用者資料，我們僅使用遙測來檢視使用情況和不使用情況。這使我們能夠準確決定新增或增強擴充功能中的內容。",
   "codeBlock.expand": "展開",
   "codeBlock.collapse": "摺疊",
   "codeBlock.copy": "複製",

@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "Une alternative à l'échantillonnage avec la température, appelée échantillonnage de noyau, où le modèle considère les résultats des jetons avec la masse de probabilité top_p. Ainsi, 0,1 signifie que seuls les jetons comprenant la masse de probabilité supérieure de 10 % sont \n\nIl est recommandé de modifier ceci ou la température, mais pas les deux. [Documentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
   "chatgpt.response.showNotification.description": "Choisissez si vous souhaitez recevoir une notification lorsque le bot ChatGPT répond à votre requête.",
   "chatgpt.response.autoScroll.description": "Chaque fois qu'une nouvelle question ou réponse est ajoutée à la fenêtre de conversation, l'extension défilera automatiquement vers le bas. Vous pouvez modifier ce comportement en désactivant ce paramètre.",
-  "chatgpt.telemetry.disable.markdownDescription": "Indiquez si vous souhaitez désactiver la télémétrie. Cette extension respecte également votre paramètre de télémétrie vs-code par défaut `telemetry.telemetryLevel`. Nous vérifions les deux paramètres pour la télémétrie. **Important** : Aucune donnée utilisateur n'est suivie, nous utilisons uniquement la télémétrie pour voir ce qui est utilisé et ce qui ne l'est pas. Cela nous permet de prendre des décisions précises sur ce qu'il faut ajouter ou améliorer à l'extension.",
   "codeBlock.expand": "Développer",
   "codeBlock.collapse": "Réduire",
   "codeBlock.copy": "Copier",
