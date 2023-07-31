@@ -24,15 +24,6 @@ ul {
     padding-left: var(--container-padding);
 }
 
-.message-wrapper ul,
-.message-wrapper ol {
-    @apply list-disc;
-}
-
-.message-wrapper li {
-    @apply my-2 mx-6;
-}
-
 a {
     color: var(--vscode-textLink-foreground);
 }
@@ -94,6 +85,19 @@ a:active {
 }
 .message-wrapper p {
     @apply my-2;
+}
+/* * Markdown lists */
+/* Show bullets */
+.message-wrapper ul,
+.message-wrapper ol {
+    @apply list-disc;
+}
+.message-wrapper li {
+    @apply my-2 mx-6;
+}
+/* Prevent <p> from dropping to next line in bulleted list */
+.message-wrapper li > p {
+    display: inline;
 }
 
 /* CSS Spinner */
