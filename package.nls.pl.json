@@ -65,7 +65,7 @@
   "chatgpt.promptPrefix.customPrompt2-enabled.markdownDescription": "Włącz tekst wprowadzający używany do Twojego niestandardowego promptu. Domyślna wartość to pusta wartość, jeśli włączysz tę opcję, upewnij się, że ustawiłeś `chatgpt.promptPrefix.customPrompt2`",
   "chatgpt.promptPrefix.adhoc-enabled.description": "Włącz tekst wprowadzający używany do adhoc rozkazów dla wybranego kodu w menu kontekstowym",
   "chatgpt.gpt3.apiKey.markdownDescription": "Klucz API OpenAI. [Pobierz swój klucz API z OpenAI](https://platform.openai.com/account/api-keys).",
-  "chatgpt.gpt3.apiBaseUrl.markdownDescription": "Opcjonalne zastąpienie podstawowego adresu URL API OpenAI. Jeśli go dostosujesz, upewnij się, że masz ten sam format. Np. zaczyna się od `https://` bez końcowego ukośnika. Uzupełnienia sufiks punktu końcowego jest dodawany wewnętrznie, np. w celach informacyjnych: `${apiBaseUrl}/v1/completions`",
+  "chatgpt.gpt3.apiBaseUrl.markdownDescription": "Opcjonalne zastąpienie podstawowego adresu URL API OpenAI. Jeśli go dostosujesz, upewnij się, że masz ten sam format. Np. zaczyna się od `https://` bez końcowego ukośnika. Uzupełnienia sufiks punktu końcowego jest dodawany wewnętrznie, np. w celach informacyjnych: `${apiBaseUrl}/completions`",
   "chatgpt.gpt3.organization.markdownDescription": "Identyfikator organizacji OpenAI. [Dokumentacja](https://beta.openai.com/docs/api-reference/requesting-organization).",
   "chatgpt.gpt3.model.markdownDescription": "Modele OpenAI do wykorzystania w podpowiedziach. [Dokumentacja](https://beta.openai.com/docs/models/models). \n\n**Jeśli napotkasz 400 Złe żądanie Upewnij się, że używasz właściwego modelu dla swojej metody integracji.**",
   "chatgpt.gpt3.model.enumItemLabels1": "Klucz OpenAI API - gpt-4",

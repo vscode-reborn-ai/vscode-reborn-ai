@@ -439,7 +439,7 @@
         "chatgpt.gpt3.apiBaseUrl": {
           "type": "string",
           "default": "https://api.openai.com/v1",
-          "markdownDescription": "Optional override for the OpenAI API base URL. If you customize it, please make sure you have the same format. e.g. starts with `https://` without a trailing slash. The completions endpoint suffix is added internally, e.g. for reference: `${apiBaseUrl}/v1/completions`",
+          "markdownDescription": "Optional override for the OpenAI API base URL. If you customize it, please make sure you have the same format. e.g. starts with `https://` without a trailing slash. The completions endpoint suffix is added internally, e.g. for reference: `${apiBaseUrl}/completions`",
           "order": 34
         },
         "chatgpt.gpt3.organization": {
