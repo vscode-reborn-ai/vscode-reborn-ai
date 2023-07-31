@@ -128,6 +128,18 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### July 31, 2023 (`v3.19.0`)
+
+- 🔧 [Fixes] The right-click menu had "Add tests" twice, the label for the 2nd one is fixed to be "Add comments". - *Thank you for the report @wojtekcz*
+
+### July 11, 2023 (`v3.18.1`)
+
+- 🌐 [i18n] Fix syntax errors in translation files. - *Thank you for the PR @PeterDaveHello*
+
+### July 3, 2023 (`v3.18.0`)
+
+- 🌐 [i18n] Taiwan localization improved with native Mandarin translations. - *This PR is highly appreciated @PeterDaveHello*
+
 ### June 27, 2023 (`v3.17.0`)
 
 - 🔧 [Fixes] Token count calculation bugs fixed. Updated to reflect new OpenAI pricing.

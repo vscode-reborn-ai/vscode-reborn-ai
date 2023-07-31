@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.17.0",
+  "version": "3.18.1",
   "aiKey": "",
   "license": "ISC",
   "repository": {
@@ -207,7 +207,7 @@
       },
       {
         "command": "vscode-chatgpt.addComments",
-        "title": "%vscode-chatgpt.addTests.title%",
+        "title": "%vscode-chatgpt.addComments.title%",
         "enablement": "editorHasSelection"
       },
       {
@@ -613,6 +613,7 @@
     "@dqbd/tiktoken": "^1.0.7",
     "@reduxjs/toolkit": "^1.9.3",
     "autoprefixer": "^10.4.14",
+    "clsx": "^2.0.0",
     "css-loader": "^6.7.3",
     "delay": "^5.0.0",
     "eventsource-parser": "^0.1.0",

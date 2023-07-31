@@ -101,7 +101,7 @@
   "customPromptPanel.newPrompt": "Nuovo",
   "customPromptPanel.newFromTemplate": "Nuovo dal modello",
   "introSplash.features.title": "Caratteristiche",
-  "introduzioneSplash.features.feature1": "Ottimizza, refactoring ed esegui il debug del tuo codice",
+  "introductionSplash.features.feature1": "Ottimizza, refactoring ed esegui il debug del tuo codice",
   "introductionSplash.features.feature2": "Crea test, README e altro",
   "introductionSplash.features.feature3": "Evidenziazione automatica della sintassi",
   "introductionSplash.features.feature4": "Esegui più chat contemporaneamente",

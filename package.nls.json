@@ -132,7 +132,7 @@
     "questionInputField.tokenBreakdownAtMostNote": "(all messages + prompt + longest answer)",
     "questionInputField.tokenBreakdownBasedOn": "This is calculated based on the",
     "questionInputField.maxTokens": "maxTokens",
-    "questionInputField.tokenBreakdownConfigSettingAnd ": "This is calculated based on the",
+    "questionInputField.tokenBreakdownConfigSettingAnd": "This is calculated based on the",
     "modelSelect.chat": "Chat",
     "modelSelect.gpt35TurboNote": "(Fast, recommended)",
     "modelSelect.gpt35Turbo16kNote": "(Fast, 4x longer input)",
