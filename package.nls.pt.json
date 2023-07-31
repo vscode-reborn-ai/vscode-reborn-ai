@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "Uma alternativa para amostragem com temperatura, chamada amostragem de núcleo, onde o modelo considera os resultados dos tokens com massa de probabilidade top_p. Portanto, 0,1 significa que apenas os tokens que compreendem os 10% de massa de probabilidade superiores são considerado. \n\nRecomenda-se alterar este ou a temperatura, mas não ambos. [Documentação](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
   "chatgpt.response.showNotification.description": "Escolha se deseja receber uma notificação quando o bot ChatGPT responder à sua consulta.",
   "chatgpt.response.autoScroll.description": "Sempre que houver uma nova pergunta ou resposta adicionada à janela de conversa, a extensão rolará automaticamente para o final. Você pode alterar esse comportamento desativando esta configuração.",
-  "chatgpt.telemetry.disable.markdownDescription": "Especifique se você deseja desativar a telemetria. Esta extensão também respeita sua configuração padrão de telemetria vs-code `telemetry.telemetryLevel`. Verificamos ambas as configurações para telemetria. **Importante**: Nenhum dado do usuário é rastreado, apenas usamos a telemetria para ver o que é usado e o que não é. Isso nos permite tomar decisões precisas sobre o que adicionar ou aprimorar à extensão.",
   "codeBlock.expand": "Expandir",
   "codeBlock.collapse": "Recolher",
   "codeBlock.copy": "Copiar",

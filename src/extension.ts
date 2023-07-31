@@ -46,7 +46,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	const exportConversation = vscode.commands.registerCommand("vscode-chatgpt.exportConversation", async () => {
-		provider?.sendMessage({ type: 'exportConversation' }, true);
+		const currentConversation = provider.currentConversation;
+		provider?.sendMessage({ type: 'exportToMarkdown', conversation: currentConversation }, true);
 	});
 
 	const clearSession = vscode.commands.registerCommand("vscode-chatgpt.clearSession", () => {

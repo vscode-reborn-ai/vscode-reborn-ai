@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "Modelin top_p olasılık kütlesine sahip belirteçlerin sonuçlarını dikkate aldığı, çekirdek örnekleme adı verilen, sıcaklıkla örneklemeye bir alternatif. Yani 0,1, yalnızca en yüksek %10 olasılık kütlesini oluşturan belirteçlerin dikkate alındığı anlamına gelir. \n\nBunu veya sıcaklığı değiştirmeniz önerilir, ancak ikisini birden değil. [Belgeler](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
   "chatgpt.response.showNotification.description": "ChatGPT botu sorgunuza yanıt verdiğinde bildirim almak isteyip istemediğinizi seçin.",
   "chatgpt.response.autoScroll.description": "Konuşma penceresine her yeni soru veya yanıt eklendiğinde, uzantı otomatik olarak en alta kayar. Bu ayarı devre dışı bırakarak bu davranışı değiştirebilirsiniz.",
-  "chatgpt.telemetry.disable.markdownDescription": "Telemetriyi devre dışı bırakmak isteyip istemediğinizi belirtin. Bu uzantı aynı zamanda varsayılan vs-kod telemetri ayarınız olan 'telemetry.telemetryLevel'e uyar. Telemetri için her iki ayarı da kontrol ediyoruz. **Önemli**: Hiçbir kullanıcı verisi izlenmez, yalnızca neyin kullanılıp kullanılmadığını görmek için telemetri kullanırız. Bu, uzantıya ne ekleyeceğimiz veya geliştireceğimiz konusunda doğru kararlar vermemizi sağlar.",
   "codeBlock.expand": "Örn.pan",
   "codeBlock.collapse": "Daralt",
   "codeBlock.copy": "Kopyala",

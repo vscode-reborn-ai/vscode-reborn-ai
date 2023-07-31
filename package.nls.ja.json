@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "核サンプリングと呼ばれる温度によるサンプリングの代替手段で、モデルは top_p の確率質量を持つトークンの結果を考慮します。つまり、0.1 は上位 10% の確率質量を含むトークンのみが \n\nこれまたは温度を変更することをお勧めしますが、両方を変更することはお勧めしません。[ドキュメント](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
   "chatgpt.response.showNotification.description": "ChatGPT ボットがクエリに応答したときに通知を受け取るかどうかを選択してください。",
   "chatgpt.response.autoScroll.description": "会話ウィンドウに新しい質問または回答が追加されると、拡張機能は自動的に一番下までスクロールします。この設定を無効にすることで、その動作を変更できます。",
-  "chatgpt.telemetry.disable.markdownDescription": "テレメトリを無効にするかどうかを指定します。この拡張機能は、デフォルトの vs-code テレメトリ設定 `telemetry.telemetryLevel` も尊重します。テレメトリの両方の設定を確認します。 **重要**: ユーザーデータは追跡されず、テレメトリのみを使用して、何が使用され、何が使用されていないかを確認します.これにより、拡張機能に何を追加または強化するかについて正確な決定を下すことができます.",
   "codeBlock.expand": "展開",
   "codeBlock.collapse": "折りたたむ",
   "codeBlock.copy": "コピー",

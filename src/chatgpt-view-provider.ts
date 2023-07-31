@@ -450,13 +450,37 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 	private convertMessagesToMarkdown(conversation: Conversation): string {
 		let markdown = conversation.messages.reduce((accumulator: string, message: Message) => {
-			const role = message.role === Role.user ? "You" : "ChatGPT";
+			let role = 'Unknown';
+			if (message.role === Role.user) {
+				role = 'You';
+			} else if (message.role === Role.system) {
+				role = 'System Context';
+			} else if (message.role === Role.assistant) {
+				role = 'ChatGPT';
+			}
 			const isError = message.isError ? "ERROR: " : "";
 			const content = message.rawContent ?? message.content;
 
-			// Add language to code blocks using highlight.js auto-detection
-			const wrappedContent = hljs.highlightAuto(content).value;
-			const formattedMessage = `<code>**${isError}[${role}]**</code>\n\`\`\`${wrappedContent}\`\`\`\n\n`;
+			let formattedMessage = `<code>**${isError}[${role}]**</code>\n${content}\n\n`;
+
+			// User included editor code selection in their question?
+			if (message.role === Role.user && message.questionCode) {
+				let code = message.questionCode;
+
+				try {
+					// The code will be already formatted with highlight.js
+					code = code.replace('<pre><code class="language-', '');
+					const split = code.split('">');
+					let language = split[0];
+					code = split[1].replace('</code></pre>', '');
+
+					formattedMessage += `\`\`\`${language}\n${code}\n\`\`\`\n\n`;
+				} catch (error) {
+					// Fallback
+					formattedMessage += `\`\`\`\n${code}\n\`\`\`\n\n`;
+				}
+			}
+
 			return accumulator + formattedMessage;
 		}, "");
 
@@ -805,7 +829,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					message = `400 Bad Request\n\nYour model: '${this.model}' may be incompatible or one of your parameters is unknown. Reset your settings to default.`;
 					break;
 				case 401:
-					message = '401 Unauthorized\n\nMake sure you are properly signed in. If you are using Browser Auto-login method, make sure the browser is open (You could refresh the browser tab manually if you face any issues, too). If you stored your API key in settings.json, make sure it is accurate. If you stored API key in session, you can reset it with `ChatGPT: Reset session` command. Potential reasons: \n- 1.Invalid Authentication\n- 2.Incorrect API key provided.\n- 3.Incorrect Organization provided. \n See https://platform.openai.com/docs/guides/error-codes for more details.';
+					message = '401 Unauthorized\n\nMake sure your API key is correct, you can reset it by going to "More Actions" > "Reset API Key". Potential reasons: \n- 1. Incorrect API key provided.\n- 2. Incorrect Organization provided. \n See https://platform.openai.com/docs/guides/error-codes for more details.';
 					break;
 				case 403:
 					message = '403 Forbidden\n\nYour token has expired. Please try authenticating again.';
@@ -866,8 +890,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 
 	private logEvent(eventName: string, properties?: {}): void {
-		// You can initialize your telemetry reporter and consume it here - *replaced with console.debug to prevent unwanted telemetry logs
-		// this.reporter?.sendTelemetryEvent(eventName, { "chatgpt.loginMethod": this.loginMethod!, "chatgpt.authType": this.authType!, "chatgpt.model": this.model || "unknown", ...properties }, { "chatgpt.questionCounter": this.questionCounter });
 		console.debug(eventName, {
 			// eslint-disable-next-line @typescript-eslint/naming-convention
 			"chatgpt.model": this.model || "unknown", ...properties
@@ -877,8 +899,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private logError(eventName: string): void {
-		// You can initialize your telemetry reporter and consume it here - *replaced with console.error to prevent unwanted telemetry logs
-		// this.reporter?.sendTelemetryErrorEvent(eventName, { "chatgpt.loginMethod": this.loginMethod!, "chatgpt.authType": this.authType!, "chatgpt.model": this.model || "unknown" }, { "chatgpt.questionCounter": this.questionCounter });
 		console.error(eventName, {
 			// eslint-disable-next-line @typescript-eslint/naming-convention
 			"chatgpt.model": this.model || "unknown"

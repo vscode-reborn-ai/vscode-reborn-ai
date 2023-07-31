@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "Eine Alternative zum Sampling mit Temperatur, Nucleus-Sampling genannt, bei der das Modell die Ergebnisse der Token mit der Wahrscheinlichkeitsmasse top_p berücksichtigt. 0,1 bedeutet also, dass nur die Tokens die obersten 10 % der Wahrscheinlichkeitsmasse umfassen \n\nEs wird empfohlen, diese oder die Temperatur zu ändern, aber nicht beides. [Dokumentation](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
   "chatgpt.response.showNotification.description": "Wählen Sie aus, ob Sie eine Benachrichtigung erhalten möchten, wenn der ChatGPT-Bot auf Ihre Anfrage antwortet.",
   "chatgpt.response.autoScroll.description": "Wann immer eine neue Frage oder Antwort zum Konversationsfenster hinzugefügt wird, scrollt die Erweiterung automatisch nach unten. Sie können dieses Verhalten ändern, indem Sie diese Einstellung deaktivieren.",
-  "chatgpt.telemetry.disable.markdownDescription": "Geben Sie an, ob Sie die Telemetrie deaktivieren möchten. Diese Erweiterung respektiert auch Ihre Standard-Vs-Code-Telemetrie-Einstellung `telemetry.telemetryLevel`. Wir prüfen beide Einstellungen auf Telemetrie. **Wichtig**: Es werden keine Benutzerdaten nachverfolgt, wir verwenden nur Telemetrie, um zu sehen, was verwendet wird und was nicht. Dadurch können wir genaue Entscheidungen darüber treffen, was wir der Erweiterung hinzufügen oder verbessern.",
   "codeBlock.expand": "Erweitern",
   "codeBlock.collapse": "Reduzieren",
   "codeBlock.copy": "Kopieren",

@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "모델이 top_p 확률 질량을 가진 토큰의 결과를 고려하는 핵 샘플링이라고 하는 온도를 사용한 샘플링의 대안입니다. 따라서 0.1은 상위 10% 확률 질량을 구성하는 토큰만 \n\n이것 또는 온도를 변경하는 것이 좋지만 둘 다 변경하는 것은 권장되지 않습니다. [문서](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
   "chatgpt.response.showNotification.description": "ChatGPT 봇이 쿼리에 응답할 때 알림을 받을지 여부를 선택하세요.",
   "chatgpt.response.autoScroll.description": "대화 창에 새로운 질문이나 응답이 추가될 때마다 확장 프로그램이 자동으로 아래로 스크롤됩니다. 이 설정을 비활성화하여 해당 동작을 변경할 수 있습니다.",
-  "chatgpt.telemetry.disable.markdownDescription": "원격 분석을 비활성화할지 지정하십시오. 이 확장 프로그램은 기본 대 코드 원격 분석 설정인 `telemetry.telemetryLevel`도 준수합니다. 원격 분석에 대한 두 설정을 모두 확인합니다. **중요**: 어떤 사용자 데이터도 추적하지 않으며 원격 분석을 사용하여 무엇이 사용되고 무엇이 아닌지 확인합니다. 이를 통해 확장 프로그램에 추가하거나 개선할 항목에 대한 정확한 결정을 내릴 수 있습니다.",
   "codeBlock.expand": "확장",
   "codeBlock.collapse": "축소",
   "codeBlock.copy": "복사",

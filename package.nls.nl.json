@@ -85,7 +85,6 @@
   "chatgpt.gpt3.top_p.markdownDescription": "Een alternatief voor bemonstering met temperatuur, genaamd nucleus sampling, waarbij het model de resultaten van de tokens beschouwt met een top_p waarschijnlijkheidsmassa. Dus 0,1 betekent dat alleen de tokens met de hoogste 10% waarschijnlijkheidsmassa zijn overwogen. \n\nHet wordt aanbevolen om deze of temperatuur te wijzigen, maar niet beide. [Documentatie](https://beta.openai.com/docs/api-reference/completions/create#completions/create-top_p)",
   "chatgpt.response.showNotification.description": "Kies of je een melding wilt ontvangen wanneer de ChatGPT-bot reageert op je vraag.",
   "chatgpt.response.autoScroll.description": "Telkens wanneer er een nieuwe vraag of antwoord wordt toegevoegd aan het gespreksvenster, zal de extensie automatisch naar beneden scrollen. Je kunt dat gedrag veranderen door deze instelling uit te schakelen.",
-  "chatgpt.telemetry.disable.markdownDescription": "Geef aan of je de telemetrie wilt uitschakelen. Deze extensie respecteert ook je standaard vs-code telemetrie-instelling `telemetry.telemetryLevel`. We controleren beide instellingen voor telemetrie. **Belangrijk**: Er worden geen gebruikersgegevens bijgehouden, we gebruiken alleen telemetrie om te zien wat er wordt gebruikt en wat niet. Hierdoor kunnen we nauwkeurige beslissingen nemen over wat we aan de extensie willen toevoegen of verbeteren.",
   "codeBlock.expand": "Uitvouwen",
   "codeBlock.collapse": "Samenvouwen",
   "codeBlock.copy": "Kopiëren",

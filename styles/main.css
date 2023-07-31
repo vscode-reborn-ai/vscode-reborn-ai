@@ -24,6 +24,15 @@ ul {
     padding-left: var(--container-padding);
 }
 
+.message-wrapper ul,
+.message-wrapper ol {
+    @apply list-disc;
+}
+
+.message-wrapper li {
+    @apply my-2 mx-6;
+}
+
 a {
     color: var(--vscode-textLink-foreground);
 }

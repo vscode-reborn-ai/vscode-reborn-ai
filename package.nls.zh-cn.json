@@ -85,7 +85,6 @@
     "chatgpt.gpt3.top_p.markdownDescription": "与温度采样相对的一种替代方法，称为核采样，其中模型考虑具有top_p概率质量的令牌的结果。因此，0.1表示仅考虑组成前10％概率质量的令牌。\n\n建议更改此项或温度，但不要同时更改两者。文档",
     "chatgpt.response.showNotification.description": "选择是否在ChatGPT机器人回答您的查询时接收通知。",
     "chatgpt.response.autoScroll.description": "每当有新的问题或响应添加到会话窗口时，扩展程序将自动滚动到底部。您可以通过禁用此设置来更改该行为。",
-    "chatgpt.telemetry.disable.markdownDescription": "指定是否要禁用遥测。该扩展程序还尊重您的默认vs-code遥测设置telemetry.telemetryLevel。我们检查遥测的两个设置。 重要提示：不跟踪用户数据，我们仅使用遥测来查看使用情况和不使用情况。这使我们能够准确决定添加或增强扩展程序中的内容。",
     "codeBlock.expand": "展开",
     "codeBlock.collapse": "折叠",
     "codeBlock.copy": "复制",

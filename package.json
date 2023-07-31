@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.19.0",
+  "version": "3.19.1",
   "aiKey": "",
   "license": "ISC",
   "repository": {
@@ -512,12 +512,6 @@
           "default": true,
           "description": "Whenever there is a new question or response added to the conversation window, extension will automatically scroll to the bottom. You can change that behavior by disabling this setting.",
           "order": 41
-        },
-        "chatgpt.telemetry.disable": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Specify if you want to disable the telemetry. This extension also respects your default vs-code telemetry setting `telemetry.telemetryLevel`. We check both settings for telemetry. **Important**: No user data is tracked, we only use telemetry to see what is used, and what isn't. This allows us to make accurate decisions on what to add or enhance to the extension.",
-          "order": 42
         },
         "chatgpt.systemContext": {
           "type": "string",
