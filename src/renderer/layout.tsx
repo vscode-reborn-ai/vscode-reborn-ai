@@ -468,7 +468,7 @@ export default function Layout({ vscode }: { vscode: any }) {
 
         break;
       default:
-        console.log('Renderer - Uncaught message type: "' + data.type + '"');
+        console.error('Renderer - Uncaught message type: "' + data.type + '"');
     }
   };
 

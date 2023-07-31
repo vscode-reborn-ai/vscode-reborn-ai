@@ -130,7 +130,9 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ### July 31, 2023 (`v3.19.0`)
 
+- 🎮 [QoL] Allow the user to set a proxy/alternative API base URL at the setup screen. - *Thank you for the report @zzy-life*
 - 🔧 [Fixes] The right-click menu had "Add tests" twice, the label for the 2nd one is fixed to be "Add comments". - *Thank you for the report @wojtekcz*
+- 🔩 [Behind the scenes] More of the UI is being separated into components to improve maintainability.
 
 ### July 11, 2023 (`v3.18.1`)
 

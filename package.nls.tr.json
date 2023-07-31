@@ -64,7 +64,7 @@
   "chatgpt.promptPrefix.customPrompt2.description": "Özel isteminiz. Varsayılan olarak devre dışıdır, lütfen özel bir istem olarak ayarlayın ve özelleştirilmiş istem kullanmayı tercih ediyorsanız etkinleştirin",
   "chatgpt.promptPrefix.customPrompt2-enabled.markdownDescription": "Özel isteminiz için kullanılan bilgi istemi önekini etkinleştirin. Varsayılan değer boştur, eğer bu öğeyi etkinleştirirseniz, bu `chatgpt.promptPrefix.customPrompt2` ayarını yaptığınızdan emin olun",
   "chatgpt.promptPrefix.adhoc-enabled.description": "İçerik menüsünde seçili kod için adhoc komutu için kullanılan bilgi istemi önekini etkinleştir",
-  "chatgpt.gpt3.apiKey.markdownDescription": "OpenAI API anahtarı. [API Anahtarınızı OpenAI'den alın](https://beta.openai.com/account/api-keys).",
+  "chatgpt.gpt3.apiKey.markdownDescription": "OpenAI API anahtarı. [API Anahtarınızı OpenAI'den alın](https://platform.openai.com/account/api-keys).",
   "chatgpt.gpt3.apiBaseUrl.markdownDescription": "OpenAI API temel URL'si için isteğe bağlı geçersiz kılma. Özelleştirirseniz, lütfen aynı biçime sahip olduğunuzdan emin olun. ör. sonunda eğik çizgi olmadan `https://` ile başlar. Tamamlamalar uç nokta soneki dahili olarak eklenir, örneğin referans için: `${apiBaseUrl}/v1/completions`",
   "chatgpt.gpt3.organization.markdownDescription": "OpenAI Organizasyon Kimliği. [Documentation](https://beta.openai.com/docs/api-reference/requesting-organization).",
   "chatgpt.gpt3.model.markdownDescription": "İstemleriniz için kullanılacak OpenAI modelleri. [Belgeler](https://beta.openai.com/docs/models/models). \n\n**400 ile karşılaşırsanız Hatalı İstek, lütfen entegrasyon yönteminiz için doğru modeli kullandığınızdan emin olun.**",
