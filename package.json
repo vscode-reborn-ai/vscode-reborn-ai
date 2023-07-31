@@ -612,6 +612,7 @@
     "@dqbd/tiktoken": "^1.0.7",
     "@reduxjs/toolkit": "^1.9.3",
     "autoprefixer": "^10.4.14",
+    "clsx": "^2.0.0",
     "css-loader": "^6.7.3",
     "delay": "^5.0.0",
     "eventsource-parser": "^0.1.0",
