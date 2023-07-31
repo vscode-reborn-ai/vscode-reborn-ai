@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.18.1",
+  "version": "3.19.0",
   "aiKey": "",
   "license": "ISC",
   "repository": {
@@ -207,7 +207,7 @@
       },
       {
         "command": "vscode-chatgpt.addComments",
-        "title": "%vscode-chatgpt.addTests.title%",
+        "title": "%vscode-chatgpt.addComments.title%",
         "enablement": "editorHasSelection"
       },
       {
@@ -439,7 +439,7 @@
         "chatgpt.gpt3.apiBaseUrl": {
           "type": "string",
           "default": "https://api.openai.com/v1",
-          "markdownDescription": "Optional override for the OpenAI API base URL. If you customize it, please make sure you have the same format. e.g. starts with `https://` without a trailing slash. The completions endpoint suffix is added internally, e.g. for reference: `${apiBaseUrl}/v1/completions`",
+          "markdownDescription": "Optional override for the OpenAI API base URL. If you customize it, please make sure you have the same format. e.g. starts with `https://` without a trailing slash. The completions endpoint suffix is added internally, e.g. for reference: `${apiBaseUrl}/completions`",
           "order": 34
         },
         "chatgpt.gpt3.organization": {
@@ -570,14 +570,15 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "rimraf out && npm run esbuild-base -- --minify && npm run build-webview && cp ./node_modules/@dqbd/tiktoken/tiktoken_bg.wasm ./out/tiktoken_bg.wasm",
+    "vscode:prepublish": "rimraf out && yarn esbuild-base -- --minify && yarn build-webview && cp ./node_modules/@dqbd/tiktoken/tiktoken_bg.wasm ./out/tiktoken_bg.wasm",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-    "build": "npm run -S esbuild-base -- --sourcemap && npm run build-webview",
+    "build": "yarn esbuild-base -- --sourcemap && yarn build-webview",
+    "dev": "yarn watch",
     "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "npm run -S esbuild-base -- --sourcemap --watch",
+    "watch:esbuild": "yarn esbuild-base -- --sourcemap --watch",
     "watch:webview": "webpack --mode development --watch",
     "build-webview": "webpack --mode production",
-    "fmt": "prettier --write \"src/**/*.ts\" && npm run test -- --fix",
+    "fmt": "prettier --write \"src/**/*.ts\" && yarn test -- --fix",
     "test": "eslint src --ext ts && tsc --noEmit"
   },
   "devDependencies": {
@@ -612,6 +613,7 @@
     "@dqbd/tiktoken": "^1.0.7",
     "@reduxjs/toolkit": "^1.9.3",
     "autoprefixer": "^10.4.14",
+    "clsx": "^2.0.0",
     "css-loader": "^6.7.3",
     "delay": "^5.0.0",
     "eventsource-parser": "^0.1.0",
