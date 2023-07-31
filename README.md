@@ -128,10 +128,12 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### July 31, 2023 (`v3.19.0`)
+### July 31, 2023 (`v3.19.0`, `v3.19.1`)
 
 - 🎮 [QoL] Allow the user to set a proxy/alternative API base URL at the setup screen. - *Thank you for the report @zzy-life*
 - 🔧 [Fixes] The right-click menu had "Add tests" twice, the label for the 2nd one is fixed to be "Add comments". - *Thank you for the report @wojtekcz*
+- 🔧 [Fixes] Bullet points were not showing in ChatGPT's response. - *Thank you for the report @wojtekcz*
+- 🔧 [Fixes] "export to markdown" button was not correctly showing markdown in the export. - *Thank you for the report @wojtekcz*
 - 🔩 [Behind the scenes] More of the UI is being separated into components to improve maintainability.
 
 ### July 11, 2023 (`v3.18.1`)
