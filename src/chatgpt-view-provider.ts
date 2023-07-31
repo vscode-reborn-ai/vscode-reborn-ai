@@ -450,13 +450,37 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 	private convertMessagesToMarkdown(conversation: Conversation): string {
 		let markdown = conversation.messages.reduce((accumulator: string, message: Message) => {
-			const role = message.role === Role.user ? "You" : "ChatGPT";
+			let role = 'Unknown';
+			if (message.role === Role.user) {
+				role = 'You';
+			} else if (message.role === Role.system) {
+				role = 'System Context';
+			} else if (message.role === Role.assistant) {
+				role = 'ChatGPT';
+			}
 			const isError = message.isError ? "ERROR: " : "";
 			const content = message.rawContent ?? message.content;
 
-			// Add language to code blocks using highlight.js auto-detection
-			const wrappedContent = hljs.highlightAuto(content).value;
-			const formattedMessage = `<code>**${isError}[${role}]**</code>\n\`\`\`${wrappedContent}\`\`\`\n\n`;
+			let formattedMessage = `<code>**${isError}[${role}]**</code>\n${content}\n\n`;
+
+			// User included editor code selection in their question?
+			if (message.role === Role.user && message.questionCode) {
+				let code = message.questionCode;
+
+				try {
+					// The code will be already formatted with highlight.js
+					code = code.replace('<pre><code class="language-', '');
+					const split = code.split('">');
+					let language = split[0];
+					code = split[1].replace('</code></pre>', '');
+
+					formattedMessage += `\`\`\`${language}\n${code}\n\`\`\`\n\n`;
+				} catch (error) {
+					// Fallback
+					formattedMessage += `\`\`\`\n${code}\n\`\`\`\n\n`;
+				}
+			}
+
 			return accumulator + formattedMessage;
 		}, "");
 

@@ -175,7 +175,8 @@ export default function Chat({
                                 updateMessageContent({
                                   conversationId: conversation.id,
                                   messageId: message.id,
-                                  content: newQuestion ?? message.rawContent,
+                                  content: newQuestion ?? message.content,
+                                  rawContent: newQuestion ?? message.rawContent,
                                   done: true,
                                 })
                               );
