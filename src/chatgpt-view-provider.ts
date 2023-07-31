@@ -208,8 +208,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private async rebuildApiProvider() {
+		const apiKey = await (this.authStore ?? Auth.instance).getAuthData();
+
 		this.api = new ApiProvider(
-			vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiKey") as string,
+			apiKey ?? '',
 			{
 				organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string,
 				apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
@@ -343,7 +345,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 						vscode.window.showTextDocument(markdownExport);
 					} else {
-						console.log("Main Process - No conversation to export to markdown");
+						console.error("Main Process - No conversation to export to markdown");
 					}
 					break;
 				case "getChatGPTModels":

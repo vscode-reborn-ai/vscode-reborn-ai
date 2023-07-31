@@ -35,7 +35,7 @@ export default function MoreActionsMenu({
           "fixed z-20 bottom-8 right-4 p-2 bg-menu rounded border border-menu",
           className,
           {
-            hidden: showMoreActions,
+            hidden: !showMoreActions,
           }
         )}
       >

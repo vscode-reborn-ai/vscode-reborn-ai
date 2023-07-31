@@ -11,8 +11,10 @@ export default function ({
   className?: string;
 }) {
   const apiKeyPlaceholder = "sk-...";
-  const apiUrlPlaceholder =
-    "https://example-with-azure-openai.openai.azure.com/openai/deployments/your-deployment-name";
+  const apiUrlPlaceholder = "https://openai-proxy.dev/v1";
+  // Azure API support is not quite ready yet - API provider needs to be refactored
+  // const apiUrlPlaceholder =
+  //   "https://example-with-azure-openai.openai.azure.com/openai/deployments/your-deployment-name";
 
   const [apiKey, setApiKey] = useState("");
   const [apiUrl, setApiUrl] = useState("");
@@ -26,8 +28,8 @@ export default function ({
 
     if (showApiUrl) {
       vscode.postMessage({
-        type: "updateApiUrl",
-        apiUrl,
+        type: "changeApiUrl",
+        value: apiUrl,
       });
     }
 
@@ -71,8 +73,8 @@ export default function ({
             </li>
             <li>
               {t?.apiKeySetup?.instructions?.step2 ?? "Then, go to"}{" "}
-              <a href="https://beta.openai.com/account/api-keys">
-                https://beta.openai.com/account/api-keys
+              <a href="https://platform.openai.com/account/api-keys">
+                https://platform.openai.com/account/api-keys
               </a>
             </li>
             <li>
@@ -103,7 +105,7 @@ export default function ({
           </label>
           <div className="flex gap-x-4">
             <input
-              type="text"
+              type="password"
               id="apiKey"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
@@ -137,7 +139,7 @@ export default function ({
             </label>
             <p className="text-xs mb-2">
               {t?.apiKeySetup?.altApiUrlDescription ??
-                "The url should start with 'https'. The API url should NOT include /chat/completions. OpenAI proxy URLs should end with /v1"}
+                "The url should start with 'https'. The API url should NOT include /chat/completions. OpenAI API proxies should work without issues. OpenAI proxy URLs should end with /v1. Other models like Claude will not work unless they are using the same API as OpenAI. Azure's API is not yet supported."}
             </p>
             <div className="flex gap-x-4">
               <input

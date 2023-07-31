@@ -64,7 +64,7 @@
   "chatgpt.promptPrefix.customPrompt2.description": "您的自訂 Prompt 提示。預設情況下停用，需要手動勾選啟用。",
   "chatgpt.promptPrefix.customPrompt2-enabled.markdownDescription": "用於您的自訂 Prompt 的提示前綴，預設情況下為空，如需啟用，需先啟用功能。",
   "chatgpt.promptPrefix.adhoc-enabled.description": "在上下文選單中啟用用於選定程式碼的 adhoc 命令的提示前綴",
-  "chatgpt.gpt3.apiKey.markdownDescription": "OpenAI API 金鑰。[從 OpenAI 取得您的 API 金鑰](https://beta.openai.com/account/api-keys)。\n\n **僅適用於 OpenAI API Key 方式使用此設定。**",
+  "chatgpt.gpt3.apiKey.markdownDescription": "OpenAI API 金鑰。[從 OpenAI 取得您的 API 金鑰](https://platform.openai.com/account/api-keys)。\n\n **僅適用於 OpenAI API Key 方式使用此設定。**",
   "chatgpt.gpt3.apiBaseUrl.markdownDescription": "[選擇性] OpenAI API 存取路徑。如果您自訂它，請確保具有相同的格式。以 `https://` 開頭，沒有尾隨斜線。完整性端點後綴在內部新增，例如供參考：`${apiBaseUrl}/v1/completions`",
   "chatgpt.gpt3.organization.markdownDescription": "[選擇性] OpenAI 組織 ID。[文件](https://beta.openai.com/docs/api-reference/requesting-organization)。\n\n**僅適用於 OpenAI API Key 方式使用此設定。**",
   "chatgpt.gpt3.model.markdownDescription": "用於 Prompt 的 OpenAI 語言模型。[文件](https://beta.openai.com/docs/models/models)。\n\n**如果出現 400 Bad Request，請檢查您的登入方式是否允許使用此語言模型。**",
