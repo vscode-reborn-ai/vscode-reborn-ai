@@ -805,7 +805,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					message = `400 Bad Request\n\nYour model: '${this.model}' may be incompatible or one of your parameters is unknown. Reset your settings to default.`;
 					break;
 				case 401:
-					message = '401 Unauthorized\n\nMake sure you are properly signed in. If you are using Browser Auto-login method, make sure the browser is open (You could refresh the browser tab manually if you face any issues, too). If you stored your API key in settings.json, make sure it is accurate. If you stored API key in session, you can reset it with `ChatGPT: Reset session` command. Potential reasons: \n- 1.Invalid Authentication\n- 2.Incorrect API key provided.\n- 3.Incorrect Organization provided. \n See https://platform.openai.com/docs/guides/error-codes for more details.';
+					message = '401 Unauthorized\n\nMake sure your API key is correct, you can reset it by going to "More Actions" > "Reset API Key". Potential reasons: \n- 1. Incorrect API key provided.\n- 2. Incorrect Organization provided. \n See https://platform.openai.com/docs/guides/error-codes for more details.';
 					break;
 				case 403:
 					message = '403 Forbidden\n\nYour token has expired. Please try authenticating again.';
