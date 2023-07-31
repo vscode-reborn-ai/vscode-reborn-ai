@@ -207,7 +207,7 @@
       },
       {
         "command": "vscode-chatgpt.addComments",
-        "title": "%vscode-chatgpt.addTests.title%",
+        "title": "%vscode-chatgpt.addComments.title%",
         "enablement": "editorHasSelection"
       },
       {
