@@ -8,6 +8,7 @@ export const unEscapeHTML = (unsafe: any) => {
     .replaceAll("&lt;", "<")
     .replaceAll("&gt;", ">")
     .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
     .replaceAll("&#039;", "'");
 };
 
