@@ -29,12 +29,6 @@ I will be continuing work on this extension, I have some ideas for features that
 
 As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it will allow the Genie AI team to spend more time improving their extension. But, you can expect "Reborn" to stay FOSS, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
 
-### GPT-4
-
-**Required** - You must have access to GPT-4 via API. OpenAI's waitlist for GPT-4 API access is here: <https://openai.com/waitlist/gpt-4-api>
-
-If you're part of an organization account that has GPT-4 access, be sure to set the `Organization ID`. (This will also charge the organization account). If you're wondering about the 32,000 token version of GPT-4, OpenAI hasn't made that model available yet.
-
 ## Installation
 
 To set up the project, first clone the repository:

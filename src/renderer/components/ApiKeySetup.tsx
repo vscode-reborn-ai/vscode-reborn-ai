@@ -196,7 +196,7 @@ export default function ({
               "For example if all of the text in this extension window was from ai, it would've cost"}{" "}
             <span className="font-code">$0.00054</span>{" "}
             {t?.apiKeySetup?.openAIAPICosts?.examplePart2 ??
-              "in API usage on GPT-3.5-turbo. Beware if you use OpenAI's latest model, GPT-4, it is"}{" "}
+              "in API usage on GPT-3.5-turbo. Beware if you use OpenAI's, GPT-4, it is"}{" "}
             <span className="font-code underline">30x</span>{" "}
             {t?.apiKeySetup?.openAIAPICosts?.examplePart3 ??
               "more expensive than GPT-3.5-turbo at"}{" "}

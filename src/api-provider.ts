@@ -1,14 +1,19 @@
 import { encoding_for_model, Tiktoken, TiktokenModel } from "@dqbd/tiktoken";
-import { ChatCompletionResponseMessage, Configuration, OpenAIApi } from 'openai';
+import OpenAI, { ClientOptions } from 'openai';
 import { v4 as uuidv4 } from "uuid";
 import { Conversation, Message, Model, Role } from "./renderer/types";
 // https://openai.1rmb.tk/v1/
 
+// TODO: this is also in TokenCountPopup.tsx, consolidate to avoid discrepancies..
+// TODO: Need to separately track input and output limits
 export const MODEL_TOKEN_LIMITS: Record<Model, number> = {
+  [Model.gpt_4_turbo]: 4096,
   [Model.gpt_4]: 8192,
   [Model.gpt_4_32k]: 32768,
+  // TODO - Dec 11, 2023, gpt_35_turbo will start pointing to the 16k model
   [Model.gpt_35_turbo]: 4096,
   [Model.gpt_35_turbo_16k]: 16384,
+  // Note: These models are not yet supported in this extension
   [Model.text_davinci_003]: 4097,
   [Model.text_curie_001]: 2049,
   [Model.text_babbage_001]: 2049,
@@ -18,13 +23,13 @@ export const MODEL_TOKEN_LIMITS: Record<Model, number> = {
 };
 
 export class ApiProvider {
-  private _openai: OpenAIApi;
+  private _openai: OpenAI;
   private _maxTokens: number;
   private _maxResponseTokens: number;
   private _temperature: number;
   private _topP: number;
 
-  public apiConfig: Configuration;
+  public apiConfig: ClientOptions;
 
   constructor(apiKey: string, {
     organizationId = '',
@@ -44,12 +49,12 @@ export class ApiProvider {
     // If apiBaseUrl ends with slash, remove it
     apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
     // OpenAI API config
-    this.apiConfig = new Configuration({
+    this.apiConfig = {
       apiKey: apiKey,
       organization: organizationId,
-      basePath: apiBaseUrl,
-    });
-    this._openai = new OpenAIApi(this.apiConfig);
+      // baseURL: apiBaseUrl,
+    };
+    this._openai = new OpenAI(this.apiConfig);
     this._maxTokens = maxTokens;
     this._maxResponseTokens = maxResponseTokens ?? maxTokens;
     this._temperature = temperature;
@@ -86,7 +91,7 @@ export class ApiProvider {
 
     // Only stream if not using a proxy
     const useStream = true; // this.apiConfig.basePath === 'https://api.openai.com/v1';
-    const response = await this._openai.createChatCompletion(
+    const response = await this._openai.chat.completions.create(
       {
         model,
         messages: conversation.messages.map((message) => ({
@@ -96,54 +101,23 @@ export class ApiProvider {
         max_tokens: tokensLeft,
         temperature,
         top_p: topP,
-        // Note - this alone won't make streaming work, OpenAI's SDK generator doesn't implement streaming
         stream: useStream,
-      },
-      {
-        // This is an Axios request config object - this is how streaming is made possible
-        responseType: useStream ? 'stream' : 'json',
-        signal: abortSignal,
-      },
+      }
     );
 
-    const dataStream = response.data as unknown as AsyncIterable<Buffer>;
-
-    // Weird bug with proxies where the first chunk is broken up into two
-    let incompleteLine = '';
-
-    for await (const chunk of dataStream) {
-      // For whatever reason triggering abort() with the signal above doesn't work, so checking the abortSignal manually
+    for await (const chunk of response) {
       if (abortSignal.aborted) {
         return;
       }
 
-      const lines = chunk.toString('utf8').split('\n');
+      try {
+        const token = chunk.choices[0].delta.content;
 
-      for (const line of lines) {
-        if (!line.trim().startsWith('data: ') && incompleteLine === '') {
-          continue;
+        if (token) {
+          yield token;
         }
-
-        const message = (incompleteLine + line).replace(/^data: /, '');
-
-        if (message === '[DONE]') {
-          return;
-        }
-
-        try {
-          const json = JSON.parse(message);
-
-          const token = json.choices[0].delta.content;
-
-          if (token) {
-            yield token;
-          }
-
-          incompleteLine = '';
-        } catch (e) {
-          console.error('api JSON parse error. Message:', message, 'Error:', e);
-          incompleteLine += message;
-        }
+      } catch (e: any) {
+        console.error('api JSON parse error. Message:', e?.message, 'Error:', e);
       }
     }
   }
@@ -158,7 +132,7 @@ export class ApiProvider {
     temperature?: number;
     topP?: number;
     maxResponseTokens?: number;
-  } = {}): Promise<ChatCompletionResponseMessage | undefined> {
+  } = {}): Promise<OpenAI.Chat.Completions.ChatCompletionMessage | undefined> {
     const model = conversation.model ?? Model.gpt_35_turbo;
     const tokensUsed = ApiProvider.countConversationTokens(conversation);
 
@@ -175,7 +149,7 @@ export class ApiProvider {
       throw new Error(`This conversation uses ${tokensUsed} tokens. After applying the "maxTokens" setting of ${maxTokens}, and this model's (${model}) token limit of ${MODEL_TOKEN_LIMITS[model]}, there are no tokens left to send. Either A) Clear the conversation to reduce the conversation size or B) reduce the amount of code you are sending or C) increase the sending limit on "maxTokens" by hitting "More Actions" > "Settings" > search for "maxTokens". Note that if you are hitting the model token limit of ${MODEL_TOKEN_LIMITS[model]}, you will need to switch to a different model that accepts more tokens.`);
     }
 
-    const response = await this._openai.createChatCompletion(
+    const response = await this._openai.chat.completions.create(
       {
         model,
         messages: conversation.messages.map((message) => ({
@@ -186,15 +160,13 @@ export class ApiProvider {
         max_tokens: tokensLeft,
         temperature,
         top_p: topP,
-      },
-      {
-        responseEncoding: 'utf8',
-      },
+      }
     );
 
-    return response.data.choices[0].message;
+    return response.choices[0].message;
   }
 
+  // Note: PromptCompletion is LEGACY
   // Using prompt as a param instead of the last message in the conversation to
   // allow for special formatting of the prompt before sending it to OpenAI
   async getPromptCompletion(prompt: string, conversation: Conversation, {
@@ -224,10 +196,10 @@ export class ApiProvider {
       throw new Error(`This conversation uses ${tokensUsed} tokens. After applying the "maxTokens" setting of ${maxTokens}, and this model's (${model}) token limit of ${MODEL_TOKEN_LIMITS[model]}, there are no tokens left to send. Either A) Clear the conversation to reduce the conversation size or B) reduce the amount of code you are sending or C) increase the sending limit on "maxTokens" by hitting "More Actions" > "Settings" > search for "maxTokens". Note that if you are hitting the model token limit of ${MODEL_TOKEN_LIMITS[model]}, you will need to switch to a different model that accepts more tokens.`);
     }
 
-    const response = await this._openai.createCompletion(
+    const response = await this._openai.chat.completions.create(
       {
         model,
-        prompt,
+        messages: [{ "role": "user", "content": prompt }],
         max_tokens: tokensLeft,
         temperature,
         top_p: topP,
@@ -237,8 +209,8 @@ export class ApiProvider {
 
     return {
       id: uuidv4(),
-      content: response.data.choices[0].text ?? '',
-      rawContent: response.data.choices[0].text ?? '',
+      content: response.choices[0].message.content ?? '',
+      rawContent: response.choices[0].message.content ?? '',
       role: Role.assistant,
       createdAt: Date.now(),
     };
@@ -253,6 +225,10 @@ export class ApiProvider {
       case Model.gpt_35_turbo_16k:
         // June 27, 2023 - Tiktoken@1.0.7 does not recognize the 3.5-16k model version.
         adjustedModel = Model.gpt_35_turbo;
+        break;
+      case Model.gpt_4_turbo:
+        // Nov 24, 2023 - Adding gpt-4-turbo, will update tiktoken at another date
+        adjustedModel = Model.gpt_4;
         break;
     }
 
@@ -327,33 +303,33 @@ export class ApiProvider {
 
   updateApiKey(apiKey: string) {
     // OpenAI API config
-    this.apiConfig = new Configuration({
+    this.apiConfig = {
       apiKey: apiKey,
       organization: this.apiConfig.organization,
-      basePath: this.apiConfig.basePath,
-    });
-    this._openai = new OpenAIApi(this.apiConfig);
+      // baseURL: this.apiConfig.baseURL,
+    };
+    this._openai = new OpenAI(this.apiConfig);
   }
 
   updateOrganizationId(organizationId: string) {
     // OpenAI API config
-    this.apiConfig = new Configuration({
+    this.apiConfig = {
       apiKey: this.apiConfig.apiKey,
       organization: organizationId,
-      basePath: this.apiConfig.basePath,
-    });
-    this._openai = new OpenAIApi(this.apiConfig);
+      // baseURL: this.apiConfig.baseURL,
+    };
+    this._openai = new OpenAI(this.apiConfig);
   }
 
   updateApiBaseUrl(apiBaseUrl: string) {
     // If apiBaseUrl ends with slash, remove it
     apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
     // OpenAI API config
-    this.apiConfig = new Configuration({
+    this.apiConfig = {
       apiKey: this.apiConfig.apiKey,
       organization: this.apiConfig.organization,
-      basePath: apiBaseUrl,
-    });
-    this._openai = new OpenAIApi(this.apiConfig);
+      // baseURL: this.apiConfig.baseURL,
+    };
+    this._openai = new OpenAI(this.apiConfig);
   }
 }

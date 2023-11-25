@@ -1,6 +1,6 @@
 import hljs from 'highlight.js';
 import { marked } from "marked";
-import { Configuration, OpenAIApi } from "openai";
+import OpenAI, { ClientOptions } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
 import { ActionRunner } from "./actionRunner";
@@ -9,6 +9,9 @@ import Auth from "./auth";
 import { loadTranslations } from './localization';
 import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
 import { unEscapeHTML } from "./renderer/utils";
+
+// At the moment, gpt-4-1106-preview means "GPT-4 Turbo"
+const CHATGPT_MODELS = ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-1106-preview', 'gpt-4', 'gpt-4-32k'];
 
 export interface ApiRequestOptions {
 	command: string,
@@ -29,7 +32,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	public model?: string;
 
 	private api: ApiProvider = new ApiProvider('');
-	private _maxTokens: number = 2048;
+	// private _maxTokens: number = 2048;
 	private _temperature: number = 0.9;
 	private _topP: number = 1;
 	private chatMode?: boolean = true;
@@ -96,7 +99,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", "https://api.openai.com/v1", true);
 		}
 
-		this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number;
+		// * EXPERIMENT: Turn off maxTokens
+		//   Due to how extension settings work, the setting will default to the 1,024 setting
+		//   from a very long time ago. New models support 128,000 tokens, but you have to tell the
+		//   user to update their config to "enable" these larger contexts. With the updated UI
+		//   now showing token counts, I think it's better to just turn off the maxTokens setting
+		// this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number;
 		this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number;
 		this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number;
 
@@ -139,10 +147,14 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				this.api.updateApiBaseUrl(vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") ?? "");
 				rebuildApiProvider = true;
 			}
-			// maxTokens
-			if (e.affectsConfiguration("chatgpt.gpt3.maxTokens")) {
-				this.api.maxTokens = this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number ?? 2048;
-			}
+			// * EXPERIMENT: Turn off maxTokens
+			//   Due to how extension settings work, the setting will default to the 1,024 setting
+			//   from a very long time ago. New models support 128,000 tokens, but you have to tell the
+			//   user to update their config to "enable" these larger contexts. With the updated UI
+			//   now showing token counts, I think it's better to just turn off the maxTokens setting
+			// if (e.affectsConfiguration("chatgpt.gpt3.maxTokens")) {
+			// 	this.api.maxTokens = this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number ?? 2048;
+			// }
 			// temperature
 			if (e.affectsConfiguration("chatgpt.gpt3.temperature")) {
 				this.api.temperature = this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number ?? 0.9;
@@ -397,7 +409,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						tokenCount: {
 							messages: convTokens,
 							userInput: userInputTokens,
-							maxTotal: Math.min(this._maxTokens, MODEL_TOKEN_LIMITS[(data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model]),
+							// maxTotal: Math.min(this._maxTokens, MODEL_TOKEN_LIMITS[(data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model]),
+							maxTotal: MODEL_TOKEN_LIMITS[(data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model],
 							minTotal: convTokens + userInputTokens,
 						},
 					});
@@ -532,9 +545,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			};
 		}
 
-		let configuration = new Configuration({
+		let configuration: ClientOptions = {
 			apiKey,
-		});
+		};
 
 		// if the organization id is set in settings, use it
 		const organizationId = await vscode.workspace.getConfiguration("chatgpt").get("organizationId") as string;
@@ -545,16 +558,16 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		// if the api base url is set in settings, use it
 		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 		if (apiBaseUrl) {
-			configuration.basePath = apiBaseUrl;
+			configuration.baseURL = apiBaseUrl;
 		}
 
 		try {
-			const openai = new OpenAIApi(configuration);
-			const response = await openai.listModels();
+			const openai = new OpenAI(configuration);
+			const response = await openai.models.list();
 
 			return {
 				valid: true,
-				models: response.data?.data
+				models: response.data
 			};
 		} catch (error) {
 			console.error('Main Process - Error getting models', error);
@@ -568,9 +581,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		// Get OpenAI API key from secret store
 		const apiKey = await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') as string;
 
-		const configuration = new Configuration({
+		const configuration: ClientOptions = {
 			apiKey,
-		});
+		};
 
 		// if the organization id is set in settings, use it
 		const organizationId = await vscode.workspace.getConfiguration("chatgpt").get("organizationId") as string;
@@ -581,14 +594,14 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		// if the api base url is set in settings, use it
 		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 		if (apiBaseUrl) {
-			configuration.basePath = apiBaseUrl;
+			configuration.baseURL = apiBaseUrl;
 		}
 
 		try {
-			const openai = new OpenAIApi(configuration);
-			const response = await openai.listModels();
+			const openai = new OpenAI(configuration);
+			const response = await openai.models.list();
 
-			return response.data?.data;
+			return response.data;
 		} catch (error) {
 			console.error('Main Process - Error getting models', error);
 			return [];
@@ -597,13 +610,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	async getChatGPTModels(fullModelList: any[] = []): Promise<Model[]> {
 		if (fullModelList?.length && fullModelList?.length > 0) {
-			return fullModelList.filter((model: any) => ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
+			return fullModelList.filter((model: any) => CHATGPT_MODELS.includes(model.id)).map((model: any) => {
 				return model.id as Model;
 			});
 		} else {
 			const models = await this.getModels();
 
-			return models.filter((model: any) => ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4', 'gpt-4-32k'].includes(model.id)).map((model: any) => {
+			return models.filter((model: any) => CHATGPT_MODELS.includes(model.id)).map((model: any) => {
 				return model.id as Model;
 			});
 		}
@@ -616,7 +629,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				verbosity = 'Do not include any explanations in your answer. Only respond with the code.';
 				break;
 			case Verbosity.concise:
-				verbosity = 'Your explanations should be as concise and to the point as possible.';
+				verbosity = 'Your explanations should be as concise and to the point as possible, one or two sentences at most.';
 				break;
 			case Verbosity.full:
 				verbosity = 'You should give full explanations that are as detailed as possible.';
@@ -754,7 +767,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 				// Stream ChatGPT response (this is using an async iterator)
 				for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal, {
-					maxTokens: options.maxTokens ?? this._maxTokens,
+					// maxTokens: options.maxTokens ?? this._maxTokens,
+					maxTokens: options.maxTokens ?? MODEL_TOKEN_LIMITS[(options.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model],
 					temperature: options.temperature ?? this._temperature,
 					topP: options.topP ?? this._topP,
 				})) {
@@ -838,7 +852,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					message = `404 Not Found\n\n`;
 
 					// For certain certain proxy paths, recommand a fix
-					if (this.api.apiConfig.basePath?.includes("openai.1rmb.tk") && this.api.apiConfig.basePath !== "https://openai.1rmb.tk/v1") {
+					if (this.api.apiConfig.baseURL?.includes("openai.1rmb.tk") && this.api.apiConfig.baseURL !== "https://openai.1rmb.tk/v1") {
 						message += "It looks like you are using the openai.1rmb.tk proxy server, but the path might be wrong.\nThe recommended path is https://openai.1rmb.tk/v1";
 					} else {
 						message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model}' may be incompatible or you may have exhausted your ChatGPT subscription allowance.`;

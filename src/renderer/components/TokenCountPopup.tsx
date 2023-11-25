@@ -4,11 +4,15 @@ import { useAppSelector } from "../hooks";
 import { Conversation, Model } from "../types";
 
 // TODO: this is also in api-provider.ts, consolidate to avoid discrepancies..
+// TODO: Need to separately track input and output limits
 const MODEL_TOKEN_LIMITS: Record<Model, number> = {
+  [Model.gpt_4_turbo]: 4096,
   [Model.gpt_4]: 8192,
   [Model.gpt_4_32k]: 32768,
+  // TODO - Dec 11, 20(23, gpt_35_turbo will start pointing to the 16k model
   [Model.gpt_35_turbo]: 4096,
   [Model.gpt_35_turbo_16k]: 16384,
+  // Note: These models are not yet supported in this extension
   [Model.text_davinci_003]: 4097,
   [Model.text_curie_001]: 2049,
   [Model.text_babbage_001]: 2049,
@@ -37,6 +41,7 @@ export default function TokenCountPopup({
   const [minTokens, setMinTokens] = useState(
     currentConversation.tokenCount?.minTotal ?? 0
   );
+  const [maxTokens, setMaxTokens] = useState(0);
 
   useEffect(() => {
     setMinTokens(
@@ -49,13 +54,18 @@ export default function TokenCountPopup({
   }, [currentConversation.tokenCount, currentConversation.model]);
 
   useEffect(() => {
-    let maxTokens = Math.min(
-      currentConversation.tokenCount?.maxTotal ?? 0,
-      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
+    setMaxTokens(
+      Math.min(
+        currentConversation.tokenCount?.maxTotal ?? 0,
+        MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
+      )
     );
+  }, [currentConversation.tokenCount, currentConversation.model]);
 
+  useEffect(() => {
     // on tokenCount change, set the cost
-    // Based on data from: https://openai.com/pricing
+    // Based on data from: https://openai.com/pricing (as of 2023-11-24)
+    // TODO: update dec 11, 2023
     let rateComplete = 0;
     let ratePrompt = 0;
     switch (currentConversation.model) {
@@ -67,13 +77,17 @@ export default function TokenCountPopup({
         ratePrompt = 0.003;
         rateComplete = 0.004;
         break;
+      case Model.gpt_4_turbo:
+        ratePrompt = 0.01;
+        rateComplete = 0.03;
+        break;
       case Model.gpt_4:
         ratePrompt = 0.03;
         rateComplete = 0.06;
         break;
       case Model.gpt_4_32k:
         ratePrompt = 0.06;
-        rateComplete = 0.012;
+        rateComplete = 0.12;
         break;
       default:
         rateComplete = -1;
@@ -87,7 +101,12 @@ export default function TokenCountPopup({
     setMaxCost(maxCost);
 
     setTokenCountLabel(minTokens.toString());
-  }, [currentConversation.tokenCount, currentConversation.model, minTokens]);
+  }, [
+    currentConversation.tokenCount,
+    currentConversation.model,
+    minTokens,
+    maxTokens,
+  ]);
 
   return (
     <div
@@ -155,7 +174,8 @@ export default function TokenCountPopup({
           {t?.questionInputField?.tokenBreakdownRecommendation ??
             "Strongly recommended - clear the conversation routinely to keep the prompt short."}
         </p>
-        {/* if gpt-4 is the model, add an additional warning about it being 30x more expensive than gpt-3.5-turbo */}
+
+        {/* if gpt-4 or gpt-4-32k is the model, add an additional warning about cost */}
         {(currentConversation.model === Model.gpt_4 ||
           currentConversation.model === Model.gpt_4_32k) && (
           <p className="font-bold">
@@ -163,8 +183,20 @@ export default function TokenCountPopup({
               `Warning: You are currently using ${
                 currentConversation.model
               }, which is ${
-                currentConversation.model === Model.gpt_4 ? "30x" : "60x"
-              } more expensive than gpt-3.5-turbo.`}
+                currentConversation.model === Model.gpt_4
+                  ? "30x"
+                  : currentConversation.model === Model.gpt_4_32k
+                  ? "60x"
+                  : "3x"
+              } more expensive than gpt-3.5-turbo. Consider using gpt-4-turbo, which is 3x cheaper than gpt-4 and 6x cheaper than gpt-4-32k.`}
+          </p>
+        )}
+
+        {/* gpt_4_turbo cost warning */}
+        {currentConversation.model === Model.gpt_4_turbo && (
+          <p className="font-bold">
+            {t?.questionInputField?.tokenBreakdownGpt4TurboWarning ??
+              `Note: You are currently using gpt-4-turbo. Keep in mind that gpt-3.5-turbo is still 10x cheaper.`}
           </p>
         )}
       </div>
