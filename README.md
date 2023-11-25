@@ -122,6 +122,11 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### WIP: November ??, 2023 (`v3.20.0`)
+
+- ✨ [Feature] Added support for the `gpt-4-1106-preview` model. This model supports 128,000 token input context. The output token limit is 4,096. It's ~3x less expensive than `gpt-4`. - *Thank you for the suggestion @xmjiao*
+- 🔧 [Fixes] Fix highlighting of HTML characters. - *Thank you for the PR @ZsgsDesign*
+
 ### July 31, 2023 (`v3.19.0`, `v3.19.1`)
 
 - 🎮 [QoL] Allow the user to set a proxy/alternative API base URL at the setup screen. - *Thank you for the report @zzy-life*
