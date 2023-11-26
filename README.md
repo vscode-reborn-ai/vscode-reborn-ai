@@ -84,9 +84,9 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 4. Use the Debug Console in the main Visual Studio Code window to view any output or errors.
 
-5. If you need to make changes to the extension, stop the Extension Development Host, make the changes, and then start the Extension Development Host again.
+5. To make changes to the extension, update the code, and then press `Ctrl + Shift + F5`/`Cmd + Shift + F5` (or click `Run > Restart Debugging`) to reload the extension.
 
-6. Once you are satisfied with your changes, submit a pull request to the original repository.
+6. Once you are satisfied with your changes, submit a pull request to this repository.
 
 ## TODO
 
