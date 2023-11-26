@@ -37,6 +37,16 @@ export enum Model {
   davinci_002 = "davinci-002",
 }
 
+export const MODEL_FRIENDLY_NAME = {
+  [Model.gpt_4_turbo]: "GPT-4 Turbo",
+  [Model.gpt_4]: "GPT-4",
+  [Model.gpt_4_32k]: "GPT-4 32k",
+  [Model.gpt_35_turbo]: "GPT-3.5 Turbo",
+  [Model.gpt_35_turbo_16k]: "GPT-3.5 Turbo 16k",
+  [Model.babbage_002]: "Babbage 002",
+  [Model.davinci_002]: "Davinci 002",
+};
+
 // source: https://openai.com/pricing
 export const MODEL_COSTS = {
   [Model.gpt_4_turbo]: {
