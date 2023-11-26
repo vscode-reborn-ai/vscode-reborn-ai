@@ -38,6 +38,13 @@
     "menus": {
       "editor/context": [
         {
+          "group": "chatGpt",
+          "when": "editorHasSelection",
+          "submenu": "vscode-chatgpt.subMenu"
+        }
+      ],
+      "vscode-chatgpt.subMenu": [
+        {
           "command": "vscode-chatgpt.generateCode",
           "group": "chatGpt@1",
           "when": "editorHasSelection && generateCode-enabled"
@@ -101,14 +108,16 @@
           "command": "vscode-chatgpt.customPrompt5",
           "group": "chatGpt@13",
           "when": "editorHasSelection && customPrompt5-enabled"
-        },
-        {
-          "command": "vscode-chatgpt.customPrompt6",
-          "group": "chatGpt@14",
-          "when": "editorHasSelection && customPrompt6-enabled"
         }
       ]
     },
+    "submenus": [
+      {
+        "id": "vscode-chatgpt.subMenu",
+        "label": "ChatGPT",
+        "group": "chatGpt"
+      }
+    ],
     "keybindings": [
       {
         "command": "vscode-chatgpt.generateCode",
