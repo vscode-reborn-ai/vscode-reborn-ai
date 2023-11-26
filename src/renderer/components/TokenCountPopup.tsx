@@ -1,21 +1,7 @@
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { useAppSelector } from "../hooks";
-import { Conversation, Model } from "../types";
-
-// TODO: this is also in api-provider.ts, consolidate to avoid discrepancies..
-const MODEL_TOKEN_LIMITS: Record<Model, number> = {
-  [Model.gpt_4]: 8192,
-  [Model.gpt_4_32k]: 32768,
-  [Model.gpt_35_turbo]: 4096,
-  [Model.gpt_35_turbo_16k]: 16384,
-  [Model.text_davinci_003]: 4097,
-  [Model.text_curie_001]: 2049,
-  [Model.text_babbage_001]: 2049,
-  [Model.text_ada_001]: 2049,
-  [Model.code_davinci_002]: 4097,
-  [Model.code_cushman_001]: 2049,
-};
+import { Conversation, MODEL_COSTS, MODEL_TOKEN_LIMITS, Model } from "../types";
 
 export default function TokenCountPopup({
   currentConversation,
@@ -34,60 +20,42 @@ export default function TokenCountPopup({
   const t = useAppSelector((state: any) => state.app.translations);
   const [minCost, setMinCost] = useState(0);
   const [maxCost, setMaxCost] = useState(0);
-  const [minTokens, setMinTokens] = useState(
+  const [minPromptTokens, setMinPromptTokens] = useState(
     currentConversation.tokenCount?.minTotal ?? 0
   );
+  const [maxPromptTokens, setMaxPromptTokens] = useState(0);
+  const [maxCompleteTokens, setMaxCompleteTokens] = useState(0);
+  const [promptRate, setPromptRate] = useState(0);
+  const [completeRate, setCompleteRate] = useState(0);
 
+  // On model change and token count change, update the token count label
   useEffect(() => {
-    setMinTokens(
-      Math.min(
-        (currentConversation.tokenCount?.messages ?? 0) +
-          (currentConversation.tokenCount?.userInput ?? 0),
-        currentConversation.tokenCount?.maxTotal ?? 0
-      )
-    );
-  }, [currentConversation.tokenCount, currentConversation.model]);
-
-  useEffect(() => {
-    let maxTokens = Math.min(
-      currentConversation.tokenCount?.maxTotal ?? 0,
+    const minPromptTokens =
+      (currentConversation.tokenCount?.messages ?? 0) +
+      (currentConversation.tokenCount?.userInput ?? 0);
+    const maxPrompt =
       MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
-    );
-
-    // on tokenCount change, set the cost
-    // Based on data from: https://openai.com/pricing
-    let rateComplete = 0;
-    let ratePrompt = 0;
-    switch (currentConversation.model) {
-      case Model.gpt_35_turbo:
-        ratePrompt = 0.0015;
-        rateComplete = 0.002;
-        break;
-      case Model.gpt_35_turbo_16k:
-        ratePrompt = 0.003;
-        rateComplete = 0.004;
-        break;
-      case Model.gpt_4:
-        ratePrompt = 0.03;
-        rateComplete = 0.06;
-        break;
-      case Model.gpt_4_32k:
-        ratePrompt = 0.06;
-        rateComplete = 0.012;
-        break;
-      default:
-        rateComplete = -1;
-    }
-    let minCost = (minTokens / 1000) * ratePrompt;
+        .prompt;
+    const maxComplete =
+      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
+        .complete;
+    let ratePrompt =
+      MODEL_COSTS[currentConversation.model ?? Model.gpt_35_turbo].prompt;
+    let rateComplete =
+      MODEL_COSTS[currentConversation.model ?? Model.gpt_35_turbo].complete;
+    let minCost = (minPromptTokens / 1000) * ratePrompt;
     // maxCost is based on current convo text at ratePrompt pricing + theoretical maximum response at rateComplete pricing
-    let maxCost =
-      minCost + (Math.max(0, maxTokens - minTokens) / 1000) * rateComplete;
+    let maxCost = ((minPromptTokens + maxCompleteTokens) / 1000) * rateComplete;
 
+    setMinPromptTokens(minPromptTokens);
+    setMaxPromptTokens(maxPrompt);
+    setMaxCompleteTokens(maxComplete);
+    setPromptRate(ratePrompt);
+    setCompleteRate(rateComplete);
     setMinCost(minCost);
     setMaxCost(maxCost);
-
-    setTokenCountLabel(minTokens.toString());
-  }, [currentConversation.tokenCount, currentConversation.model, minTokens]);
+    setTokenCountLabel(minPromptTokens.toString());
+  }, [currentConversation.tokenCount, currentConversation.model]);
 
   return (
     <div
@@ -115,7 +83,7 @@ export default function TokenCountPopup({
                 "(no answer)"}
             </span>
           </span>
-          <code>{minTokens}</code>{" "}
+          <code>{minPromptTokens}</code>{" "}
           {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
             "tokens which is"}
           <code> ${minCost?.toFixed(4) ?? 0}</code>
@@ -131,18 +99,14 @@ export default function TokenCountPopup({
                 "(all messages + prompt + longest answer)"}
             </span>
           </span>
-          <code>{currentConversation.tokenCount?.maxTotal ?? 0}</code>{" "}
+          <code>{minPromptTokens + maxCompleteTokens}</code>{" "}
           {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
             "tokens which is"}
           <code> ${maxCost?.toFixed(4) ?? 0}</code>
         </p>
         <p>
           {t?.questionInputField?.tokenBreakdownBasedOn ??
-            "This is calculated based on the"}{" "}
-          <code>{settings?.gpt3?.maxTokens ?? "??"}</code> "
-          <code>{t?.questionInputField?.maxTokens ?? "maxTokens"}</code>"{" "}
-          {t?.questionInputField?.tokenBreakdownConfigSettingAnd ??
-            "config setting and"}{" "}
+            "This is calculated based on "}
           <code>{currentConversation.model ?? Model.gpt_35_turbo}</code>
           's{" "}
           <a href="https://openai.com/pricing" target="_blank" rel="noreferrer">
@@ -150,12 +114,14 @@ export default function TokenCountPopup({
           </a>{" "}
           {t?.questionInputField?.tokenBreakdownForPromptsAndCompletions ??
             "for prompts and completions."}
+          {`(prompt: $${promptRate} / 1000 tokens, completion: $${completeRate} / 1000 tokens)`}
         </p>
         <p className="italic">
           {t?.questionInputField?.tokenBreakdownRecommendation ??
             "Strongly recommended - clear the conversation routinely to keep the prompt short."}
         </p>
-        {/* if gpt-4 is the model, add an additional warning about it being 30x more expensive than gpt-3.5-turbo */}
+
+        {/* if gpt-4 or gpt-4-32k is the model, add an additional warning about cost */}
         {(currentConversation.model === Model.gpt_4 ||
           currentConversation.model === Model.gpt_4_32k) && (
           <p className="font-bold">
@@ -163,8 +129,20 @@ export default function TokenCountPopup({
               `Warning: You are currently using ${
                 currentConversation.model
               }, which is ${
-                currentConversation.model === Model.gpt_4 ? "30x" : "60x"
-              } more expensive than gpt-3.5-turbo.`}
+                currentConversation.model === Model.gpt_4
+                  ? "30x"
+                  : currentConversation.model === Model.gpt_4_32k
+                  ? "60x"
+                  : "3x"
+              } more expensive than gpt-3.5-turbo. Consider using gpt-4-turbo, which is 3x cheaper than gpt-4 and 6x cheaper than gpt-4-32k.`}
+          </p>
+        )}
+
+        {/* gpt_4_turbo cost warning */}
+        {currentConversation.model === Model.gpt_4_turbo && (
+          <p className="font-bold">
+            {t?.questionInputField?.tokenBreakdownGpt4TurboWarning ??
+              `Note: You are currently using gpt-4-turbo. Keep in mind that gpt-3.5-turbo is still 10x cheaper.`}
           </p>
         )}
       </div>

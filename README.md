@@ -29,12 +29,6 @@ I will be continuing work on this extension, I have some ideas for features that
 
 As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it will allow the Genie AI team to spend more time improving their extension. But, you can expect "Reborn" to stay FOSS, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
 
-### GPT-4
-
-**Required** - You must have access to GPT-4 via API. OpenAI's waitlist for GPT-4 API access is here: <https://openai.com/waitlist/gpt-4-api>
-
-If you're part of an organization account that has GPT-4 access, be sure to set the `Organization ID`. (This will also charge the organization account). If you're wondering about the 32,000 token version of GPT-4, OpenAI hasn't made that model available yet.
-
 ## Installation
 
 To set up the project, first clone the repository:
@@ -127,6 +121,12 @@ This extension can be used with a proxy if you put the proxy's URL path in the "
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
+
+### November 25, 2023 (`v3.20.0`)
+
+- ✨ [Feature] Added support for the `gpt-4-1106-preview` model. This model supports 128,000 token input context. The output token limit is 4,096. It's ~3x less expensive than `gpt-4`. - *Thank you for the suggestion @xmjiao*
+- 🔧 [Fixes] Fix highlighting of HTML characters. - *Thank you for the PR @ZsgsDesign*
+- 🎮 [QoL] OpenAI is beginning to have different prompt and complete token limits. The model selector now has more specific model info, including token prompt/complete limits.
 
 ### July 31, 2023 (`v3.19.0`, `v3.19.1`)
 

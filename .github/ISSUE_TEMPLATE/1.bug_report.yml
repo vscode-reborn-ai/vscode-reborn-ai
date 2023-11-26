@@ -21,9 +21,10 @@ body:
   - type: dropdown
     attributes:
       label: Which OpenAI model are you using? (Optional)
-      description: In the model dropdown, do you have "gpt-3.5-turbo", "gpt-4", or "gpt-4-32k" selected?
+      description: In the model dropdown, do you have "gpt-3.5-turbo","gpt-4-turbo", "gpt-4", or "gpt-4-32k" selected?
       options:
         - gpt-3.5-turbo
+        - gpt-4-turbo
         - gpt-4
         - gpt-4-32k
     validations:

@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { updateConversationModel } from "../store/conversation";
 import {
-  addConversation,
-  removeConversation,
-  updateConversationModel,
-} from "../store/conversation";
-import { Conversation, Model, Verbosity } from "../types";
+  Conversation,
+  MODEL_FRIENDLY_NAME,
+  MODEL_TOKEN_LIMITS,
+  Model,
+} from "../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
@@ -26,51 +26,11 @@ export default function ModelSelect({
   tooltipId?: string;
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: any) => state.app.translations);
   const [showModels, setShowModels] = useState(false);
   const settings = useAppSelector((state: any) => state.app.extensionSettings);
   const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
-
-  const createNewConversation = (model: Model) => {
-    let title = t?.modelSelect?.chat ?? "Chat";
-    let i = 2;
-
-    while (
-      conversationList.find((conversation) => conversation.title === title)
-    ) {
-      title = `${t?.modelSelect?.chat ?? "Chat"} ${i}`;
-      i++;
-    }
-    const newConversation = {
-      id: `${title}-${Date.now()}`,
-      title,
-      messages: [],
-      inProgress: false,
-      createdAt: Date.now(),
-      model,
-      autoscroll: true,
-      verbosity:
-        settings?.verbosity ??
-        currentConversation?.verbosity ??
-        Verbosity.normal,
-    } as Conversation;
-
-    dispatch(addConversation(newConversation));
-
-    // switch to the new conversation
-    navigate(`/chat/${encodeURI(newConversation.id)}`);
-
-    // If multiple conversations are disabled, remove all but the new conversation
-    if (settings?.disableMultipleConversations) {
-      for (const conversation of conversationList) {
-        if (conversation.id !== newConversation.id) {
-          dispatch(removeConversation(conversation.id));
-        }
-      }
-    }
-  };
 
   const setModel = (model: Model) => {
     // Update settings
@@ -80,20 +40,12 @@ export default function ModelSelect({
       conversationId: currentConversation.id,
     });
 
-    // Model can't change partway through a conversation, so we need to create a new one
-    // if (
-    //   currentConversation.model !== model &&
-    //   currentConversation.messages.length > 0
-    // ) {
-    //   createNewConversation(model);
-    // } else {
     dispatch(
       updateConversationModel({
         conversationId: currentConversation.id,
         model,
       })
     );
-    // }
 
     // Close the menu
     setShowModels(false);
@@ -111,8 +63,10 @@ export default function ModelSelect({
           data-tooltip-content="Change the AI model being used"
         >
           <Icon icon="box" className="w-3 h-3 mr-1" />
-          {currentConversation.messages.length > 0
-            ? currentConversation.model
+          {currentConversation.model
+            ? MODEL_FRIENDLY_NAME[
+                currentConversation.model ?? Model.gpt_35_turbo
+              ]
             : settings?.gpt3?.model ?? "..."}
         </button>
         <div
@@ -123,7 +77,7 @@ export default function ModelSelect({
         >
           {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo) && (
             <button
-              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
               onClick={() => {
                 setModel(Model.gpt_35_turbo);
                 if (showParentMenu) {
@@ -131,13 +85,18 @@ export default function ModelSelect({
                 }
               }}
             >
-              <code>gpt-3.5-turbo</code>{" "}
-              {t?.modelSelect?.gpt35TurboNote ?? "(Fast, recommended)"}
+              <code>gpt-3.5-turbo</code>
+              <p>
+                Quality: ✅⬜⬜, Speed: ✅✅✅, Cost: ✅✅✅, Prompt:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].prompt}</code>,
+                Completion:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].complete}</code>
+              </p>
             </button>
           )}
           {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo_16k) && (
             <button
-              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
               onClick={() => {
                 setModel(Model.gpt_35_turbo_16k);
                 if (showParentMenu) {
@@ -145,13 +104,55 @@ export default function ModelSelect({
                 }
               }}
             >
-              <code>gpt-3.5-turbo-16k</code>{" "}
-              {t?.modelSelect?.gpt35Turbo16kNote ?? "(Fast, 4x longer input)"}
+              <code>gpt-3.5-turbo-16k</code>
+              <p>
+                Quality: ✅⬜⬜, Speed: ✅✅✅, Cost: ✅✅✅, Prompt:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].prompt}</code>
+                , Completion:{" "}
+                <code>
+                  {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].complete}
+                </code>
+              </p>
             </button>
+          )}
+          {chatGPTModels && chatGPTModels.includes(Model.gpt_4_turbo) ? (
+            <button
+              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+              onClick={() => {
+                setModel(Model.gpt_4_turbo);
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
+              }}
+            >
+              <code>gpt-4-turbo</code>
+              <p>
+                Quality: ✅✅⬜, Speed: ✅✅⬜, Cost: ✅✅⬜, Prompt:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].prompt}</code>,
+                Completion:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].complete}</code>
+              </p>
+            </button>
+          ) : (
+            <a
+              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              href="https://openai.com/waitlist/gpt-4-api"
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => {
+                setShowModels(false);
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
+              }}
+            >
+              {t?.modelSelect?.gpt4TurboUnavailableNote ??
+                "Looking for GPT-4-turbo? Your account does not seem to have access yet."}
+            </a>
           )}
           {chatGPTModels && chatGPTModels.includes(Model.gpt_4) ? (
             <button
-              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
               onClick={() => {
                 setModel(Model.gpt_4);
                 if (showParentMenu) {
@@ -159,9 +160,13 @@ export default function ModelSelect({
                 }
               }}
             >
-              <code>gpt-4</code>{" "}
-              {t?.modelSelect?.gpt4Note ??
-                "(Better and larger input, but slower and more pricey)"}
+              <code>gpt-4</code>
+              <p>
+                Quality: ✅✅✅, Speed: ✅⬜⬜, Cost: ✅⬜⬜, Prompt:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4].prompt}</code>,
+                Completion:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4].complete}</code>
+              </p>
             </button>
           ) : (
             <a
@@ -182,14 +187,18 @@ export default function ModelSelect({
           )}
           {chatGPTModels && chatGPTModels.includes(Model.gpt_4_32k) ? (
             <button
-              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
+              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
               onClick={() => {
                 setModel(Model.gpt_4_32k);
               }}
             >
-              <code>gpt-4-32k</code>{" "}
-              {t?.modelSelect?.gpt432kNote ??
-                "(Extremely long input, but even more pricey than GPT-4)"}
+              <code>gpt-4-32k</code>
+              <p>
+                Quality: ✅✅✅, Speed: ✅⬜⬜, Cost: ✅⬜⬜, Prompt:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k].prompt}</code>,
+                Completion:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k].complete}</code>
+              </p>
             </button>
           ) : (
             <a
