@@ -269,13 +269,13 @@ export default function Chat({
                                     />
                                   );
                                 } else {
-                                  return (
+                                  return message.role !== Role.user ? (
                                     <div
                                       key={index}
-                                      dangerouslySetInnerHTML={{
-                                        __html: item,
-                                      }}
+                                      dangerouslySetInnerHTML={{ __html: item }}
                                     />
+                                  ) : (
+                                    <div key={index}>{item}</div>
                                   );
                                 }
                               }
