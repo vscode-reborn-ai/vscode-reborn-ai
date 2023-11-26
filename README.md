@@ -122,11 +122,13 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### November 25, 2023 (`v3.20.0`)
+### November 25, 2023 (`v3.20.0`, `v3.20.1`)
 
 - ✨ [Feature] Added support for the `gpt-4-1106-preview` model. This model supports 128,000 token input context. The output token limit is 4,096. It's ~3x less expensive than `gpt-4`. - *Thank you for the suggestion @xmjiao*
+- 🎮 [QoL] The context menu items have been consolidated into a single "ChatGPT" submenu to reduce clutter.
 - 🔧 [Fixes] Fix highlighting of HTML characters. - *Thank you for the PR @ZsgsDesign*
 - 🎮 [QoL] OpenAI is beginning to have different prompt and complete token limits. The model selector now has more specific model info, including token prompt/complete limits.
+- 🔧 [Fixes] When HTML code is used in the question, the code should no longer be injected.
 
 ### July 31, 2023 (`v3.19.0`, `v3.19.1`)
 
