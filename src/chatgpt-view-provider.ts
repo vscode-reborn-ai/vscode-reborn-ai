@@ -4,10 +4,10 @@ import OpenAI, { ClientOptions } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
 import { ActionRunner } from "./actionRunner";
-import { ApiProvider, MODEL_TOKEN_LIMITS } from "./api-provider";
+import { ApiProvider } from "./api-provider";
 import Auth from "./auth";
 import { loadTranslations } from './localization';
-import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
+import { ActionNames, Conversation, MODEL_TOKEN_LIMITS, Message, Model, Role, Verbosity } from "./renderer/types";
 import { unEscapeHTML } from "./renderer/utils";
 
 // At the moment, gpt-4-1106-preview means "GPT-4 Turbo"
@@ -409,8 +409,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						tokenCount: {
 							messages: convTokens,
 							userInput: userInputTokens,
-							// maxTotal: Math.min(this._maxTokens, MODEL_TOKEN_LIMITS[(data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model]),
-							maxTotal: MODEL_TOKEN_LIMITS[(data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model],
 							minTotal: convTokens + userInputTokens,
 						},
 					});
@@ -767,8 +765,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 				// Stream ChatGPT response (this is using an async iterator)
 				for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal, {
-					// maxTokens: options.maxTokens ?? this._maxTokens,
-					maxTokens: options.maxTokens ?? MODEL_TOKEN_LIMITS[(options.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model],
+					maxTokens: options.maxTokens ?? MODEL_TOKEN_LIMITS[(options.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model].complete,
 					temperature: options.temperature ?? this._temperature,
 					topP: options.topP ?? this._topP,
 				})) {

@@ -121,7 +121,6 @@ export default function Layout({ vscode }: { vscode: any }) {
       tokenCount?: {
         messages: number;
         userInput: number;
-        maxTotal: number;
         minTotal: number;
       };
       // For questions
@@ -430,7 +429,6 @@ export default function Layout({ vscode }: { vscode: any }) {
             tokenCount: data.tokenCount ?? {
               messages: 0,
               userInput: 0,
-              maxTotal: 0,
               minTotal: 0,
             },
           })

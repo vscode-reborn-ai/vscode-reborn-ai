@@ -1,26 +1,7 @@
 import { encoding_for_model, Tiktoken, TiktokenModel } from "@dqbd/tiktoken";
 import OpenAI, { ClientOptions } from 'openai';
 import { v4 as uuidv4 } from "uuid";
-import { Conversation, Message, Model, Role } from "./renderer/types";
-// https://openai.1rmb.tk/v1/
-
-// TODO: this is also in TokenCountPopup.tsx, consolidate to avoid discrepancies..
-// TODO: Need to separately track input and output limits
-export const MODEL_TOKEN_LIMITS: Record<Model, number> = {
-  [Model.gpt_4_turbo]: 4096,
-  [Model.gpt_4]: 8192,
-  [Model.gpt_4_32k]: 32768,
-  // TODO - Dec 11, 2023, gpt_35_turbo will start pointing to the 16k model
-  [Model.gpt_35_turbo]: 4096,
-  [Model.gpt_35_turbo_16k]: 16384,
-  // Note: These models are not yet supported in this extension
-  [Model.text_davinci_003]: 4097,
-  [Model.text_curie_001]: 2049,
-  [Model.text_babbage_001]: 2049,
-  [Model.text_ada_001]: 2049,
-  [Model.code_davinci_002]: 4097,
-  [Model.code_cushman_001]: 2049,
-};
+import { Conversation, Message, Model, MODEL_TOKEN_LIMITS, Role } from "./renderer/types";
 
 export class ApiProvider {
   private _openai: OpenAI;
@@ -77,7 +58,7 @@ export class ApiProvider {
     const tokensUsed = ApiProvider.countConversationTokens(conversation);
 
     // Max tokens cannot be greater than the model's token limit
-    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model]);
+    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model].complete);
 
     // if tokensUsed > maxTokens, throw error
     if (tokensUsed > maxTokens) {
@@ -137,7 +118,7 @@ export class ApiProvider {
     const tokensUsed = ApiProvider.countConversationTokens(conversation);
 
     // Max tokens cannot be greater than the model's token limit
-    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model]);
+    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model].complete);
 
     // if tokensUsed > maxTokens, throw error
     if (tokensUsed > maxTokens) {
@@ -184,7 +165,7 @@ export class ApiProvider {
     const tokensUsed = ApiProvider.countConversationTokens(conversation);
 
     // Max tokens cannot be greater than the model's token limit
-    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model]);
+    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model].complete);
 
     // if tokensUsed > maxTokens, throw error
     if (tokensUsed > maxTokens) {

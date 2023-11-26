@@ -33,13 +33,74 @@ export enum Model {
   gpt_35_turbo = "gpt-3.5-turbo",
   gpt_35_turbo_16k = "gpt-3.5-turbo-16k",
   // Prompt completion models - Not yet supported in this extension
-  text_davinci_003 = "text-davinci-003",
-  text_curie_001 = "text-curie-001",
-  text_babbage_001 = "text-babbage-001",
-  text_ada_001 = "text-ada-001",
-  code_davinci_002 = "code-davinci-002",
-  code_cushman_001 = "code-cushman-001"
+  babbage_002 = "babbage-002",
+  davinci_002 = "davinci-002",
 }
+
+// source: https://openai.com/pricing
+export const MODEL_COSTS = {
+  [Model.gpt_4_turbo]: {
+    prompt: 0.01,
+    complete: 0.03,
+  },
+  [Model.gpt_4]: {
+    prompt: 0.03,
+    complete: 0.06,
+  },
+  [Model.gpt_4_32k]: {
+    prompt: 0.06,
+    complete: 0.12,
+  },
+  [Model.gpt_35_turbo]: {
+    prompt: 0.0015,
+    complete: 0.002,
+  },
+  [Model.gpt_35_turbo_16k]: {
+    prompt: 0.003,
+    complete: 0.004,
+  },
+  [Model.babbage_002]: {
+    prompt: 0.0004,
+    complete: 0.0004,
+  },
+  [Model.davinci_002]: {
+    prompt: 0.002,
+    complete: 0.002,
+  },
+};
+
+// source: https://platform.openai.com/docs/models
+export const MODEL_TOKEN_LIMITS = {
+  [Model.gpt_4_turbo]: {
+    prompt: 128000,
+    complete: 4096,
+  },
+  [Model.gpt_4]: {
+    prompt: 8192,
+    complete: 8192,
+  },
+  [Model.gpt_4_32k]: {
+    prompt: 32768,
+    complete: 32768,
+  },
+  // TODO: Dec 11, 2023 gpt-35-turbo prompt will become 16385 (but complete will remain 4096)
+  [Model.gpt_35_turbo]: {
+    prompt: 4096,
+    complete: 4096,
+  },
+  [Model.gpt_35_turbo_16k]: {
+    prompt: 16385,
+    complete: 16385,
+  },
+  [Model.babbage_002]: {
+    prompt: 16384,
+    complete: 16384,
+  },
+  [Model.davinci_002]: {
+    prompt: 16384,
+    complete: 16384,
+  }
+};
 
 interface OpenAIMessage {
   role: Role;
@@ -105,7 +166,6 @@ export interface Conversation {
   tokenCount?: {
     messages: number; // All messages combined
     userInput: number; // User input
-    maxTotal: number; // Maximum tokens that can be used (same as config.maxTokens)
     minTotal: number; // Minimum tokens to be used (messages + userInput)
   },
 }

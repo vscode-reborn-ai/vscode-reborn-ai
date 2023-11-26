@@ -79,7 +79,6 @@ export const conversationSlice = createSlice({
         conversationId: string; tokenCount: {
           messages: number; // All messages combined
           userInput: number; // User input
-          maxTotal: number; // Maximum tokens that can be used (same as config.maxTokens)
           minTotal: number; // Minimum tokens to be used (messages + userInput)
         };
       }>
