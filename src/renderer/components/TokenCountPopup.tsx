@@ -106,7 +106,7 @@ export default function TokenCountPopup({
         </p>
         <p>
           {t?.questionInputField?.tokenBreakdownBasedOn ??
-            "This is calculated based on "}
+            "This is calculated based on"}{" "}
           <code>{currentConversation.model ?? Model.gpt_35_turbo}</code>
           's{" "}
           <a href="https://openai.com/pricing" target="_blank" rel="noreferrer">
