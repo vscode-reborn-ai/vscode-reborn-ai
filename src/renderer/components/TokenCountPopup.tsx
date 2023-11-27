@@ -45,7 +45,7 @@ export default function TokenCountPopup({
       MODEL_COSTS[currentConversation.model ?? Model.gpt_35_turbo].complete;
     let minCost = (minPromptTokens / 1000) * ratePrompt;
     // maxCost is based on current convo text at ratePrompt pricing + theoretical maximum response at rateComplete pricing
-    let maxCost = ((minPromptTokens + maxCompleteTokens) / 1000) * rateComplete;
+    let maxCost = minCost + (maxCompleteTokens / 1000) * rateComplete;
 
     setMinPromptTokens(minPromptTokens);
     setMaxPromptTokens(maxPrompt);
