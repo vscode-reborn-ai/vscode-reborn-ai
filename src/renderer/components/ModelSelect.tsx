@@ -87,10 +87,14 @@ export default function ModelSelect({
             >
               <code>gpt-3.5-turbo</code>
               <p>
-                Quality: ✅⬜⬜, Speed: ✅✅✅, Cost: ✅✅✅, Prompt:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].prompt}</code>,
-                Completion:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].complete}</code>
+                Quality: ✅⬜⬜, Speed: ✅✅✅, Cost: ✅✅✅, Context:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].context}</code>
+                {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].max && (
+                  <>
+                    , Max Completion:{" "}
+                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo]?.max}</code>
+                  </>
+                )}
               </p>
             </button>
           )}
@@ -106,12 +110,18 @@ export default function ModelSelect({
             >
               <code>gpt-3.5-turbo-16k</code>
               <p>
-                Quality: ✅⬜⬜, Speed: ✅✅✅, Cost: ✅✅✅, Prompt:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].prompt}</code>
-                , Completion:{" "}
+                Quality: ✅⬜⬜, Speed: ✅✅✅, Cost: ✅✅✅, Context:{" "}
                 <code>
-                  {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].complete}
+                  {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].context}
                 </code>
+                {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].max && (
+                  <>
+                    , Max Completion:{" "}
+                    <code>
+                      {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k]?.max}
+                    </code>
+                  </>
+                )}
               </p>
             </button>
           )}
@@ -127,10 +137,14 @@ export default function ModelSelect({
             >
               <code>gpt-4-turbo</code>
               <p>
-                Quality: ✅✅⬜, Speed: ✅✅⬜, Cost: ✅✅⬜, Prompt:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].prompt}</code>,
-                Completion:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].complete}</code>
+                Quality: ✅✅⬜, Speed: ✅✅⬜, Cost: ✅✅⬜, Context:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].context}</code>
+                {MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].max && (
+                  <>
+                    , Max Completion:{" "}
+                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo]?.max}</code>
+                  </>
+                )}
               </p>
             </button>
           ) : (
@@ -162,10 +176,14 @@ export default function ModelSelect({
             >
               <code>gpt-4</code>
               <p>
-                Quality: ✅✅✅, Speed: ✅⬜⬜, Cost: ✅⬜⬜, Prompt:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4].prompt}</code>,
-                Completion:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4].complete}</code>
+                Quality: ✅✅✅, Speed: ✅⬜⬜, Cost: ✅⬜⬜, Context:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4].context}</code>
+                {MODEL_TOKEN_LIMITS[Model.gpt_4].max && (
+                  <>
+                    , Max Completion:{" "}
+                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_4]?.max}</code>
+                  </>
+                )}
               </p>
             </button>
           ) : (
@@ -194,10 +212,14 @@ export default function ModelSelect({
             >
               <code>gpt-4-32k</code>
               <p>
-                Quality: ✅✅✅, Speed: ✅⬜⬜, Cost: ✅⬜⬜, Prompt:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k].prompt}</code>,
-                Completion:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k].complete}</code>
+                Quality: ✅✅✅, Speed: ✅⬜⬜, Cost: ✅⬜⬜, Context:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k].context}</code>
+                {MODEL_TOKEN_LIMITS[Model.gpt_4_32k].max && (
+                  <>
+                    , Max Completion:{" "}
+                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k]?.max}</code>
+                  </>
+                )}
               </p>
             </button>
           ) : (

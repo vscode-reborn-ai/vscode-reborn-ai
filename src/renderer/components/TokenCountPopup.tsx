@@ -23,7 +23,6 @@ export default function TokenCountPopup({
   const [minPromptTokens, setMinPromptTokens] = useState(
     currentConversation.tokenCount?.minTotal ?? 0
   );
-  const [maxPromptTokens, setMaxPromptTokens] = useState(0);
   const [maxCompleteTokens, setMaxCompleteTokens] = useState(0);
   const [promptRate, setPromptRate] = useState(0);
   const [completeRate, setCompleteRate] = useState(0);
@@ -33,23 +32,28 @@ export default function TokenCountPopup({
     const minPromptTokens =
       (currentConversation.tokenCount?.messages ?? 0) +
       (currentConversation.tokenCount?.userInput ?? 0);
-    const maxPrompt =
+    const modelContextLimit =
       MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
-        .prompt;
-    const maxComplete =
-      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
-        .complete;
+        .context;
+
+    const modelMax =
+      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo].max;
+    let maxCompleteTokens = modelContextLimit - minPromptTokens;
+
+    if (modelMax) {
+      maxCompleteTokens = Math.min(maxCompleteTokens, modelMax);
+    }
+
     let ratePrompt =
       MODEL_COSTS[currentConversation.model ?? Model.gpt_35_turbo].prompt;
     let rateComplete =
       MODEL_COSTS[currentConversation.model ?? Model.gpt_35_turbo].complete;
     let minCost = (minPromptTokens / 1000) * ratePrompt;
     // maxCost is based on current convo text at ratePrompt pricing + theoretical maximum response at rateComplete pricing
-    let maxCost = ((minPromptTokens + maxCompleteTokens) / 1000) * rateComplete;
+    let maxCost = minCost + (maxCompleteTokens / 1000) * rateComplete;
 
     setMinPromptTokens(minPromptTokens);
-    setMaxPromptTokens(maxPrompt);
-    setMaxCompleteTokens(maxComplete);
+    setMaxCompleteTokens(maxCompleteTokens);
     setPromptRate(ratePrompt);
     setCompleteRate(rateComplete);
     setMinCost(minCost);
@@ -81,6 +85,9 @@ export default function TokenCountPopup({
             <span className="font-italic text-[10px]">
               {t?.questionInputField?.tokenBreakdownAtLeastNote ??
                 "(no answer)"}
+              <br />(
+              <code>{currentConversation.tokenCount?.messages ?? 0}</code> +{" "}
+              <code>{currentConversation.tokenCount?.userInput ?? 0}</code>)
             </span>
           </span>
           <code>{minPromptTokens}</code>{" "}
@@ -97,6 +104,10 @@ export default function TokenCountPopup({
             <span className="font-italic text-[10px]">
               {t?.questionInputField?.tokenBreakdownAtMostNote ??
                 "(all messages + prompt + longest answer)"}
+              <br />(
+              <code>{currentConversation.tokenCount?.messages ?? 0}</code> +{" "}
+              <code>{currentConversation.tokenCount?.userInput ?? 0}</code> +{" "}
+              <code>{maxCompleteTokens})</code>
             </span>
           </span>
           <code>{minPromptTokens + maxCompleteTokens}</code>{" "}
@@ -106,7 +117,7 @@ export default function TokenCountPopup({
         </p>
         <p>
           {t?.questionInputField?.tokenBreakdownBasedOn ??
-            "This is calculated based on "}
+            "This is calculated based on"}{" "}
           <code>{currentConversation.model ?? Model.gpt_35_turbo}</code>
           's{" "}
           <a href="https://openai.com/pricing" target="_blank" rel="noreferrer">
