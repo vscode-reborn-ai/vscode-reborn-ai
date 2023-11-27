@@ -5,8 +5,6 @@ import { Conversation, Message, Model, MODEL_TOKEN_LIMITS, Role } from "./render
 
 export class ApiProvider {
   private _openai: OpenAI;
-  private _maxCompleteTokens: number;
-  private _maxResponseTokens: number;
   private _temperature: number;
   private _topP: number;
 
@@ -36,44 +34,44 @@ export class ApiProvider {
       // baseURL: apiBaseUrl,
     };
     this._openai = new OpenAI(this.apiConfig);
-    this._maxCompleteTokens = maxTokens;
-    this._maxResponseTokens = maxResponseTokens ?? maxTokens;
     this._temperature = temperature;
     this._topP = topP;
   }
 
-  getRemainingTokens(model: Model, promptTokensUsed: number, maxCompleteTokens: number) {
-    maxCompleteTokens = Math.min(maxCompleteTokens, MODEL_TOKEN_LIMITS[model].complete);
+  getRemainingTokens(model: Model, promptTokensUsed: number) {
+    const maxPromptTokens = MODEL_TOKEN_LIMITS[model].context;
 
-    // Max tokens cannot be greater than the model's token limit
-    const maxPromptTokens = MODEL_TOKEN_LIMITS[model].prompt;
-
-    // if tokensUsed > maxTokens, throw error
-    if (promptTokensUsed > maxPromptTokens - maxCompleteTokens) {
-      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${model}) only supports ${maxPromptTokens} prompt tokens. Please clear the conversation to reduce the conversation size or switch to a different model.`);
-    }
-    const completeTokensLeft = Math.min(maxPromptTokens - promptTokensUsed, maxCompleteTokens);
-
-    if (completeTokensLeft <= 0) {
-      throw new Error(`This conversation uses ${promptTokensUsed} tokens. After applying this model's (${model}) prompt token limit of ${MODEL_TOKEN_LIMITS[model].prompt} and complete token limit of ${MODEL_TOKEN_LIMITS[model].complete}, there are no tokens left to send. Either A) Clear the conversation to reduce the conversation size or B) reduce the amount of code you are sending or C) increase the sending limit on "maxTokens" by hitting "More Actions" > "Settings" > search for "maxTokens". Note that if you are hitting the model token limit of ${MODEL_TOKEN_LIMITS[model]}, you will need to switch to a different model that accepts more tokens.`);
+    if (promptTokensUsed > maxPromptTokens) {
+      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${model}) only supports ${maxPromptTokens} prompt tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
     }
 
-    return completeTokensLeft;
+    // OpenAI's maxTokens is used as max (prompt + complete) tokens
+    // We must calculate total context window - prompt tokens being sent to determine max response size
+    // This is complicated by the fact that some models have a max token completion limit
+    let tokensLeft = 4096;
+
+    if (MODEL_TOKEN_LIMITS[model].max) {
+      // Models with a max token limit (ie gpt-4-turbo)
+      tokensLeft = Math.min(MODEL_TOKEN_LIMITS[model]?.context - promptTokensUsed, MODEL_TOKEN_LIMITS[model]?.max ?? 4096);
+    } else {
+      // Models without a max token limit (ie gpt-4)
+      tokensLeft = MODEL_TOKEN_LIMITS[model]?.context - promptTokensUsed;
+    }
+
+    return tokensLeft;
   }
 
   // OpenAI's library doesn't support streaming, but great workaround from @danneu - https://github.com/openai/openai-node/issues/18#issuecomment-1483808526
   async* streamChatCompletion(conversation: Conversation, abortSignal: AbortSignal, {
-    maxCompleteTokens = this._maxCompleteTokens,
     temperature = this._temperature,
     topP = this._topP,
   }: {
-    maxCompleteTokens?: number;
     temperature?: number;
     topP?: number;
   } = {}): AsyncGenerator<any, any, unknown> {
     const model = conversation.model ?? Model.gpt_35_turbo;
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed, maxCompleteTokens);
+    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
 
     // Only stream if not using a proxy
     const useStream = true; // this.apiConfig.basePath === 'https://api.openai.com/v1';
@@ -109,17 +107,15 @@ export class ApiProvider {
   }
 
   async getChatCompletion(conversation: Conversation, {
-    maxCompleteTokens = this._maxCompleteTokens,
     temperature = this._temperature,
     topP = this._topP,
   }: {
-    maxCompleteTokens?: number;
     temperature?: number;
     topP?: number;
   } = {}): Promise<OpenAI.Chat.Completions.ChatCompletionMessage | undefined> {
     const model = conversation.model ?? Model.gpt_35_turbo;
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed, maxCompleteTokens);
+    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
 
     const response = await this._openai.chat.completions.create(
       {
@@ -142,37 +138,21 @@ export class ApiProvider {
   // Using prompt as a param instead of the last message in the conversation to
   // allow for special formatting of the prompt before sending it to OpenAI
   async getPromptCompletion(prompt: string, conversation: Conversation, {
-    maxTokens = this._maxCompleteTokens,
     temperature = this._temperature,
     topP = this._topP,
-    maxResponseTokens = this._maxResponseTokens,
   }: {
-    maxTokens?: number;
     temperature?: number;
     topP?: number;
-    maxResponseTokens?: number;
   } = {}): Promise<Message | undefined> {
     const model = conversation.model ?? Model.gpt_35_turbo;
-    const tokensUsed = ApiProvider.countConversationTokens(conversation);
-
-    // Max tokens cannot be greater than the model's token limit
-    maxTokens = Math.min(maxTokens, MODEL_TOKEN_LIMITS[model].complete);
-
-    // if tokensUsed > maxTokens, throw error
-    if (tokensUsed > maxTokens) {
-      throw new Error(`Conversation uses ${tokensUsed} tokens, but the "maxTokens" set in the extension settings is ${maxTokens}. Please increase the "maxTokens" setting or reduce amount of code you're sending.`);
-    }
-    const tokensLeft = Math.min(maxTokens - tokensUsed, maxResponseTokens);
-
-    if (tokensLeft <= 0) {
-      throw new Error(`This conversation uses ${tokensUsed} tokens. After applying the "maxTokens" setting of ${maxTokens}, and this model's (${model}) token limit of ${MODEL_TOKEN_LIMITS[model]}, there are no tokens left to send. Either A) Clear the conversation to reduce the conversation size or B) reduce the amount of code you are sending or C) increase the sending limit on "maxTokens" by hitting "More Actions" > "Settings" > search for "maxTokens". Note that if you are hitting the model token limit of ${MODEL_TOKEN_LIMITS[model]}, you will need to switch to a different model that accepts more tokens.`);
-    }
+    const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
+    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
 
     const response = await this._openai.chat.completions.create(
       {
         model,
         messages: [{ "role": "user", "content": prompt }],
-        max_tokens: tokensLeft,
+        max_tokens: completeTokensLeft,
         temperature,
         top_p: topP,
         stream: false,
@@ -261,10 +241,6 @@ export class ApiProvider {
   }
 
   // * Getters and setters
-  set maxTokens(value: number) {
-    this._maxCompleteTokens = value;
-  }
-
   set temperature(value: number) {
     this._temperature = value;
   }

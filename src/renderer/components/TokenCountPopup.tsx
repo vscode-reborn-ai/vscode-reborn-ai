@@ -35,10 +35,16 @@ export default function TokenCountPopup({
       (currentConversation.tokenCount?.userInput ?? 0);
     const maxPrompt =
       MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
-        .prompt;
-    const maxComplete =
-      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
-        .complete;
+        .context;
+
+    const modelMax =
+      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo].max;
+    let maxCompleteTokens = maxPrompt - minPromptTokens;
+
+    if (modelMax) {
+      maxCompleteTokens = Math.min(maxCompleteTokens, modelMax);
+    }
+
     let ratePrompt =
       MODEL_COSTS[currentConversation.model ?? Model.gpt_35_turbo].prompt;
     let rateComplete =
@@ -49,7 +55,7 @@ export default function TokenCountPopup({
 
     setMinPromptTokens(minPromptTokens);
     setMaxPromptTokens(maxPrompt);
-    setMaxCompleteTokens(maxComplete);
+    setMaxCompleteTokens(maxCompleteTokens);
     setPromptRate(ratePrompt);
     setCompleteRate(rateComplete);
     setMinCost(minCost);

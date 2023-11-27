@@ -309,7 +309,7 @@ export default ({
                   parseInt(tokenCountLabel) >
                   MODEL_TOKEN_LIMITS[
                     currentConversation?.model ?? Model.gpt_35_turbo
-                  ].prompt
+                  ].context
                     ? "duration-200 bg-red-300 bg-opacity-40"
                     : ""
                 }
