@@ -32,7 +32,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	public model?: string;
 
 	private api: ApiProvider = new ApiProvider('');
-	// private _maxTokens: number = 2048;
 	private _temperature: number = 0.9;
 	private _topP: number = 1;
 	private chatMode?: boolean = true;
@@ -115,7 +114,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				{
 					organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string,
 					apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
-					maxTokens: vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number,
 					temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
 					topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
 				});
@@ -227,7 +225,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			{
 				organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string,
 				apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
-				maxTokens: vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number,
 				temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
 				topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
 			});
@@ -765,7 +762,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 				// Stream ChatGPT response (this is using an async iterator)
 				for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal, {
-					maxTokens: options.maxTokens ?? MODEL_TOKEN_LIMITS[(options.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model].complete,
+					maxCompleteTokens: MODEL_TOKEN_LIMITS[(options.conversation?.model ?? this.model ?? Model.gpt_35_turbo) as Model].complete,
 					temperature: options.temperature ?? this._temperature,
 					topP: options.topP ?? this._topP,
 				})) {
