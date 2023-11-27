@@ -8,7 +8,7 @@ import {
   setInProgress,
   updateUserInput,
 } from "../store/conversation";
-import { Conversation } from "../types";
+import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 import MoreActionsMenu from "./MoreActionsMenu";
@@ -304,7 +304,16 @@ export default ({
                 tokenCountAnimation
                   ? "duration-200 bg-blue-300 bg-opacity-20"
                   : "duration-500"
-              }`}
+              }
+                ${
+                  parseInt(tokenCountLabel) >
+                  MODEL_TOKEN_LIMITS[
+                    currentConversation?.model ?? Model.gpt_35_turbo
+                  ].context
+                    ? "duration-200 bg-red-700 bg-opacity-20"
+                    : ""
+                }
+              `}
               ref={tokenCountRef}
               tabIndex={0}
               // on hover showTokenBreakdown

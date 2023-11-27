@@ -122,6 +122,11 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### November 26, 2023 (`v3.20.2`)
+
+- 🔧 [Fixes] Fixes bugs with `gpt-4-turbo` context being limited to 4,096 tokens, instead of its full 128,000 context window. - *Thank you for the report @xmjiao*
+- 🎮 [QoL] Minor improvements to token counting. Token modal now shows full token breakdown. Token counter turns red when above context limit.
+
 ### November 25, 2023 (`v3.20.0`, `v3.20.1`)
 
 - ✨ [Feature] Added support for the `gpt-4-1106-preview` model. This model supports 128,000 token input context. The output token limit is 4,096. It's ~3x less expensive than `gpt-4`. - *Thank you for the suggestion @xmjiao*
