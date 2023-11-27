@@ -310,7 +310,7 @@ export default ({
                   MODEL_TOKEN_LIMITS[
                     currentConversation?.model ?? Model.gpt_35_turbo
                   ].context
-                    ? "duration-200 bg-red-300 bg-opacity-40"
+                    ? "duration-200 bg-red-700 bg-opacity-20"
                     : ""
                 }
               `}

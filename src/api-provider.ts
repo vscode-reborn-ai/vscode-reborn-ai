@@ -39,23 +39,24 @@ export class ApiProvider {
   }
 
   getRemainingTokens(model: Model, promptTokensUsed: number) {
-    const maxPromptTokens = MODEL_TOKEN_LIMITS[model].context;
-
-    if (promptTokensUsed > maxPromptTokens) {
-      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${model}) only supports ${maxPromptTokens} prompt tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
-    }
+    const modelContext = MODEL_TOKEN_LIMITS[model].context;
+    const modelMax = MODEL_TOKEN_LIMITS[model].max;
 
     // OpenAI's maxTokens is used as max (prompt + complete) tokens
     // We must calculate total context window - prompt tokens being sent to determine max response size
     // This is complicated by the fact that some models have a max token completion limit
     let tokensLeft = 4096;
 
-    if (MODEL_TOKEN_LIMITS[model].max) {
+    if (modelMax !== undefined) {
       // Models with a max token limit (ie gpt-4-turbo)
-      tokensLeft = Math.min(MODEL_TOKEN_LIMITS[model]?.context - promptTokensUsed, MODEL_TOKEN_LIMITS[model]?.max ?? 4096);
+      tokensLeft = Math.min(modelContext - promptTokensUsed, modelMax);
     } else {
       // Models without a max token limit (ie gpt-4)
-      tokensLeft = MODEL_TOKEN_LIMITS[model]?.context - promptTokensUsed;
+      tokensLeft = modelContext - promptTokensUsed;
+    }
+
+    if (tokensLeft < 0) {
+      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${model}) only supports ${modelContext} context tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
     }
 
     return tokensLeft;
