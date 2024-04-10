@@ -10,8 +10,7 @@ import { loadTranslations } from './localization';
 import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
 import { unEscapeHTML } from "./renderer/utils";
 
-// At the moment, gpt-4-1106-preview means "GPT-4 Turbo"
-const CHATGPT_MODELS = ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-1106-preview', 'gpt-4', 'gpt-4-32k'];
+const CHATGPT_MODELS = ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-turbo', 'gpt-4', 'gpt-4-32k'];
 
 export interface ApiRequestOptions {
 	command: string,
