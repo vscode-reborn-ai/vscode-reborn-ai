@@ -4,7 +4,7 @@
   "displayName": "ChatGPT Reborn",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.20.2",
+  "version": "3.21.0",
   "aiKey": "",
   "license": "ISC",
   "repository": {
@@ -462,6 +462,7 @@
             "gpt-4-1106-preview",
             "gpt-4",
             "gpt-4-32k",
+            "gpt-4o",
             "gpt-3.5-turbo",
             "gpt-3.5-turbo-16k",
             "text-davinci-003",
@@ -478,6 +479,7 @@
             "gpt-4-turbo",
             "gpt-4",
             "gpt-4-32k",
+            "gpt-4o",
             "gpt-3.5-turbo",
             "gpt-3.5-turbo-16k",
             "text-davinci-003",
@@ -488,9 +490,10 @@
             "code-cushman-001"
           ],
           "markdownEnumDescriptions": [
-            "GPT-4-TURBO, the latest model from OpenAI. 3x cheaper than GPT-4. 16x longer inputs than GPT-4.",
-            "GPT-4, the latest and greatest model from OpenAI. 2x longer inputs than GPT-3.",
-            "GPT-4-32k, the latest and greatest model from OpenAI, with 32k tokens. This is 4x GPT-4 max length and 8x GPT-3 max length.",
+            "GPT-4-TURBO, 3x cheaper than GPT-4. 16x longer inputs than GPT-4.",
+            "GPT-4, 2x longer inputs than GPT-3",
+            "GPT-4-32k, This is 4x GPT-4 max length and 8x GPT-3 max length.",
+            "GPT-4o, newest high speed and cheaper GPT-4 series model",
             "GPT-3.5-TURBO is optimized for chat at 1/10th the cost of `text-davinci-003`.",
             "GPT-3.5-TURBO-16K is the same as `gpt-3.5-turbo` but with 16k tokens."
           ]
@@ -616,7 +619,7 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
-    "@dqbd/tiktoken": "^1.0.7",
+    "@dqbd/tiktoken": "^1.0.15",
     "@reduxjs/toolkit": "^1.9.3",
     "autoprefixer": "^10.4.14",
     "clsx": "^2.0.0",
