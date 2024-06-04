@@ -575,7 +575,7 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "rimraf out && yarn esbuild-base -- --minify && yarn build-webview && cp ./node_modules/@dqbd/tiktoken/tiktoken_bg.wasm ./out/tiktoken_bg.wasm",
+    "vscode:prepublish": "rimraf out && yarn esbuild-base -- --minify && yarn build-webview",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
     "build": "yarn esbuild-base -- --sourcemap && yarn build-webview",
     "dev": "yarn watch",
