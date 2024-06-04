@@ -1,4 +1,4 @@
-import { encoding_for_model, Tiktoken, TiktokenModel } from "@dqbd/tiktoken";
+import { encodingForModel, Tiktoken, TiktokenModel } from "js-tiktoken";
 import OpenAI, { ClientOptions } from 'openai';
 import { v4 as uuidv4 } from "uuid";
 import { Conversation, Message, Model, MODEL_TOKEN_LIMITS, Role } from "./renderer/types";
@@ -170,7 +170,7 @@ export class ApiProvider {
   }
 
   // * Utility token counting methods
-  // Use this.getEncodingForModel() instead of encoding_for_model() due to missing model support
+  // Use this.getEncodingForModel() instead of encodingForModel() due to missing model support
   public static getEncodingForModel(model: Model): Tiktoken {
     let adjustedModel = model;
 
@@ -185,7 +185,7 @@ export class ApiProvider {
         break;
     }
 
-    return encoding_for_model(adjustedModel as TiktokenModel);
+    return encodingForModel(adjustedModel as TiktokenModel);
   }
 
   public static countConversationTokens(conversation: Conversation): number {
@@ -198,7 +198,6 @@ export class ApiProvider {
 
     tokensUsed += 3; // every reply is primed with <im_start>assistant
 
-    enc.free();
     return tokensUsed;
   }
 
@@ -222,9 +221,6 @@ export class ApiProvider {
       }
     }
 
-    if (!encoder) {
-      enc.free();
-    }
     return tokensUsed;
   }
 
@@ -237,7 +233,6 @@ export class ApiProvider {
     const enc = this.getEncodingForModel(model);
     const tokens = enc.encode(prompt).length;
 
-    enc.free();
     return tokens;
   }
 

@@ -27,9 +27,10 @@ export enum Role {
 
 export enum Model {
   // ChatGPT
-  gpt_4_turbo = "gpt-4-1106-preview",
+  gpt_4_turbo = "gpt-4-turbo",
   gpt_4 = "gpt-4",
   gpt_4_32k = "gpt-4-32k",
+  gpt_4o = "gpt-4o",
   gpt_35_turbo = "gpt-3.5-turbo",
   gpt_35_turbo_16k = "gpt-3.5-turbo-16k",
   // Prompt completion models - Not yet supported in this extension
@@ -41,6 +42,7 @@ export const MODEL_FRIENDLY_NAME = {
   [Model.gpt_4_turbo]: "GPT-4 Turbo",
   [Model.gpt_4]: "GPT-4",
   [Model.gpt_4_32k]: "GPT-4 32k",
+  [Model.gpt_4o]: "GPT-4o",
   [Model.gpt_35_turbo]: "GPT-3.5 Turbo",
   [Model.gpt_35_turbo_16k]: "GPT-3.5 Turbo 16k",
   [Model.babbage_002]: "Babbage 002",
@@ -60,6 +62,10 @@ export const MODEL_COSTS = {
   [Model.gpt_4_32k]: {
     prompt: 0.06,
     complete: 0.12,
+  },
+  [Model.gpt_4o]: {
+    prompt: 0.005,
+    complete: 0.015,
   },
   [Model.gpt_35_turbo]: {
     prompt: 0.0015,
@@ -92,9 +98,14 @@ export const MODEL_TOKEN_LIMITS = {
   },
   [Model.gpt_4]: {
     context: 8192,
+    max: 4096,
   },
   [Model.gpt_4_32k]: {
     context: 32768,
+  },
+  [Model.gpt_4o]: {
+    context: 128000,
+    max: 4096,
   },
   // TODO: Dec 11, 2023 gpt-35-turbo prompt will become 16385 (but complete will remain 4096)
   [Model.gpt_35_turbo]: {
