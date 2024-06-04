@@ -9,9 +9,9 @@ import Auth from "./auth";
 import { loadTranslations } from './localization';
 import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
 import { unEscapeHTML } from "./renderer/utils";
+import { getSelectedModel, updateSelectedModel } from "./utils";
 
-// At the moment, gpt-4-1106-preview means "GPT-4 Turbo"
-const CHATGPT_MODELS = ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-1106-preview', 'gpt-4', 'gpt-4-32k'];
+const CHATGPT_MODELS = ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-turbo', 'gpt-4', 'gpt-4-32k'];
 
 export interface ApiRequestOptions {
 	command: string,
@@ -55,7 +55,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private leftOverMessage?: any;
 	constructor(private context: vscode.ExtensionContext) {
 		this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
-		this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
+		this.model = getSelectedModel();
 		this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
 		this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
 
@@ -125,7 +125,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 			// Model
 			if (e.affectsConfiguration("chatgpt.gpt3.model")) {
-				this.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
+				this.model = getSelectedModel();
 			}
 			// System Context
 			if (e.affectsConfiguration("chatgpt.systemContext")) {
@@ -301,8 +301,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					this.logEvent("code-inserted");
 					break;
 				case 'setModel':
-					this.model = data.value;
-					await vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", data.value, vscode.ConfigurationTarget.Global);
+					// Note that due to some models being deprecated, this function may change the model
+					this.model = await updateSelectedModel(data.value);
 					this.logEvent("model-changed to " + data.value);
 					break;
 				case 'openNew':

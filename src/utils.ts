@@ -1,5 +1,6 @@
 import fs from "fs";
 import upath from 'upath';
+import * as vscode from 'vscode';
 
 export function readDirRecursively(dir: string, maxDepth: number, currentDepth: number = 0): string[] {
   if (currentDepth > maxDepth) {
@@ -39,4 +40,49 @@ export function listItems(currentProjectDir: string): string[] {
     .slice(0, 50);
 
   return filteredItems;
+}
+
+// Get the currently selected LLM model from the VSCode settings
+// This utility function gracefully handles deprecated models
+export function getSelectedModel(): string {
+  const model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model");
+  let modifiedModel = typeof model === 'string' ? model : 'gpt-4-turbo';
+
+  // Handle deprecated models
+  switch (model) {
+    case 'gpt-4-1106-preview':
+      modifiedModel = 'gpt-4-turbo';
+      break;
+  }
+
+  // Update VSCode user settings if their selected model is deprecated
+  if (model !== modifiedModel) {
+    // Note update() is async, but we don't need to wait for it to get the new model
+    vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", modifiedModel, vscode.ConfigurationTarget.Global);
+
+    console.debug(`[Reborn] Your selected model "${model}" is deprecated. Updated to "${modifiedModel}".`);
+  }
+
+  return modifiedModel;
+}
+
+// Update the selected LLM model in the VSCode settings
+export async function updateSelectedModel(newModel: string): Promise<string> {
+  let modifiedModel = newModel;
+
+  // Handle deprecated models
+  switch (newModel) {
+    case 'gpt-4-1106-preview':
+      modifiedModel = 'gpt-4-turbo';
+      break;
+  }
+
+  // Update VSCode user settings
+  await vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", modifiedModel, vscode.ConfigurationTarget.Global);
+
+  if (newModel !== modifiedModel) {
+    console.debug(`[Reborn] Your selected model "${newModel}" is deprecated. Updated to "${modifiedModel}".`);
+  }
+
+  return modifiedModel;
 }
