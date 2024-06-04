@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import ChatGptViewProvider from './chatgpt-view-provider';
+import { getSelectedModel } from "./utils";
 
 const menuCommands = [
 	"addTests", "findProblems", "optimize", "explain",
@@ -60,7 +61,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		if (e.affectsConfiguration('chatgpt.gpt3.model')) {
-			provider.model = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model");
+			provider.model = getSelectedModel();
 		}
 
 		if (e.affectsConfiguration('chatgpt.promptPrefix') || e.affectsConfiguration('chatgpt.gpt3.generateCode-enabled') || e.affectsConfiguration('chatgpt.gpt3.model')) {
@@ -168,7 +169,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		menuCommands.forEach(command => {
 			if (command === "generateCode") {
 				let generateCodeEnabled = !!vscode.workspace.getConfiguration("chatgpt").get<boolean>("gpt3.generateCode-enabled");
-				const modelName = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model") as string;
+				const modelName = getSelectedModel();
 				const method = vscode.workspace.getConfiguration("chatgpt").get("method") as string;
 				generateCodeEnabled = generateCodeEnabled && method === "GPT3 OpenAI API Key" && modelName.startsWith("code-");
 				vscode.commands.executeCommand('setContext', "generateCode-enabled", generateCodeEnabled);
