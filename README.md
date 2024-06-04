@@ -90,14 +90,12 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## TODO
 
-- [ ] Let users that are using `gpt-3.5-turbo-16k` know when their prompt is well below 4K tokens. To recommend using `gpt-3.5-turbo` instead to save on costs.
 - [ ] Add way to manage custom prompts in UI.
 - [ ] Add option to stream directly into the editor.
 - [ ] Inline diff
 - [ ] "Smart" actions based on the type of file open.
 - [ ] "Smart" actions on that run at a project level.
 - [ ] AI-generated git commit messages
-- [ ] Support davinci models in place of ChatGPT models
 
 ## Internationalization
 
@@ -121,6 +119,12 @@ This extension can be used with a proxy if you put the proxy's URL path in the "
 This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
 
 ## Changelog
+
+### June 4, 2024 (`v3.22.0`)
+
+- ✨ [Feature] Added support for the latest `gpt-4o` model. This model is slightly better than `gpt-4-turbo`, faster, and half the price. - *Thank you for the help on this one @nickv2002*
+- 🔩 [Behind the scenes] "GPT-4 Turbo" is no longer in preview. We've switched to the official `gpt-4-turbo` model, this model gets automatically updated by OpenAI every quarter or so. - *Thank you for the PR @PeterDaveHello*
+- 🎮 [QoL] The model selector UI has been updated to show the price comparison more clearly. - *Thank you for the suggestion @moritz-t-w*
 
 ### November 26, 2023 (`v3.20.2`)
 
