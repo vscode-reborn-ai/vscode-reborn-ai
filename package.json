@@ -1,11 +1,10 @@
 {
   "name": "chatgpt-reborn",
   "publisher": "chris-hayes",
-  "displayName": "ChatGPT Reborn",
+  "displayName": "ChatGPT Reborn AI",
   "icon": "images/ai-logo.jpg",
-  "description": "Refactor, improve, and debug your code with GPT-4. This is a fork of the now discontinued vscode-chatgpt extension.",
-  "version": "3.21.0",
-  "aiKey": "",
+  "description": "Refactor, improve, and debug your code with GPT-4. Bring your own OpenAI API key.",
+  "version": "3.22.0",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"
@@ -21,14 +20,11 @@
   ],
   "keywords": [
     "chatgpt",
-    "gpt",
-    "gpt3",
-    "gpt3.5",
     "gpt4",
+    "gpt4o",
+    "ai",
     "openai",
-    "testing",
-    "find bugs",
-    "ai"
+    "find bugs"
   ],
   "activationEvents": [
     "onStartupFinished"
