@@ -11,7 +11,7 @@ import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./re
 import { unEscapeHTML } from "./renderer/utils";
 import { getSelectedModel, updateSelectedModel } from "./utils";
 
-const CHATGPT_MODELS = ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-turbo', 'gpt-4', 'gpt-4-32k'];
+const CHATGPT_MODELS = ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-turbo', 'gpt-4', 'gpt-4o', 'gpt-4-32k'];
 
 export interface ApiRequestOptions {
 	command: string,
@@ -833,7 +833,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 			switch (status) {
 				case 400:
-					message = `400 Bad Request\n\nYour model: '${this.model}' may be incompatible or one of your parameters is unknown. Reset your settings to default.`;
+					message = `400 Bad Request\n\nYour model: '${this.model}' may be incompatible or one of your parameters is unknown. \n\nServer message: ${apiMessage}`;
 					break;
 				case 401:
 					message = '401 Unauthorized\n\nMake sure your API key is correct, you can reset it by going to "More Actions" > "Reset API Key". Potential reasons: \n- 1. Incorrect API key provided.\n- 2. Incorrect Organization provided. \n See https://platform.openai.com/docs/guides/error-codes for more details.';

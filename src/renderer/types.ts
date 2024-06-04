@@ -98,12 +98,14 @@ export const MODEL_TOKEN_LIMITS = {
   },
   [Model.gpt_4]: {
     context: 8192,
+    max: 4096,
   },
   [Model.gpt_4_32k]: {
     context: 32768,
   },
   [Model.gpt_4o]: {
     context: 128000,
+    max: 4096,
   },
   // TODO: Dec 11, 2023 gpt-35-turbo prompt will become 16385 (but complete will remain 4096)
   [Model.gpt_35_turbo]: {

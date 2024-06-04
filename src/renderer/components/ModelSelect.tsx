@@ -87,17 +87,18 @@ export default function ModelSelect({
             >
               <code>gpt-3.5-turbo</code>
               <p>
-                Quality: ✅⬜⬜, Speed: ✅✅✅, Cost: ✅✅✅, Context:{" "}
+                Quality: ⭐⬜⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
                 <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].context}</code>
                 {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].max && (
                   <>
-                    , Max Completion:{" "}
+                    , Completion:{" "}
                     <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo]?.max}</code>
                   </>
                 )}
               </p>
             </button>
           )}
+          {/* This model will be removed from the list soon (gpt-3.5-turbo now has 16k by default)
           {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo_16k) && (
             <button
               className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
@@ -110,13 +111,13 @@ export default function ModelSelect({
             >
               <code>gpt-3.5-turbo-16k</code>
               <p>
-                Quality: ✅⬜⬜, Speed: ✅✅✅, Cost: ✅✅✅, Context:{" "}
+                Quality: ⭐⬜⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
                 <code>
                   {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].context}
                 </code>
                 {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].max && (
                   <>
-                    , Max Completion:{" "}
+                    , Completion:{" "}
                     <code>
                       {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k]?.max}
                     </code>
@@ -124,7 +125,7 @@ export default function ModelSelect({
                 )}
               </p>
             </button>
-          )}
+          )} */}
           {chatGPTModels && chatGPTModels.includes(Model.gpt_4_turbo) ? (
             <button
               className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
@@ -137,11 +138,11 @@ export default function ModelSelect({
             >
               <code>gpt-4-turbo</code>
               <p>
-                Quality: ✅✅⬜, Speed: ✅✅⬜, Cost: ✅✅⬜, Context:{" "}
+                Quality: ⭐⭐⬜, Speed: ⚡⚡⬜, Cost: 💸💸💸, Context:{" "}
                 <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].context}</code>
                 {MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].max && (
                   <>
-                    , Max Completion:{" "}
+                    , Completion:{" "}
                     <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo]?.max}</code>
                   </>
                 )}
@@ -176,11 +177,11 @@ export default function ModelSelect({
             >
               <code>gpt-4</code>
               <p>
-                Quality: ✅✅✅, Speed: ✅⬜⬜, Cost: ✅⬜⬜, Context:{" "}
+                Quality: ⭐⭐⬜, Speed: ⚡⬜⬜, Cost: 💸💸💸, Context:{" "}
                 <code>{MODEL_TOKEN_LIMITS[Model.gpt_4].context}</code>
                 {MODEL_TOKEN_LIMITS[Model.gpt_4].max && (
                   <>
-                    , Max Completion:{" "}
+                    , Completion:{" "}
                     <code>{MODEL_TOKEN_LIMITS[Model.gpt_4]?.max}</code>
                   </>
                 )}
@@ -203,6 +204,7 @@ export default function ModelSelect({
                 "Looking for GPT-4? You need to sign up on the waitlist here"}
             </a>
           )}
+          {/* This model will be removed from the list soon. Not a lot of use-cases for it.
           {chatGPTModels && chatGPTModels.includes(Model.gpt_4_32k) ? (
             <button
               className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
@@ -212,11 +214,11 @@ export default function ModelSelect({
             >
               <code>gpt-4-32k</code>
               <p>
-                Quality: ✅✅✅, Speed: ✅⬜⬜, Cost: ✅⬜⬜, Context:{" "}
+                Quality: ⭐⭐⭐, Speed: ⚡⬜⬜, Cost: 💸💸💸, Context:{" "}
                 <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k].context}</code>
                 {MODEL_TOKEN_LIMITS[Model.gpt_4_32k].max && (
                   <>
-                    , Max Completion:{" "}
+                    , Completion:{" "}
                     <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k]?.max}</code>
                   </>
                 )}
@@ -238,6 +240,36 @@ export default function ModelSelect({
               {t?.modelSelect?.gpt432kUnavailableNote ??
                 "You can sign up for updates here"}
             </a>
+          )}
+          */}
+          {chatGPTModels && chatGPTModels.includes(Model.gpt_4o) ? (
+            <button
+              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+              onClick={() => {
+                setModel(Model.gpt_4o);
+                if (showParentMenu) {
+                  showParentMenu(false);
+                }
+              }}
+            >
+              <span>
+                <code>gpt-4o</code> <strong>(recommended)</strong>
+              </span>
+              <p>
+                Quality: ⭐⭐⭐, Speed: ⚡⚡⚡, Cost: 💸💸⬜, Context:{" "}
+                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4o].context}</code>
+                {MODEL_TOKEN_LIMITS[Model.gpt_4o].max && (
+                  <>
+                    , Completion:{" "}
+                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_4o]?.max}</code>
+                  </>
+                )}
+              </p>
+            </button>
+          ) : (
+            <p className="flex gap-2 items-center justify-start p-2 w-full">
+              <code>gpt-4o</code> is not available for your account yet.
+            </p>
           )}
         </div>
       </div>
