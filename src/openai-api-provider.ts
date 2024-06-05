@@ -3,6 +3,15 @@ import OpenAI, { ClientOptions } from 'openai';
 import { v4 as uuidv4 } from "uuid";
 import { Conversation, Message, Model, MODEL_TOKEN_LIMITS, Role } from "./renderer/types";
 
+/*
+
+* openai-api-provider.ts
+
+Responsible for handling API calls to OpenAI's API
+(or any server that implements the OpenAI API).
+
+*/
+
 export class ApiProvider {
   private _openai: OpenAI;
   private _temperature: number;

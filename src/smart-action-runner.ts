@@ -2,9 +2,18 @@ import fs from "fs";
 import upath from 'upath';
 import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
-import { ApiProvider } from "./api-provider";
+import { listItems } from "./helpers";
+import { ApiProvider } from "./openai-api-provider";
 import { ActionNames, Conversation, Message, Model, Role } from "./renderer/types";
-import { listItems } from "./utils";
+
+/*
+
+* smart-action-runner.ts
+
+High-level module responsible for running "smart" / complex actions.
+For example: Create a README.md file from the package.json (with chatgpt).
+
+*/
 
 export class ActionRunner {
   public static runAction(actionName: ActionNames, apiProvider: ApiProvider, systemContext: string, controller: AbortController): Promise<void> {

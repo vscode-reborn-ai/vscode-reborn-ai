@@ -1,5 +1,13 @@
 import { ExtensionContext, SecretStorage } from "vscode";
 
+/*
+
+* secrets-store.ts
+
+Responsible for storing and retrieving the OpenAI API key from the secret storage.
+
+*/
+
 export default class Auth {
   private static _instance: Auth;
 

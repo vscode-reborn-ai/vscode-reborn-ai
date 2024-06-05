@@ -3,15 +3,33 @@ import { marked } from "marked";
 import OpenAI, { ClientOptions } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
-import { ActionRunner } from "./actionRunner";
-import { ApiProvider } from "./api-provider";
-import Auth from "./auth";
+import { getSelectedModel, updateSelectedModel } from "./helpers";
 import { loadTranslations } from './localization';
+import { ApiProvider } from "./openai-api-provider";
 import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
 import { unEscapeHTML } from "./renderer/utils";
-import { getSelectedModel, updateSelectedModel } from "./utils";
+import Auth from "./secrets-store";
+import { ActionRunner } from "./smart-action-runner";
 
-const CHATGPT_MODELS = ['gpt-3.5-turbo', 'gpt-3.5-turbo-16k', 'gpt-4-turbo', 'gpt-4', 'gpt-4o', 'gpt-4-32k'];
+/*
+
+* main.ts
+
+This is the main backend file for this extension.
+It handles the communication between the webview ("renderer process", uses react) and the extension's backend process.
+
+*/
+
+// The models this extension looks for in the OpenAI API
+// TODO: Instead of a hard-coded list, support whatever models the API returns.
+const SUPPORTED_CHATGPT_MODELS = [
+	'gpt-3.5-turbo',
+	'gpt-3.5-turbo-16k', // We will remove this soon
+	'gpt-4-turbo',
+	'gpt-4',
+	'gpt-4o',
+	'gpt-4-32k' // We will remove this soon
+];
 
 export interface ApiRequestOptions {
 	command: string,
@@ -605,13 +623,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	async getChatGPTModels(fullModelList: any[] = []): Promise<Model[]> {
 		if (fullModelList?.length && fullModelList?.length > 0) {
-			return fullModelList.filter((model: any) => CHATGPT_MODELS.includes(model.id)).map((model: any) => {
+			return fullModelList.filter((model: any) => SUPPORTED_CHATGPT_MODELS.includes(model.id)).map((model: any) => {
 				return model.id as Model;
 			});
 		} else {
 			const models = await this.getModels();
 
-			return models.filter((model: any) => CHATGPT_MODELS.includes(model.id)).map((model: any) => {
+			return models.filter((model: any) => SUPPORTED_CHATGPT_MODELS.includes(model.id)).map((model: any) => {
 				return model.id as Model;
 			});
 		}

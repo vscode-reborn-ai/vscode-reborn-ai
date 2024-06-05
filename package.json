@@ -29,7 +29,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./out/extension.js",
+  "main": "./out/entry-point.js",
   "contributes": {
     "menus": {
       "editor/context": [
@@ -575,15 +575,15 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "rimraf out && yarn esbuild-base -- --minify && yarn build-webview",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-    "build": "yarn esbuild-base -- --sourcemap && yarn build-webview",
+    "vscode:prepublish": "rimraf out && yarn esbuild-base --minify && yarn build-webview",
+    "esbuild-base": "esbuild ./src/entry-point.ts --bundle --outfile=out/entry-point.js --external:vscode --format=cjs --platform=node",
+    "build": "yarn esbuild-base --sourcemap && yarn build-webview",
     "dev": "yarn watch",
     "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "yarn esbuild-base -- --sourcemap --watch",
+    "watch:esbuild": "yarn esbuild-base --sourcemap --watch",
     "watch:webview": "webpack --mode development --watch",
     "build-webview": "webpack --mode production",
-    "fmt": "prettier --write \"src/**/*.ts\" && yarn test -- --fix",
+    "fmt": "prettier --write \"src/**/*.ts\" && yarn test --fix",
     "test": "eslint src --ext ts && tsc --noEmit"
   },
   "devDependencies": {

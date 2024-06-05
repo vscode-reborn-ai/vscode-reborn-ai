@@ -1,6 +1,16 @@
 import * as vscode from "vscode";
-import ChatGptViewProvider from './chatgpt-view-provider';
-import { getSelectedModel } from "./utils";
+import { getSelectedModel } from "./helpers";
+import ChatGptViewProvider from './main';
+
+/*
+
+* entry-point.ts
+
+This is the entry point for the backend code of the extension.
+
+However, most of the backend code is in the `main.ts` file.
+
+*/
 
 const menuCommands = [
 	"addTests", "findProblems", "optimize", "explain",
