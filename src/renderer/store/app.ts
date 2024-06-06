@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Model } from "../types";
+import { DEFAULT_EXTENSION_SETTINGS, ExtensionSettings, Model } from "../types";
 
 export enum ApiKeyStatus {
   Unknown = "unknown", // On extension load, key has not yet been checked
@@ -11,7 +11,7 @@ export enum ApiKeyStatus {
 
 export interface AppState {
   debug: boolean;
-  extensionSettings: any;
+  extensionSettings: ExtensionSettings;
   chatGPTModels: Model[];
   apiKeyStatus: ApiKeyStatus;
   translations: any;
@@ -20,7 +20,7 @@ export interface AppState {
 
 const initialState: AppState = {
   debug: false,
-  extensionSettings: {},
+  extensionSettings: DEFAULT_EXTENSION_SETTINGS,
   chatGPTModels: [],
   apiKeyStatus: ApiKeyStatus.Unknown,
   translations: {},

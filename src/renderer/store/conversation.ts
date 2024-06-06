@@ -10,9 +10,10 @@ export interface ConversationState {
 }
 
 const initialConversationID = `Chat-${Date.now()}`;
-const initialConversation = {
+const initialConversation: Conversation = {
   id: initialConversationID,
   title: "Chat",
+  aiRenamedTitle: false,
   messages: [],
   createdAt: Date.now(),
   inProgress: false,
@@ -81,6 +82,16 @@ export const conversationSlice = createSlice({
 
       if (state.conversations[conversationId]) {
         state.conversations[conversationId].title = title;
+      }
+    },
+    aiRenamedTitle: (
+      state,
+      action: PayloadAction<{ conversationId: string; aiRenamedTitle: boolean; }>
+    ) => {
+      const { conversationId, aiRenamedTitle } = action.payload;
+
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].aiRenamedTitle = aiRenamedTitle;
       }
     },
     updateConversationTokenCount: (
@@ -302,6 +313,7 @@ export const {
   updateConversationMessages,
   updateConversationModel,
   updateConversationTitle,
+  aiRenamedTitle,
   updateConversationTokenCount,
   addMessage,
   updateMessage,

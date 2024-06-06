@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAppSelector } from "../hooks";
+import { RootState } from "../store";
 
 const examplePrompts = [
   { category: "Greetings", prompts: ["Hello", "Hi", "Hey"] },
@@ -7,7 +8,7 @@ const examplePrompts = [
 ];
 
 function CustomPromptManager() {
-  const t = useAppSelector((state: any) => state.app.translations);
+  const t = useAppSelector((state: RootState) => state.app.translations);
   const [prompts, setPrompts] = useState(Array(6).fill(""));
   const [showTemplatePanel, setShowTemplatePanel] = useState(false);
 

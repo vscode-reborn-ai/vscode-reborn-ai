@@ -468,7 +468,7 @@
             "code-davinci-002",
             "code-cushman-001"
           ],
-          "default": "gpt-3.5-turbo",
+          "default": "gpt-4o",
           "markdownDescription": "OpenAI models to use for your prompts. [Documentation](https://beta.openai.com/docs/models/models). \n\n**If you face 400 Bad Request please make sure you are using the right model for your integration method.**",
           "order": 36,
           "enumItemLabels": [
@@ -496,7 +496,7 @@
         },
         "chatgpt.gpt3.maxTokens": {
           "type": "number",
-          "default": 4000,
+          "default": 4096,
           "markdownDescription": "NOTE - THIS CONFIG IS NOW DISABLED, and might be totally removed in the future. If you think this config setting should stay, please comment it in the GitHub repository that you find it useful.",
           "order": 37
         },
@@ -570,6 +570,12 @@
             "Normal explanations",
             "Detailed, full explanations"
           ]
+        },
+        "chatgpt.renameTabTitles": {
+          "type": "boolean",
+          "default": true,
+          "description": "If enabled, after the first user message, gpt-4o will be used to rename the tab title.",
+          "order": 47
         }
       }
     }

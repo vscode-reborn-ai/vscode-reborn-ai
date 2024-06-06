@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { addConversation, removeConversation } from "../store/conversation";
 import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
@@ -19,8 +20,10 @@ export default function Tabs({
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
-  const t = useAppSelector((state: any) => state.app.translations);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
+  const t = useAppSelector((state: RootState) => state.app.translations);
   const location = useLocation();
   const [tabs, setTabs] = useState(
     [] as {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { updateConversationModel } from "../store/conversation";
 import {
   Conversation,
@@ -27,10 +28,14 @@ export default function ModelSelect({
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
-  const t = useAppSelector((state: any) => state.app.translations);
+  const t = useAppSelector((state: RootState) => state.app.translations);
   const [showModels, setShowModels] = useState(false);
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
-  const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
+  const chatGPTModels = useAppSelector(
+    (state: RootState) => state.app.chatGPTModels
+  );
 
   const setModel = (model: Model) => {
     // Update settings

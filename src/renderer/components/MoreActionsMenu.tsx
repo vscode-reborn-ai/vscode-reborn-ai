@@ -2,6 +2,7 @@ import clsx from "clsx";
 import React from "react";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { setDebug } from "../store/app";
 import { Conversation } from "../types";
 import Icon from "./Icon"; // import the correct component
@@ -24,8 +25,8 @@ export default function MoreActionsMenu({
   className?: string;
 }) {
   const dispatch = useAppDispatch();
-  const t = useAppSelector((state: any) => state.app.translations);
-  const debug = useAppSelector((state: any) => state.app.debug);
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const debug = useAppSelector((state: RootState) => state.app.debug);
 
   return (
     <>

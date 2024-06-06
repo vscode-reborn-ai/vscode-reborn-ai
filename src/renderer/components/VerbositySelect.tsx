@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { setVerbosity } from "../store/conversation";
 import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
@@ -20,7 +21,7 @@ export default function VerbositySelect({
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
-  const t = useAppSelector((state: any) => state.app.translations);
+  const t = useAppSelector((state: RootState) => state.app.translations);
   const [showOptions, setShowOptions] = useState(false);
 
   const getHumanFriendlyLabel = (verbosity: Verbosity) => {

@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
 import { useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { Conversation, MODEL_COSTS, MODEL_TOKEN_LIMITS, Model } from "../types";
 
 export default function TokenCountPopup({
@@ -16,8 +17,10 @@ export default function TokenCountPopup({
   setTokenCountLabel: React.Dispatch<React.SetStateAction<string>>;
   className?: string;
 }) {
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
-  const t = useAppSelector((state: any) => state.app.translations);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
+  const t = useAppSelector((state: RootState) => state.app.translations);
   const [minCost, setMinCost] = useState(0);
   const [maxCost, setMaxCost] = useState(0);
   const [minPromptTokens, setMinPromptTokens] = useState(

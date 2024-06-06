@@ -339,7 +339,7 @@ class TitleAction extends Action {
     }
 
     const prompt = options.messageText;
-    const systemContextModified = `Derive a concise title from the provided user message. ONLY respond with 2 to 4 words which are a title based on the message provided by the user.`;
+    const systemContextModified = 'Derive a concise conversation title from the provided user question and assistant response. ONLY respond with a 2 or 3 word title. For context, conversations are normally about software development. Shorter is better. Prepend an appropriate emoji to the title.';
     let title = '';
 
     try {

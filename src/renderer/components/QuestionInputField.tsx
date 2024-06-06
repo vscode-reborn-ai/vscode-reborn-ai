@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { setUseEditorSelection } from "../store/app";
 import {
   clearMessages,
@@ -8,13 +9,7 @@ import {
   setInProgress,
   updateUserInput,
 } from "../store/conversation";
-import {
-  ActionNames,
-  Conversation,
-  MODEL_TOKEN_LIMITS,
-  Model,
-  Role,
-} from "../types";
+import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 import MoreActionsMenu from "./MoreActionsMenu";
@@ -31,7 +26,9 @@ export default ({
   vscode: any;
 }) => {
   const dispatch = useAppDispatch();
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
   const t = useAppSelector((state: any) => state.app.translations);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
@@ -91,25 +88,6 @@ export default ({
         conversation: currentConversation,
         includeEditorSelection: useEditorSelection,
       });
-
-      // Count how many messages have role 'user'
-      const userMessageCount = currentConversation.messages.reduce(
-        (acc, message) => acc + (message.role === Role.user ? 1 : 0),
-        0
-      );
-
-      // If it is 0 (this is before we've updated the conversation)
-      // have ai set the title on this conversation
-      if (userMessageCount === 0) {
-        vscode.postMessage({
-          type: "runAction",
-          actionId: ActionNames.createConversationTitle,
-          actionOptions: {
-            messageText: questionInputRef.current.value,
-            conversationId: currentConversation.id,
-          },
-        });
-      }
 
       questionInputRef.current.value = "";
       questionInputRef.current.rows = 1;

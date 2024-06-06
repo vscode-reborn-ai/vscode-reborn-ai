@@ -6,6 +6,7 @@ import "../../styles/main.css";
 import ApiKeySetup from "./components/ApiKeySetup";
 import Tabs from "./components/Tabs";
 import { useAppDispatch, useAppSelector } from "./hooks";
+import { RootState } from "./store";
 import { ActionRunState, setActionError, setActionState } from "./store/action";
 import {
   ApiKeyStatus,
@@ -16,6 +17,7 @@ import {
 } from "./store/app";
 import {
   addMessage,
+  aiRenamedTitle,
   setAutoscroll,
   setCurrentConversationId,
   setInProgress,
@@ -27,7 +29,14 @@ import {
   updateMessage,
   updateMessageContent,
 } from "./store/conversation";
-import { ActionNames, Conversation, Message, Model, Role } from "./types";
+import {
+  ActionNames,
+  Conversation,
+  ExtensionSettings,
+  Message,
+  Model,
+  Role,
+} from "./types";
 import { unEscapeHTML } from "./utils";
 import Actions from "./views/actions";
 import Chat from "./views/chat";
@@ -41,13 +50,19 @@ export default function Layout({ vscode }: { vscode: any }) {
     (state: any) => state.conversation.currentConversation
   );
   const conversationList = Object.values(
-    useAppSelector((state: any) => state.conversation.conversations)
+    useAppSelector((state: RootState) => state.conversation.conversations)
   ) as Conversation[];
 
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
-  const debug = useAppSelector((state: any) => state.app.debug);
-  const apiKeyStatus = useAppSelector((state: any) => state.app?.apiKeyStatus);
-  const chatGPTModels = useAppSelector((state: any) => state.app.chatGPTModels);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
+  const debug = useAppSelector((state: RootState) => state.app.debug);
+  const apiKeyStatus = useAppSelector(
+    (state: RootState) => state.app?.apiKeyStatus
+  );
+  const chatGPTModels = useAppSelector(
+    (state: RootState) => state.app.chatGPTModels
+  );
   const useEditorSelection = useAppSelector(
     (state: any) => state.app.useEditorSelection
   );
@@ -108,6 +123,56 @@ export default function Layout({ vscode }: { vscode: any }) {
     currentConversation.model,
     useEditorSelection,
   ]);
+
+  // Rename the tab title with AI
+  const renameTabTitleWithAI = (
+    conversation: Conversation,
+    settings: ExtensionSettings,
+    firstAssistantMessage?: string
+  ) => {
+    if (
+      conversation &&
+      // Has the AI already renamed the title?
+      !conversation?.aiRenamedTitle
+    ) {
+      dispatch(
+        aiRenamedTitle({
+          conversationId: conversation.id,
+          aiRenamedTitle: true,
+        })
+      );
+
+      const firstUserMessage =
+        conversation.messages.find(
+          (message: Message) => message.role === Role.user
+        )?.content ?? "";
+
+      if (!firstAssistantMessage) {
+        firstAssistantMessage =
+          conversation.messages.find(
+            (message: Message) => message.role === Role.assistant
+          )?.content ?? "";
+      }
+      // Use ChatGPT to rename the tab title
+      if (
+        settings.renameTabTitles &&
+        !settings.minimalUI &&
+        !settings.disableMultipleConversations
+      ) {
+        vscode.postMessage({
+          type: "runAction",
+          actionId: ActionNames.createConversationTitle,
+          actionOptions: {
+            messageText: `
+            Question: ${firstUserMessage.substring(0, 200)}...
+            Answer: ${firstAssistantMessage.substring(0, 200)}...
+          `,
+            conversationId: conversation.id,
+          },
+        });
+      }
+    }
+  };
 
   // Handle messages sent from the extension to the webview
   const handleMessages = (event: any) => {
@@ -208,6 +273,19 @@ export default function Layout({ vscode }: { vscode: any }) {
               message: data?.message,
             })
           );
+
+          if (
+            data?.message?.role === Role.assistant &&
+            (data?.message?.done || data?.message?.content.length > 200)
+          ) {
+            const conversation = conversationList.find(
+              (conversation) => conversation.id === currentConversationId
+            );
+
+            if (conversation && !conversation?.aiRenamedTitle) {
+              renameTabTitleWithAI(conversation, settings);
+            }
+          }
         } else {
           console.error("updateMessage event: No message provided");
         }
@@ -246,6 +324,17 @@ export default function Layout({ vscode }: { vscode: any }) {
           })
         );
 
+        // Is the message done or over 200 characters?
+        const messageLength = data?.content?.length ?? 0;
+        if (messageLength > 200) {
+          const conversation = conversationList.find(
+            (conversation) => conversation.id === currentConversationId
+          );
+
+          if (conversation && !conversation?.aiRenamedTitle) {
+            renameTabTitleWithAI(conversation, settings, data.content);
+          }
+        }
         break;
       case "addResponse":
         if (data.value === "") {
@@ -256,11 +345,12 @@ export default function Layout({ vscode }: { vscode: any }) {
           console.log("Renderer - Adding response: ", data);
         }
 
+        const conversation = conversationList.find(
+          (conversation) => conversation.id === currentConversationId
+        );
         let existingMessage =
           (data.id &&
-            conversationList
-              .find((conversation) => conversation.id === currentConversationId)
-              ?.messages.find((message) => message.id === data.id)) ??
+            conversation?.messages.find((message) => message.id === data.id)) ??
           null;
 
         const markedResponse = (window as any)?.marked.parse(
@@ -282,6 +372,17 @@ export default function Layout({ vscode }: { vscode: any }) {
                 done: data.done === undefined ? true : data.done,
               })
             );
+
+            // Is the message done or over 200 characters?
+            if (
+              data.done === undefined ||
+              data.done ||
+              data.value.length > 200
+            ) {
+              if (conversation) {
+                renameTabTitleWithAI(conversation, settings, data.value);
+              }
+            }
           } else {
             console.warn(
               "Renderer - Cannot updated message - No message id found"
@@ -289,7 +390,7 @@ export default function Layout({ vscode }: { vscode: any }) {
 
             // Attempt graceful fallback -
             // Try adding a new message to the current conversation
-            const botResponse = {
+            const aiResponse = {
               id: uuidv4(),
               role: Role.assistant,
               content: markedResponse,
@@ -302,12 +403,23 @@ export default function Layout({ vscode }: { vscode: any }) {
             dispatch(
               addMessage({
                 conversationId: data?.conversationId ?? currentConversationId,
-                message: botResponse,
+                message: aiResponse,
               })
             );
+
+            // Is the message done or over 200 characters?
+            if (
+              data.done === undefined ||
+              data.done ||
+              data.value.length > 200
+            ) {
+              if (conversation) {
+                renameTabTitleWithAI(conversation, settings, data.value);
+              }
+            }
           }
         } else {
-          const botResponse = {
+          const aiResponse = {
             id: data.id,
             role: Role.assistant,
             content: markedResponse,
@@ -320,7 +432,7 @@ export default function Layout({ vscode }: { vscode: any }) {
           if (debug) {
             console.log(
               "dispatching addMessage with botResponse: ",
-              botResponse,
+              aiResponse,
               "\nconversationId: ",
               data?.conversationId
             );
@@ -329,9 +441,16 @@ export default function Layout({ vscode }: { vscode: any }) {
           dispatch(
             addMessage({
               conversationId: data?.conversationId ?? currentConversationId,
-              message: botResponse,
+              message: aiResponse,
             })
           );
+
+          // Is the message done or over 200 characters?
+          if (data.done === undefined || data.done || data.value.length > 200) {
+            if (conversation) {
+              renameTabTitleWithAI(conversation, settings, data.value);
+            }
+          }
         }
         break;
       case "addError":

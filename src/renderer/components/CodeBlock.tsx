@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
 import { useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { Role } from "../types";
 import CodeBlockActionsButton from "./CodeBlockActionsButton";
 
@@ -21,7 +22,7 @@ export default ({
   startCollapsed = false,
   role,
 }: CodeBlockProps) => {
-  const t = useAppSelector((state: any) => state.app.translations);
+  const t = useAppSelector((state: RootState) => state.app.translations);
   const [codeTextContent, setCodeTextContent] = React.useState("");
   const [language, setLanguage] = React.useState("");
   const codeRef = React.useRef<HTMLPreElement>(null);

@@ -5,6 +5,7 @@ import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { setAutoscroll, updateMessageContent } from "../store/conversation";
 import { Conversation, Message, Role } from "../types";
 
@@ -18,9 +19,11 @@ export default function Chat({
   vscode: any;
 }) {
   const dispatch = useAppDispatch();
-  const t = useAppSelector((state: any) => state.app.translations);
-  const debug = useAppSelector((state: any) => state.app.debug);
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const debug = useAppSelector((state: RootState) => state.app.debug);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
   const conversationListRef = React.useRef<HTMLDivElement>(null);
   const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
     null

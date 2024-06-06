@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
 import Icon from "./Icon";
 
@@ -20,8 +21,10 @@ export default function ({
   const [apiUrl, setApiUrl] = useState("");
   const [showApiUrl, setShowApiUrl] = useState(false);
   const dispatch = useAppDispatch();
-  const t = useAppSelector((state: any) => state.app.translations);
-  const apiKeyStatus = useAppSelector((state: any) => state.app?.apiKeyStatus);
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const apiKeyStatus = useAppSelector(
+    (state: RootState) => state.app?.apiKeyStatus
+  );
 
   function handleSubmit() {
     dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
