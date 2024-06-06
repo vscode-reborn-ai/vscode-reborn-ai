@@ -120,6 +120,10 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### ✨ Next Release
+
+- ✨ [Feature] Conversation tabs now automatically rename themselves.
+
 ### June 4, 2024 (`v3.22.0`)
 
 - ✨ [Feature] Added support for the latest `gpt-4o` model. This model is slightly better than `gpt-4-turbo`, faster, and half the price. - *Thank you for the help on this one @nickv2002*
