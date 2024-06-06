@@ -22,11 +22,12 @@ import {
   setModel,
   setVerbosity,
   updateConversationMessages,
+  updateConversationTitle,
   updateConversationTokenCount,
   updateMessage,
   updateMessageContent,
 } from "./store/conversation";
-import { Conversation, Message, Model, Role } from "./types";
+import { ActionNames, Conversation, Message, Model, Role } from "./types";
 import { unEscapeHTML } from "./utils";
 import Actions from "./views/actions";
 import Chat from "./views/chat";
@@ -136,6 +137,7 @@ export default function Layout({ vscode }: { vscode: any }) {
       // Actions
       error?: string;
       actionId?: string;
+      actionResult?: any;
     };
 
     // Handle requests from editor
@@ -450,6 +452,23 @@ export default function Layout({ vscode }: { vscode: any }) {
               state: ActionRunState.idle,
             })
           );
+
+          // Handle action results (where the action has a result)
+          switch (data?.actionId) {
+            case ActionNames.createConversationTitle:
+              // Update the conversation title
+              dispatch(
+                updateConversationTitle({
+                  conversationId: data?.actionResult?.conversationId,
+                  title: data?.actionResult?.newTitle,
+                })
+              );
+              break;
+            default:
+              console.warn(
+                `Renderer - Unhandled result from action: ${data?.actionId}`
+              );
+          }
         }
         break;
       case "actionError":

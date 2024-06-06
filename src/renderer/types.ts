@@ -225,4 +225,5 @@ export enum ActionNames {
   createReadmeFromPackageJson = "createReadmeFromPackageJson",
   createReadmeFromFileStructure = "createReadmeFromFileStructure",
   createGitignore = "createGitignore",
+  createConversationTitle = "createConversationTitle",
 }

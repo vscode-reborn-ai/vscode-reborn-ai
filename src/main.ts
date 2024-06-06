@@ -333,9 +333,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					this.logEvent(data.language === "markdown" ? "code-exported" : "code-opened");
 					break;
 				case 'cleargpt3':
+					// TODO: remove this?
 					// this.apiGpt3 = undefined;
 
-					this.logEvent("gpt3-cleared");
+					this.logEvent("[Reborn] NOT IMPLEMENTED - gpt3-cleared");
 					break;
 				case 'openSettings':
 					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn chatgpt.");
@@ -438,10 +439,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					});
 
 					try {
-						await ActionRunner.runAction(actionId, this.api, this.systemContext, controller);
+						const actionResult = await ActionRunner.runAction(actionId, this.api, this.systemContext, controller, data?.actionOptions);
 						this.sendMessage({
 							type: "actionComplete",
 							actionId,
+							actionResult
 						});
 					} catch (error: any) {
 						console.error("Main Process - Error running action: " + actionId);

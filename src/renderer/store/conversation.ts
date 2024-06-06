@@ -73,6 +73,16 @@ export const conversationSlice = createSlice({
         state.conversations[conversationId].model = model;
       }
     },
+    updateConversationTitle: (
+      state,
+      action: PayloadAction<{ conversationId: string; title: string; }>
+    ) => {
+      const { conversationId, title } = action.payload;
+
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].title = title;
+      }
+    },
     updateConversationTokenCount: (
       state,
       action: PayloadAction<{
@@ -291,6 +301,7 @@ export const {
   updateConversation,
   updateConversationMessages,
   updateConversationModel,
+  updateConversationTitle,
   updateConversationTokenCount,
   addMessage,
   updateMessage,

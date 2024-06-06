@@ -123,14 +123,14 @@ export default function Tabs({
           />
           {/* button for new chat */}
           <button
-            className="flex gap-x-2 items-center bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap rounded p-2 pr-3 text-xs"
+            className="flex gap-x-2 items-center bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap rounded p-2 pr-3 text-2xs"
             onClick={createNewConversation}
           >
             <Icon icon="plus" className="w-4 h-4" />
             {t?.tabs?.new_chat ?? "New"}
           </button>
           <Link
-            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 pr-3 text-xs
+            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 pr-3 text-2xs
             ${
               location.pathname === "/actions"
                 ? "bg-tab-active border-secondary text-tab-active-unfocused"
@@ -164,7 +164,7 @@ export default function Tabs({
                       currentConversation.title === tab.name
                         ? "bg-tab-active border-secondary text-tab-active-unfocused hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
                         : "border-transparent hover:bg-tab-selection hover:text-tab-inactive text-tab-inactive-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
-                      "flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap border text-xs rounded focus:outline-none"
+                      "flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap border text-2xs rounded focus:outline-none"
                     )}
                     to={tab.href}
                     aria-current={
@@ -211,7 +211,7 @@ export default function Tabs({
             {/* create new chat button */}
             <li className="flex items-center">
               <button
-                className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-xs rounded"
+                className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-2xs rounded"
                 onClick={createNewConversation}
               >
                 <Icon icon="plus" className="w-4 h-4" />
@@ -220,7 +220,7 @@ export default function Tabs({
             </li>
           </ul>
           <Link
-            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 pr-3 text-xs
+            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 max-h-[32px] text-2xs
             ${
               location.pathname === "/actions"
                 ? "bg-button border-button text-button"

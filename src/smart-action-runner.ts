@@ -16,12 +16,12 @@ For example: Create a README.md file from the package.json (with chatgpt).
 */
 
 export class ActionRunner {
-  public static runAction(actionName: ActionNames, apiProvider: ApiProvider, systemContext: string, controller: AbortController): Promise<void> {
+  public static runAction(actionName: ActionNames, apiProvider: ApiProvider, systemContext: string, controller: AbortController, options?: any): Promise<void> {
     const action = ActionRunner.getAction(actionName);
     if (!action) {
       throw new Error(`Action ${actionName} not found`);
     }
-    return action.run(apiProvider, systemContext, controller);
+    return action.run(apiProvider, systemContext, controller, options ?? {});
   }
 
   private static getAction(actionName: ActionNames): Action | undefined {
@@ -32,6 +32,8 @@ export class ActionRunner {
         return new ReadmeFromFileStructure() as Action;
       case ActionNames.createGitignore:
         return new GitignoreAction() as Action;
+      case ActionNames.createConversationTitle:
+        return new TitleAction() as Action;
       default:
         console.error(`Action ${actionName} not found`);
         return undefined;
@@ -64,7 +66,7 @@ class Action {
       messages: [systemMessage, message],
       createdAt: Date.now(),
       inProgress: true,
-      model: Model.gpt_35_turbo,
+      model: Model.gpt_4o,
       autoscroll: true,
     };
 
@@ -75,8 +77,9 @@ class Action {
 
   public run(apiProvider: ApiProvider,
     systemContext: string,
-    controller: AbortController
-  ): Promise<void> {
+    controller: AbortController,
+    options?: any
+  ): Promise<any> {
     throw new Error('Not implemented');
   }
 }
@@ -315,5 +318,41 @@ Please ensure the .gitignore file is well-organized, easy to understand. The typ
     } finally {
       writeStream.end();
     }
+  }
+}
+
+// TODO: this doesn't need to be streamed
+class TitleAction extends Action {
+  public async run(apiProvider: ApiProvider,
+    systemContext: string,
+    controller: AbortController,
+    options: {
+      messageText: string;
+      conversationId: string;
+    }
+  ): Promise<{
+    newTitle: string;
+    conversationId: string;
+  }> {
+    if (!options.messageText) {
+      throw new Error('No user message provided.');
+    }
+
+    const prompt = options.messageText;
+    const systemContextModified = `Derive a concise title from the provided user message. ONLY respond with 2 to 4 words which are a title based on the message provided by the user.`;
+    let title = '';
+
+    try {
+      for await (const token of this.streamChatCompletion(apiProvider, systemContextModified, prompt, controller.signal)) {
+        title += token;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    return {
+      newTitle: title.trim(),
+      conversationId: options.conversationId
+    };
   }
 }

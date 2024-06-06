@@ -9,6 +9,7 @@ module.exports = {
             },
             fontSize: {
                 code: ['var(--vscode-editor-font-size)'],
+                '2xs': ['11px', { lineHeight: '1rem' }],
                 DEFAULT: ['var(--vscode-font-size)'],
             },
             fontWeight: {
