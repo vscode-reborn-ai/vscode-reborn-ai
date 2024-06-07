@@ -103,7 +103,7 @@ This extension can be used with a proxy either for geographical reasons or if yo
 - [X] [text-generation-webui](https://github.com/oobabooga/text-generation-webui)
 - [X] [LocalAI](https://localai.io/)
 
-Any local LLM that suppotrs the OpenAI API *should* work with this extension. The list above are the tools I've personally tested and work.
+Any local LLM that supports the OpenAI API *should* work with this extension. The list above are the tools I've personally tested and work.
 
 ## Changelog
 
