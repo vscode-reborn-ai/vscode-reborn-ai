@@ -88,35 +88,22 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 6. Once you are satisfied with your changes, submit a pull request to this repository.
 
-## TODO
-
-- [ ] Add way to manage custom prompts in UI.
-- [ ] Add option to stream directly into the editor.
-- [ ] Inline diff
-- [ ] "Smart" actions based on the type of file open.
-- [ ] "Smart" actions on that run at a project level.
-- [ ] AI-generated git commit messages
-
 ## Internationalization
 
 Initial i18n support has been added in `v3.15.0`, but I need help translating to different languages. If you're able to help at all [see this discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
 
-## Proxy
+## Proxy and Local LLMs
 
-This extension can be used with a proxy if you put the proxy's URL path in the "Api Base Url" config setting.
+This extension can be used with a proxy either for geographical reasons or if you're using a local LLM. The "Api Base Url" just needs to be changed.
 
 **Update 4.8.2023** - I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers.
 
-## Tech
+### Local LLMs tested to work with this extension
 
-[Yarn](https://yarnpkg.com/) - [TypeScript](https://www.typescriptlang.org/) - [VSCode Extension API](https://code.visualstudio.com/api) - [React](https://reactjs.org/) - [Redux](https://redux.js.org/) - [React Router](https://reactrouter.com/) - [Tailwind CSS](https://tailwindcss.com/)
+- [X] [text-generation-webui](https://github.com/oobabooga/text-generation-webui)
+- [X] [LocalAI](https://localai.io/)
 
-- The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
-- This does not use VSCode's [WebView UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit/tree/main/src). But, I'm open to switching to the WebView UI toolkit since it better aligns with VSCode's UI.
-
-## License
-
-This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+Any local LLM that suppotrs the OpenAI API *should* work with this extension. The list above are the tools I've personally tested and work.
 
 ## Changelog
 
@@ -125,6 +112,8 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - ✨ **Feature** - Conversation tabs now automatically rename themselves.
 - 🔧 **Fixes** - A previous commit broke the `apiBaseUrl` config. Sorry about that. - *Thanks for the bug report @nossebro*
 - ✨ **Feature** - New page for making it easier to connect to local LLMs.
+
+---
 
 ### June 4, 2024 (`v3.22.0`)
 
@@ -228,3 +217,14 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - 🎮 **QoL** - Updated scroll behavior. You can now scroll up as code is being generated, or scroll back to the bottom to "re-lock" the auto-scroll.
 - 🎮 **QoL** - When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
 - 🎮 **QoL** - Configuring "System message" is now an extension setting.
+
+## Tech
+
+[Yarn](https://yarnpkg.com/) - [TypeScript](https://www.typescriptlang.org/) - [VSCode Extension API](https://code.visualstudio.com/api) - [React](https://reactjs.org/) - [Redux](https://redux.js.org/) - [React Router](https://reactrouter.com/) - [Tailwind CSS](https://tailwindcss.com/)
+
+- The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
+- This does not use VSCode's [WebView UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit/tree/main/src). But, I'm open to switching to the WebView UI toolkit since it better aligns with VSCode's UI.
+
+## License
+
+This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
