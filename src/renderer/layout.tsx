@@ -38,8 +38,9 @@ import {
   Role,
 } from "./types";
 import { unEscapeHTML } from "./utils";
-import Actions from "./views/actions";
-import Chat from "./views/chat";
+import ActionsView from "./views/actions";
+import APIView from "./views/api";
+import ChatView from "./views/chat";
 
 export default function Layout({ vscode }: { vscode: any }) {
   const dispatch = useAppDispatch();
@@ -637,8 +638,12 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   return (
     <>
-      {apiKeyStatus === ApiKeyStatus.Unknown ||
-      apiKeyStatus === ApiKeyStatus.Valid ? (
+      {settings?.gpt3.apiBaseUrl.includes("openai.com") &&
+      apiKeyStatus !== ApiKeyStatus.Unknown &&
+      apiKeyStatus !== ApiKeyStatus.Valid &&
+      location.pathname !== "/api" ? (
+        <ApiKeySetup vscode={vscode} />
+      ) : (
         <>
           {!settings?.minimalUI && !settings?.disableMultipleConversations && (
             <Tabs
@@ -648,7 +653,8 @@ export default function Layout({ vscode }: { vscode: any }) {
           )}
           <Routes>
             {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
-            <Route path="/actions" element={<Actions vscode={vscode} />} />
+            <Route path="/actions" element={<ActionsView vscode={vscode} />} />
+            <Route path="/api" element={<APIView vscode={vscode} />} />
             {conversationList &&
               conversationList.map &&
               conversationList.map((conversation: Conversation) => (
@@ -657,7 +663,7 @@ export default function Layout({ vscode }: { vscode: any }) {
                   path={`/chat/${conversation.id}`}
                   index={conversation.id === currentConversationId}
                   element={
-                    <Chat
+                    <ChatView
                       conversation={conversation}
                       vscode={vscode}
                       conversationList={conversationList}
@@ -677,8 +683,6 @@ export default function Layout({ vscode }: { vscode: any }) {
             {/* <Route path="/options" element={<Options vscode={vscode} />} /> */}
           </Routes>
         </>
-      ) : (
-        <ApiKeySetup vscode={vscode} />
       )}
     </>
   );

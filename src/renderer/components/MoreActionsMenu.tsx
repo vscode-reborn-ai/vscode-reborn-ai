@@ -1,13 +1,14 @@
 import clsx from "clsx";
 import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { RootState } from "../store";
 import { setDebug } from "../store/app";
 import { Conversation } from "../types";
-import Icon from "./Icon"; // import the correct component
-import ModelSelect from "./ModelSelect"; // import the correct component
-import VerbositySelect from "./VerbositySelect"; // import the correct component
+import Icon from "./Icon";
+import ModelSelect from "./ModelSelect";
+import VerbositySelect from "./VerbositySelect";
 
 export default function MoreActionsMenu({
   currentConversation,
@@ -27,6 +28,7 @@ export default function MoreActionsMenu({
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: RootState) => state.app.translations);
   const debug = useAppSelector((state: RootState) => state.app.debug);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -52,6 +54,27 @@ export default function MoreActionsMenu({
               <Icon icon="help" className="w-3 h-3" />
               {t?.questionInputField?.feedback ?? "Feedback"}
             </a>
+          </li>
+          <li>
+            <Link
+              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
+              to="/api"
+              onClick={(e) => {
+                // if the local API tab is already open, close it
+                if (location.pathname === "/api") {
+                  e.preventDefault();
+                  navigate(`/chat/${encodeURI(currentConversation.id)}`);
+                }
+
+                // close menu
+                setShowMoreActions(false);
+              }}
+              data-tooltip-id="local-api-tooltip"
+              data-tooltip-content="Open the local API tab"
+            >
+              <Icon icon="ai" className="w-3 h-3" />
+              {t?.questionInputField?.localAPI ?? "Use Local LLM"}
+            </Link>
           </li>
           {process.env.NODE_ENV === "development" && (
             <li>

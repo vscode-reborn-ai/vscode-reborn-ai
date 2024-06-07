@@ -1,5 +1,6 @@
 // Convenience functions for the renderer code
 
+import { useLayoutEffect, useMemo, useRef } from "react";
 import { Conversation, Message } from "./types";
 
 export const unEscapeHTML = (unsafe: any) => {
@@ -66,3 +67,33 @@ export const addMessage = (
     )
   );
 };
+
+
+export const useDebounce =
+  (callback: (...args: any[]) => void,
+    delay: number) => {
+
+    const callbackRef = useRef(callback);
+
+    useLayoutEffect(() => {
+      callbackRef.current = callback;
+    });
+
+    let timer: NodeJS.Timeout;
+
+    const naiveDebounce = (
+      func: (...args: any[]) => void,
+      delayMs: number,
+      ...args: any[]
+    ) => {
+      clearTimeout(timer);
+
+      timer = setTimeout(() => {
+        func(...args);
+      }, delayMs);
+    };
+
+    return useMemo(() => (...args: any) =>
+      naiveDebounce(callbackRef.current, delay,
+        ...args), [delay]);
+  };

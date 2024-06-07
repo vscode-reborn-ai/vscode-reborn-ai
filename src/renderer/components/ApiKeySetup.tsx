@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { RootState } from "../store";
 import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
@@ -21,6 +22,7 @@ export default function ({
   const [apiUrl, setApiUrl] = useState("");
   const [showApiUrl, setShowApiUrl] = useState(false);
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const t = useAppSelector((state: RootState) => state.app.translations);
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
@@ -161,12 +163,18 @@ export default function ({
         <div className="flex gap-x-4 justify-end">
           {/* "I'm using an alternative API" button */}
           {!showApiUrl && (
-            <button
-              onClick={() => setShowApiUrl(true)}
-              className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button-secondary hover:bg-button-secondary-hover focus:bg-button-secondary-hover"
+            // <button
+            //   onClick={() => setShowApiUrl(true)}
+            //   className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button-secondary hover:bg-button-secondary-hover focus:bg-button-secondary-hover"
+            // >
+            //   {t?.apiUrlSetup?.setApiUrl ?? "I'm using an alternative API"}
+            // </button>
+            <Link
+              to="/api"
+              className="rounded px-4 py-2 flex flex-row items-center bg-button-secondary hover:bg-button-secondary-hover focus:bg-button-secondary-hover"
             >
               {t?.apiUrlSetup?.setApiUrl ?? "I'm using an alternative API"}
-            </button>
+            </Link>
           )}
           {/* "Set API Key" button */}
           <button

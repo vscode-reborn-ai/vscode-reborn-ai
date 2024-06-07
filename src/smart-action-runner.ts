@@ -350,8 +350,13 @@ class TitleAction extends Action {
       console.error(error);
     }
 
+    // remove any leading/trailing whitespace
+    title = title.trim();
+    // remove any double quotes
+    title = title.replace(/"/g, '');
+
     return {
-      newTitle: title.trim(),
+      newTitle: title,
       conversationId: options.conversationId
     };
   }

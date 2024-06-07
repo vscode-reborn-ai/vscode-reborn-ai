@@ -187,12 +187,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		// if any of the extension settings change, send a message to the webview for the "settingsUpdate" event
 		vscode.workspace.onDidChangeConfiguration((e) => {
-			if (e.affectsConfiguration("chatgpt")) {
-				this.sendMessage({
-					type: "settingsUpdate",
-					value: vscode.workspace.getConfiguration("chatgpt")
-				});
-			}
+			this.sendMessage({
+				type: "settingsUpdate",
+				value: vscode.workspace.getConfiguration("chatgpt")
+			});
 		});
 
 		// Load translations
@@ -248,7 +246,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			});
 	}
 
-	public updateApiUrl(apiUrl: string = '') {
+	public async updateApiUrl(apiUrl: string = '') {
 		if (!apiUrl) {
 			console.error("updateApiUrl called with no apiUrl");
 			return;
@@ -266,7 +264,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			apiUrl = apiUrl.slice(0, -17);
 		}
 
-		vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", apiUrl, true);
+		await vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", apiUrl, true);
+
+		// this.sendMessage({
+		// 	type: "settingsUpdate",
+		// 	value: vscode.workspace.getConfiguration("chatgpt")
+		// });
 	}
 
 	// reset the API key to the default value
