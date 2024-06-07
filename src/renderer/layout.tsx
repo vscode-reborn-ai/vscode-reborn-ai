@@ -577,12 +577,16 @@ export default function Layout({ vscode }: { vscode: any }) {
           switch (data?.actionId) {
             case ActionNames.createConversationTitle:
               // Update the conversation title
-              dispatch(
-                updateConversationTitle({
-                  conversationId: data?.actionResult?.conversationId,
-                  title: data?.actionResult?.newTitle,
-                })
-              );
+              const newTitle = data?.actionResult?.newTitle;
+
+              if (newTitle) {
+                dispatch(
+                  updateConversationTitle({
+                    conversationId: data?.actionResult?.conversationId,
+                    title: newTitle,
+                  })
+                );
+              }
               break;
             default:
               console.warn(

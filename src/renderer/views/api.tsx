@@ -15,7 +15,6 @@ const popularLocalLlms: {
   tested?: boolean;
 }[] = [
   {
-    // All set
     name: "Official OpenAI API",
     instructions:
       "Ensure you have an API key set to use the official OpenAI API.",
@@ -26,7 +25,6 @@ const popularLocalLlms: {
     tested: true,
   },
   {
-    // All set
     name: "text-generation-webui",
     instructions:
       "To start text-generation-webui in API-only mode, open your terminal and run: \n\n```bash\npython server.py --api\n```However, you must open the text-generation-webui at http://localhost:7860 and load a model.",
@@ -37,42 +35,30 @@ const popularLocalLlms: {
     tested: true,
   },
   {
-    name: "automatic1111",
-    instructions:
-      "To start automatic1111 in API-only mode, open your terminal and run: \n\n```bash\npython webui.py --api\n```",
-    apiUrl: new URL("http://localhost:7860/v1"),
-  },
-  {
-    name: "comfyui",
-    instructions:
-      "To start comfyui in API-only mode, open your terminal and run: \n\n```bash\npython main.py --api\n```",
-    apiUrl: new URL("http://localhost:8188/v1"),
-  },
-  {
-    // All set
     name: "LocalAI",
     instructions:
       "Just start LocalAI like normal, it should automatically host an OpenAI-compatible API at localhost:8080",
     apiUrl: new URL("http://localhost:8080/v1"),
     docsUrl: new URL("https://localai.io/features/openai-functions/"),
-  },
-  {
-    name: "GPT4All",
-    instructions:
-      "GPT4All does not have an API-only mode, just run your start command like normal, for example: \n\n```bash\ngpt4all-lora-quantized-OSX-m1\n```",
-    apiUrl: new URL("http://localhost:8001/v1"),
-  },
-  {
-    name: "LM Studio",
-    instructions:
-      "To start LM Studio in API-only mode, open your terminal and run: \n\n```bash\nlmstudio --api\n```",
-    apiUrl: new URL("http://localhost:8002/v1"),
+    tested: true,
   },
   {
     name: "Modelz LLM",
     instructions:
-      "Modelz LLM does not have an API-only mode, just run your start command like normal, for example: \n\n```bash\nmodelz-llm -m bigscience/bloomz-560m --device cpu\n```",
-    apiUrl: new URL("http://localhost:8003/v1"),
+      "Just run Modelz LLM, for example: \n\n```bash\nmodelz-llm -m bigscience/bloomz-560m --device cpu\n```And the API will be at localhost:8000/v1",
+    apiUrl: new URL("http://localhost:8000/v1"),
+    docsUrl: new URL("https://github.com/tensorchord/modelz-llm#quick-start"),
+    tested: false,
+  },
+  {
+    name: "GPT4All",
+    instructions:
+      "If you launch the GPT4ALL docker container, the API will be at localhost:4891/v1. The authors indicate that this API may no longer be maintained.",
+    apiUrl: new URL("http://localhost:4891/v1"),
+    docsUrl: new URL(
+      "https://github.com/nomic-ai/gpt4all/tree/cef74c2be20f5b697055d5b8b506861c7b997fab/gpt4all-api"
+    ),
+    tested: false,
   },
 ];
 
@@ -230,6 +216,18 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                   return <p>{item}</p>;
                 }
               })}
+            {selectedToolInfo.docsUrl && (
+              <p>
+                <strong className="inline-block mt-2 mb-1">Full Docs:</strong>{" "}
+                <a
+                  href={selectedToolInfo.docsUrl.href}
+                  target="_blank"
+                  className="text-blue-500"
+                >
+                  {selectedToolInfo.docsUrl.href}
+                </a>
+              </p>
+            )}
             <p>
               <strong className="inline-block mt-2 mb-1">
                 Suggested API URL:
@@ -252,6 +250,10 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                 type: "changeApiUrl",
                 value: selectedToolInfo.apiUrl.href,
               });
+
+              if (apiUrlInputRef.current) {
+                apiUrlInputRef.current.value = selectedToolInfo.apiUrl.href;
+              }
 
               setShowSaved(true);
 
@@ -364,6 +366,11 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
               type: "changeApiUrl",
               value: DEFAULT_EXTENSION_SETTINGS.gpt3.apiBaseUrl,
             });
+
+            if (apiUrlInputRef.current) {
+              apiUrlInputRef.current.value =
+                DEFAULT_EXTENSION_SETTINGS.gpt3.apiBaseUrl;
+            }
 
             setShowSaved(true);
 

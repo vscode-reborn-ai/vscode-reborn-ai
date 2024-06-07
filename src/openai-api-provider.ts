@@ -16,6 +16,7 @@ export class ApiProvider {
   private _openai: OpenAI;
   private _temperature: number;
   private _topP: number;
+  private _modelList: OpenAI.Model[] | undefined;
 
   public apiConfig: ClientOptions;
 
@@ -254,35 +255,56 @@ export class ApiProvider {
     this._topP = value;
   }
 
-  updateApiKey(apiKey: string) {
+  async updateApiKey(apiKey: string) {
     // OpenAI API config
     this.apiConfig = {
       apiKey: apiKey,
       organization: this.apiConfig.organization,
-      // baseURL: this.apiConfig.baseURL,
+      baseURL: this.apiConfig.baseURL,
     };
+
     this._openai = new OpenAI(this.apiConfig);
+
+    this.repullModelList();
   }
 
-  updateOrganizationId(organizationId: string) {
+  async updateOrganizationId(organizationId: string) {
     // OpenAI API config
     this.apiConfig = {
       apiKey: this.apiConfig.apiKey,
       organization: organizationId,
-      // baseURL: this.apiConfig.baseURL,
+      baseURL: this.apiConfig.baseURL,
     };
+
     this._openai = new OpenAI(this.apiConfig);
+
+    this.repullModelList();
   }
 
-  updateApiBaseUrl(apiBaseUrl: string) {
+  async updateApiBaseUrl(apiBaseUrl: string) {
     // If apiBaseUrl ends with slash, remove it
     apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
     // OpenAI API config
     this.apiConfig = {
       apiKey: this.apiConfig.apiKey,
       organization: this.apiConfig.organization,
-      // baseURL: this.apiConfig.baseURL,
+      baseURL: this.apiConfig.baseURL,
     };
+
     this._openai = new OpenAI(this.apiConfig);
+
+    this.repullModelList();
+  }
+
+  private async repullModelList(): Promise<void> {
+    this._modelList = (await this._openai.models.list()).getPaginatedItems();
+  }
+
+  async getModelList(): Promise<OpenAI.Model[]> {
+    if (!this._modelList) {
+      await this.repullModelList();
+    }
+
+    return this._modelList ?? [];
   }
 }

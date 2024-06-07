@@ -45,6 +45,25 @@ class Action {
 
   // async iterator
   protected async* streamChatCompletion(apiProvider: ApiProvider, systemContext: string, prompt: string, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
+    let model = Model.gpt_35_turbo;
+    const supportedModels = (await apiProvider.getModelList()).map((m) => m.id);
+
+    if (supportedModels.includes(Model.gpt_4)) {
+      model = Model.gpt_4;
+    }
+
+    if (supportedModels.includes(Model.gpt_35_turbo)) {
+      model = Model.gpt_35_turbo;
+    }
+
+    if (supportedModels.includes(Model.gpt_4_turbo)) {
+      model = Model.gpt_4_turbo;
+    }
+
+    if (supportedModels.includes(Model.gpt_4o)) {
+      model = Model.gpt_4o;
+    }
+
     const systemMessage: Message = {
       id: uuidv4(),
       content: systemContext,
@@ -66,7 +85,7 @@ class Action {
       messages: [systemMessage, message],
       createdAt: Date.now(),
       inProgress: true,
-      model: Model.gpt_4o,
+      model,
       autoscroll: true,
     };
 
@@ -331,7 +350,7 @@ class TitleAction extends Action {
       conversationId: string;
     }
   ): Promise<{
-    newTitle: string;
+    newTitle: string | undefined;
     conversationId: string;
   }> {
     if (!options.messageText) {
@@ -340,7 +359,7 @@ class TitleAction extends Action {
 
     const prompt = options.messageText;
     const systemContextModified = 'Derive a concise conversation title from the provided user question and assistant response. ONLY respond with a 2 or 3 word title. For context, conversations are normally about software development. Shorter is better. Prepend an appropriate emoji to the title.';
-    let title = '';
+    let title: string | undefined = '';
 
     try {
       for await (const token of this.streamChatCompletion(apiProvider, systemContextModified, prompt, controller.signal)) {
@@ -354,6 +373,13 @@ class TitleAction extends Action {
     title = title.trim();
     // remove any double quotes
     title = title.replace(/"/g, '');
+    // Truncate to 50 characters
+    title = title.slice(0, 25);
+
+    // Avoid renaming to empty string if rename fails
+    if (title.length < 3) {
+      title = undefined;
+    }
 
     return {
       newTitle: title,
