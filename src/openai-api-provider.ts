@@ -40,7 +40,7 @@ export class ApiProvider {
     this.apiConfig = {
       apiKey: apiKey,
       organization: organizationId,
-      // baseURL: apiBaseUrl,
+      baseURL: apiBaseUrl,
     };
     this._openai = new OpenAI(this.apiConfig);
     this._temperature = temperature;
