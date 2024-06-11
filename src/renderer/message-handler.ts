@@ -153,7 +153,8 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             dispatch(
               setModel({
                 conversationId: currentConversationId,
-                model: models.find((model) => model.id === message.config.gpt3?.model) ?? models[0],
+                model: models.find((model) => model.id === (message.config.gpt3?.model ?? settings?.gpt3?.model)
+                ) ?? models[0],
               })
             );
           } else {

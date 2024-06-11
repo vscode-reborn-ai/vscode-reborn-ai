@@ -8,7 +8,7 @@ import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetApiKeyStatusMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetApiKeyStatusMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import { unEscapeHTML } from "./renderer/utils";
 import Auth from "./secrets-store";
 import Messenger from "./send-to-frontend";
@@ -437,6 +437,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					const setVerbosityData = data as SetVerbosityMessage;
 					const verbosity = setVerbosityData?.verbosity ?? Verbosity.normal;
 					vscode.workspace.getConfiguration("chatgpt").update("verbosity", verbosity, vscode.ConfigurationTarget.Global);
+					break;
+				case BackendMessageType.setShowAllModels:
+					const setShowAllModelsData = data as SetShowAllModelsMessage;
+					this.showAllModels = setShowAllModelsData.showAllModels;
+					vscode.workspace.getConfiguration("chatgpt").update("showAllModels", this.showAllModels, vscode.ConfigurationTarget.Global);
 					break;
 				case BackendMessageType.setCurrentConversation:
 					const setCurrentConversationData = data as SetCurrentConversationMessage;

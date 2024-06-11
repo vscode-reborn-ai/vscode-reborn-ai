@@ -9,7 +9,6 @@ export enum BackendMessageType {
   stopGenerating = "stopGenerating",
   setCurrentConversation = "setCurrentConversation",
   getTokenCount = "getTokenCount",
-  setVerbosity = "setVerbosity",
   editCode = "editCode",
   openNew = "openNew",
   cleargpt3 = "cleargpt3",
@@ -18,6 +17,8 @@ export enum BackendMessageType {
   getSettings = "getSettings",
   openSettings = "openSettings",
   openSettingsPrompt = "openSettingsPrompt",
+  setVerbosity = "setVerbosity",
+  setShowAllModels = "setShowAllModels",
   // Models
   getModels = "getModels",
   setModel = "setModel",
@@ -109,6 +110,11 @@ export interface ResetApiKeyMessage extends BaseBackendMessage {
 export interface SetVerbosityMessage extends BaseBackendMessage {
   type: BackendMessageType.setVerbosity;
   verbosity: Verbosity;
+}
+
+export interface SetShowAllModelsMessage extends BaseBackendMessage {
+  type: BackendMessageType.setShowAllModels;
+  showAllModels: boolean;
 }
 
 export interface SetCurrentConversationMessage extends BaseBackendMessage {

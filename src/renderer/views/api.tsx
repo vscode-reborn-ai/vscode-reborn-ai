@@ -3,7 +3,11 @@ import CodeBlock from "../components/CodeBlock";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
-import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
+import {
+  ApiKeyStatus,
+  setApiKeyStatus,
+  setExtensionSettings,
+} from "../store/app";
 import { DEFAULT_EXTENSION_SETTINGS } from "../types";
 import { useDebounce } from "../utils";
 
@@ -14,6 +18,7 @@ const popularLocalLlms: {
   apiUrl?: URL;
   docsUrl?: URL;
   showApiKeyInput?: boolean;
+  showAllModelSuggestion?: boolean;
   tested?: boolean;
 }[] = [
   {
@@ -25,16 +30,17 @@ const popularLocalLlms: {
       "https://platform.openai.com/docs/api-reference/authentication"
     ),
     showApiKeyInput: true,
+    showAllModelSuggestion: false,
     tested: true,
   },
   {
-    // TODO - test
     name: "OpenRouter AI",
     instructions:
       "To use OpenRouter AI, you must have an account at https://openrouter.ai and provide your API key.",
     apiUrl: new URL("https://openrouter.ai/api/v1"),
     docsUrl: new URL("https://openrouter.ai/docs"),
     showApiKeyInput: true,
+    showAllModelSuggestion: true,
     tested: true,
   },
   {
@@ -45,6 +51,7 @@ const popularLocalLlms: {
     docsUrl: new URL(
       "https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API"
     ),
+    showAllModelSuggestion: true,
     tested: true,
   },
   {
@@ -53,6 +60,7 @@ const popularLocalLlms: {
       "Just start LocalAI like normal, it should automatically host an OpenAI-compatible API at localhost:8080",
     apiUrl: new URL("http://localhost:8080/v1"),
     docsUrl: new URL("https://localai.io/features/openai-functions/"),
+    showAllModelSuggestion: true,
     tested: true,
   },
   {
@@ -61,6 +69,7 @@ const popularLocalLlms: {
       "Just run Modelz LLM, for example: \n\n```bash\nmodelz-llm -m bigscience/bloomz-560m --device cpu\n```And the API will be at localhost:8000/v1",
     apiUrl: new URL("http://localhost:8000/v1"),
     docsUrl: new URL("https://github.com/tensorchord/modelz-llm#quick-start"),
+    showAllModelSuggestion: true,
     tested: false,
   },
   {
@@ -71,6 +80,7 @@ const popularLocalLlms: {
     docsUrl: new URL(
       "https://github.com/nomic-ai/gpt4all/tree/cef74c2be20f5b697055d5b8b506861c7b997fab/gpt4all-api"
     ),
+    showAllModelSuggestion: true,
     tested: false,
   },
   {
@@ -78,6 +88,7 @@ const popularLocalLlms: {
     instructions:
       "If you're tool is compatible with OpenAI's API, you can use it here. Set the API URL in the input below. It should starts with 'https' and should (probably) end with '/v1' (without quotes). If the API key is needed, set that too.",
     showApiKeyInput: true,
+    showAllModelSuggestion: true,
     tested: false,
   },
 ];
@@ -99,11 +110,9 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
 
   const handleApiKeyUpdate = (apiKey: string) => {
     if (apiKey === lastApiKeyTest) {
-      console.log("API key is the same as last test, skipping...");
       return;
     }
 
-    console.log("Testing API key...");
     dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
 
     backendMessenger.sendChangeApiKey(apiKey);
@@ -149,14 +158,6 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
     }
   }, []);
 
-  // Every time selected tool changes, retest the API key (if applicable)
-  useEffect(() => {
-    if (selectedToolInfo?.showApiKeyInput) {
-      // getApiKeyStatus will retest the API key on the backend
-      backendMessenger.sendGetApiKeyStatus();
-    }
-  }, [selectedTool]);
-
   return (
     <div className="api-settings-view p-4 flex flex-col gap-4 overflow-y-auto">
       <header>
@@ -186,7 +187,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
       </header>
       <section className="p-4 rounded border border-input">
         <label className="block text-md font-medium mb-2">
-          Use one of our templates:
+          Select a tool to see instructions for it:
         </label>
         <select
           value={selectedTool}
@@ -215,83 +216,99 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
           ))}
         </select>
         {selectedToolInfo && (
-          <div>
-            <h2 className="text-lg font-medium mt-2">Instructions</h2>
-            {selectedToolInfo.instructions
-              .split(/(```bash\n[\s\S]*?\n```)/)
-              .reduce((acc: any[], item: any) => {
-                if (item) {
-                  acc.push(item);
-                }
-                return acc;
-              }, [])
-              .map((item: string, index: React.Key | null | undefined) => {
-                if (item.startsWith("```bash")) {
-                  // remove the ```bash and ``` from the string
-                  item = item.replace(/```bash\n/g, "").replace(/\n```/g, "");
-                  return (
-                    <CodeBlock
-                      margins={false}
-                      className="my-1"
-                      code={item}
-                      key={index}
-                      vscode={vscode}
-                    />
-                  );
-                } else {
-                  return <p>{item}</p>;
-                }
-              })}
-            {selectedToolInfo.docsUrl && (
-              <p>
-                <strong className="inline-block mt-2 mb-1">Full Docs:</strong>{" "}
-                <a
-                  href={selectedToolInfo.docsUrl.href}
-                  target="_blank"
-                  className="text-blue-500"
-                >
-                  {selectedToolInfo.docsUrl.href}
-                </a>
-              </p>
-            )}
+          <>
+            <div>
+              <h2 className="text-lg font-medium mt-2">Instructions</h2>
+              {selectedToolInfo.instructions
+                .split(/(```bash\n[\s\S]*?\n```)/)
+                .reduce((acc: any[], item: any) => {
+                  if (item) {
+                    acc.push(item);
+                  }
+                  return acc;
+                }, [])
+                .map((item: string, index: React.Key | null | undefined) => {
+                  if (item.startsWith("```bash")) {
+                    // remove the ```bash and ``` from the string
+                    item = item.replace(/```bash\n/g, "").replace(/\n```/g, "");
+                    return (
+                      <CodeBlock
+                        margins={false}
+                        className="my-1"
+                        code={item}
+                        key={index}
+                        vscode={vscode}
+                      />
+                    );
+                  } else {
+                    return <p>{item}</p>;
+                  }
+                })}
+              {selectedToolInfo.docsUrl && (
+                <p>
+                  <strong className="inline-block mt-2 mb-1">Full Docs:</strong>{" "}
+                  <a
+                    href={selectedToolInfo.docsUrl.href}
+                    target="_blank"
+                    className="text-blue-500"
+                  >
+                    {selectedToolInfo.docsUrl.href}
+                  </a>
+                </p>
+              )}
+            </div>
             {selectedToolInfo.apiUrl && (
-              <p>
+              <>
                 <strong className="inline-block mt-2 mb-1">
                   Suggested API URL:
                 </strong>
-                <CodeBlock
-                  margins={false}
-                  className="mb-2"
-                  code={selectedToolInfo.apiUrl.href}
-                  vscode={vscode}
-                />
-              </p>
+                <div className="flex flex-wrap gap-2">
+                  <CodeBlock
+                    margins={false}
+                    className="flex-grow"
+                    code={selectedToolInfo.apiUrl.href}
+                    vscode={vscode}
+                  />
+                  <button
+                    type="button"
+                    className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
+                    onClick={() => {
+                      backendMessenger.sendChangeApiUrl(
+                        selectedToolInfo.apiUrl?.href ?? ""
+                      );
+
+                      if (apiUrlInputRef.current) {
+                        apiUrlInputRef.current.value =
+                          selectedToolInfo.apiUrl?.href ?? "";
+                      }
+
+                      setShowSaved(true);
+
+                      setTimeout(() => {
+                        setShowSaved(false);
+                      }, 2000);
+                    }}
+                  >
+                    Use suggested API URL
+                  </button>
+                </div>
+              </>
             )}
-          </div>
+          </>
         )}
-        {selectedToolInfo && selectedToolInfo.apiUrl && (
-          <button
-            type="button"
-            className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
-            onClick={() => {
-              backendMessenger.sendChangeApiUrl(
-                selectedToolInfo.apiUrl?.href ?? ""
-              );
-
-              if (apiUrlInputRef.current) {
-                apiUrlInputRef.current.value =
-                  selectedToolInfo.apiUrl?.href ?? "";
-              }
-
-              setShowSaved(true);
-
-              setTimeout(() => {
-                setShowSaved(false);
-              }, 2000);
-            }}
-          >
-            Use suggested API URL
-          </button>
+        {selectedToolInfo && selectedToolInfo.showAllModelSuggestion && (
+          <p className="mt-2">
+            <strong>Note:</strong> With this API it is{" "}
+            <strong>recommended</strong> to check the "Show all models" checkbox
+            below to see all models.
+          </p>
+        )}
+        {selectedToolInfo && !selectedToolInfo.showAllModelSuggestion && (
+          <p className="mt-2">
+            <strong>Note:</strong> It is recommended you do <strong>not</strong>{" "}
+            check the "Show all models" checkbox below or a lot of unnecessary
+            models will be shown.
+          </p>
         )}
       </section>
 
@@ -308,33 +325,11 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             className="block w-full p-2 text-sm rounded border border-input text-input bg-input outline-0"
           />
           {showSaved && (
-            <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-button-secondary">
+            <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-menu">
               Saved
             </span>
           )}
         </div>
-        <button
-          type="button"
-          className="mt-2 inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button-secondary hover:text-button-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button-secondary hover:bg-button-secondary-hover"
-          onClick={() => {
-            backendMessenger.sendChangeApiUrl(
-              DEFAULT_EXTENSION_SETTINGS.gpt3.apiBaseUrl
-            );
-
-            if (apiUrlInputRef.current) {
-              apiUrlInputRef.current.value =
-                DEFAULT_EXTENSION_SETTINGS.gpt3.apiBaseUrl;
-            }
-
-            setShowSaved(true);
-
-            setTimeout(() => {
-              setShowSaved(false);
-            }, 2000);
-          }}
-        >
-          Reset to OpenAI default
-        </button>
       </section>
 
       <section>
@@ -417,6 +412,34 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
               )}
           </>
         )}
+        <div className="flex flex-col gap-2 mt-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="showAllModels"
+              checked={settings.showAllModels}
+              onChange={(e) => {
+                dispatch(
+                  setExtensionSettings({
+                    newSettings: {
+                      ...settings,
+                      showAllModels: e.target.checked,
+                    },
+                  })
+                );
+                backendMessenger.sendSetShowAllModels(e.target.checked);
+              }}
+              className="rounded text-input cursor-pointer bg-input border-input"
+            />
+            <label htmlFor="showAllModels" className="text-sm cursor-pointer">
+              {t?.apiKeySetup?.showAllModels ?? "Show ALL models"}
+            </label>
+          </div>
+          <p>
+            {t?.apiKeySetup?.showAllModelsDescription ??
+              "If checked, every single model available on the API will be shown. This setting is recommended for APIs that serve models different from OpenAI's Official API. However, note that some models that are listed will NOT work with this extension."}
+          </p>
+        </div>
       </section>
     </div>
   );

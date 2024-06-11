@@ -105,6 +105,11 @@ export function useMessenger(vscode: any) {
       verbosity
     } as SetVerbosityMessage);
   };
+  const sendSetShowAllModels = (showAllModels: boolean) => {
+    sendMessageToBackend(BackendMessageType.setShowAllModels, {
+      showAllModels
+    });
+  };
 
   return {
     sendGetSettings,
@@ -126,5 +131,6 @@ export function useMessenger(vscode: any) {
     sendAddFreeTextQuestion,
     sendStopGenerating,
     sendSetVerbosity,
+    sendSetShowAllModels,
   };
 }
