@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { setVerbosity } from "../store/conversation";
 import { Conversation, Verbosity } from "../types";
@@ -23,6 +24,7 @@ export default function VerbositySelect({
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: RootState) => state.app.translations);
   const [showOptions, setShowOptions] = useState(false);
+  const backendMessenger = useMessenger(vscode);
 
   const getHumanFriendlyLabel = (verbosity: Verbosity) => {
     switch (verbosity) {
@@ -90,10 +92,7 @@ export default function VerbositySelect({
                 );
 
                 // Update settings
-                vscode.postMessage({
-                  type: "setVerbosity",
-                  value: option,
-                });
+                backendMessenger.sendSetVerbosity(option);
 
                 // Close the menu
                 setShowOptions(false);

@@ -1,7 +1,9 @@
 import { encodingForModel, Tiktoken, TiktokenModel } from "js-tiktoken";
 import OpenAI, { ClientOptions } from 'openai';
 import { v4 as uuidv4 } from "uuid";
-import { Conversation, Message, Model, MODEL_TOKEN_LIMITS, Role } from "./renderer/types";
+import { ChatMessage, Conversation, MODEL_TOKEN_LIMITS, Role } from "./renderer/types";
+
+const FALLBACK_MODEL_ID = 'gpt-4-turbo';
 
 /*
 
@@ -48,9 +50,9 @@ export class ApiProvider {
     this._topP = topP;
   }
 
-  getRemainingTokens(model: Model, promptTokensUsed: number) {
-    const modelContext = MODEL_TOKEN_LIMITS[model].context;
-    const modelMax = MODEL_TOKEN_LIMITS[model].max;
+  getRemainingTokens(modelId: string, promptTokensUsed: number) {
+    const modelContext = MODEL_TOKEN_LIMITS.get(modelId)?.context ?? 128000;
+    const modelMax = MODEL_TOKEN_LIMITS.get(modelId)?.max ?? 4096;
 
     // OpenAI's maxTokens is used as max (prompt + complete) tokens
     // We must calculate total context window - prompt tokens being sent to determine max response size
@@ -66,7 +68,7 @@ export class ApiProvider {
     }
 
     if (tokensLeft < 0) {
-      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${model}) only supports ${modelContext} context tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
+      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${modelId}) only supports ${modelContext} context tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
     }
 
     return tokensLeft;
@@ -80,15 +82,15 @@ export class ApiProvider {
     temperature?: number;
     topP?: number;
   } = {}): AsyncGenerator<any, any, unknown> {
-    const model = conversation.model ?? Model.gpt_35_turbo;
+    const modelId = conversation.model?.id ?? FALLBACK_MODEL_ID;
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(modelId, promptTokensUsed);
 
     // Only stream if not using a proxy
     const useStream = true; // this.apiConfig.basePath === 'https://api.openai.com/v1';
     const response = await this._openai.chat.completions.create(
       {
-        model,
+        model: modelId,
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -124,13 +126,13 @@ export class ApiProvider {
     temperature?: number;
     topP?: number;
   } = {}): Promise<OpenAI.Chat.Completions.ChatCompletionMessage | undefined> {
-    const model = conversation.model ?? Model.gpt_35_turbo;
+    const modelId = conversation.model?.id ?? FALLBACK_MODEL_ID;
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(modelId, promptTokensUsed);
 
     const response = await this._openai.chat.completions.create(
       {
-        model,
+        model: modelId,
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -154,14 +156,14 @@ export class ApiProvider {
   }: {
     temperature?: number;
     topP?: number;
-  } = {}): Promise<Message | undefined> {
-    const model = conversation.model ?? Model.gpt_35_turbo;
+  } = {}): Promise<ChatMessage | undefined> {
+    const modelId = conversation.model?.id ?? 'gpt-4-turbo';
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(modelId, promptTokensUsed);
 
     const response = await this._openai.chat.completions.create(
       {
-        model,
+        model: modelId,
         messages: [{ "role": "user", "content": prompt }],
         max_tokens: completeTokensLeft,
         temperature,
@@ -180,30 +182,21 @@ export class ApiProvider {
   }
 
   // * Utility token counting methods
-  // Use this.getEncodingForModel() instead of encodingForModel() due to missing model support
-  public static getEncodingForModel(model: Model): Tiktoken {
-    let adjustedModel = model;
-
-    switch (model) {
-      case Model.gpt_35_turbo_16k:
-        // June 27, 2023 - Tiktoken@1.0.7 does not recognize the 3.5-16k model version.
-        adjustedModel = Model.gpt_35_turbo;
-        break;
-      case Model.gpt_4_turbo:
-        // Nov 24, 2023 - Adding gpt-4-turbo, will update tiktoken at another date
-        adjustedModel = Model.gpt_4;
-        break;
+  public static getEncodingForModel(modelId: string): Tiktoken {
+    try {
+      return encodingForModel(modelId as TiktokenModel);
+    } catch (e) {
+      console.info(`Failed to get encoding for model ${modelId}. Using default model ${FALLBACK_MODEL_ID}.`);
+      return encodingForModel(FALLBACK_MODEL_ID as TiktokenModel);
     }
-
-    return encodingForModel(adjustedModel as TiktokenModel);
   }
 
   public static countConversationTokens(conversation: Conversation): number {
-    const enc = this.getEncodingForModel(conversation.model ?? Model.gpt_35_turbo);
+    const enc = this.getEncodingForModel(conversation.model?.id ?? FALLBACK_MODEL_ID);
     let tokensUsed = 0;
 
     for (const message of conversation.messages) {
-      tokensUsed += ApiProvider.countMessageTokens(message, conversation.model ?? Model.gpt_35_turbo, enc);
+      tokensUsed += ApiProvider.countMessageTokens(message, conversation.model, enc);
     }
 
     tokensUsed += 3; // every reply is primed with <im_start>assistant
@@ -211,8 +204,8 @@ export class ApiProvider {
     return tokensUsed;
   }
 
-  public static countMessageTokens(message: Message, model: Model, encoder?: Tiktoken): number {
-    let enc = encoder ?? this.getEncodingForModel(model);
+  public static countMessageTokens(message: ChatMessage, model: OpenAI.Model | undefined, encoder?: Tiktoken): number {
+    let enc = encoder ?? this.getEncodingForModel(model?.id ?? FALLBACK_MODEL_ID);
     let tokensUsed = 4; // every message follows <im_start>{role/name}\n{content}<im_end>\n
 
     const openAIMessage = {
@@ -235,12 +228,12 @@ export class ApiProvider {
   }
 
   // Calculate tokens remaining for OpenAI's response
-  public static getRemainingPromptTokens(maxTokens: number, prompt: string, model: Model): number {
-    return maxTokens - ApiProvider.countPromptTokens(prompt, model);
+  public static getRemainingPromptTokens(maxTokens: number, prompt: string, modelId: string): number {
+    return maxTokens - ApiProvider.countPromptTokens(prompt, modelId);
   }
 
-  public static countPromptTokens(prompt: string, model: Model): number {
-    const enc = this.getEncodingForModel(model);
+  public static countPromptTokens(prompt: string, modelId: string): number {
+    const enc = this.getEncodingForModel(modelId);
     const tokens = enc.encode(prompt).length;
 
     return tokens;

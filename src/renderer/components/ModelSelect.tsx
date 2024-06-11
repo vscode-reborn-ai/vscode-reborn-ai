@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import OpenAI from "openai";
+import React, { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { updateConversationModel } from "../store/conversation";
 import {
   Conversation,
   MODEL_FRIENDLY_NAME,
   MODEL_TOKEN_LIMITS,
-  Model,
 } from "../types";
 import Icon from "./Icon";
 
@@ -33,17 +34,17 @@ export default function ModelSelect({
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
-  const chatGPTModels = useAppSelector(
-    (state: RootState) => state.app.chatGPTModels
-  );
+  const models = useAppSelector((state: RootState) => state.app.models);
+  const [filteredModels, setFilteredModels] = useState<OpenAI.Model[]>([]);
+  const backendMessenger = useMessenger(vscode);
 
-  const setModel = (model: Model) => {
+  useEffect(() => {
+    setFilteredModels(models);
+  }, [models]);
+
+  const setModel = (model: OpenAI.Model) => {
     // Update settings
-    vscode.postMessage({
-      type: "setModel",
-      value: model,
-      conversationId: currentConversation.id,
-    });
+    backendMessenger.sendModelUpdate(model);
 
     dispatch(
       updateConversationModel({
@@ -69,212 +70,204 @@ export default function ModelSelect({
         >
           <Icon icon="box" className="w-3 h-3 mr-1" />
           {currentConversation.model
-            ? MODEL_FRIENDLY_NAME[
-                currentConversation.model ?? Model.gpt_35_turbo
-              ]
+            ? MODEL_FRIENDLY_NAME.has(currentConversation.model.id)
+              ? MODEL_FRIENDLY_NAME.get(currentConversation.model.id)
+              : currentConversation.model.id ?? settings?.gpt3?.model
             : settings?.gpt3?.model ?? "..."}
         </button>
         <div
-          className={`fixed items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+          className={`fixed mb-8 overflow-y-auto max-h-screen items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
-            ${dropdownClassName ? dropdownClassName : "bottom-8 left-4 z-10"}
+            ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}
         >
-          {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo) && (
-            <button
-              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
-              onClick={() => {
-                setModel(Model.gpt_35_turbo);
-                if (showParentMenu) {
-                  showParentMenu(false);
-                }
-              }}
-            >
-              <code>gpt-3.5-turbo</code>
-              <p>
-                Quality: ⭐⬜⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].context}</code>
-                {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo].max && (
-                  <>
-                    , Completion:{" "}
-                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_35_turbo]?.max}</code>
-                  </>
-                )}
-              </p>
-            </button>
-          )}
-          {/* This model will be removed from the list soon (gpt-3.5-turbo now has 16k by default)
-          {chatGPTModels && chatGPTModels.includes(Model.gpt_35_turbo_16k) && (
-            <button
-              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
-              onClick={() => {
-                setModel(Model.gpt_35_turbo_16k);
-                if (showParentMenu) {
-                  showParentMenu(false);
-                }
-              }}
-            >
-              <code>gpt-3.5-turbo-16k</code>
-              <p>
-                Quality: ⭐⬜⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
-                <code>
-                  {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].context}
-                </code>
-                {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k].max && (
-                  <>
-                    , Completion:{" "}
-                    <code>
-                      {MODEL_TOKEN_LIMITS[Model.gpt_35_turbo_16k]?.max}
-                    </code>
-                  </>
-                )}
-              </p>
-            </button>
-          )} */}
-          {chatGPTModels && chatGPTModels.includes(Model.gpt_4_turbo) ? (
-            <button
-              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
-              onClick={() => {
-                setModel(Model.gpt_4_turbo);
-                if (showParentMenu) {
-                  showParentMenu(false);
-                }
-              }}
-            >
-              <code>gpt-4-turbo</code>
-              <p>
-                Quality: ⭐⭐⬜, Speed: ⚡⚡⬜, Cost: 💸💸💸, Context:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].context}</code>
-                {MODEL_TOKEN_LIMITS[Model.gpt_4_turbo].max && (
-                  <>
-                    , Completion:{" "}
-                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_turbo]?.max}</code>
-                  </>
-                )}
-              </p>
-            </button>
+          {settings?.showAllModels ? (
+            <>
+              {(models.length > 6 ? filteredModels : models).map(
+                (model: OpenAI.Model) => (
+                  <button
+                    key={model.id}
+                    className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                    onClick={() => {
+                      setModel(model);
+                      if (showParentMenu) {
+                        showParentMenu(false);
+                      }
+                    }}
+                  >
+                    <code>{model.id}</code>
+                  </button>
+                )
+              )}
+              {models.length > 6 && (
+                <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
+                  <span className="text-button">
+                    Showing {filteredModels.length} of {models.length} models
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search models..."
+                    className="px-3 py-2 rounded border text-input text-sm border-input bg-menu-selection outline-0"
+                    onChange={(e) => {
+                      const query = e.target.value.toLowerCase();
+
+                      setFilteredModels(
+                        query.length > 0
+                          ? models.filter((model) =>
+                              model.id.toLowerCase().includes(query)
+                            )
+                          : models
+                      );
+                    }}
+                  />
+                </div>
+              )}
+            </>
           ) : (
-            <a
-              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-              href="https://openai.com/waitlist/gpt-4-api"
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => {
-                setShowModels(false);
-                if (showParentMenu) {
-                  showParentMenu(false);
-                }
-              }}
-            >
-              {t?.modelSelect?.gpt4TurboUnavailableNote ??
-                "Looking for GPT-4-turbo? Your account does not seem to have access yet."}
-            </a>
-          )}
-          {chatGPTModels && chatGPTModels.includes(Model.gpt_4) ? (
-            <button
-              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
-              onClick={() => {
-                setModel(Model.gpt_4);
-                if (showParentMenu) {
-                  showParentMenu(false);
-                }
-              }}
-            >
-              <code>gpt-4</code>
-              <p>
-                Quality: ⭐⭐⬜, Speed: ⚡⬜⬜, Cost: 💸💸💸, Context:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4].context}</code>
-                {MODEL_TOKEN_LIMITS[Model.gpt_4].max && (
-                  <>
-                    , Completion:{" "}
-                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_4]?.max}</code>
-                  </>
-                )}
-              </p>
-            </button>
-          ) : (
-            <a
-              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-              href="https://openai.com/waitlist/gpt-4-api"
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => {
-                setShowModels(false);
-                if (showParentMenu) {
-                  showParentMenu(false);
-                }
-              }}
-            >
-              {t?.modelSelect?.gpt4UnavailableNote ??
-                "Looking for GPT-4? You need to sign up on the waitlist here"}
-            </a>
-          )}
-          {/* This model will be removed from the list soon. Not a lot of use-cases for it.
-          {chatGPTModels && chatGPTModels.includes(Model.gpt_4_32k) ? (
-            <button
-              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
-              onClick={() => {
-                setModel(Model.gpt_4_32k);
-              }}
-            >
-              <code>gpt-4-32k</code>
-              <p>
-                Quality: ⭐⭐⭐, Speed: ⚡⬜⬜, Cost: 💸💸💸, Context:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k].context}</code>
-                {MODEL_TOKEN_LIMITS[Model.gpt_4_32k].max && (
-                  <>
-                    , Completion:{" "}
-                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_4_32k]?.max}</code>
-                  </>
-                )}
-              </p>
-            </button>
-          ) : (
-            <a
-              className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
-              href="https://community.openai.com/t/how-to-get-access-to-gpt-4-32k/"
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => {
-                setShowModels(false);
-                if (showParentMenu) {
-                  showParentMenu(false);
-                }
-              }}
-            >
-              {t?.modelSelect?.gpt432kUnavailableNote ??
-                "You can sign up for updates here"}
-            </a>
-          )}
-          */}
-          {chatGPTModels && chatGPTModels.includes(Model.gpt_4o) ? (
-            <button
-              className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
-              onClick={() => {
-                setModel(Model.gpt_4o);
-                if (showParentMenu) {
-                  showParentMenu(false);
-                }
-              }}
-            >
-              <span>
-                <code>gpt-4o</code> <strong>(recommended)</strong>
-              </span>
-              <p>
-                Quality: ⭐⭐⭐, Speed: ⚡⚡⚡, Cost: 💸💸⬜, Context:{" "}
-                <code>{MODEL_TOKEN_LIMITS[Model.gpt_4o].context}</code>
-                {MODEL_TOKEN_LIMITS[Model.gpt_4o].max && (
-                  <>
-                    , Completion:{" "}
-                    <code>{MODEL_TOKEN_LIMITS[Model.gpt_4o]?.max}</code>
-                  </>
-                )}
-              </p>
-            </button>
-          ) : (
-            <p className="flex gap-2 items-center justify-start p-2 w-full">
-              <code>gpt-4o</code> is not available for your account yet.
-            </p>
+            <>
+              {models &&
+                (() => {
+                  const gpt35Turbo = models.find(
+                    (model) => model.id === "gpt-3.5-turbo"
+                  );
+
+                  if (!gpt35Turbo) {
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      onClick={() => {
+                        setModel(gpt35Turbo);
+                        if (showParentMenu) {
+                          showParentMenu(false);
+                        }
+                      }}
+                    >
+                      <code>gpt-3.5-turbo</code>
+                      <p>
+                        Quality: ⭐⬜⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
+                        <code>
+                          {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.context}
+                        </code>
+                        {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.max && (
+                          <>
+                            , Completion:{" "}
+                            <code>
+                              {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.max}
+                            </code>
+                          </>
+                        )}
+                      </p>
+                    </button>
+                  );
+                })()}
+              {models &&
+                (() => {
+                  const gpt4Turbo = models.find(
+                    (model) => model.id === "gpt-4-turbo"
+                  );
+
+                  if (!gpt4Turbo) {
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      onClick={() => {
+                        setModel(gpt4Turbo);
+                        if (showParentMenu) {
+                          showParentMenu(false);
+                        }
+                      }}
+                    >
+                      <code>gpt-4-turbo</code>
+                      <p>
+                        Quality: ⭐⭐⬜, Speed: ⚡⚡⬜, Cost: 💸💸💸, Context:{" "}
+                        <code>
+                          {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.context}
+                        </code>
+                        {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.max && (
+                          <>
+                            , Completion:{" "}
+                            <code>
+                              {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.max}
+                            </code>
+                          </>
+                        )}
+                      </p>
+                    </button>
+                  );
+                })()}
+              {models &&
+                (() => {
+                  const gpt4 = models.find((model) => model.id === "gpt-4");
+
+                  if (!gpt4) {
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      onClick={() => {
+                        setModel(gpt4);
+                        if (showParentMenu) {
+                          showParentMenu(false);
+                        }
+                      }}
+                    >
+                      <code>gpt-4</code>
+                      <p>
+                        Quality: ⭐⭐⬜, Speed: ⚡⬜⬜, Cost: 💸💸💸, Context:{" "}
+                        <code>{MODEL_TOKEN_LIMITS.get(gpt4.id)?.context}</code>
+                        {MODEL_TOKEN_LIMITS.get(gpt4.id)?.max && (
+                          <>
+                            , Completion:{" "}
+                            <code>{MODEL_TOKEN_LIMITS.get(gpt4.id)?.max}</code>
+                          </>
+                        )}
+                      </p>
+                    </button>
+                  );
+                })()}
+              {models &&
+                (() => {
+                  const gpt4o = models.find((model) => model.id === "gpt-4o");
+
+                  if (!gpt4o) {
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      onClick={() => {
+                        setModel(gpt4o);
+                        if (showParentMenu) {
+                          showParentMenu(false);
+                        }
+                      }}
+                    >
+                      <span>
+                        <code>gpt-4o</code> <strong>(recommended)</strong>
+                      </span>
+                      <p>
+                        Quality: ⭐⭐⭐, Speed: ⚡⚡⚡, Cost: 💸💸⬜, Context:{" "}
+                        <code>{MODEL_TOKEN_LIMITS.get(gpt4o.id)?.context}</code>
+                        {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max && (
+                          <>
+                            , Completion:{" "}
+                            <code>{MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max}</code>
+                          </>
+                        )}
+                      </p>
+                    </button>
+                  );
+                })()}
+            </>
           )}
         </div>
       </div>

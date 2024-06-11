@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import CodeBlock from "../components/CodeBlock";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
 import { DEFAULT_EXTENSION_SETTINGS } from "../types";
@@ -12,6 +13,7 @@ const popularLocalLlms: {
   instructions: string;
   apiUrl: URL;
   docsUrl?: URL;
+  showApiKeyInput?: boolean;
   tested?: boolean;
 }[] = [
   {
@@ -22,7 +24,18 @@ const popularLocalLlms: {
     docsUrl: new URL(
       "https://platform.openai.com/docs/api-reference/authentication"
     ),
+    showApiKeyInput: true,
     tested: true,
+  },
+  {
+    // TODO - test
+    name: "OpenRouter AI",
+    instructions:
+      "To use OpenRouter AI, you must have an account at https://openrouter.ai and provide your API key.",
+    apiUrl: new URL("https://openrouter.ai/api/v1"),
+    docsUrl: new URL("https://openrouter.ai/docs"),
+    showApiKeyInput: true,
+    tested: false,
   },
   {
     name: "text-generation-webui",
@@ -75,27 +88,26 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
   const [showSaved, setShowSaved] = useState(false);
   const apiUrlInputRef = React.createRef<HTMLInputElement>();
   const [lastApiKeyTest, setLastApiKeyTest] = useState<string | null>(null);
+  const backendMessenger = useMessenger(vscode);
 
   const handleApiKeyUpdate = (apiKey: string) => {
     if (apiKey === lastApiKeyTest) {
+      console.log("API key is the same as last test, skipping...");
       return;
     }
 
+    console.log("Testing API key...");
     dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
 
-    vscode.postMessage({
-      type: "changeApiKey",
-      value: apiKey,
-    });
+    backendMessenger.sendChangeApiKey(apiKey);
 
     setLastApiKeyTest(apiKey);
   };
 
+  const debouncedSetApiKey = useDebounce(handleApiKeyUpdate, 2000);
+
   const handleApiUrlUpdate = (apiUrl: string) => {
-    vscode.postMessage({
-      type: "changeApiUrl",
-      value: apiUrl,
-    });
+    backendMessenger.sendChangeApiUrl(apiUrl);
 
     setShowSaved(true);
 
@@ -104,7 +116,6 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
     }, 2000);
   };
 
-  const debouncedSetApiKey = useDebounce(handleApiKeyUpdate, 2000);
   const debouncedSetApiUrl = useDebounce(handleApiUrlUpdate, 1000);
 
   useEffect(() => {
@@ -130,6 +141,14 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
       apiUrlInputRef.current.value = settings.gpt3.apiBaseUrl;
     }
   }, []);
+
+  // Every time selected tool changes, retest the API key (if applicable)
+  useEffect(() => {
+    if (selectedToolInfo?.showApiKeyInput) {
+      // getApiKeyStatus will retest the API key on the backend
+      backendMessenger.sendGetApiKeyStatus();
+    }
+  }, [selectedTool]);
 
   return (
     <div className="api-settings-view p-4 flex flex-col gap-4 overflow-y-auto">
@@ -244,12 +263,9 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
         {selectedToolInfo && (
           <button
             type="button"
-            className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button-secondary hover:text-button-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
+            className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
             onClick={() => {
-              vscode.postMessage({
-                type: "changeApiUrl",
-                value: selectedToolInfo.apiUrl.href,
-              });
+              backendMessenger.sendChangeApiUrl(selectedToolInfo.apiUrl.href);
 
               if (apiUrlInputRef.current) {
                 apiUrlInputRef.current.value = selectedToolInfo.apiUrl.href;
@@ -269,7 +285,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
 
       <section>
         {/* API key: user input */}
-        {selectedToolInfo?.name === "Official OpenAI API" && (
+        {selectedToolInfo?.showApiKeyInput && (
           <>
             <div>
               <label
@@ -362,10 +378,9 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
           type="button"
           className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button-secondary hover:text-button-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button-secondary hover:bg-button-secondary-hover"
           onClick={() => {
-            vscode.postMessage({
-              type: "changeApiUrl",
-              value: DEFAULT_EXTENSION_SETTINGS.gpt3.apiBaseUrl,
-            });
+            backendMessenger.sendChangeApiUrl(
+              DEFAULT_EXTENSION_SETTINGS.gpt3.apiBaseUrl
+            );
 
             if (apiUrlInputRef.current) {
               apiUrlInputRef.current.value =

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { setUseEditorSelection } from "../store/app";
 import {
@@ -9,7 +10,7 @@ import {
   setInProgress,
   updateUserInput,
 } from "../store/conversation";
-import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
+import { Conversation, MODEL_TOKEN_LIMITS } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 import MoreActionsMenu from "./MoreActionsMenu";
@@ -39,6 +40,7 @@ export default ({
   // Animation on token count value change
   const [tokenCountAnimation, setTokenCountAnimation] = useState(false);
   const tokenCountAnimationTimer = useRef(null);
+  const backendMessenger = useMessenger(vscode);
 
   // when includeEditorSelection changes, update the store (needed for token calculations elsewhere), one-way binding for now
   useEffect(() => {
@@ -82,10 +84,9 @@ export default ({
         })
       );
 
-      vscode.postMessage({
-        type: "addFreeTextQuestion",
-        value: questionInputRef.current.value,
+      backendMessenger.sendAddFreeTextQuestion({
         conversation: currentConversation,
+        question: questionInputRef.current.value,
         includeEditorSelection: useEditorSelection,
       });
 
@@ -204,10 +205,7 @@ export default ({
               title="Stop"
               className="px-2 py-1 h-full flex flex-row items-center border border-red-900 rounded hover:bg-button-secondary focus:bg-button-secondary"
               onClick={(e) => {
-                vscode.postMessage({
-                  type: "stopGenerating",
-                  conversationId: currentConversation.id,
-                });
+                backendMessenger.sendStopGenerating(currentConversation.id);
 
                 // Set the conversation to not in progress
                 dispatch(
@@ -243,7 +241,7 @@ export default ({
               currentConversation={currentConversation}
               vscode={vscode}
               conversationList={conversationList}
-              className="hidden xs:block"
+              className="hidden xs:flex items-end"
               tooltipId="footer-tooltip"
             />
             <VerbositySelect
@@ -310,9 +308,13 @@ export default ({
               }
                 ${
                   parseInt(tokenCountLabel) >
-                  MODEL_TOKEN_LIMITS[
-                    currentConversation?.model ?? Model.gpt_35_turbo
-                  ].context
+                  (MODEL_TOKEN_LIMITS.has(
+                    currentConversation.model?.id ?? "gpt-4-turbo"
+                  )
+                    ? MODEL_TOKEN_LIMITS.get(
+                        currentConversation.model?.id ?? "gpt-4-turbo"
+                      )?.context ?? 128000
+                    : 128000)
                     ? "duration-200 bg-red-700 bg-opacity-20"
                     : ""
                 }

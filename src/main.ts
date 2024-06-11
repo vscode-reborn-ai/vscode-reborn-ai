@@ -3,12 +3,15 @@ import { marked } from "marked";
 import OpenAI, { ClientOptions } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
-import { getSelectedModel, updateSelectedModel } from "./helpers";
+import { getSelectedModelId, updateSelectedModel } from "./helpers";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
-import { ActionNames, Conversation, Message, Model, Role, Verbosity } from "./renderer/types";
+import { ApiKeyStatus } from "./renderer/store/app";
+import { ActionNames, ChatMessage, Conversation, Role, Verbosity } from "./renderer/types";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetApiKeyStatusMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import { unEscapeHTML } from "./renderer/utils";
 import Auth from "./secrets-store";
+import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
 
 /*
@@ -46,14 +49,16 @@ export interface ApiRequestOptions {
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
 
+	public frontendMessenger: Messenger;
 	public subscribeToResponse: boolean;
-	public model?: string;
+	public model: OpenAI.Model;
 
 	private api: ApiProvider = new ApiProvider('');
 	private _temperature: number = 0.9;
 	private _topP: number = 1;
 	private chatMode?: boolean = true;
 	private systemContext: string;
+	private showAllModels: boolean = false;
 
 	private throttling: number = 100;
 	private abortControllers: {
@@ -61,7 +66,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		actionName?: string,
 		controller: AbortController;
 	}[] = [];
-	private chatGPTModels: Model[] = [];
 	private authStore?: Auth;
 
 	public currentConversation?: Conversation;
@@ -72,8 +76,15 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	 */
 	private leftOverMessage?: any;
 	constructor(private context: vscode.ExtensionContext) {
+		this.frontendMessenger = new Messenger();
 		this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
-		this.model = getSelectedModel();
+		this.model = {
+			id: getSelectedModelId(),
+			// dummy values
+			object: "model",
+			created: 0,
+			owned_by: 'system'
+		};
 		this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
 		this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
 
@@ -135,15 +146,37 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
 					topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
 				});
+			this.frontendMessenger.setApiProvider(this.api);
 		});
 
 		// Update data members when the config settings change
-		vscode.workspace.onDidChangeConfiguration((e) => {
+		vscode.workspace.onDidChangeConfiguration(async (e) => {
 			let rebuildApiProvider = false;
 
+			// Show all models
+			if (e.affectsConfiguration("chatgpt.showAllModels")) {
+				this.showAllModels = vscode.workspace.getConfiguration("chatgpt").get("showAllModels") ?? false;
+			}
 			// Model
 			if (e.affectsConfiguration("chatgpt.gpt3.model")) {
-				this.model = getSelectedModel();
+				if (this.api) {
+					const selectedModelId = getSelectedModelId();
+					const modelList = await this.api.getModelList();
+
+					const newModel = modelList.find((m) => m.id === selectedModelId);
+
+					if (newModel) {
+						this.model = newModel;
+					} else {
+						this.model = {
+							id: selectedModelId,
+							// dummy values
+							object: "model",
+							created: 0,
+							owned_by: 'system'
+						};
+					}
+				}
 			}
 			// System Context
 			if (e.affectsConfiguration("chatgpt.systemContext")) {
@@ -187,18 +220,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		// if any of the extension settings change, send a message to the webview for the "settingsUpdate" event
 		vscode.workspace.onDidChangeConfiguration((e) => {
-			this.sendMessage({
-				type: "settingsUpdate",
-				value: vscode.workspace.getConfiguration("chatgpt")
-			});
+			this.frontendMessenger.sendUpdatedSettings(vscode.workspace.getConfiguration("chatgpt"));
 		});
 
 		// Load translations
 		loadTranslations(context.extensionPath).then((translations) => {
-			// Serialize and send translations to the webview
-			const serializedTranslations = JSON.stringify(translations);
-
-			this.sendMessage({ type: 'setTranslations', value: serializedTranslations });
+			this.frontendMessenger.sendTranslations(translations);
 		}).catch((err) => {
 			console.error("Failed to load translations", err);
 		});
@@ -213,23 +240,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			await vscode.commands.executeCommand("chatgptReborn.setOpenAIApiKey", apiKey);
 		}
 
-		let { valid, models } = await this.isGoodApiKey(apiKey);
+		let { status, models } = await this.isGoodApiKey(apiKey);
 
-		this.sendMessage({
-			type: "updateApiKeyStatus",
-			value: valid,
-		});
+		this.frontendMessenger.sendApiKeyStatus(status);
 
-		if (valid) {
-			// Get an updated list of models
-			this.getChatGPTModels(models).then(async (models) => {
-				this.chatGPTModels = models;
-
-				this.sendMessage({
-					type: "chatGPTModels",
-					value: this.chatGPTModels
-				});
-			});
+		if (status === ApiKeyStatus.Valid) {
+			this.frontendMessenger.sendModels(models);
 		}
 	}
 
@@ -244,6 +260,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
 				topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
 			});
+		this.frontendMessenger.setApiProvider(this.api);
 	}
 
 	public async updateApiUrl(apiUrl: string = '') {
@@ -266,10 +283,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		await vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", apiUrl, true);
 
-		// this.sendMessage({
-		// 	type: "settingsUpdate",
-		// 	value: vscode.workspace.getConfiguration("chatgpt")
-		// });
+		// Retest access to the api
+		// This test is async, but we don't need to wait for it
+		this.updateApiKeyState();
 	}
 
 	// reset the API key to the default value
@@ -284,6 +300,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		_token: vscode.CancellationToken,
 	) {
 		this.webView = webviewView;
+		this.frontendMessenger.setWebView(webviewView);
 
 		webviewView.webview.options = {
 			// Allow scripts in the webview
@@ -296,123 +313,121 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
 
-		webviewView.webview.onDidReceiveMessage(async data => {
+		// TODO: split this out into its own file
+		webviewView.webview.onDidReceiveMessage(async (data: BaseBackendMessage) => {
 			switch (data.type) {
-				case 'addFreeTextQuestion':
+				case BackendMessageType.addFreeTextQuestion:
+					const freeTextData = data as AddFreeTextQuestionMessage;
 					const apiRequestOptions = {
 						command: "freeText",
-						conversation: data.conversation ?? null,
-						questionId: data.questionId ?? null,
-						messageId: data.messageId ?? null,
+						conversation: freeTextData.conversation ?? null,
+						questionId: freeTextData.questionId ?? null,
+						messageId: freeTextData.messageId ?? null,
 					} as ApiRequestOptions;
 
 					// if includeEditorSelection is true, add the code snippet to the question
-					if (data?.includeEditorSelection) {
+					if (freeTextData?.includeEditorSelection) {
 						const selection = this.getActiveEditorSelection();
 						apiRequestOptions.code = selection?.content ?? "";
 						apiRequestOptions.language = selection?.language ?? "";
 					}
 
-					this.sendApiRequest(data.value, apiRequestOptions);
+					this.sendApiRequest(freeTextData.question, apiRequestOptions);
 					break;
-				case 'editCode':
-					const escapedString = (data.value as string).replace(/\$/g, '\\$');;
+				case BackendMessageType.editCode:
+					const editCodeData = data as EditCodeMessage;
+					const escapedString = (editCodeData.code as string).replace(/\$/g, '\$');
 					vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(escapedString));
 
 					this.logEvent("code-inserted");
 					break;
-				case 'setModel':
+				case BackendMessageType.setModel:
+					const setModelData = data as SetModelMessage;
 					// Note that due to some models being deprecated, this function may change the model
-					this.model = await updateSelectedModel(data.value);
-					this.logEvent("model-changed to " + data.value);
+					this.model = await updateSelectedModel(setModelData.model);
+					this.logEvent("model-changed to ", setModelData.model);
 					break;
-				case 'openNew':
+				case BackendMessageType.openNew:
+					const openNewData = data as OpenNewMessage;
 					const document = await vscode.workspace.openTextDocument({
-						content: data.value,
-						language: data.language
+						content: openNewData.code,
+						language: openNewData.language
 					});
 					vscode.window.showTextDocument(document);
 
-					this.logEvent(data.language === "markdown" ? "code-exported" : "code-opened");
+					this.logEvent(openNewData.language === "markdown" ? "code-exported" : "code-opened");
 					break;
-				case 'cleargpt3':
+				case BackendMessageType.cleargpt3:
 					// TODO: remove this?
 					// this.apiGpt3 = undefined;
 
 					this.logEvent("[Reborn] NOT IMPLEMENTED - gpt3-cleared");
 					break;
-				case 'openSettings':
+				case BackendMessageType.openSettings:
+					const openSettingsData = data as OpenSettingsMessage;
 					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn chatgpt.");
 
 					this.logEvent("settings-opened");
 					break;
-				case 'openSettingsPrompt':
+				case BackendMessageType.openSettingsPrompt:
+					const openSettingsPromptData = data as OpenSettingsPromptMessage;
 					vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn promptPrefix");
 
 					this.logEvent("settings-prompt-opened");
 					break;
-				case "stopGenerating":
-					if (data?.conversationId) {
-						this.stopGenerating(data.conversationId);
+				case BackendMessageType.stopGenerating:
+					const stopGeneratingData = data as StopGeneratingMessage;
+					if (stopGeneratingData?.conversationId) {
+						this.stopGenerating(stopGeneratingData.conversationId);
 					} else {
 						console.warn("Main Process - No conversationId provided to stop generating");
 					}
 					break;
-				case "getSettings":
-					this.sendMessage({
-						type: "settingsUpdate",
-						value: vscode.workspace.getConfiguration("chatgpt")
-					});
+				case BackendMessageType.getSettings:
+					const getSettingsData = data as GetSettingsMessage;
+					this.frontendMessenger.sendSettingsUpdate(vscode.workspace.getConfiguration("chatgpt"));
 					break;
-				case "exportToMarkdown":
-					// convert all messages in the conversation to markdown and open a new document with the markdown
-					if (data?.conversation) {
-						const markdown = this.convertMessagesToMarkdown(data.conversation);
-
-						const markdownExport = await vscode.workspace.openTextDocument({
-							content: markdown,
-							language: 'markdown'
-						});
-
-						vscode.window.showTextDocument(markdownExport);
-					} else {
-						console.error("Main Process - No conversation to export to markdown");
-					}
+				case BackendMessageType.exportToMarkdown:
+					const exportToMarkdownData = data as ExportToMarkdownMessage;
+					this.exportToMarkdown(exportToMarkdownData.conversation);
 					break;
-				case "getChatGPTModels":
-					this.sendMessage({
-						type: "chatGPTModels",
-						value: this.chatGPTModels
-					});
+				case BackendMessageType.getModels:
+					this.frontendMessenger.sendModels();
 					break;
-				case "changeApiUrl":
-					this.updateApiUrl(data.value);
+				case BackendMessageType.changeApiUrl:
+					const changeApiUrlData = data as ChangeApiUrlMessage;
+					this.updateApiUrl(changeApiUrlData.apiUrl);
 					break;
-				case "changeApiKey":
-					this.updateApiKeyState(data.value);
+				case BackendMessageType.changeApiKey:
+					const changeApiKeyData = data as ChangeApiKeyMessage;
+					this.updateApiKeyState(changeApiKeyData.apiKey);
 					break;
-				case "getApiKeyStatus":
+				case BackendMessageType.getApiKeyStatus:
+					const getApiKeyStatusData = data as GetApiKeyStatusMessage;
 					this.updateApiKeyState();
 					break;
-				case "resetApiKey":
+				case BackendMessageType.resetApiKey:
 					this.resetApiKey();
 					break;
-				case "setVerbosity":
-					const verbosity = data?.value ?? Verbosity.normal;
+				case BackendMessageType.setVerbosity:
+					const setVerbosityData = data as SetVerbosityMessage;
+					const verbosity = setVerbosityData?.verbosity ?? Verbosity.normal;
 					vscode.workspace.getConfiguration("chatgpt").update("verbosity", verbosity, vscode.ConfigurationTarget.Global);
 					break;
-				case "setCurrentConversation":
-					this.currentConversation = data.conversation;
+				case BackendMessageType.setCurrentConversation:
+					const setCurrentConversationData = data as SetCurrentConversationMessage;
+					this.currentConversation = setCurrentConversationData.conversation;
 					break;
-				case 'getTokenCount':
-					const convTokens = ApiProvider.countConversationTokens(data.conversation);
+				case BackendMessageType.getTokenCount:
+					const getTokenCountData = data as GetTokenCountMessage;
+					const convTokens = ApiProvider.countConversationTokens(getTokenCountData.conversation);
 					let userInputTokens = ApiProvider.countMessageTokens({
 						role: Role.user,
-						content: data.conversation.userInput
-					} as Message, data.conversation?.model ?? this.model ?? Model.gpt_35_turbo);
+						content: getTokenCountData.conversation.userInput
+					} as ChatMessage, getTokenCountData.conversation?.model ?? this.model);
 
 					// If "use editor selection" is enabled, add the tokens from the editor selection
-					if (data?.useEditorSelection) {
+					if (getTokenCountData?.useEditorSelection) {
 						const selection = this.getActiveEditorSelection();
 						// Roughly approximate the number of tokens used for the instructions about using the editor selection
 						const roughApproxCodeSelectionContext = 40;
@@ -420,49 +435,37 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						userInputTokens += ApiProvider.countMessageTokens({
 							role: Role.user,
 							content: selection?.content ?? ""
-						} as Message, data.conversation?.model ?? this.model ?? Model.gpt_35_turbo) + roughApproxCodeSelectionContext;
+						} as ChatMessage, getTokenCountData.conversation?.model ?? this.model) + roughApproxCodeSelectionContext;
 					}
 
-					this.sendMessage({
-						type: "tokenCount",
-						tokenCount: {
-							messages: convTokens,
-							userInput: userInputTokens,
-							minTotal: convTokens + userInputTokens,
-						},
-					});
+					this.frontendMessenger.sendTokenCount(convTokens, userInputTokens, getTokenCountData.conversation.id);
 					break;
-				case 'runAction':
-					const actionId: ActionNames = data.actionId as ActionNames;
+				case BackendMessageType.runAction:
+					const runActionData = data as RunActionMessage;
+					const actionId: ActionNames = runActionData.actionId as ActionNames;
 
 					const controller = new AbortController();
 					this.abortControllers.push({
-						actionName: data.actionId,
+						actionName: runActionData.actionId,
 						controller
 					});
 
 					try {
-						const actionResult = await ActionRunner.runAction(actionId, this.api, this.systemContext, controller, data?.actionOptions);
-						this.sendMessage({
-							type: "actionComplete",
-							actionId,
-							actionResult
-						});
+						const actionResult = await ActionRunner.runAction(actionId, this.api, this.systemContext, controller, runActionData?.actionOptions);
+
+						this.frontendMessenger.sendActionComplete(actionId, actionResult);
 					} catch (error: any) {
 						console.error("Main Process - Error running action: " + actionId);
 						console.error(error);
 
-						this.sendMessage({
-							type: "actionError",
-							actionId,
-							error: error?.message ?? "Unknown error"
-						});
+						this.frontendMessenger.sendActionError(actionId, error);
 					}
 
 					break;
-				case "stopAction":
-					if (data?.actionId) {
-						this.stopAction(data.actionId);
+				case BackendMessageType.stopAction:
+					const stopActionData = data as StopActionMessage;
+					if (stopActionData?.actionId) {
+						this.stopAction(stopActionData.actionId);
 					} else {
 						console.warn("Main Process - No actionName provided to stop action");
 					}
@@ -472,15 +475,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					break;
 			}
 		});
-
-		if (this.leftOverMessage !== null) {
-			// If there were any messages that wasn't delivered, render after resolveWebView is called.
-			this.sendMessage(this.leftOverMessage);
-			this.leftOverMessage = null;
-		}
 	}
+
 	private convertMessagesToMarkdown(conversation: Conversation): string {
-		let markdown = conversation.messages.reduce((accumulator: string, message: Message) => {
+		let markdown = conversation.messages.reduce((accumulator: string, message: ChatMessage) => {
 			let role = 'Unknown';
 			if (message.role === Role.user) {
 				role = 'You';
@@ -524,12 +522,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		// Remove abort controller from array
 		this.abortControllers = this.abortControllers.filter((controller) => controller.conversationId !== conversationId);
 
-		// show inProgress status update
-		this.sendMessage({
-			type: 'showInProgress',
-			inProgress: false,
-			conversationId,
-		});
+		this.frontendMessenger.sendShowInProgress(false, conversationId);
 	}
 
 	private stopAction(actionName: string): void {
@@ -540,7 +533,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	private get isCodexModel(): boolean {
-		return !!this.model?.startsWith("code-");
+		return !!this.model?.id.startsWith("code-");
 	}
 
 	private async getApiKey(): Promise<string> {
@@ -548,8 +541,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	async isGoodApiKey(apiKey: string = ''): Promise<{
-		valid: boolean,
-		models?: any[],
+		status: ApiKeyStatus,
+		models?: OpenAI.Model[],
 	}> {
 		if (!apiKey) {
 			// Get OpenAI API key from secret store
@@ -559,9 +552,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		// If empty, return false
 		if (!apiKey) {
 			return {
-				valid: false,
+				status: ApiKeyStatus.Unset
 			};
 		}
+
+		this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Pending);
 
 		let configuration: ClientOptions = {
 			apiKey,
@@ -584,13 +579,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			const response = await openai.models.list();
 
 			return {
-				valid: true,
+				status: ApiKeyStatus.Valid,
 				models: response.data
 			};
 		} catch (error) {
 			console.error('Main Process - Error getting models', error);
 			return {
-				valid: false,
+				status: ApiKeyStatus.Invalid
 			};
 		}
 	}
@@ -626,17 +621,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
-	async getChatGPTModels(fullModelList: any[] = []): Promise<Model[]> {
-		if (fullModelList?.length && fullModelList?.length > 0) {
-			return fullModelList.filter((model: any) => SUPPORTED_CHATGPT_MODELS.includes(model.id)).map((model: any) => {
-				return model.id as Model;
-			});
-		} else {
-			const models = await this.getModels();
+	async getChatGPTModels(): Promise<OpenAI.Model[]> {
+		const models = await this.api.getModelList();
 
-			return models.filter((model: any) => SUPPORTED_CHATGPT_MODELS.includes(model.id)).map((model: any) => {
-				return model.id as Model;
-			});
+		if (this.showAllModels) {
+			return models;
+		} else {
+			return models.filter((model: OpenAI.Model) => SUPPORTED_CHATGPT_MODELS.includes(model.id));
 		}
 	}
 
@@ -688,6 +679,33 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		);
 	}
 
+	public clearConversation(conversationId?: string) {
+		// If no conversationId is provided, use the current conversation
+		if (!conversationId) {
+			conversationId = this.currentConversation?.id;
+		}
+
+		// Clear the conversation
+		if (conversationId) {
+			this.frontendMessenger.sendMessagesUpdated([], conversationId);
+		}
+	}
+
+	public async exportToMarkdown(conversation: Conversation) {
+		// convert all messages in the conversation to markdown and open a new document with the markdown
+		if (conversation) {
+			const markdown = this.convertMessagesToMarkdown(conversation);
+
+			const markdownExport = await vscode.workspace.openTextDocument({
+				content: markdown,
+				language: 'markdown'
+			});
+
+			vscode.window.showTextDocument(markdownExport);
+		} else {
+			console.error("Main Process - No conversation to export to markdown");
+		}
+	}
 
 	public async sendApiRequest(prompt: string, options: ApiRequestOptions) {
 		this.logEvent("api-request-sent", { "chatgpt.command": options.command, "chatgpt.hasCode": String(!!options.code) });
@@ -734,11 +752,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		// 3. Tell the webview about the new messages
-		this.sendMessage({
-			type: 'messagesUpdated',
-			messages: options.conversation?.messages,
-			conversationId: options.conversation?.id ?? '',
-		});
+		this.frontendMessenger.sendMessagesUpdated(options.conversation?.messages, options.conversation?.id ?? '');
 
 		// If the ChatGPT view is not in focus/visible; focus on it to render Q&A
 		if (this.webView === null) {
@@ -748,14 +762,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		// Tell the webview that this conversation is in progress
-		this.sendMessage({
-			type: 'showInProgress',
-			inProgress: true,
-			conversationId: options.conversation?.id ?? '',
-		});
+		this.frontendMessenger.sendShowInProgress(true, options.conversation?.id ?? '');
 
 		try {
-			const message: Message = {
+			const message: ChatMessage = {
 				// Normally random ID is generated, but when editing a question, the response update the same message
 				id: options?.messageId ?? uuidv4(),
 				content: '',
@@ -766,16 +776,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 			// Initialize message in webview. Now event streaming only needs to update the message content
 			if (options?.messageId) {
-				this.sendMessage({
-					type: 'updateMessage',
-					message: message,
-					conversationId: options.conversation?.id ?? '',
-				});
+				this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
 			} else {
-				this.sendMessage({
-					type: 'addMessage',
-					message: message,
-				});
+				this.frontendMessenger.sendAddMessage(message, options.conversation?.id ?? '');
 			}
 
 			if (this.chatMode) {
@@ -796,12 +799,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						message.content = this.formatMessageContent((message.rawContent ?? ''), responseInMarkdown);
 
 						// Send webview updated message content
-						this.sendMessage({
-							type: 'streamMessage',
-							conversationId: options.conversation.id ?? '',
-							messageId: message.id,
-							content: message.content,
-						});
+						this.frontendMessenger.sendStreamMessage(options.conversation?.id ?? '', message.id, message.content);
 
 						lastMessageTime = now;
 					}
@@ -814,11 +812,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				message.content = this.formatMessageContent(message.rawContent ?? "", responseInMarkdown);
 
 				// Send webview full updated message
-				this.sendMessage({
-					type: 'updateMessage',
-					conversationId: options.conversation.id ?? '',
-					message: message,
-				});
+				this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
 			} else {
 				this.logEvent('chat-mode-off (not sending message)');
 			}
@@ -888,20 +882,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					}
 			}
 
-			this.sendMessage({
-				type: 'addError',
-				id: uuidv4(),
-				conversationId: options.conversation.id,
-				value: message,
-			});
+			this.frontendMessenger.sendAddError(uuidv4(), options.conversation?.id ?? '', message);
 
 			return;
 		} finally {
-			this.sendMessage({
-				type: 'showInProgress',
-				conversationId: options.conversation.id,
-				inProgress: false,
-			});
+			this.frontendMessenger.sendShowInProgress(false, options.conversation?.id ?? '');
 		}
 	}
 
@@ -910,13 +895,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	 * @param message Message to be sent to WebView
 	 * @param ignoreMessageIfNullWebView We will ignore the command if webView is null/not-focused
 	 */
-	public sendMessage(message: any, ignoreMessageIfNullWebView?: boolean) {
-		if (this.webView) {
-			this.webView?.webview.postMessage(message);
-		} else if (!ignoreMessageIfNullWebView) {
-			this.leftOverMessage = message;
-		}
-	}
+	// public sendMessage(message: any, ignoreMessageIfNullWebView?: boolean) {
+	// 	if (this.webView) {
+	// 		this.webView?.webview.postMessage(message);
+	// 	} else if (!ignoreMessageIfNullWebView) {
+	// 		this.leftOverMessage = message;
+	// 	}
+	// }
 
 
 	private logEvent(eventName: string, properties?: {}): void {

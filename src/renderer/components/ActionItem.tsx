@@ -1,5 +1,6 @@
 import React from "react";
 import { useAppDispatch } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import {
   Action,
   ActionRunState,
@@ -15,6 +16,7 @@ interface Props {
 
 const ActionItem: React.FC<Props> = ({ vscode, action }) => {
   const dispatch = useAppDispatch();
+  const backendMessenger = useMessenger(vscode);
 
   const handleClick = () => {
     // Reset error
@@ -27,19 +29,13 @@ const ActionItem: React.FC<Props> = ({ vscode, action }) => {
         setActionState({ actionId: action.id, state: ActionRunState.idle })
       );
 
-      vscode.postMessage({
-        type: "stopAction",
-        actionId: action.id,
-      });
+      backendMessenger.sendStopAction(action.id);
     } else if (action.state === ActionRunState.idle) {
       dispatch(
         setActionState({ actionId: action.id, state: ActionRunState.running })
       );
 
-      vscode.postMessage({
-        type: "runAction",
-        actionId: action.id,
-      });
+      backendMessenger.sendRunAction(action.id);
     }
   };
 

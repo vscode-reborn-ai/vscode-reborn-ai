@@ -3,6 +3,7 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { setDebug } from "../store/app";
 import { Conversation } from "../types";
@@ -29,6 +30,7 @@ export default function MoreActionsMenu({
   const t = useAppSelector((state: RootState) => state.app.translations);
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const navigate = useNavigate();
+  const backendMessenger = useMessenger(vscode);
 
   return (
     <>
@@ -101,10 +103,8 @@ export default function MoreActionsMenu({
             <button
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               onClick={() => {
-                vscode.postMessage({
-                  type: "openSettings",
-                  conversationId: currentConversation.id,
-                });
+                backendMessenger.sendOpenSettings();
+
                 // close menu
                 setShowMoreActions(false);
               }}
@@ -121,11 +121,8 @@ export default function MoreActionsMenu({
               data-tooltip-id="more-actions-tooltip"
               data-tooltip-content="Export the conversation to a markdown file"
               onClick={() => {
-                vscode.postMessage({
-                  type: "exportToMarkdown",
-                  conversationId: currentConversation.id,
-                  conversation: currentConversation,
-                });
+                backendMessenger.sendExportToMarkdown(currentConversation);
+
                 // close menu
                 setShowMoreActions(false);
               }}
@@ -140,9 +137,8 @@ export default function MoreActionsMenu({
               data-tooltip-id="more-actions-tooltip"
               data-tooltip-content="Reset your OpenAI API key."
               onClick={() => {
-                vscode.postMessage({
-                  type: "resetApiKey",
-                });
+                backendMessenger.sendResetApiKey();
+
                 // close menu
                 setShowMoreActions(false);
               }}

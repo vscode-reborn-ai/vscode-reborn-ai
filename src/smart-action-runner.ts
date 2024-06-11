@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
 import { listItems } from "./helpers";
 import { ApiProvider } from "./openai-api-provider";
-import { ActionNames, Conversation, Message, Model, Role } from "./renderer/types";
+import { ActionNames, ChatMessage, Conversation, Role } from "./renderer/types";
 
 /*
 
@@ -45,26 +45,29 @@ class Action {
 
   // async iterator
   protected async* streamChatCompletion(apiProvider: ApiProvider, systemContext: string, prompt: string, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
-    let model = Model.gpt_35_turbo;
-    const supportedModels = (await apiProvider.getModelList()).map((m) => m.id);
+    let modelId = 'gpt-3.5-turbo';
+    const supportedModels = (await apiProvider.getModelList());
+    const supportedModelIds = supportedModels.map((m) => m.id);
 
-    if (supportedModels.includes(Model.gpt_4)) {
-      model = Model.gpt_4;
+    if (supportedModelIds.includes('gpt-4')) {
+      modelId = 'gpt-4';
     }
 
-    if (supportedModels.includes(Model.gpt_35_turbo)) {
-      model = Model.gpt_35_turbo;
+    if (supportedModelIds.includes('gp-3.5-turbo')) {
+      modelId = 'gpt-3.5-turbo';
     }
 
-    if (supportedModels.includes(Model.gpt_4_turbo)) {
-      model = Model.gpt_4_turbo;
+    if (supportedModelIds.includes('gpt-4-turbo')) {
+      modelId = 'gpt-4-turbo';
     }
 
-    if (supportedModels.includes(Model.gpt_4o)) {
-      model = Model.gpt_4o;
+    if (supportedModelIds.includes('gpt-4o')) {
+      modelId = 'gpt-4o';
     }
 
-    const systemMessage: Message = {
+    const model = supportedModels.find((m) => m.id === modelId);
+
+    const systemMessage: ChatMessage = {
       id: uuidv4(),
       content: systemContext,
       rawContent: systemContext,
@@ -72,7 +75,7 @@ class Action {
       createdAt: Date.now(),
     };
 
-    const message: Message = {
+    const message: ChatMessage = {
       id: uuidv4(),
       content: prompt,
       rawContent: prompt,

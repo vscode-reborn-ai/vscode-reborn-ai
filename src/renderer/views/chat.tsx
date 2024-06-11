@@ -5,9 +5,10 @@ import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { setAutoscroll, updateMessageContent } from "../store/conversation";
-import { Conversation, Message, Role } from "../types";
+import { ChatMessage, Conversation, Role } from "../types";
 
 export default function Chat({
   conversation,
@@ -29,6 +30,7 @@ export default function Chat({
     null
   );
   const editingMessageRef = React.useRef<HTMLTextAreaElement>(null);
+  const backendMessenger = useMessenger(vscode);
 
   (window as any)?.marked?.setOptions({
     renderer: new ((window as any)?.marked).Renderer(),
@@ -99,7 +101,7 @@ export default function Chat({
             second: "2-digit",
           })}
           <br />
-          Conversation Model: {conversation?.model}
+          Conversation Model: {conversation.model?.id}
           <br />
           Conversation inProgress: {conversation?.inProgress ? "true" : "false"}
         </div>
@@ -122,10 +124,10 @@ export default function Chat({
         >
           {conversation.messages
             .filter(
-              (message: Message) =>
+              (message: ChatMessage) =>
                 debug || (message.role !== Role.system && message.content)
             )
-            .map((message: Message, index: number) => {
+            .map((message: ChatMessage, index: number) => {
               return (
                 <div
                   className={`w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative
@@ -160,17 +162,17 @@ export default function Chat({
                             data-tooltip-content="Send this prompt"
                             onClick={() => {
                               const newQuestion =
-                                editingMessageRef.current?.value;
+                                editingMessageRef.current?.value ?? "";
 
-                              vscode.postMessage({
-                                type: "addFreeTextQuestion",
-                                value: newQuestion,
+                              backendMessenger.sendAddFreeTextQuestion({
+                                conversation,
+                                question: newQuestion,
+                                includeEditorSelection: false,
                                 questionId: message.id,
                                 // get message that comes after this one
                                 // Note - "2" is used here because the system message at [0] is removed before this map() function is called
                                 messageId:
                                   conversation.messages[index + 2]?.id ?? "",
-                                conversation: conversation,
                                 code: message?.questionCode ?? "",
                               });
 

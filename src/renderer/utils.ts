@@ -1,7 +1,9 @@
 // Convenience functions for the renderer code
 
 import { useLayoutEffect, useMemo, useRef } from "react";
-import { Conversation, Message } from "./types";
+import { useAppDispatch } from "./hooks";
+import { aiRenamedTitle } from "./store/conversation";
+import { ActionNames, ChatMessage, Conversation, ExtensionSettings, Role } from "./types";
 
 export const unEscapeHTML = (unsafe: any) => {
   return unsafe
@@ -13,8 +15,8 @@ export const unEscapeHTML = (unsafe: any) => {
     .replaceAll("&#039;", "'");
 };
 
-export const updateMessage = (
-  updatedMessage: Message,
+export const updateChatMessage = (
+  updatedMessage: ChatMessage,
   currentConversationId: string,
   setConversationList: React.Dispatch<React.SetStateAction<Conversation[]>>
 ) => {
@@ -23,7 +25,7 @@ export const updateMessage = (
       if (conversation.id === currentConversationId) {
         // Find index of message to update
         const index = conversation.messages.findIndex(
-          (message: Message) => message.id === updatedMessage.id
+          (message: ChatMessage) => message.id === updatedMessage.id
         );
 
         if (index !== -1) {
@@ -47,8 +49,8 @@ export const updateMessage = (
   );
 };
 
-export const addMessage = (
-  newMessage: Message,
+export const addChatMessage = (
+  newMessage: ChatMessage,
   currentConversationId: string,
   setConversationList: React.Dispatch<React.SetStateAction<Conversation[]>>
 ) => {
@@ -59,8 +61,8 @@ export const addMessage = (
           ...conversation,
           // Add message to conversation; filter is here to prevent duplicate messages
           messages: [...conversation.messages, newMessage].filter(
-            (message: Message, index: number, self: Message[]) =>
-              index === self.findIndex((m: Message) => m.id === message.id)
+            (message: ChatMessage, index: number, self: ChatMessage[]) =>
+              index === self.findIndex((m: ChatMessage) => m.id === message.id)
           ),
         }
         : conversation
@@ -97,3 +99,55 @@ export const useDebounce =
       naiveDebounce(callbackRef.current, delay,
         ...args), [delay]);
   };
+
+
+// Hook - Rename the tab title with AI
+export function useRenameTabTitleWithAI(
+  backendMessenger: any,
+  conversation: Conversation,
+  settings: ExtensionSettings,
+  firstAssistantMessage?: string
+) {
+  const dispatch = useAppDispatch();
+
+  return useMemo(() => {
+    if (
+      conversation &&
+      // Has the AI already renamed the title?
+      !conversation?.aiRenamedTitle
+    ) {
+      dispatch(
+        aiRenamedTitle({
+          conversationId: conversation.id,
+          aiRenamedTitle: true,
+        })
+      );
+
+      const firstUserMessage =
+        conversation.messages.find(
+          (message: ChatMessage) => message.role === Role.user
+        )?.content ?? "";
+
+      if (!firstAssistantMessage) {
+        firstAssistantMessage =
+          conversation.messages.find(
+            (message: ChatMessage) => message.role === Role.assistant
+          )?.content ?? "";
+      }
+      // Use ChatGPT to rename the tab title
+      if (
+        settings.renameTabTitles &&
+        !settings.minimalUI &&
+        !settings.disableMultipleConversations
+      ) {
+        backendMessenger.sendRunAction(ActionNames.createConversationTitle, {
+          messageText: `
+            Question: ${firstUserMessage.substring(0, 200)}...
+            Answer: ${firstAssistantMessage.substring(0, 200)}...
+          `,
+          conversationId: conversation.id,
+        });
+      }
+    }
+  }, [conversation, settings, firstAssistantMessage]);
+}

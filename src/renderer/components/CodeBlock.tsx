@@ -2,6 +2,7 @@ import classNames from "classnames";
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
 import { useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { Role } from "../types";
 import CodeBlockActionsButton from "./CodeBlockActionsButton";
@@ -30,6 +31,7 @@ export default ({
   const [language, setLanguage] = React.useState("");
   const codeRef = React.useRef<HTMLPreElement>(null);
   const [expanded, setExpanded] = React.useState(false);
+  const backendMessenger = useMessenger(vscode);
 
   useEffect(() => {
     setExpanded(!startCollapsed);
@@ -96,11 +98,7 @@ export default ({
                   buttonSuccessText={t?.codeBlock?.inserted ?? "Inserted"}
                   onClick={() => {
                     if (currentConversationId) {
-                      vscode.postMessage({
-                        type: "editCode",
-                        value: codeTextContent,
-                        conversationId: currentConversationId,
-                      });
+                      backendMessenger.sendEditCode(codeTextContent);
                     }
                   }}
                 />
@@ -115,17 +113,13 @@ export default ({
                   buttonText={t?.codeBlock?.new ?? "New"}
                   buttonSuccessText={t?.codeBlock?.created ?? "Created"}
                   onClick={() => {
-                    vscode.postMessage({
-                      type: "openNew",
-                      value: codeTextContent,
-                      conversationId: currentConversationId,
-                      // Handle HLJS language names that are different from VS Code's language IDs
-                      language: language
-                        .replace("js", "javascript")
-                        .replace("py", "python")
-                        .replace("sh", "bash")
-                        .replace("ts", "typescript"),
-                    });
+                    // Handle HLJS language names that are different from VS Code's language IDs
+                    const lang = language
+                      .replace("js", "javascript")
+                      .replace("py", "python")
+                      .replace("sh", "bash")
+                      .replace("ts", "typescript");
+                    backendMessenger.sendOpenNew(codeTextContent, lang);
                   }}
                 />
               </>

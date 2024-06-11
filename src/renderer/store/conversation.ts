@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Conversation, Message, Model, Verbosity } from "../types";
+import OpenAI from "openai";
+import { ChatMessage, Conversation, Verbosity } from "../types";
 
 export interface ConversationState {
   conversations: {
@@ -52,7 +53,7 @@ export const conversationSlice = createSlice({
     },
     updateConversationMessages: (
       state,
-      action: PayloadAction<{ conversationId: string; messages: Message[]; }>
+      action: PayloadAction<{ conversationId: string; messages: ChatMessage[]; }>
     ) => {
       const { conversationId, messages } = action.payload;
 
@@ -66,7 +67,7 @@ export const conversationSlice = createSlice({
     },
     updateConversationModel: (
       state,
-      action: PayloadAction<{ conversationId: string; model: Model; }>
+      action: PayloadAction<{ conversationId: string; model: OpenAI.Model; }>
     ) => {
       const { conversationId, model } = action.payload;
 
@@ -112,14 +113,14 @@ export const conversationSlice = createSlice({
     },
     addMessage: (
       state,
-      action: PayloadAction<{ conversationId: string; message: Message; }>
+      action: PayloadAction<{ conversationId: string; message: ChatMessage; }>
     ) => {
       const { conversationId, message } = action.payload;
 
       if (state.conversations[conversationId]) {
         // Check if message already exists
         const index = state.conversations[conversationId].messages.findIndex(
-          (value: Message) => value.id === message.id
+          (value: ChatMessage) => value.id === message.id
         );
 
         if (index === -1) {
@@ -139,14 +140,14 @@ export const conversationSlice = createSlice({
     },
     updateMessage: (
       state,
-      action: PayloadAction<{ conversationId: string; message: Message; messageId?: string; }>
+      action: PayloadAction<{ conversationId: string; message: ChatMessage; messageId?: string; }>
     ) => {
       const { conversationId, message, messageId } = action.payload;
       const conversation = state.conversations[conversationId];
 
       if (conversation) {
         const index = conversation.messages.findIndex(
-          (value: Message) => value.id === (messageId ?? message.id)
+          (value: ChatMessage) => value.id === (messageId ?? message.id)
         );
         if (index !== -1) {
           conversation.messages.splice(index, 1, message);
@@ -172,7 +173,7 @@ export const conversationSlice = createSlice({
 
       if (conversation) {
         const index = conversation.messages.findIndex(
-          (value: Message) => value.id === messageId
+          (value: ChatMessage) => value.id === messageId
         );
         if (index !== -1) {
           conversation.messages[index].content = content;
@@ -218,7 +219,7 @@ export const conversationSlice = createSlice({
       const conversation = state.conversations[conversationId];
       if (conversation) {
         const index = conversation.messages.findIndex(
-          (m: Message) => m.id === messageId
+          (m: ChatMessage) => m.id === messageId
         );
         if (index !== -1) {
           conversation.messages.splice(index, 1);
@@ -279,7 +280,7 @@ export const conversationSlice = createSlice({
       state,
       action: PayloadAction<{
         conversationId: string;
-        model: Model;
+        model: OpenAI.Model;
       }>
     ) => {
       const { conversationId, model } = action.payload;

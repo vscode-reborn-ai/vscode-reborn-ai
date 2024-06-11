@@ -1,5 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DEFAULT_EXTENSION_SETTINGS, ExtensionSettings, Model } from "../types";
+import OpenAI from "openai";
+import { WebviewApi } from "vscode-webview";
+import { DEFAULT_EXTENSION_SETTINGS, ExtensionSettings } from "../types";
 
 export enum ApiKeyStatus {
   Unknown = "unknown", // On extension load, key has not yet been checked
@@ -12,19 +14,21 @@ export enum ApiKeyStatus {
 export interface AppState {
   debug: boolean;
   extensionSettings: ExtensionSettings;
-  chatGPTModels: Model[];
+  models: OpenAI.Model[];
   apiKeyStatus: ApiKeyStatus;
   translations: any;
   useEditorSelection: boolean;
+  vscode?: WebviewApi<unknown>;
 }
 
 const initialState: AppState = {
   debug: false,
   extensionSettings: DEFAULT_EXTENSION_SETTINGS,
-  chatGPTModels: [],
+  models: [],
   apiKeyStatus: ApiKeyStatus.Unknown,
   translations: {},
   useEditorSelection: false,
+  vscode: undefined,
 };
 
 export const appSlice = createSlice({
@@ -39,10 +43,10 @@ export const appSlice = createSlice({
     }>) => {
       state.extensionSettings = action.payload.newSettings;
     },
-    setChatGPTModels: (state, action: PayloadAction<{
-      models: Model[];
+    setModels: (state, action: PayloadAction<{
+      models: OpenAI.Model[];
     }>) => {
-      state.chatGPTModels = action.payload.models;
+      state.models = action.payload.models;
     },
     setApiKeyStatus: (state, action: PayloadAction<ApiKeyStatus>) => {
       state.apiKeyStatus = action.payload;
@@ -52,6 +56,9 @@ export const appSlice = createSlice({
     },
     setUseEditorSelection: (state, action: PayloadAction<boolean>) => {
       state.useEditorSelection = action.payload;
+    },
+    setVSCode: (state, action: PayloadAction<any>) => {
+      state.vscode = action.payload;
     }
   },
 });
@@ -59,10 +66,11 @@ export const appSlice = createSlice({
 export const {
   setDebug,
   setExtensionSettings,
-  setChatGPTModels,
+  setModels,
   setApiKeyStatus,
   setTranslations,
   setUseEditorSelection,
+  setVSCode,
 } = appSlice.actions;
 
 export default appSlice.reducer;

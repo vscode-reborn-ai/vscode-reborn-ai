@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
 import Icon from "./Icon";
@@ -27,21 +28,16 @@ export default function ({
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
   );
+  const backendMessenger = useMessenger(vscode);
 
   function handleSubmit() {
     dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
 
-    if (showApiUrl) {
-      vscode.postMessage({
-        type: "changeApiUrl",
-        value: apiUrl,
-      });
+    if (showApiUrl && apiUrl) {
+      backendMessenger.sendChangeApiUrl(apiUrl);
     }
 
-    vscode.postMessage({
-      type: "changeApiKey",
-      value: apiKey,
-    });
+    backendMessenger.sendChangeApiKey(apiKey);
   }
 
   return (

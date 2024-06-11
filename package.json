@@ -576,6 +576,12 @@
           "default": true,
           "description": "If enabled, after the first user message, gpt-4o will be used to rename the tab title.",
           "order": 47
+        },
+        "chatgpt.showAllModels": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, the model select dropdown will show ALL available models returned from the API.",
+          "order": 48
         }
       }
     }
