@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import vscode from 'vscode';
 import { ApiProvider } from "./openai-api-provider";
 import { ApiKeyStatus } from "./renderer/store/app";
-import { ChatMessage } from "./renderer/types";
+import { ChatMessage, ExtensionSettings } from "./renderer/types";
 import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage } from "./renderer/types-messages";
 
 export default class Messenger {
@@ -59,7 +59,7 @@ export default class Messenger {
   sendUpdatedSettings(config: vscode.WorkspaceConfiguration) {
     this.sendMessage({
       type: FrontendMessageType.settingsUpdate,
-      config,
+      config: config as unknown as ExtensionSettings,
     } as SettingsUpdateMessage);
   }
 
@@ -83,7 +83,7 @@ export default class Messenger {
   sendSettingsUpdate(config: vscode.WorkspaceConfiguration) {
     this.sendMessage({
       type: FrontendMessageType.settingsUpdate,
-      config,
+      config: config as unknown as ExtensionSettings,
     } as SettingsUpdateMessage);
   }
 

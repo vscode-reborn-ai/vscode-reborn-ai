@@ -33,7 +33,7 @@ export class ActionRunner {
       case ActionNames.createGitignore:
         return new GitignoreAction() as Action;
       case ActionNames.createConversationTitle:
-        return new TitleAction() as Action;
+        return new RetitleAction() as Action;
       default:
         console.error(`Action ${actionName} not found`);
         return undefined;
@@ -344,7 +344,7 @@ Please ensure the .gitignore file is well-organized, easy to understand. The typ
 }
 
 // TODO: this doesn't need to be streamed
-class TitleAction extends Action {
+class RetitleAction extends Action {
   public async run(apiProvider: ApiProvider,
     systemContext: string,
     controller: AbortController,

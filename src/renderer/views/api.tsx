@@ -11,7 +11,7 @@ const apiKeyPlaceholder = "sk-...";
 const popularLocalLlms: {
   name: string;
   instructions: string;
-  apiUrl: URL;
+  apiUrl?: URL;
   docsUrl?: URL;
   showApiKeyInput?: boolean;
   tested?: boolean;
@@ -35,7 +35,7 @@ const popularLocalLlms: {
     apiUrl: new URL("https://openrouter.ai/api/v1"),
     docsUrl: new URL("https://openrouter.ai/docs"),
     showApiKeyInput: true,
-    tested: false,
+    tested: true,
   },
   {
     name: "text-generation-webui",
@@ -71,6 +71,13 @@ const popularLocalLlms: {
     docsUrl: new URL(
       "https://github.com/nomic-ai/gpt4all/tree/cef74c2be20f5b697055d5b8b506861c7b997fab/gpt4all-api"
     ),
+    tested: false,
+  },
+  {
+    name: "Other",
+    instructions:
+      "If you're tool is compatible with OpenAI's API, you can use it here. Set the API URL in the input below. It should starts with 'https' and should (probably) end with '/v1' (without quotes). If the API key is needed, set that too.",
+    showApiKeyInput: true,
     tested: false,
   },
 ];
@@ -120,7 +127,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
 
   useEffect(() => {
     const matchingTool = popularLocalLlms.find(
-      (tool) => tool.apiUrl.href === settings.gpt3.apiBaseUrl
+      (tool) => tool.apiUrl && tool.apiUrl.href === settings.gpt3.apiBaseUrl
     );
     if (matchingTool) {
       setSelectedTool(matchingTool.name);
@@ -179,7 +186,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
       </header>
       <section className="p-4 rounded border border-input">
         <label className="block text-md font-medium mb-2">
-          Select AI Tool:
+          Use one of our templates:
         </label>
         <select
           value={selectedTool}
@@ -247,28 +254,33 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                 </a>
               </p>
             )}
-            <p>
-              <strong className="inline-block mt-2 mb-1">
-                Suggested API URL:
-              </strong>
-              <CodeBlock
-                margins={false}
-                className="mb-2"
-                code={selectedToolInfo.apiUrl.href}
-                vscode={vscode}
-              />
-            </p>
+            {selectedToolInfo.apiUrl && (
+              <p>
+                <strong className="inline-block mt-2 mb-1">
+                  Suggested API URL:
+                </strong>
+                <CodeBlock
+                  margins={false}
+                  className="mb-2"
+                  code={selectedToolInfo.apiUrl.href}
+                  vscode={vscode}
+                />
+              </p>
+            )}
           </div>
         )}
-        {selectedToolInfo && (
+        {selectedToolInfo && selectedToolInfo.apiUrl && (
           <button
             type="button"
             className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
             onClick={() => {
-              backendMessenger.sendChangeApiUrl(selectedToolInfo.apiUrl.href);
+              backendMessenger.sendChangeApiUrl(
+                selectedToolInfo.apiUrl?.href ?? ""
+              );
 
               if (apiUrlInputRef.current) {
-                apiUrlInputRef.current.value = selectedToolInfo.apiUrl.href;
+                apiUrlInputRef.current.value =
+                  selectedToolInfo.apiUrl?.href ?? "";
               }
 
               setShowSaved(true);
@@ -284,76 +296,6 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
       </section>
 
       <section>
-        {/* API key: user input */}
-        {selectedToolInfo?.showApiKeyInput && (
-          <>
-            <div>
-              <label
-                htmlFor="apiKey"
-                className="block text-md font-medium my-2"
-              >
-                {t?.apiKeySetup?.apiKeyLabel ?? "API Key"}
-              </label>
-              <div className="relative flex gap-x-4">
-                <input
-                  type="password"
-                  id="apiKey"
-                  onChange={(event) => debouncedSetApiKey(event.target.value)}
-                  onPaste={(event) =>
-                    handleApiKeyUpdate(
-                      event.clipboardData.getData("text/plain")
-                    )
-                  }
-                  placeholder={apiKeyPlaceholder}
-                  className="flex-grow px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
-                  disabled={apiKeyStatus === ApiKeyStatus.Pending}
-                />
-                {apiKeyStatus === ApiKeyStatus.Pending && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-yellow-500 border border-yellow-500 rounded bg-button-secondary">
-                    Testing...
-                  </span>
-                )}
-                {apiKeyStatus === ApiKeyStatus.Valid && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-button-secondary">
-                    Valid
-                  </span>
-                )}
-                {apiKeyStatus === ApiKeyStatus.Invalid && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-red-500 border border-red-500 rounded bg-button-secondary">
-                    Invalid
-                  </span>
-                )}
-                {apiKeyStatus === ApiKeyStatus.Unknown && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-gray-500 border border-gray-500 rounded bg-button-secondary">
-                    Unknown
-                  </span>
-                )}
-                {apiKeyStatus === ApiKeyStatus.Unset && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-gray-500 border border-gray-500 rounded bg-button-secondary">
-                    Unset
-                  </span>
-                )}
-              </div>
-            </div>
-            {/* API key: error message */}
-            {apiKeyStatus === ApiKeyStatus.Invalid && (
-              <div className="flex flex-col gap-2 p-4 bg-red-500 text bg-opacity-10 rounded">
-                <h2 className="font-medium">
-                  {t?.apiKeySetup?.invalidApiKey?.title ?? "Invalid API Key"}
-                </h2>
-                <p>
-                  {t?.apiKeySetup?.invalidApiKey?.description ??
-                    "The API key you entered has failed to get an OK response from OpenAI. Please double check the key was copied in correctly. Also, check that OpenAI is not currently experiencing an API outage. ("}
-                  <a href="https://status.openai.com/" target="_blank">
-                    https://status.openai.com/
-                  </a>
-                  {t?.apiKeySetup?.invalidApiKey?.closingParenthesis ?? ")"}
-                </p>
-              </div>
-            )}
-          </>
-        )}
-
         <label htmlFor="apiUrl" className="block text-md font-medium my-2">
           This extension's current API URL:
         </label>
@@ -371,12 +313,9 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             </span>
           )}
         </div>
-      </section>
-
-      <section className="flex flex-wrap justify-start gap-4">
         <button
           type="button"
-          className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button-secondary hover:text-button-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button-secondary hover:bg-button-secondary-hover"
+          className="mt-2 inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button-secondary hover:text-button-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button-secondary hover:bg-button-secondary-hover"
           onClick={() => {
             backendMessenger.sendChangeApiUrl(
               DEFAULT_EXTENSION_SETTINGS.gpt3.apiBaseUrl
@@ -396,6 +335,88 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
         >
           Reset to OpenAI default
         </button>
+      </section>
+
+      <section>
+        {/* API key: user input */}
+        {selectedToolInfo?.showApiKeyInput && (
+          <>
+            <div>
+              <label
+                htmlFor="apiKey"
+                className="block text-md font-medium my-2"
+              >
+                {t?.apiKeySetup?.apiKeyLabel ?? "This extensions's API Key"}{" "}
+                {selectedToolInfo?.apiUrl && (
+                  <span className="text-xs">
+                    on {new URL(settings.gpt3.apiBaseUrl).hostname}
+                  </span>
+                )}
+              </label>
+              <div className="relative flex gap-x-4">
+                <input
+                  type="password"
+                  id="apiKey"
+                  onChange={(event) => debouncedSetApiKey(event.target.value)}
+                  onPaste={(event) =>
+                    handleApiKeyUpdate(
+                      event.clipboardData.getData("text/plain")
+                    )
+                  }
+                  placeholder={apiKeyPlaceholder}
+                  className="flex-grow px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
+                  disabled={apiKeyStatus === ApiKeyStatus.Pending}
+                />
+                {apiKeyStatus === ApiKeyStatus.Pending && (
+                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-yellow-500 border border-yellow-500 rounded bg-menu">
+                    Testing...
+                  </span>
+                )}
+                {apiKeyStatus === ApiKeyStatus.Valid && (
+                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-menu">
+                    Valid
+                  </span>
+                )}
+                {apiKeyStatus === ApiKeyStatus.Invalid && (
+                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-red-500 border border-red-500 rounded bg-menu">
+                    Invalid
+                  </span>
+                )}
+                {apiKeyStatus === ApiKeyStatus.Unknown && (
+                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-gray-500 border border-gray-500 rounded bg-menu">
+                    Unknown
+                  </span>
+                )}
+                {apiKeyStatus === ApiKeyStatus.Unset && (
+                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-gray-500 border border-gray-500 rounded bg-menu">
+                    Unset
+                  </span>
+                )}
+              </div>
+              <p className="text-xs mt-2">
+                {t?.apiKeySetup?.apiKeyNote ??
+                  "This extension will remember which API key is used for each API URL. Note that some API's, like OpenRouter, will return models even with the wrong API key, so the 'Valid' status may not be accurate. "}
+              </p>
+            </div>
+            {/* API key: error message */}
+            {apiKeyStatus === ApiKeyStatus.Invalid &&
+              !!apiUrlInputRef.current?.value.length && (
+                <div className="flex flex-col gap-2 p-4 bg-red-500 text bg-opacity-10 rounded">
+                  <h2 className="font-medium">
+                    {t?.apiKeySetup?.invalidApiKey?.title ?? "Invalid API Key"}
+                  </h2>
+                  <p>
+                    {t?.apiKeySetup?.invalidApiKey?.description ??
+                      "The API key you entered has failed to get an OK response from OpenAI. Please double check the key was copied in correctly. Also, check that OpenAI is not currently experiencing an API outage. ("}
+                    <a href="https://status.openai.com/" target="_blank">
+                      https://status.openai.com/
+                    </a>
+                    {t?.apiKeySetup?.invalidApiKey?.closingParenthesis ?? ")"}
+                  </p>
+                </div>
+              )}
+          </>
+        )}
       </section>
     </div>
   );

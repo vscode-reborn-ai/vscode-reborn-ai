@@ -1,8 +1,13 @@
-import React, { useEffect, useLayoutEffect, useRef } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import React, { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import "react-tooltip/dist/react-tooltip.css";
 import "../../styles/main.css";
-import ApiKeySetup from "./components/ApiKeySetup";
 import Tabs from "./components/Tabs";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { useBackendMessageHandler } from "./message-handler";
@@ -14,6 +19,7 @@ import { Conversation } from "./types";
 import ActionsView from "./views/actions";
 import APIView from "./views/api";
 import ChatView from "./views/chat";
+import OpenAISetup from "./views/openai-setup";
 
 export default function Layout({ vscode }: { vscode: any }) {
   const dispatch = useAppDispatch();
@@ -40,6 +46,11 @@ export default function Layout({ vscode }: { vscode: any }) {
   );
   const backendMessenger = useMessenger(vscode);
   const backendMessageHandler = useBackendMessageHandler(backendMessenger);
+  // Ensure the handler doesn't change unless necessary
+  const memoizedBackendMessageHandler = useCallback(backendMessageHandler, [
+    backendMessageHandler,
+  ]);
+  const navigate = useNavigate();
 
   useLayoutEffect(() => {
     // Ask for the extension settings
@@ -115,66 +126,70 @@ export default function Layout({ vscode }: { vscode: any }) {
     }
   }, [location.pathname]);
 
-  // Only add the event listener once
   useEffect(() => {
     // Remove in case it's already added, re-adding the event listener will cause the handler to be called twice
-    window.removeEventListener("message", backendMessageHandler);
-    window.addEventListener("message", backendMessageHandler);
+    window.removeEventListener("message", memoizedBackendMessageHandler);
+    window.addEventListener("message", memoizedBackendMessageHandler);
 
     return () => {
       // unmount cleanup function
-      window.removeEventListener("message", backendMessageHandler);
+      window.removeEventListener("message", memoizedBackendMessageHandler);
     };
-  }, [conversationList, currentConversationId]); // These are important or the handler uses outdated state data
+  }, [memoizedBackendMessageHandler]);
+
+  // if api key status is "invalid" and the api url includes openai.com, and the path is not /api, redirect to /openai-setup
+  useEffect(() => {
+    if (
+      settings?.gpt3.apiBaseUrl.toLowerCase().includes("openai.com") &&
+      apiKeyStatus !== ApiKeyStatus.Unknown &&
+      apiKeyStatus !== ApiKeyStatus.Pending &&
+      apiKeyStatus !== ApiKeyStatus.Valid &&
+      location.pathname !== "/api"
+    ) {
+      navigate("/openai-setup");
+    }
+  }, [apiKeyStatus]);
 
   return (
     <>
-      {settings?.gpt3.apiBaseUrl.includes("openai.com") &&
-      apiKeyStatus !== ApiKeyStatus.Unknown &&
-      apiKeyStatus !== ApiKeyStatus.Valid &&
-      location.pathname !== "/api" ? (
-        <ApiKeySetup vscode={vscode} />
-      ) : (
-        <>
-          {!settings?.minimalUI && !settings?.disableMultipleConversations && (
-            <Tabs
-              conversationList={conversationList}
-              currentConversationId={currentConversationId}
-            />
-          )}
-          <Routes>
-            {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
-            <Route path="/actions" element={<ActionsView vscode={vscode} />} />
-            <Route path="/api" element={<APIView vscode={vscode} />} />
-            {conversationList &&
-              conversationList.map &&
-              conversationList.map((conversation: Conversation) => (
-                <Route
-                  key={conversation.id}
-                  path={`/chat/${conversation.id}`}
-                  index={conversation.id === currentConversationId}
-                  element={
-                    <ChatView
-                      conversation={conversation}
-                      vscode={vscode}
-                      conversationList={conversationList}
-                    />
-                  }
-                />
-              ))}
+      {!settings?.minimalUI && !settings?.disableMultipleConversations && (
+        <Tabs
+          conversationList={conversationList}
+          currentConversationId={currentConversationId}
+        />
+      )}
+      <Routes>
+        {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
+        <Route path="/actions" element={<ActionsView vscode={vscode} />} />
+        <Route path="/api" element={<APIView vscode={vscode} />} />
+        <Route path="/openai-setup" element={<OpenAISetup vscode={vscode} />} />
+        {conversationList &&
+          conversationList.map &&
+          conversationList.map((conversation: Conversation) => (
             <Route
-              path="/"
+              key={conversation.id}
+              path={`/chat/${conversation.id}`}
+              index={conversation.id === currentConversationId}
               element={
-                <Navigate
-                  to={`/chat/${conversationList[0]?.id ?? "chat"}`}
-                  replace={true}
+                <ChatView
+                  conversation={conversation}
+                  vscode={vscode}
+                  conversationList={conversationList}
                 />
               }
             />
-            {/* <Route path="/options" element={<Options vscode={vscode} />} /> */}
-          </Routes>
-        </>
-      )}
+          ))}
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={`/chat/${conversationList[0]?.id ?? "chat"}`}
+              replace={true}
+            />
+          }
+        />
+        {/* <Route path="/options" element={<Options vscode={vscode} />} /> */}
+      </Routes>
     </>
   );
 }

@@ -11,8 +11,8 @@
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
     "editor.codeActionsOnSave": {
-        "source.fixAll": true,
-        "source.organizeImports": true
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
     },
     "javascript.format.semicolons": "insert",
     "typescript.format.semicolons": "insert",

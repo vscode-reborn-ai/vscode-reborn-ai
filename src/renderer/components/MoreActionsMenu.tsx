@@ -141,6 +141,9 @@ export default function MoreActionsMenu({
 
                 // close menu
                 setShowMoreActions(false);
+
+                // navigate to the /api tab
+                navigate("/api");
               }}
             >
               <Icon icon="cancel" className="w-3 h-3" />

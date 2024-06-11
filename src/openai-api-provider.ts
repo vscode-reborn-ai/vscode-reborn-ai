@@ -117,6 +117,8 @@ export class ApiProvider {
         console.error('api JSON parse error. Message:', e?.message, 'Error:', e);
       }
     }
+
+    console.error('api stream ended');
   }
 
   async getChatCompletion(conversation: Conversation, {

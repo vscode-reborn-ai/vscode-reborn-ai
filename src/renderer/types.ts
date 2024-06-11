@@ -259,7 +259,7 @@ export interface ExtensionSettings {
   throttling: number,
   minimalUI: boolean,
   disableMultipleConversations: boolean,
-  verbosity: "code" | "concise" | "normal" | "full",
+  verbosity: Verbosity,
   renameTabTitles: boolean;
   showAllModels: boolean;
 }
@@ -309,7 +309,7 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   throttling: 100,
   minimalUI: false,
   disableMultipleConversations: false,
-  verbosity: "normal",
+  verbosity: Verbosity.normal,
   renameTabTitles: true,
   showAllModels: false
 };

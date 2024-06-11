@@ -1,6 +1,6 @@
 // Convenience functions for the renderer code
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { useAppDispatch } from "./hooks";
 import { aiRenamedTitle } from "./store/conversation";
 import { ActionNames, ChatMessage, Conversation, ExtensionSettings, Role } from "./types";
@@ -104,13 +104,14 @@ export const useDebounce =
 // Hook - Rename the tab title with AI
 export function useRenameTabTitleWithAI(
   backendMessenger: any,
-  conversation: Conversation,
   settings: ExtensionSettings,
-  firstAssistantMessage?: string
 ) {
   const dispatch = useAppDispatch();
 
-  return useMemo(() => {
+  return useCallback((
+    conversation: Conversation,
+    firstAssistantMessage?: string
+  ) => {
     if (
       conversation &&
       // Has the AI already renamed the title?
@@ -149,5 +150,5 @@ export function useRenameTabTitleWithAI(
         });
       }
     }
-  }, [conversation, settings, firstAssistantMessage]);
+  }, [settings]);
 }

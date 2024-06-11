@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { ApiKeyStatus } from "./store/app";
-import { ChatMessage, Conversation, Verbosity } from "./types";
+import { ChatMessage, Conversation, ExtensionSettings, Verbosity } from "./types";
 
 // A message that gets sent TO the backend
 export enum BackendMessageType {
@@ -170,7 +170,7 @@ export interface ModelsUpdateMessage extends BaseFrontendMessage {
 
 export interface SettingsUpdateMessage extends BaseFrontendMessage {
   type: FrontendMessageType.settingsUpdate;
-  config: any; // vscode.WorkspaceConfiguration;
+  config: ExtensionSettings;
 }
 
 export interface SetTranslationsMessage extends BaseFrontendMessage {
