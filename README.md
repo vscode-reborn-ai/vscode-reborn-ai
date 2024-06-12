@@ -15,19 +15,34 @@ Or build this extension yourself (see below).
 
 ## About this fork
 
-This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for building the original extension and open-sourcing it. Note that this version is API-only, the browser code was not open-sourced by Gencay (due to OpenAI ToS issue).
+This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for working on the original extension and later open-sourcing it.
 
-### The new "ChatGPT: Genie AI" extension
+Gencay has since released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work: <https://github.com/ai-genie/chatgpt-vscode>.
 
-Gencay has released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work in an API-only format: <https://github.com/ai-genie/chatgpt-vscode>
+How these extensions differ is that Genie AI is a proprietary extension, and "reborn" is an open-source extension.
 
-### What does that mean for this fork?
+## Proxy and Local LLMs
 
-I will be continuing work on this extension, I have some ideas for features that focus on automation. Please understand that this means there are fairly major changes on the horizon in the name of a better dev experience. I suggest building from [gencay/vscode-gencay](https://github.com/gencay/vscode-chatgpt) source if you do not want an extension that may occasionally break as it evolves.
+This extension can be used with a proxy either for geographical reasons or if you're using a local LLM. The "Api Base Url" just needs to be changed.
 
-### FOSS
+### Proxies
 
-As a FOSS advocate, I feel compelled to note that Genie AI is not open-source and it sounds (to me at least) like it may at some point have paid features. I don't have a personal issue with that, it will allow the Genie AI team to spend more time improving their extension. But, you can expect "Reborn" to stay FOSS, and if you're a fan of open-source - feedback, issues, and PRs are welcome.
+I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers.
+
+### Alternative APIs tested to work with this extension
+
+- [X] [OpenRouter](https://openrouter.ai/)
+
+### Local LLMs tested to work with this extension
+
+- [X] [text-generation-webui](https://github.com/oobabooga/text-generation-webui)
+- [X] [LocalAI](https://localai.io/)
+
+Any local LLM that supports the OpenAI API *should* work with this extension. The list above are the tools I've personally tested.
+
+## Internationalization
+
+Most of this extension has been translated to a ~dozen languages, but the translations are not complete and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20)
 
 ## Installation
 
@@ -60,18 +75,6 @@ yarn run build
 yarn run watch
 ```
 
-### Format the code using Prettier and run tests with fixes
-
-```bash
-yarn run fmt
-```
-
-### Run tests using ESLint and TypeScript
-
-```bash
-yarn run test
-```
-
 ## Testing the Extension in Visual Studio Code
 
 To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these steps:
@@ -87,23 +90,6 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 5. To make changes to the extension, update the code, and then press `Ctrl + Shift + F5`/`Cmd + Shift + F5` (or click `Run > Restart Debugging`) to reload the extension.
 
 6. Once you are satisfied with your changes, submit a pull request to this repository.
-
-## Internationalization
-
-Initial i18n support has been added in `v3.15.0`, but I need help translating to different languages. If you're able to help at all [see this discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
-
-## Proxy and Local LLMs
-
-This extension can be used with a proxy either for geographical reasons or if you're using a local LLM. The "Api Base Url" just needs to be changed.
-
-**Update 4.8.2023** - I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers.
-
-### Local LLMs tested to work with this extension
-
-- [X] [text-generation-webui](https://github.com/oobabooga/text-generation-webui)
-- [X] [LocalAI](https://localai.io/)
-
-Any local LLM that supports the OpenAI API *should* work with this extension. The list above are the tools I've personally tested and work.
 
 ## Changelog
 
