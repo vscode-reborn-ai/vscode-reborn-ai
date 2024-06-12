@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import classNames from "classnames";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
@@ -41,6 +42,16 @@ export default ({
   const [tokenCountAnimation, setTokenCountAnimation] = useState(false);
   const tokenCountAnimationTimer = useRef(null);
   const backendMessenger = useMessenger(vscode);
+  const models = useAppSelector((state: RootState) => state.app.models);
+
+  // Check if the current model is in the model list
+  // When APIs are changed, the current model might not be available
+  const isCurrentModelAvailable = useMemo(() => {
+    return (
+      models.length === 0 ||
+      models.some((model) => model.id === currentConversation.model?.id)
+    );
+  }, [models, currentConversation.model]);
 
   // when includeEditorSelection changes, update the store (needed for token calculations elsewhere), one-way binding for now
   useEffect(() => {
@@ -73,6 +84,11 @@ export default ({
   }, [currentConversation.id]);
 
   const askQuestion = () => {
+    if (!isCurrentModelAvailable) {
+      console.error("Model not available. Select a model first.");
+      return;
+    }
+
     const question = questionInputRef?.current?.value;
 
     if (question && question.length > 0) {
@@ -139,6 +155,12 @@ export default ({
                 className="w-5 h-5 mr-2 text stroke-current"
               />
               <span>{t?.questionInputField?.thinking ?? "Thinking..."}</span>
+              {currentConversation.model?.id.includes("instruct") && (
+                <span className="text-xs opacity-50 ml-2">
+                  {t?.questionInputField?.streamingOnInstructModels ??
+                    "(streaming is disabled on instruct models)"}
+                </span>
+              )}
             </div>
           )}
           {!currentConversation.inProgress && (
@@ -223,12 +245,22 @@ export default ({
           {!currentConversation.inProgress && (
             <button
               title="Submit prompt"
-              className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover"
+              className={classNames(
+                "ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover",
+                {
+                  "opacity-50 cursor-not-allowed": !isCurrentModelAvailable,
+                }
+              )}
               onClick={() => {
                 askQuestion();
               }}
+              disabled={
+                currentConversation.inProgress || !isCurrentModelAvailable
+              }
             >
-              {t?.questionInputField?.ask ?? "Ask"}
+              {isCurrentModelAvailable
+                ? t?.questionInputField?.ask ?? "Ask"
+                : "Select a model first"}
               <Icon icon="send" className="w-5 h-5 ml-1" />
             </button>
           )}

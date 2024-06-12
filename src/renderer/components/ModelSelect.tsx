@@ -1,5 +1,6 @@
+import classNames from "classnames";
 import OpenAI from "openai";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
@@ -38,6 +39,32 @@ export default function ModelSelect({
   const [filteredModels, setFilteredModels] = useState<OpenAI.Model[]>([]);
   const backendMessenger = useMessenger(vscode);
 
+  const hasOpenAIModels = useMemo(() => {
+    // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-3.5-turbo
+    return models.some(
+      (model) =>
+        model.id === "gpt-4" ||
+        model.id === "gpt-4-turbo" ||
+        model.id === "gpt-4o" ||
+        model.id === "gpt-3.5-turbo"
+    );
+  }, [models]);
+
+  // Check if the current model is in the model list
+  // When APIs are changed, the current model might not be available
+  const isCurrentModelAvailable = useMemo(() => {
+    return (
+      models.length === 0 ||
+      models.some((model) => model.id === currentConversation.model?.id)
+    );
+  }, [models, currentConversation.model]);
+
+  const currentModelFriendlyName = useMemo(() => {
+    return MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
+      ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
+      : currentConversation.model?.id ?? settings?.gpt3?.model;
+  }, [currentConversation.model, settings]);
+
   useEffect(() => {
     setFilteredModels(models);
   }, [models]);
@@ -61,7 +88,12 @@ export default function ModelSelect({
     <>
       <div className={`${className}`}>
         <button
-          className={`rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary`}
+          className={classNames(
+            `rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary`,
+            {
+              "text-red-500": !isCurrentModelAvailable,
+            }
+          )}
           onClick={() => {
             setShowModels(!showModels);
           }}
@@ -69,11 +101,9 @@ export default function ModelSelect({
           data-tooltip-content="Change the AI model being used"
         >
           <Icon icon="box" className="w-3 h-3 mr-1" />
-          {currentConversation.model
-            ? MODEL_FRIENDLY_NAME.has(currentConversation.model.id)
-              ? MODEL_FRIENDLY_NAME.get(currentConversation.model.id)
-              : currentConversation.model.id ?? settings?.gpt3?.model
-            : settings?.gpt3?.model ?? "..."}
+          {isCurrentModelAvailable
+            ? currentModelFriendlyName
+            : "No model selected"}
         </button>
         <div
           className={`fixed mb-8 overflow-y-auto max-h-screen items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
@@ -81,7 +111,12 @@ export default function ModelSelect({
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}
         >
-          {settings?.showAllModels ? (
+          {/*
+            Show all models if "Show all models" is enabled in settings.
+            OR show all models if there's no overlap with OpenAI models,
+            otherwise the model select will be empty.
+          */}
+          {settings?.showAllModels || !hasOpenAIModels ? (
             <>
               {(models.length > 6 ? filteredModels : models).map(
                 (model: OpenAI.Model) => (

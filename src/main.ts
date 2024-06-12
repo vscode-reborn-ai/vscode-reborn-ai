@@ -8,7 +8,7 @@ import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetApiKeyStatusMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import { unEscapeHTML } from "./renderer/utils";
 import Auth from "./secrets-store";
 import Messenger from "./send-to-frontend";
@@ -234,57 +234,40 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		});
 	}
 
-	// Param is optional - if provided, it will change the API key to the provided value
-	// This func validates the API key against the OpenAI API (and notifies the webview of the result)
-	// If valid it updates the chatGPTModels array (and notifies the webview of the available models)
-	public async updateApiKeyState(apiKey: string = '') {
-		if (apiKey) {
-			// Run the setOpenAIApiKey command
-			await vscode.commands.executeCommand("chatgptReborn.setOpenAIApiKey", apiKey);
-		}
+	/** API KEY and API URL update functions
 
-		// Api url may change based on the api key, so rebuild the api provider
-		const apiUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
-		await this.rebuildApiProvider(apiUrl);
-
-		// Set to pending
-		this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Pending);
-
-		let { status, models } = await this.isGoodApiKey(apiKey);
-
-		this.frontendMessenger.sendApiKeyStatus(status);
-
-		if (status === ApiKeyStatus.Valid) {
-			this.frontendMessenger.sendModels(models);
-
-			// Key is valid on this api, associate the api url with the key
-			await this.authStore?.storeApiKey(apiKey, this.api?.apiConfig.baseURL ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string);
-		}
-	}
-
-	private async rebuildApiProvider(apiBaseUrl: string = '') {
-		apiBaseUrl = apiBaseUrl ?? this.api?.apiConfig.baseURL ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
-		const apiKey = await (this.authStore ?? Auth.instance).getApiKey(apiBaseUrl);
-
-		// Api key may change based on the api base url
-		await vscode.commands.executeCommand("chatgptReborn.setOpenAIApiKey", apiKey);
+	 - api url is dependent on the api key
+	 So when API URL changes, we need to check for a stored key.
+	 - API key is only used by the API provider
+	 - All API url updates are propagated to the JSON settings; however,
+	 we should consider the API provider the source of truth for the API URL.
+	 */
+	public async rebuildApiProvider(apiKey: string | undefined = undefined, apiUrl: string | undefined = undefined) {
+		const finalApiKey = (apiKey === undefined ? await this.authStore?.getApiKey(apiUrl) : apiKey) ?? '';
+		const finalApiUrl = apiUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 
 		this.api = new ApiProvider(
-			apiKey ?? '',
+			finalApiKey,
 			{
 				organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string,
-				apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
+				apiBaseUrl: finalApiUrl,
 				temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
 				topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
 			});
-		this.frontendMessenger.setApiProvider(this.api);
+
+		// Test the API key
+		const { status } = await this.testApiKey(finalApiKey, finalApiUrl);
+		this.frontendMessenger.sendApiKeyStatus(status);
 	}
 
-	public async updateApiUrl(apiUrl: string = '') {
-		if (!apiUrl) {
-			console.error("updateApiUrl called with no apiUrl");
-			return;
-		}
+	public async clearApiKey() {
+		// Remake the API provider with a blank API key
+		this.rebuildApiProvider('');
+	}
+
+	public async setApiUrl(apiUrl: string) {
+		// Clear the current API key so we don't accidentally use an old key with the new URL
+		await this.clearApiKey();
 
 		// trim, lowercase
 		apiUrl = apiUrl.trim().toLowerCase();
@@ -301,21 +284,76 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			apiUrl = apiUrl.slice(0, -17);
 		}
 
-		await vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", apiUrl, true);
+		// Look for an API key associated with this API URL
+		const apiKey = await this.authStore?.getApiKey(apiUrl) ?? '';
 
-		// Retest access to the api
-		// This test is async, but we don't need to wait for it
-		this.updateApiKeyState();
+		// Update the API provider
+		this.rebuildApiProvider(apiKey, apiUrl);
+
+		// Update config
+		await vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", apiUrl, true);
 	}
 
-	// reset the API key to the default value
-	public async resetApiKey() {
-		// Update the API key state
-		await this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Unset);
+	public async setApiKey(apiKey: string) {
+		// Update the secret storage
+		const apiUrl = this.api.apiConfig?.baseURL ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+		await this.authStore?.storeApiKey(apiKey, apiUrl);
 
-		await vscode.commands.executeCommand("chatgptReborn.setOpenAIApiKey", "");
+		// Update the API provider
+		await this.rebuildApiProvider(apiKey);
+	}
 
-		this.updateApiKeyState();
+	// Test if the API can be accessed with the provided API key
+	async testApiKey(apiKey: string | undefined = undefined, apiUrl: string | undefined = undefined): Promise<{
+		status: ApiKeyStatus,
+		models?: OpenAI.Model[],
+	}> {
+		if (apiUrl === undefined) {
+			apiUrl = this.api?.apiConfig.baseURL ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+		}
+
+		if (apiKey === undefined) {
+			// Get OpenAI API key from secret store
+			apiKey = await this.authStore?.getApiKey(apiUrl) ?? '';
+		}
+
+		// If empty, return false
+		if (!apiKey) {
+			return {
+				status: ApiKeyStatus.Unset
+			};
+		}
+
+		let configuration: ClientOptions = {
+			apiKey,
+		};
+
+		// if the organization id is set in settings, use it
+		const organizationId = await vscode.workspace.getConfiguration("chatgpt").get("organizationId") as string;
+		if (organizationId) {
+			configuration.organization = organizationId;
+		}
+
+		configuration.baseURL = apiUrl;
+
+		try {
+			const openai = new OpenAI(configuration);
+			const response = await openai.models.list();
+			const models = response.data;
+
+			// Send model list to the frontend
+			this.frontendMessenger.sendModels(models);
+
+			return {
+				status: ApiKeyStatus.Valid,
+				models,
+			};
+		} catch (error) {
+			console.error('Main Process - Error getting models', error);
+			return {
+				status: ApiKeyStatus.Invalid
+			};
+		}
 	}
 
 	public resolveWebviewView(
@@ -420,18 +458,18 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					break;
 				case BackendMessageType.changeApiUrl:
 					const changeApiUrlData = data as ChangeApiUrlMessage;
-					this.updateApiUrl(changeApiUrlData.apiUrl);
+					this.setApiUrl(changeApiUrlData.apiUrl);
 					break;
 				case BackendMessageType.changeApiKey:
 					const changeApiKeyData = data as ChangeApiKeyMessage;
-					this.updateApiKeyState(changeApiKeyData.apiKey);
+					this.setApiKey(changeApiKeyData.apiKey);
 					break;
 				case BackendMessageType.getApiKeyStatus:
-					const getApiKeyStatusData = data as GetApiKeyStatusMessage;
-					this.updateApiKeyState();
+					const { status } = await this.testApiKey();
+					this.frontendMessenger.sendApiKeyStatus(status);
 					break;
 				case BackendMessageType.resetApiKey:
-					this.resetApiKey();
+					this.clearApiKey();
 					break;
 				case BackendMessageType.setVerbosity:
 					const setVerbosityData = data as SetVerbosityMessage;
@@ -567,59 +605,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	private async getApiKey(): Promise<string> {
 		return await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') ?? '';
-	}
-
-	async isGoodApiKey(apiKey: string = ''): Promise<{
-		status: ApiKeyStatus,
-		models?: OpenAI.Model[],
-	}> {
-		if (!apiKey) {
-			// Get OpenAI API key from secret store
-			apiKey = await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') as string;
-		}
-
-		// If empty, return false
-		if (!apiKey) {
-			return {
-				status: ApiKeyStatus.Unset
-			};
-		}
-
-		this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Pending);
-
-		let configuration: ClientOptions = {
-			apiKey,
-		};
-
-		// if the organization id is set in settings, use it
-		const organizationId = await vscode.workspace.getConfiguration("chatgpt").get("organizationId") as string;
-		if (organizationId) {
-			configuration.organization = organizationId;
-		}
-
-		// if the api base url is set in settings, use it
-		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
-		if (apiBaseUrl) {
-			configuration.baseURL = apiBaseUrl;
-		}
-
-		try {
-			const openai = new OpenAI(configuration);
-			const response = await openai.models.list();
-
-			// Key is valid on this api, associate the api url with the key
-			await this.authStore?.storeApiKey(apiKey, apiBaseUrl);
-
-			return {
-				status: ApiKeyStatus.Valid,
-				models: response.data
-			};
-		} catch (error) {
-			console.error('Main Process - Error getting models', error);
-			return {
-				status: ApiKeyStatus.Invalid
-			};
-		}
 	}
 
 	async getModels(): Promise<any[]> {

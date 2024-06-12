@@ -34,6 +34,18 @@ const popularLocalLlms: {
     tested: true,
   },
   {
+    name: "Proxy of OpenAI API (openai-proxy.dev)",
+    instructions:
+      "This is a proxy of the official OpenAI API. It's for anyone in a geographical location where openai.com is blocked. It's hosted by the author of this extension using Cloudflare Workers.",
+    apiUrl: new URL("https://openai-proxy.dev/v1"),
+    docsUrl: new URL(
+      "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn#proxy-and-local-llms"
+    ),
+    showApiKeyInput: true,
+    showAllModelSuggestion: false,
+    tested: true,
+  },
+  {
     name: "OpenRouter AI",
     instructions:
       "To use OpenRouter AI, you must have an account at https://openrouter.ai and provide your API key.",
@@ -203,9 +215,9 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
           >
             Select a tool...
           </option>
-          {popularLocalLlms.map((tool) => (
+          {popularLocalLlms.map((tool, index) => (
             <option
-              key={tool.name}
+              key={`tool-${index}`}
               value={tool.name}
               style={{
                 backgroundColor: "var(--vscode-tab-activeBackground)",
@@ -216,85 +228,83 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
           ))}
         </select>
         {selectedToolInfo && (
-          <>
-            <div>
-              <h2 className="text-lg font-medium mt-2">Instructions</h2>
-              {selectedToolInfo.instructions
-                .split(/(```bash\n[\s\S]*?\n```)/)
-                .reduce((acc: any[], item: any) => {
-                  if (item) {
-                    acc.push(item);
-                  }
-                  return acc;
-                }, [])
-                .map((item: string, index: React.Key | null | undefined) => {
-                  if (item.startsWith("```bash")) {
-                    // remove the ```bash and ``` from the string
-                    item = item.replace(/```bash\n/g, "").replace(/\n```/g, "");
-                    return (
-                      <CodeBlock
-                        margins={false}
-                        className="my-1"
-                        code={item}
-                        key={index}
-                        vscode={vscode}
-                      />
-                    );
-                  } else {
-                    return <p>{item}</p>;
-                  }
-                })}
-              {selectedToolInfo.docsUrl && (
-                <p>
-                  <strong className="inline-block mt-2 mb-1">Full Docs:</strong>{" "}
-                  <a
-                    href={selectedToolInfo.docsUrl.href}
-                    target="_blank"
-                    className="text-blue-500"
-                  >
-                    {selectedToolInfo.docsUrl.href}
-                  </a>
-                </p>
-              )}
-            </div>
-            {selectedToolInfo.apiUrl && (
-              <>
-                <strong className="inline-block mt-2 mb-1">
-                  Suggested API URL:
-                </strong>
-                <div className="flex flex-wrap gap-2">
-                  <CodeBlock
-                    margins={false}
-                    className="flex-grow"
-                    code={selectedToolInfo.apiUrl.href}
-                    vscode={vscode}
-                  />
-                  <button
-                    type="button"
-                    className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
-                    onClick={() => {
-                      backendMessenger.sendChangeApiUrl(
-                        selectedToolInfo.apiUrl?.href ?? ""
-                      );
-
-                      if (apiUrlInputRef.current) {
-                        apiUrlInputRef.current.value =
-                          selectedToolInfo.apiUrl?.href ?? "";
-                      }
-
-                      setShowSaved(true);
-
-                      setTimeout(() => {
-                        setShowSaved(false);
-                      }, 2000);
-                    }}
-                  >
-                    Use suggested API URL
-                  </button>
-                </div>
-              </>
+          <div>
+            <h2 className="text-lg font-medium mt-2">Instructions</h2>
+            {selectedToolInfo.instructions
+              .split(/(```bash\n[\s\S]*?\n```)/)
+              .reduce((acc: any[], item: any) => {
+                if (item) {
+                  acc.push(item);
+                }
+                return acc;
+              }, [])
+              .map((item: string, index: React.Key | null | undefined) => {
+                if (item.startsWith("```bash")) {
+                  // remove the ```bash and ``` from the string
+                  item = item.replace(/```bash\n/g, "").replace(/\n```/g, "");
+                  return (
+                    <CodeBlock
+                      margins={false}
+                      className="my-1"
+                      code={item}
+                      key={`code-${index}`}
+                      vscode={vscode}
+                    />
+                  );
+                } else {
+                  return <p>{item}</p>;
+                }
+              })}
+            {selectedToolInfo.docsUrl && (
+              <p>
+                <strong className="inline-block mt-2 mb-1">Full Docs:</strong>{" "}
+                <a
+                  href={selectedToolInfo.docsUrl.href}
+                  target="_blank"
+                  className="text-blue-500"
+                >
+                  {selectedToolInfo.docsUrl.href}
+                </a>
+              </p>
             )}
-          </>
+          </div>
+        )}
+        {selectedToolInfo && selectedToolInfo.apiUrl && (
+          <div>
+            <strong className="inline-block mt-2 mb-1">
+              Suggested API URL:
+            </strong>
+            <div className="flex flex-wrap gap-2">
+              <CodeBlock
+                margins={false}
+                className="flex-grow"
+                code={selectedToolInfo.apiUrl.href}
+                vscode={vscode}
+              />
+              <button
+                type="button"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
+                onClick={() => {
+                  backendMessenger.sendChangeApiUrl(
+                    selectedToolInfo.apiUrl?.href ?? ""
+                  );
+
+                  if (apiUrlInputRef.current) {
+                    apiUrlInputRef.current.value =
+                      selectedToolInfo.apiUrl?.href ?? "";
+                  }
+
+                  setShowSaved(true);
+
+                  setTimeout(() => {
+                    setShowSaved(false);
+                  }, 2000);
+                }}
+              >
+                Use suggested API URL
+              </button>
+            </div>
+          </div>
         )}
         {selectedToolInfo && selectedToolInfo.showAllModelSuggestion && (
           <p className="mt-2">
@@ -429,7 +439,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                 );
                 backendMessenger.sendSetShowAllModels(e.target.checked);
               }}
-              className="rounded text-input cursor-pointer bg-input border-input"
+              className="rounded cursor-pointer bg-input border-input"
             />
             <label htmlFor="showAllModels" className="text-sm cursor-pointer">
               {t?.apiKeySetup?.showAllModels ?? "Show ALL models"}

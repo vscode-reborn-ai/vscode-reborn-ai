@@ -226,6 +226,24 @@ export default function Chat({
                             {line}
                           </p>
                         ))}
+                      {message.rawContent.includes("Premature close") &&
+                        settings?.gpt3.apiBaseUrl.includes(
+                          "localhost:5000"
+                        ) && (
+                          <p className="py-1 text-xs">
+                            It looks like you're running{" "}
+                            <code className="text-xs">
+                              text-generation-webui
+                            </code>
+                            . If you're getting "Premature close" errors, you
+                            may be forgetting to load a model in the webui
+                            before trying to use the API. To do that, go to{" "}
+                            <a href="http://127.0.0.1:7860">
+                              http://127.0.0.1:7860
+                            </a>{" "}
+                            &gt; Model.
+                          </p>
+                        )}
                     </div>
                   ) : (
                     <div>
