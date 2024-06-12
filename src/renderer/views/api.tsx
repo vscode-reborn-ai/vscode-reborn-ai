@@ -58,7 +58,7 @@ const popularLocalLlms: {
   {
     name: "text-generation-webui",
     instructions:
-      "To start text-generation-webui in API-only mode, open your terminal and run: \n\n```bash\npython server.py --api\n```However, you must open the text-generation-webui at http://localhost:7860 and load a model.",
+      "1. To start text-generation-webui in API-only mode, open your terminal and run: \n\n```bash\npython server.py --api\n```2. Important - You must open the text-generation-webui at http://localhost:7860 and load a model.",
     apiUrl: new URL("http://localhost:5000/v1"),
     docsUrl: new URL(
       "https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API"
@@ -301,30 +301,28 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                   }, 2000);
                 }}
               >
-                Use suggested API URL
+                Use this API URL
               </button>
             </div>
           </div>
         )}
         {selectedToolInfo && selectedToolInfo.showAllModelSuggestion && (
           <p className="mt-2">
-            <strong>Note:</strong> With this API it is{" "}
-            <strong>recommended</strong> to check the "Show all models" checkbox
-            below to see all models.
+            With this API it is <strong>recommended</strong> to check the "Show
+            all models" checkbox below to see all models.
           </p>
         )}
         {selectedToolInfo && !selectedToolInfo.showAllModelSuggestion && (
           <p className="mt-2">
-            <strong>Note:</strong> It is recommended you do <strong>not</strong>{" "}
-            check the "Show all models" checkbox below or a lot of unnecessary
-            models will be shown.
+            It is recommended you do <strong>not</strong> check the "Show all
+            models" checkbox below or a lot of unnecessary models will be shown.
           </p>
         )}
       </section>
 
       <section>
         <label htmlFor="apiUrl" className="block text-md font-medium my-2">
-          This extension's current API URL:
+          <strong>Current</strong> API URL:
         </label>
         <div className="relative">
           <input
@@ -351,10 +349,10 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                 htmlFor="apiKey"
                 className="block text-md font-medium my-2"
               >
-                {t?.apiKeySetup?.apiKeyLabel ?? "This extensions's API Key"}{" "}
+                <strong>Current</strong> API key{" "}
                 {selectedToolInfo?.apiUrl && (
                   <span className="text-xs">
-                    on {new URL(settings.gpt3.apiBaseUrl).hostname}
+                    for {new URL(settings.gpt3.apiBaseUrl).hostname}
                   </span>
                 )}
               </label>
@@ -447,7 +445,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
           </div>
           <p>
             {t?.apiKeySetup?.showAllModelsDescription ??
-              "If checked, every single model available on the API will be shown. This setting is recommended for APIs that serve models different from OpenAI's Official API. However, note that some models that are listed will NOT work with this extension."}
+              "If checked, every single model available on the API will be shown. This setting is recommended for APIs that serve models different from OpenAI's Official API. However, note that some models listed may not work with this extension."}
           </p>
         </div>
       </section>
