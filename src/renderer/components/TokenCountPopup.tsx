@@ -73,7 +73,7 @@ export default function TokenCountPopup({
     <div
       className={clsx(
         "TokenCountPopup",
-        "absolute w-[calc(100% - 3em) max-w-[25em] items-center border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10 bottom-6 right-4",
+        "mb-4 absolute w-[calc(100% - 3em) max-w-[25em] items-center border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10 right-4",
         className,
         showTokenBreakdown ? "block" : "hidden"
       )}

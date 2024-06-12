@@ -261,7 +261,7 @@ export default ({
               {isCurrentModelAvailable
                 ? t?.questionInputField?.ask ?? "Ask"
                 : "Select a model first"}
-              <Icon icon="send" className="w-5 h-5 ml-1" />
+              <Icon icon="send" className="w-5 h-5 ml-1 hidden 2xs:block" />
             </button>
           )}
         </div>
@@ -279,7 +279,7 @@ export default ({
             <VerbositySelect
               currentConversation={currentConversation}
               vscode={vscode}
-              className="hidden xs:block"
+              className="hidden xs:flex items-end"
               tooltipId="footer-tooltip"
             />
             <button
@@ -303,8 +303,14 @@ export default ({
                 setIncludeEditorSelection(!useEditorSelection);
               }}
             >
-              <Icon icon="plus" className="w-3 h-3" />
-              {t?.questionInputField?.useEditorSelection ?? "Editor selection"}
+              <Icon icon="plus" className="w-3 h-3 hidden 2xs:block" />
+              <span className="hidden 2xs:block">
+                {t?.questionInputField?.useEditorSelection ??
+                  "Editor selection"}
+              </span>
+              <span className="block 2xs:hidden">
+                {t?.questionInputField?.useEditorSelectionShort ?? "Editor"}
+              </span>
             </button>
             <button
               className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary`}
@@ -319,21 +325,23 @@ export default ({
                 );
               }}
             >
-              <Icon icon="cancel" className="w-3 h-3" />
+              <Icon icon="cancel" className="w-3 h-3 hidden 2xs:block" />
               {t?.questionInputField?.clear ?? "Clear"}
             </button>
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
-          <MoreActionsMenu
-            vscode={vscode}
-            showMoreActions={showMoreActions}
-            currentConversation={currentConversation}
-            setShowMoreActions={setShowMoreActions}
-            conversationList={conversationList}
-          />
+          <div className="flex items-end self-start">
+            <MoreActionsMenu
+              vscode={vscode}
+              showMoreActions={showMoreActions}
+              currentConversation={currentConversation}
+              setShowMoreActions={setShowMoreActions}
+              conversationList={conversationList}
+            />
+          </div>
           <div className="flex flex-row items-start gap-2">
             <div
-              className={`rounded flex gap-1 items-center justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
+              className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
                 tokenCountAnimation
                   ? "duration-200 bg-blue-300 bg-opacity-20"
                   : "duration-500"
@@ -382,7 +390,7 @@ export default ({
                 setShowMoreActions(!showMoreActions);
               }}
             >
-              <Icon icon="zap" className="w-3.5 h-3.5" />
+              <Icon icon="zap" className="w-3.5 h-3.5 hidden 2xs:block" />
               {t?.questionInputField?.moreActions ?? "More Actions"}
             </button>
           </div>

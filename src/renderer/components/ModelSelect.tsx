@@ -60,9 +60,23 @@ export default function ModelSelect({
   }, [models, currentConversation.model]);
 
   const currentModelFriendlyName = useMemo(() => {
-    return MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
-      ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
-      : currentConversation.model?.id ?? settings?.gpt3?.model;
+    let friendlyName =
+      (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
+        ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
+        : currentConversation.model?.id ?? settings?.gpt3?.model) ??
+      "No model selected";
+
+    // if the friendly has a slash (ie perplexity/model-name), ignore everything before the slash
+    if (friendlyName.includes("/")) {
+      friendlyName = friendlyName.split("/")[1];
+    }
+
+    //  if the friendly name has a colon (ie model-name:version), ignore everything after the colon
+    if (friendlyName.includes(":")) {
+      friendlyName = friendlyName.split(":")[0];
+    }
+
+    return friendlyName;
   }, [currentConversation.model, settings]);
 
   useEffect(() => {

@@ -55,7 +55,7 @@ export default function VerbositySelect({
   return (
     <>
       <div
-        className={`relative ${className}`}
+        className={`${className}`}
         data-tooltip-id={tooltipId ?? "footer-tooltip"}
         data-tooltip-content={
           t?.verbosity?.parentTooltip ??
@@ -76,7 +76,7 @@ export default function VerbositySelect({
         <div
           className={`fixed border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10
           ${showOptions ? "block" : "hidden"}
-          ${dropdownClassName ? dropdownClassName : "bottom-8 -ml-11"}
+          ${dropdownClassName ? dropdownClassName : "mb-8 -ml-11"}
         `}
         >
           {Object.values(Verbosity).map((option) => (

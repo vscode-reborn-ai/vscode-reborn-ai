@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import classNames from "classnames";
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
@@ -35,9 +35,9 @@ export default function MoreActionsMenu({
   return (
     <>
       <div
-        className={clsx(
+        className={classNames(
           "MoreActionsMenu",
-          "fixed z-20 bottom-8 right-4 p-2 bg-menu rounded border border-menu",
+          "fixed z-20 right-4 p-2 bg-menu rounded border border-menu overflow-hidden max-w-[calc(100vw-2em)]",
           className,
           {
             hidden: !showMoreActions,
@@ -81,7 +81,7 @@ export default function MoreActionsMenu({
           {process.env.NODE_ENV === "development" && (
             <li>
               <button
-                className={clsx(
+                className={classNames(
                   "DebugButton",
                   "rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full",
                   debug
