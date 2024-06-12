@@ -142,6 +142,11 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         );
         break;
       case FrontendMessageType.settingsUpdate:
+        if (!message?.config) {
+          console.warn("Renderer - No settings provided in settingsUpdate message");
+          return;
+        }
+
         dispatch(setExtensionSettings({ newSettings: message.config }));
 
         const currentConversation = conversationList.find(
@@ -153,7 +158,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             dispatch(
               setModel({
                 conversationId: currentConversationId,
-                model: models.find((model) => model.id === (message?.config.gpt3?.model ?? settings?.gpt3?.model)
+                model: models.find((model) => model.id === (message.config.gpt3?.model ?? settings?.gpt3?.model)
                 ) ?? models[0],
               })
             );
