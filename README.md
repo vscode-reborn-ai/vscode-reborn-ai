@@ -109,9 +109,11 @@ Any local LLM that supports the OpenAI API *should* work with this extension. Th
 
 ### ✨ Next Release
 
-- ✨ **Feature** - Conversation tabs now automatically rename themselves.
-- 🔧 **Fixes** - A previous commit broke the `apiBaseUrl` config. Sorry about that. - *Thanks for the bug report @nossebro*
-- ✨ **Feature** - New page for making it easier to connect to local LLMs.
+- ✨ **Feature** - Conversation tabs now auto-rename.
+- ✨ **Feature** - Improved local LLM support. New "Use Local LLM" page to easily connect to a local LLM. Custom models now appear in the model selector if "Show All Models" is enabled.
+- 🔧 **Fix** - Resolved `apiBaseUrl` config issue. *Thanks for the bug report @nossebro.*
+- 🎮 **QoL** - Local API keys are now associated with the API URL, allowing seamless API switching without re-entering keys.
+- 🎮 **QoL** - The model selector typically hides rarely used OpenAI models. The "Show All Models" setting now reveals all models for alternative APIs, like OpenRouter.
 
 ---
 
@@ -144,7 +146,7 @@ Any local LLM that supports the OpenAI API *should* work with this extension. Th
 
 ### July 11, 2023 (`v3.18.1`)
 
-- 🌐 **i18n]** - Fix syntax errors in translation files. - *Thank you for the PR @PeterDaveHello*
+- 🌐 **i18n** - Fix syntax errors in translation files. - *Thank you for the PR @PeterDaveHello*
 
 ### July 3, 2023 (`v3.18.0`)
 
