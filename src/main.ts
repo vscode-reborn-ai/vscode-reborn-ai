@@ -6,10 +6,10 @@ import * as vscode from 'vscode';
 import { getSelectedModelId, updateSelectedModel } from "./helpers";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
+import { unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
-import { ActionNames, ChatMessage, Conversation, Role, Verbosity } from "./renderer/types";
+import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
 import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
-import { unEscapeHTML } from "./renderer/utils";
 import Auth from "./secrets-store";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
@@ -51,7 +51,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	public frontendMessenger: Messenger;
 	public subscribeToResponse: boolean;
-	public model: OpenAI.Model;
+	public model: Model;
 
 	private api: ApiProvider = new ApiProvider('');
 	private _temperature: number = 0.9;
@@ -306,7 +306,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	// Test if the API can be accessed with the provided API key
 	async testApiKey(apiKey: string | undefined = undefined, apiUrl: string | undefined = undefined): Promise<{
 		status: ApiKeyStatus,
-		models?: OpenAI.Model[],
+		models?: Model[],
 	}> {
 		if (apiUrl === undefined) {
 			apiUrl = this.api?.apiConfig.baseURL ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
@@ -638,13 +638,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
-	async getChatGPTModels(): Promise<OpenAI.Model[]> {
+	async getChatGPTModels(): Promise<Model[]> {
 		const models = await this.api.getModelList();
 
 		if (this.showAllModels) {
 			return models;
 		} else {
-			return models.filter((model: OpenAI.Model) => SUPPORTED_CHATGPT_MODELS.includes(model.id));
+			return models.filter((model: Model) => SUPPORTED_CHATGPT_MODELS.includes(model.id));
 		}
 	}
 

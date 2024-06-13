@@ -1,14 +1,20 @@
 import classNames from "classnames";
-import OpenAI from "openai";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  getModelCompletionLimit,
+  getModelContextLimit,
+  getModelRates,
+} from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
+import { ApiKeyStatus } from "../store/app";
 import { updateConversationModel } from "../store/conversation";
 import {
   Conversation,
   MODEL_FRIENDLY_NAME,
   MODEL_TOKEN_LIMITS,
+  Model,
 } from "../types";
 import Icon from "./Icon";
 
@@ -35,9 +41,15 @@ export default function ModelSelect({
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
+  const apiKeyStatus = useAppSelector(
+    (state: RootState) => state.app?.apiKeyStatus
+  );
   const models = useAppSelector((state: RootState) => state.app.models);
-  const [filteredModels, setFilteredModels] = useState<OpenAI.Model[]>([]);
+  const [filteredModels, setFilteredModels] = useState<Model[]>([]);
   const backendMessenger = useMessenger(vscode);
+  const [sortBy, setSortBy] = useState<
+    "name" | "cost" | "context" | "completion"
+  >("name");
 
   const hasOpenAIModels = useMemo(() => {
     // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-3.5-turbo
@@ -59,8 +71,46 @@ export default function ModelSelect({
     );
   }, [models, currentConversation.model]);
 
+  // Note: sorts the list in place
+  const sortList = useCallback(
+    (sortBy: "name" | "cost" | "context" | "completion", list: Model[]) => {
+      switch (sortBy) {
+        case "name":
+          return list.sort((a, b) =>
+            (a?.name ?? a.id).localeCompare(b?.name ?? b.id)
+          );
+        case "cost":
+          return list.sort((a, b) => {
+            const aCost = getModelRates(a).prompt + getModelRates(a).complete;
+            const bCost = getModelRates(b).prompt + getModelRates(b).complete;
+            return aCost - bCost;
+          });
+        case "context":
+          return list.sort(
+            (a, b) => getModelContextLimit(b) - getModelContextLimit(a)
+          );
+        case "completion":
+          return list.sort(
+            (a, b) => getModelCompletionLimit(b) - getModelCompletionLimit(a)
+          );
+        default:
+          return list;
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const sortedModels: Model[] = Object.assign([], models);
+
+    sortList(sortBy, sortedModels);
+
+    setFilteredModels(sortedModels);
+  }, [models, sortBy]);
+
   const currentModelFriendlyName = useMemo(() => {
     let friendlyName =
+      currentConversation.model?.name ??
       (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
         ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
         : currentConversation.model?.id ?? settings?.gpt3?.model) ??
@@ -80,10 +130,14 @@ export default function ModelSelect({
   }, [currentConversation.model, settings]);
 
   useEffect(() => {
-    setFilteredModels(models);
+    const sortedModels: Model[] = Object.assign([], models);
+
+    sortList(sortBy, sortedModels);
+
+    setFilteredModels(sortedModels);
   }, [models]);
 
-  const setModel = (model: OpenAI.Model) => {
+  const setModel = (model: Model) => {
     // Update settings
     backendMessenger.sendModelUpdate(model);
 
@@ -98,6 +152,67 @@ export default function ModelSelect({
     setShowModels(false);
   };
 
+  // computed model costs for all models
+  interface ComputedModelData {
+    promptLimit: number;
+    completeLimit: number;
+    prompt: number;
+    complete: number;
+    promptText: string;
+    completeText: string;
+    isFree: boolean;
+    isExpensive: boolean;
+  }
+  const computedModelDataMap = useMemo(() => {
+    const costs = new Map<string, ComputedModelData>();
+
+    models.forEach((model) => {
+      const rate = getModelRates(model);
+
+      costs.set(model.id, {
+        promptLimit: getModelContextLimit(model),
+        completeLimit: getModelCompletionLimit(model),
+        prompt: rate.prompt,
+        complete: rate.complete,
+        promptText:
+          rate.prompt === 0
+            ? "FREE"
+            : `$${(rate.prompt * 1000).toFixed(2)} / 1M`,
+        completeText:
+          rate.complete === 0
+            ? "FREE"
+            : `$${(rate.complete * 1000).toFixed(2)} / 1M`,
+        isFree: rate.prompt === 0 && rate.complete === 0,
+        isExpensive: rate.prompt > 0.01 || rate.complete > 0.03,
+      });
+    });
+
+    return costs;
+  }, [models]);
+
+  const modelSearchHandler = useCallback(
+    (e: any) => {
+      const query = e.target.value.toLowerCase();
+
+      // Search for models that match the query
+      const modelList: Model[] = Object.assign([], models);
+      const filteredModelList =
+        query.length > 0
+          ? modelList.filter(
+              (model) =>
+                model.id.toLowerCase().includes(query) ||
+                (model?.name && model.name.toLowerCase().includes(query))
+            )
+          : modelList;
+
+      sortList(sortBy, filteredModelList);
+
+      setFilteredModels(filteredModelList);
+      setFilteredModels(filteredModelList);
+    },
+    [models]
+  );
+
   return (
     <>
       <div className={`${className}`}>
@@ -111,6 +226,11 @@ export default function ModelSelect({
           onClick={() => {
             setShowModels(!showModels);
           }}
+          onKeyUp={(e) => {
+            if (e.key === "Escape") {
+              setShowModels(false);
+            }
+          }}
           data-tooltip-id={tooltipId ?? "footer-tooltip"}
           data-tooltip-content="Change the AI model being used"
         >
@@ -120,7 +240,7 @@ export default function ModelSelect({
             : "No model selected"}
         </button>
         <div
-          className={`fixed mb-8 overflow-y-auto max-h-screen items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+          className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-7em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}
@@ -132,44 +252,153 @@ export default function ModelSelect({
           */}
           {settings?.showAllModels || !hasOpenAIModels ? (
             <>
-              {(models.length > 6 ? filteredModels : models).map(
-                (model: OpenAI.Model) => (
-                  <button
-                    key={model.id}
-                    className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
-                    onClick={() => {
-                      setModel(model);
-                      if (showParentMenu) {
-                        showParentMenu(false);
-                      }
-                    }}
-                  >
-                    <code>{model.id}</code>
-                  </button>
-                )
-              )}
-              {models.length > 6 && (
-                <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
-                  <span className="text-button">
-                    Showing {filteredModels.length} of {models.length} models
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search models..."
-                    className="px-3 py-2 rounded border text-input text-sm border-input bg-menu-selection outline-0"
-                    onChange={(e) => {
-                      const query = e.target.value.toLowerCase();
-
-                      setFilteredModels(
-                        query.length > 0
-                          ? models.filter((model) =>
-                              model.id.toLowerCase().includes(query)
-                            )
-                          : models
-                      );
-                    }}
-                  />
-                </div>
+              {models.length === 0 ? (
+                <>
+                  {apiKeyStatus === ApiKeyStatus.Pending ? (
+                    <div className="p-2 text-center">
+                      <span className="text-yellow-500">
+                        Fetching models...
+                      </span>
+                    </div>
+                  ) : apiKeyStatus === ApiKeyStatus.Invalid ? (
+                    <div className="p-2 text-center">
+                      <span className="text-red-500">
+                        Invalid API key. Please check your API key.
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="p-2 text-center">
+                      <span className="text-button">No models available.</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {(models.length > 6 ? filteredModels : models).map(
+                    (model: Model) => (
+                      <button
+                        key={model.id}
+                        className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                        onClick={() => {
+                          setModel(model);
+                          if (showParentMenu) {
+                            showParentMenu(false);
+                          }
+                        }}
+                      >
+                        <span className="font-bold">
+                          {model?.name ? (
+                            <span>{model.name}</span>
+                          ) : (
+                            <code>{model.id}</code>
+                          )}
+                        </span>
+                        <p>
+                          Prompt:{" "}
+                          <span
+                            className={classNames({
+                              "text-green-500": computedModelDataMap.get(
+                                model.id
+                              )?.isFree,
+                              "text-red-500": computedModelDataMap.get(model.id)
+                                ?.isExpensive,
+                            })}
+                          >
+                            {computedModelDataMap.get(model.id)?.promptText},
+                          </span>{" "}
+                          Complete:{" "}
+                          <span
+                            className={classNames({
+                              "text-green-500": computedModelDataMap.get(
+                                model.id
+                              )?.isFree,
+                              "text-red-500": computedModelDataMap.get(model.id)
+                                ?.isExpensive,
+                            })}
+                          >
+                            {computedModelDataMap.get(model.id)?.completeText},
+                          </span>{" "}
+                          Context:{" "}
+                          <code>
+                            {computedModelDataMap.get(model.id)?.promptLimit}
+                          </code>
+                          , Completion:{" "}
+                          <code>
+                            {computedModelDataMap.get(model.id)?.completeLimit}
+                          </code>
+                        </p>
+                      </button>
+                    )
+                  )}
+                  {models.length > 6 && (
+                    <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
+                      <div className="flex flex-row items-center justify-between">
+                        <span className="text-button">
+                          Showing {filteredModels.length} of {models.length}{" "}
+                          models
+                        </span>
+                        {/* button list of sort by buttons, the current sort by button is highlighted */}
+                        <div className="flex flex-row items-center gap-2">
+                          <button
+                            className={classNames(
+                              "hover:bg-menu-selection p-1 rounded",
+                              {
+                                "bg-menu-selection": sortBy === "name",
+                              }
+                            )}
+                            onClick={() => setSortBy("name")}
+                          >
+                            Name
+                          </button>
+                          <button
+                            className={classNames(
+                              "hover:bg-menu-selection p-1 rounded",
+                              {
+                                "bg-menu-selection": sortBy === "cost",
+                              }
+                            )}
+                            onClick={() => setSortBy("cost")}
+                          >
+                            Cost
+                          </button>
+                          <button
+                            className={classNames(
+                              "hover:bg-menu-selection p-1 rounded",
+                              {
+                                "bg-menu-selection": sortBy === "context",
+                              }
+                            )}
+                            onClick={() => setSortBy("context")}
+                          >
+                            Context
+                          </button>
+                          <button
+                            className={classNames(
+                              "hover:bg-menu-selection p-1 rounded",
+                              {
+                                "bg-menu-selection": sortBy === "completion",
+                              }
+                            )}
+                            onClick={() => setSortBy("completion")}
+                          >
+                            Completion
+                          </button>
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search models..."
+                        className="px-3 py-2 rounded border text-input text-sm border-input bg-menu-selection outline-0"
+                        onChange={modelSearchHandler}
+                        onKeyUp={(e) => {
+                          if (e.key === "Escape") {
+                            setShowModels(false);
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                </>
               )}
             </>
           ) : (

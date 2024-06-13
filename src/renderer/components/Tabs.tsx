@@ -255,7 +255,7 @@ export default function Tabs({
                 </li>
               ))}
             {/* create new chat button */}
-            <li className="flex items-center">
+            <li className="flex items-center sticky right-0 pl-4 -ml-2 bg-gradient-to-r from-transparent to-bg to-20%">
               <button
                 className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-2xs rounded"
                 onClick={createNewConversation}

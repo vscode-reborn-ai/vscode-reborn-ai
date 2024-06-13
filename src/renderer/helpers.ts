@@ -3,7 +3,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { useAppDispatch } from "./hooks";
 import { aiRenamedTitle } from "./store/conversation";
-import { ActionNames, ChatMessage, Conversation, ExtensionSettings, Role } from "./types";
+import { ActionNames, ChatMessage, Conversation, ExtensionSettings, MODEL_COSTS, MODEL_TOKEN_LIMITS, Model, Role } from "./types";
 
 export const unEscapeHTML = (unsafe: any) => {
   return unsafe
@@ -152,3 +152,77 @@ export function useRenameTabTitleWithAI(
     }
   }, [settings]);
 }
+
+// Model token limit for context (input)
+export function getModelContextLimit(model: Model | undefined) {
+  let limit = 128000;
+
+  if (!model) {
+    return limit;
+  }
+
+  // For OpenRouter models, check if the model has context token limits
+  if (model.context_length) {
+    limit = model.context_length ?? 128000;
+  } else {
+    // Fallback to hardcoded limits
+    limit = MODEL_TOKEN_LIMITS.has(model.id)
+      ? MODEL_TOKEN_LIMITS.get(model.id)?.context ?? 128000
+      : 128000;
+  }
+
+  return limit;
+}
+
+// Model token limit for completions (output)
+export function getModelCompletionLimit(model: Model | undefined) {
+  let limit = 4096;
+
+  if (!model) {
+    return limit;
+  }
+
+  // For OpenRouter models, check if the model has completion token limits
+  if (model?.top_provider?.max_completion_tokens) {
+    limit = model.top_provider.max_completion_tokens;
+  } else {
+    // Fallback to hardcoded limits
+    limit = MODEL_TOKEN_LIMITS.has(model.id)
+      ? MODEL_TOKEN_LIMITS.get(model.id)?.max ?? 4096
+      : 4096;
+  }
+
+  return limit;
+}
+
+export function getModelRates(model: Model | undefined) {
+  const costs = {
+    prompt: 0,
+    complete: 0,
+  };
+
+  if (!model) {
+    return costs;
+  }
+
+  // For OpenRouter models, check if the model has cost data with it
+  if (model.pricing) {
+    // Mutiply by 1,000 to convert from $ / 1 token to $ / 1,000 tokens
+    costs.prompt = parseFloat(model.pricing.prompt) * 1000;
+    costs.complete = parseFloat(model.pricing.completion) * 1000;
+    // If cost is < 0, set to 0
+    costs.prompt = Math.max(0, costs.prompt);
+    costs.complete = Math.max(0, costs.complete);
+  } else {
+    // Fallback to hardcoded costs
+    costs.prompt = MODEL_COSTS.has(model.id)
+      ? MODEL_COSTS.get(model.id)?.prompt ?? 0
+      : 0;
+    costs.complete = MODEL_COSTS.has(model.id)
+      ? MODEL_COSTS.get(model.id)?.complete ?? 0
+      : 0;
+  }
+
+  return costs;
+}
+

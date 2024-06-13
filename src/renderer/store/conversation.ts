@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import OpenAI from "openai";
-import { ChatMessage, Conversation, Verbosity } from "../types";
+import { ChatMessage, Conversation, Model, Verbosity } from "../types";
 
 export interface ConversationState {
   conversations: {
@@ -67,7 +66,7 @@ export const conversationSlice = createSlice({
     },
     updateConversationModel: (
       state,
-      action: PayloadAction<{ conversationId: string; model: OpenAI.Model; }>
+      action: PayloadAction<{ conversationId: string; model: Model; }>
     ) => {
       const { conversationId, model } = action.payload;
 
@@ -280,7 +279,7 @@ export const conversationSlice = createSlice({
       state,
       action: PayloadAction<{
         conversationId: string;
-        model: OpenAI.Model;
+        model: Model;
       }>
     ) => {
       const { conversationId, model } = action.payload;

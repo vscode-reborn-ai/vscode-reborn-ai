@@ -1,7 +1,8 @@
 import { encodingForModel, Tiktoken, TiktokenModel } from "js-tiktoken";
 import OpenAI, { ClientOptions } from 'openai';
 import { v4 as uuidv4 } from "uuid";
-import { ChatMessage, Conversation, MODEL_TOKEN_LIMITS, Role } from "./renderer/types";
+import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
+import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
 
 const FALLBACK_MODEL_ID = 'gpt-4-turbo';
 
@@ -18,7 +19,7 @@ export class ApiProvider {
   private _openai: OpenAI;
   private _temperature: number;
   private _topP: number;
-  private _modelList: OpenAI.Model[] | undefined;
+  private _modelList: Model[] | undefined;
 
   public apiConfig: ClientOptions;
 
@@ -50,9 +51,11 @@ export class ApiProvider {
     this._topP = topP;
   }
 
-  getRemainingTokens(modelId: string, promptTokensUsed: number) {
-    const modelContext = MODEL_TOKEN_LIMITS.get(modelId)?.context ?? 128000;
-    const modelMax = MODEL_TOKEN_LIMITS.get(modelId)?.max ?? 4096;
+  getRemainingTokens(model: Model | undefined, promptTokensUsed: number) {
+    // const modelContext = MODEL_TOKEN_LIMITS.get(modelId)?.context ?? 128000;
+    // const modelMax = MODEL_TOKEN_LIMITS.get(modelId)?.max ?? 4096;
+    const modelContext = getModelContextLimit(model);
+    const modelMax = getModelCompletionLimit(model);
 
     // OpenAI's maxTokens is used as max (prompt + complete) tokens
     // We must calculate total context window - prompt tokens being sent to determine max response size
@@ -68,7 +71,7 @@ export class ApiProvider {
     }
 
     if (tokensLeft < 0) {
-      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${modelId}) only supports ${modelContext} context tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
+      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${model?.name ?? model?.id}) only supports ${modelContext} context tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
     }
 
     return tokensLeft;
@@ -82,15 +85,14 @@ export class ApiProvider {
     temperature?: number;
     topP?: number;
   } = {}): AsyncGenerator<any, any, unknown> {
-    const modelId = conversation.model?.id ?? FALLBACK_MODEL_ID;
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(modelId, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
     // Only stream if not using a proxy
     const useStream = true; // this.apiConfig.basePath === 'https://api.openai.com/v1';
     const response = await this._openai.chat.completions.create(
       {
-        model: modelId,
+        model: conversation.model?.id ?? FALLBACK_MODEL_ID,
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -128,13 +130,12 @@ export class ApiProvider {
     temperature?: number;
     topP?: number;
   } = {}): Promise<OpenAI.Chat.Completions.ChatCompletionMessage | undefined> {
-    const modelId = conversation.model?.id ?? FALLBACK_MODEL_ID;
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(modelId, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
     const response = await this._openai.chat.completions.create(
       {
-        model: modelId,
+        model: conversation.model?.id ?? FALLBACK_MODEL_ID,
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -159,13 +160,12 @@ export class ApiProvider {
     temperature?: number;
     topP?: number;
   } = {}): Promise<ChatMessage | undefined> {
-    const modelId = conversation.model?.id ?? 'gpt-4-turbo';
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(modelId, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
     const response = await this._openai.chat.completions.create(
       {
-        model: modelId,
+        model: conversation.model?.id ?? FALLBACK_MODEL_ID,
         messages: [{ "role": "user", "content": prompt }],
         max_tokens: completeTokensLeft,
         temperature,
@@ -206,7 +206,7 @@ export class ApiProvider {
     return tokensUsed;
   }
 
-  public static countMessageTokens(message: ChatMessage, model: OpenAI.Model | undefined, encoder?: Tiktoken): number {
+  public static countMessageTokens(message: ChatMessage, model: Model | undefined, encoder?: Tiktoken): number {
     let enc = encoder ?? this.getEncodingForModel(model?.id ?? FALLBACK_MODEL_ID);
     let tokensUsed = 4; // every message follows <im_start>{role/name}\n{content}<im_end>\n
 
@@ -295,7 +295,7 @@ export class ApiProvider {
     this._modelList = (await this._openai.models.list()).getPaginatedItems();
   }
 
-  async getModelList(): Promise<OpenAI.Model[]> {
+  async getModelList(): Promise<Model[]> {
     if (!this._modelList) {
       await this.repullModelList();
     }

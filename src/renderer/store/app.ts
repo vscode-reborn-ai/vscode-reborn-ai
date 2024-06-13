@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import OpenAI from "openai";
 import { WebviewApi } from "vscode-webview";
-import { DEFAULT_EXTENSION_SETTINGS, ExtensionSettings } from "../types";
+import { DEFAULT_EXTENSION_SETTINGS, ExtensionSettings, Model } from "../types";
 
 export enum ApiKeyStatus {
   Unknown = "unknown", // On extension load, key has not yet been checked
@@ -14,7 +13,7 @@ export enum ApiKeyStatus {
 export interface AppState {
   debug: boolean;
   extensionSettings: ExtensionSettings;
-  models: OpenAI.Model[];
+  models: Model[];
   apiKeyStatus: ApiKeyStatus;
   translations: any;
   useEditorSelection: boolean;
@@ -44,7 +43,7 @@ export const appSlice = createSlice({
       state.extensionSettings = action.payload.newSettings;
     },
     setModels: (state, action: PayloadAction<{
-      models: OpenAI.Model[];
+      models: Model[];
     }>) => {
       state.models = action.payload.models;
     },

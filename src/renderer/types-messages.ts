@@ -1,6 +1,5 @@
-import OpenAI from "openai";
 import { ApiKeyStatus } from "./store/app";
-import { ChatMessage, Conversation, ExtensionSettings, Verbosity } from "./types";
+import { ChatMessage, Conversation, ExtensionSettings, Model, Verbosity } from "./types";
 
 // A message that gets sent TO the backend
 export enum BackendMessageType {
@@ -54,7 +53,7 @@ export interface EditCodeMessage extends BaseBackendMessage {
 
 export interface SetModelMessage extends BaseBackendMessage {
   type: BackendMessageType.setModel;
-  model: OpenAI.Model;
+  model: Model;
 }
 
 export interface OpenNewMessage extends BaseBackendMessage {
@@ -171,7 +170,7 @@ export interface BaseFrontendMessage {
 
 export interface ModelsUpdateMessage extends BaseFrontendMessage {
   type: FrontendMessageType.modelsUpdate;
-  models: OpenAI.Model[];
+  models: Model[];
 }
 
 export interface SettingsUpdateMessage extends BaseFrontendMessage {

@@ -1,7 +1,7 @@
 import fs from "fs";
-import OpenAI from "openai";
 import upath from 'upath';
 import * as vscode from 'vscode';
+import { Model } from "./renderer/types";
 
 export function readDirRecursively(dir: string, maxDepth: number, currentDepth: number = 0): string[] {
   if (currentDepth > maxDepth) {
@@ -70,7 +70,7 @@ export function getSelectedModelId(): string {
   return updatedModelId;
 }
 
-export async function updateSelectedModel(newModel: OpenAI.Model): Promise<OpenAI.Model> {
+export async function updateSelectedModel(newModel: Model): Promise<Model> {
   // Check and update the model if it's deprecated
   const updatedModelId = getUpdatedModel(newModel.id);
 

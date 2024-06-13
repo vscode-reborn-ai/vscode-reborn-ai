@@ -1,8 +1,13 @@
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
+import {
+  getModelCompletionLimit,
+  getModelContextLimit,
+  getModelRates,
+} from "../helpers";
 import { useAppSelector } from "../hooks";
 import { RootState } from "../store";
-import { Conversation, MODEL_COSTS, MODEL_TOKEN_LIMITS } from "../types";
+import { Conversation } from "../types";
 
 const FALLBACK_MODEL_ID = "gpt-4-turbo";
 
@@ -38,32 +43,26 @@ export default function TokenCountPopup({
       (currentConversation.tokenCount?.messages ?? 0) +
       (currentConversation.tokenCount?.userInput ?? 0);
     const modelId = currentConversation.model?.id ?? FALLBACK_MODEL_ID;
-    const modelContextLimit = MODEL_TOKEN_LIMITS.has(modelId)
-      ? MODEL_TOKEN_LIMITS.get(modelId)?.context ?? 128000
-      : 128000;
-    const modelMax = MODEL_TOKEN_LIMITS.has(modelId)
-      ? MODEL_TOKEN_LIMITS.get(modelId)?.max ?? 4096
-      : 4096;
+
+    // Limits
+    const modelContextLimit = getModelContextLimit(currentConversation.model);
+    const modelMax = getModelCompletionLimit(currentConversation.model);
     let maxCompleteTokens = modelContextLimit - minPromptTokens;
 
     if (modelMax) {
       maxCompleteTokens = Math.min(maxCompleteTokens, modelMax);
     }
 
-    let ratePrompt = MODEL_COSTS.has(modelId)
-      ? MODEL_COSTS.get(modelId)?.prompt ?? 0
-      : 0;
-    let rateComplete = MODEL_COSTS.has(modelId)
-      ? MODEL_COSTS.get(modelId)?.complete ?? 0
-      : 0;
-    let minCost = (minPromptTokens / 1000) * ratePrompt;
+    // Rates
+    const rates = getModelRates(currentConversation.model);
+    let minCost = (minPromptTokens / 1000) * rates.prompt;
     // maxCost is based on current convo text at ratePrompt pricing + theoretical maximum response at rateComplete pricing
-    let maxCost = minCost + (maxCompleteTokens / 1000) * rateComplete;
+    let maxCost = minCost + (maxCompleteTokens / 1000) * rates.complete;
 
     setMinPromptTokens(minPromptTokens);
     setMaxCompleteTokens(maxCompleteTokens);
-    setPromptRate(ratePrompt);
-    setCompleteRate(rateComplete);
+    setPromptRate(rates.prompt);
+    setCompleteRate(rates.complete);
     setMinCost(minCost);
     setMaxCost(maxCost);
     setTokenCountLabel(minPromptTokens.toString());
@@ -128,7 +127,15 @@ export default function TokenCountPopup({
             "This is calculated based on"}{" "}
           <code>{currentConversation.model?.id ?? "gpt-3.5-turbo"}</code>
           's{" "}
-          <a href="https://openai.com/pricing" target="_blank" rel="noreferrer">
+          <a
+            href={
+              settings.gpt3.apiBaseUrl.includes("openrouter.ai")
+                ? "https://openrouter.ai/docs/models"
+                : "https://openai.com/pricing"
+            }
+            target="_blank"
+            rel="noreferrer"
+          >
             {t?.questionInputField?.tokenBreakdownPricing ?? "pricing"}
           </a>{" "}
           {t?.questionInputField?.tokenBreakdownForPromptsAndCompletions ??

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CodeBlock from "../components/CodeBlock";
+import { useDebounce } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
@@ -9,7 +10,6 @@ import {
   setExtensionSettings,
 } from "../store/app";
 import { DEFAULT_EXTENSION_SETTINGS } from "../types";
-import { useDebounce } from "../utils";
 
 const apiKeyPlaceholder = "sk-...";
 const popularLocalLlms: {

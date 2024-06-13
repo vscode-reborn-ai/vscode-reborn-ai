@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import { useRenameTabTitleWithAI } from "./helpers";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { RootState } from "./store";
 import { ActionRunState, setActionError, setActionState } from "./store/action";
@@ -6,7 +7,6 @@ import { setApiKeyStatus, setExtensionSettings, setModels, setTranslations } fro
 import { addMessage, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
 import { ActionNames, ChatMessage, Conversation, Role } from "./types";
 import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage } from "./types-messages";
-import { useRenameTabTitleWithAI } from "./utils";
 
 export const useBackendMessageHandler = (backendMessenger: any) => {
   const dispatch = useAppDispatch();

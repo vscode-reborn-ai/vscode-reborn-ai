@@ -28,6 +28,34 @@ export enum Role {
   system = 'system'
 }
 
+export interface Model extends OpenAI.Model {
+  // OpenRouter will send back additional fields on models:
+  name?: string; // friendly name
+  description?: string;
+  pricing?: {
+    // NOTE: These appear to be $ / 1 token, not $ / 1,000 token
+    prompt: string; // string decimal
+    completion: string; // string decimal
+    request: string; // string decimal
+    image: string; // string decimal
+  };
+  context_length?: number;
+  architecture?: {
+    modality: 'text' | 'multimodal';
+    tokenizer: string;
+    instruct_type: string | null;
+  };
+  top_provider?: {
+    max_completion_tokens: number | null;
+    is_moderated: boolean;
+  };
+  // This is more for rate limiting
+  per_request_limits?: {
+    prompt_tokens: string; // string integer
+    completion_tokens: string; // string integer
+  } | null;
+}
+
 // Maps ID to a friendly name
 // Ref: https://platform.openai.com/docs/models
 export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
@@ -164,7 +192,7 @@ export interface Conversation {
   createdAt: string | number;
   inProgress: boolean;
   messages: ChatMessage[];
-  model: OpenAI.Model | undefined;
+  model: Model | undefined;
   // Optional because tabs / multi-conversations can be turned off
   title?: string;
   // Has ai renamed the tab title? (To avoid re-triggering ai rename)
@@ -185,7 +213,7 @@ export interface SendMessageOptions {
   parentMessageId?: string;
   messageId?: string;
   timeoutMs?: number;
-  model?: OpenAI.Model;
+  model?: Model;
   abortSignal: AbortSignal;
   onProgress?: (partialResponse: ChatResponse) => void;
 }

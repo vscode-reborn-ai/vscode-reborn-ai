@@ -1,5 +1,4 @@
-import OpenAI from "openai";
-import { Conversation, Verbosity } from "./types";
+import { Conversation, Model, Verbosity } from "./types";
 import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage } from "./types-messages";
 
 export function useMessenger(vscode: any) {
@@ -20,10 +19,9 @@ export function useMessenger(vscode: any) {
     });
   };
 
-  const sendModelUpdate = (model: OpenAI.Model /* , currentConversation: any */) => {
+  const sendModelUpdate = (model: Model) => {
     sendMessageToBackend(BackendMessageType.setModel, {
       model,
-      // conversationId: currentConversation.id
     } as SetModelMessage);
   };
 

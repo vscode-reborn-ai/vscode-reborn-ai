@@ -3,6 +3,9 @@ module.exports = {
     content: ["./src/**/*.{js,ts,jsx,tsx}"],
     theme: {
         extend: {
+            colors: {
+                bg: 'var(--vscode-editor-background)',
+            },
             fontFamily: {
                 code: ['var(--vscode-editor-font-family)'],
                 DEFAULT: ['var(--vscode-font-family)'],
