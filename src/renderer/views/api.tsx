@@ -80,13 +80,13 @@ const LLM_TEMPLATES: LlmTemplate[] = [
   {
     name: "ollama",
     instructions:
-      "1. ollama should automatically be running it's API server after install.",
+      "ollama automatically runs its API in the background after install. If it's not running, you can start it with `ollama serve` in your terminal.\n\nOnly installed models will be shown. This extension does not support installing new models (yet).",
     apiUrl: new URL("http://localhost:11434/v1"),
     docsUrl: new URL(
       "https://github.com/ollama/ollama/blob/main/docs/openai.md"
     ),
     showAllModelSuggestion: true,
-    tested: false,
+    tested: true,
   },
   {
     name: "Modelz LLM",
