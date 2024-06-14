@@ -376,6 +376,11 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                       Testing...
                     </span>
                   )}
+                  {apiKeyStatus === ApiKeyStatus.Authenticating && (
+                    <span className="absolute top-2 right-2 transform px-2 py-0.5 text-yellow-500 border border-yellow-500 rounded bg-menu">
+                      Authenticating...
+                    </span>
+                  )}
                   {apiKeyStatus === ApiKeyStatus.Valid && (
                     <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-menu">
                       Valid
@@ -384,6 +389,11 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                   {apiKeyStatus === ApiKeyStatus.Invalid && (
                     <span className="absolute top-2 right-2 transform px-2 py-0.5 text-red-500 border border-red-500 rounded bg-menu">
                       Invalid
+                    </span>
+                  )}
+                  {apiKeyStatus === ApiKeyStatus.Error && (
+                    <span className="absolute top-2 right-2 transform px-2 py-0.5 text-red-500 border border-red-500 rounded bg-menu">
+                      Error
                     </span>
                   )}
                   {apiKeyStatus === ApiKeyStatus.Unknown && (
@@ -424,7 +434,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                           );
                         }
 
-                        dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
+                        dispatch(setApiKeyStatus(ApiKeyStatus.Authenticating));
 
                         // hacky - wait for 500ms to ensure the API URL is set before generating the API key
                         setTimeout(() => {

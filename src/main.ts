@@ -1061,17 +1061,15 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					try {
 						// Send the code to the backend with the built-in fetch API
 						const body = JSON.stringify({
-							code,
-							code_verifier,
+							code: encodeURIComponent(code),
+							// code_verifier: encodeURIComponent(code_verifier), not working
 						});
 
-						const response = await fetch('https://openrouter.ai/api/v1/auth/keys', {
+						const response = await fetch(`${this.api.apiConfig.baseURL}/auth/keys`, {
 							method: 'POST',
 							body,
 							headers: {
 								'Content-Type': 'application/json',
-								"HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
-								"X-Title": "VSCode Reborn AI",
 							},
 						});
 
@@ -1087,12 +1085,18 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 							res.writeHead(500, { 'Content-Type': 'text/plain' });
 							res.end('Failed to exchange code for API key');
+
+							// set api key status
+							this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Error);
 						}
 					} catch (error) {
 						console.error(`Error exchanging code for API key: ${error}`);
 
 						res.writeHead(500, { 'Content-Type': 'text/plain' });
 						res.end('Error exchanging code for API key');
+
+						// set api key status
+						this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Error);
 					} finally {
 						// Close the server
 						server.close();
@@ -1117,17 +1121,20 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			return;
 		}
 
+		// API key status
+		this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Authenticating);
+
 		const {
 			code_verifier,
 			code_challenge,
-		} = await pkceChallenge(256);
+		} = await pkceChallenge();
 
 		// Start a server to listen for the callback
 		const server = this.listenForOpenRouterCallback(code_verifier);
 
 		const uri = await vscode.env.asExternalUri(vscode.Uri.parse('http://localhost:7878'));
 		// Can't get the challenge working with openrouter
-		const openRouterAuthUrl = `https://openrouter.ai/auth?callback_url=${uri.toString()}&code_challenge=${code_challenge}&code_challenge_method=S256`;
+		const openRouterAuthUrl = `${(new URL(this.api.apiConfig.baseURL ?? '')).origin}/auth?callback_url=${uri.toString()}`; // &code_challenge=${encodeURIComponent(code_challenge)}`; not working
 
 		vscode.env.openExternal(vscode.Uri.parse(openRouterAuthUrl));
 

@@ -273,7 +273,9 @@ export const conversationSlice = createSlice({
     ) => {
       const { conversationId, verbosity } = action.payload;
 
-      state.conversations[conversationId].verbosity = verbosity;
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].verbosity = verbosity;
+      }
     },
     setModel: (
       state,
