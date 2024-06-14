@@ -582,6 +582,12 @@
           "default": false,
           "description": "If enabled, the model select dropdown will show ALL available models returned from the API.",
           "order": 48
+        },
+        "chatgpt.manualModelInput": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, you can manually input the model name in the model id in the select dropdown. This is required for some APIs, like ollama.",
+          "order": 49
         }
       }
     }

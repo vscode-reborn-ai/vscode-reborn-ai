@@ -11,16 +11,18 @@ import {
 } from "../store/app";
 import { DEFAULT_EXTENSION_SETTINGS } from "../types";
 
-const apiKeyPlaceholder = "sk-...";
-const popularLocalLlms: {
+const API_KEY_PLACEHOLDER = "sk-...";
+interface LlmTemplate {
   name: string;
   instructions: string;
   apiUrl?: URL;
   docsUrl?: URL;
   showApiKeyInput?: boolean;
   showAllModelSuggestion?: boolean;
+  manualModelInput?: boolean;
   tested?: boolean;
-}[] = [
+}
+const LLM_TEMPLATES: LlmTemplate[] = [
   {
     name: "Official OpenAI API",
     instructions:
@@ -76,6 +78,17 @@ const popularLocalLlms: {
     tested: true,
   },
   {
+    name: "ollama",
+    instructions:
+      "1. ollama should automatically be running it's API server after install.",
+    apiUrl: new URL("http://localhost:11434/v1"),
+    docsUrl: new URL(
+      "https://github.com/ollama/ollama/blob/main/docs/openai.md"
+    ),
+    showAllModelSuggestion: true,
+    tested: false,
+  },
+  {
     name: "Modelz LLM",
     instructions:
       "Just run Modelz LLM, for example: \n\n```bash\nmodelz-llm -m bigscience/bloomz-560m --device cpu\n```And the API will be at localhost:8000/v1",
@@ -101,6 +114,7 @@ const popularLocalLlms: {
       "If you're tool is compatible with OpenAI's API, you can use it here. Set the API URL in the input below. It should starts with 'https' and should (probably) end with '/v1' (without quotes). If the API key is needed, set that too.",
     showApiKeyInput: true,
     showAllModelSuggestion: true,
+    manualModelInput: true,
     tested: false,
   },
 ];
@@ -114,7 +128,10 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app.apiKeyStatus
   );
-  const [selectedTool, setSelectedTool] = useState<string>("");
+  const [selectedTool, setSelectedTool] = useState<LlmTemplate>(
+    LLM_TEMPLATES.find((tool) => tool.name === "Other") ??
+      LLM_TEMPLATES[LLM_TEMPLATES.length - 1]
+  );
   const [showSaved, setShowSaved] = useState(false);
   const apiUrlInputRef = React.createRef<HTMLInputElement>();
   const [lastApiKeyTest, setLastApiKeyTest] = useState<string | null>(null);
@@ -147,21 +164,20 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
   const debouncedSetApiUrl = useDebounce(handleApiUrlUpdate, 1000);
 
   useEffect(() => {
-    const matchingTool = popularLocalLlms.find(
+    const matchingTool = LLM_TEMPLATES.find(
       (tool) => tool.apiUrl && tool.apiUrl.href === settings.gpt3.apiBaseUrl
     );
     if (matchingTool) {
-      setSelectedTool(matchingTool.name);
+      setSelectedTool(matchingTool);
     }
   }, [settings.gpt3.apiBaseUrl]);
 
   const handleToolChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedTool(event.target.value);
+    setSelectedTool(
+      LLM_TEMPLATES.find((tool) => tool.name === event.target.value) ??
+        LLM_TEMPLATES[LLM_TEMPLATES.length - 1]
+    );
   };
-
-  const selectedToolInfo = popularLocalLlms.find(
-    (tool) => tool.name === selectedTool
-  );
 
   // On mount, set the API URL input to the current API URL
   useEffect(() => {
@@ -180,16 +196,15 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
               color: "var(--vscode-gitDecoration-modifiedResourceForeground)",
             }}
           >
-            {selectedToolInfo ? selectedToolInfo.name : "your local LLM"}
+            {selectedTool ? selectedTool.name : "your local LLM"}
           </span>
-          {selectedToolInfo && selectedToolInfo.tested && (
+          {selectedTool && selectedTool.tested && (
             <p className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button-secondary bg-button-secondary">
               Tested <span className="ml-1">✅</span>
             </p>
           )}
         </h1>
-        {(!selectedToolInfo ||
-          (selectedToolInfo && !selectedToolInfo.tested)) && (
+        {(!selectedTool || (selectedTool && !selectedTool.tested)) && (
           <p>
             <strong>Note:</strong> The local LLM tool must be compatible with
             OpenAI's API. At the moment, this extension <strong>only</strong>{" "}
@@ -202,7 +217,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
           Select a tool to see instructions for it:
         </label>
         <select
-          value={selectedTool}
+          value={selectedTool.name}
           onChange={handleToolChange}
           className="block w-full p-2 text-sm cursor-pointer rounded border border-input text-input bg-input outline-0"
         >
@@ -215,7 +230,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
           >
             Select a tool...
           </option>
-          {popularLocalLlms.map((tool, index) => (
+          {LLM_TEMPLATES.map((tool, index) => (
             <option
               key={`tool-${index}`}
               value={tool.name}
@@ -227,10 +242,10 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             </option>
           ))}
         </select>
-        {selectedToolInfo && (
+        {selectedTool && (
           <div>
             <h2 className="text-lg font-medium mt-2">Instructions</h2>
-            {selectedToolInfo.instructions
+            {selectedTool.instructions
               .split(/(```bash\n[\s\S]*?\n```)/)
               .reduce((acc: any[], item: any) => {
                 if (item) {
@@ -255,21 +270,21 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                   return <p>{item}</p>;
                 }
               })}
-            {selectedToolInfo.docsUrl && (
+            {selectedTool.docsUrl && (
               <p>
                 <strong className="inline-block mt-2 mb-1">Full Docs:</strong>{" "}
                 <a
-                  href={selectedToolInfo.docsUrl.href}
+                  href={selectedTool.docsUrl.href}
                   target="_blank"
                   className="text-blue-500"
                 >
-                  {selectedToolInfo.docsUrl.href}
+                  {selectedTool.docsUrl.href}
                 </a>
               </p>
             )}
           </div>
         )}
-        {selectedToolInfo && selectedToolInfo.apiUrl && (
+        {selectedTool && selectedTool.apiUrl && (
           <div>
             <strong className="inline-block mt-2 mb-1">
               Suggested API URL:
@@ -278,7 +293,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
               <CodeBlock
                 margins={false}
                 className="flex-grow"
-                code={selectedToolInfo.apiUrl.href}
+                code={selectedTool.apiUrl.href}
                 vscode={vscode}
               />
               <button
@@ -286,12 +301,12 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                 className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
                 onClick={() => {
                   backendMessenger.sendChangeApiUrl(
-                    selectedToolInfo.apiUrl?.href ?? ""
+                    selectedTool.apiUrl?.href ?? ""
                   );
 
                   if (apiUrlInputRef.current) {
                     apiUrlInputRef.current.value =
-                      selectedToolInfo.apiUrl?.href ?? "";
+                      selectedTool.apiUrl?.href ?? "";
                   }
 
                   setShowSaved(true);
@@ -306,18 +321,26 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             </div>
           </div>
         )}
-        {selectedToolInfo && selectedToolInfo.showAllModelSuggestion && (
+        {selectedTool && selectedTool.showAllModelSuggestion && (
           <p className="mt-2">
             With this API it is <strong>recommended</strong> to check the "Show
             all models" checkbox below to see all models.
           </p>
         )}
-        {selectedToolInfo && !selectedToolInfo.showAllModelSuggestion && (
+        {selectedTool && !selectedTool.showAllModelSuggestion && (
           <p className="mt-2">
             It is recommended you do <strong>not</strong> check the "Show all
             models" checkbox below or a lot of unnecessary models will be shown.
           </p>
         )}
+        {selectedTool &&
+          selectedTool.manualModelInput &&
+          selectedTool.name !== "other" && (
+            <p className="mt-2">
+              This tool requires <strong>manual model input</strong>. It does
+              not support fetching models from the /models endpoint.
+            </p>
+          )}
       </section>
 
       <section>
@@ -342,7 +365,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
 
       <section>
         {/* API key: user input */}
-        {selectedToolInfo?.showApiKeyInput && (
+        {selectedTool?.showApiKeyInput && (
           <>
             <div>
               <label
@@ -350,7 +373,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                 className="block text-md font-medium my-2"
               >
                 <strong>Current</strong> API key{" "}
-                {selectedToolInfo?.apiUrl && (
+                {selectedTool?.apiUrl && (
                   <span className="text-xs">
                     for {new URL(settings.gpt3.apiBaseUrl).hostname}
                   </span>
@@ -367,7 +390,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                         event.clipboardData.getData("text/plain")
                       )
                     }
-                    placeholder={apiKeyPlaceholder}
+                    placeholder={API_KEY_PLACEHOLDER}
                     className="w-full px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
                     disabled={apiKeyStatus === ApiKeyStatus.Pending}
                   />
@@ -420,7 +443,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                       Remove
                     </button>
                   )}
-                  {selectedTool === "OpenRouter AI" && (
+                  {selectedTool.name === "OpenRouter AI" && (
                     <button
                       className="px-3 py-2 text-sm rounded bg-button text-button-secondary hover:bg-button-hover hover:text-button focus:outline-none focus:ring-2 focus:ring-offset-2"
                       onClick={() => {
@@ -473,6 +496,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
               )}
           </>
         )}
+        {/* Show all models */}
         <div className="flex flex-col gap-2 mt-3">
           <div className="flex items-center gap-2">
             <input
@@ -488,6 +512,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                     },
                   })
                 );
+
                 backendMessenger.sendSetShowAllModels(e.target.checked);
               }}
               className="rounded cursor-pointer bg-input border-input"
@@ -501,6 +526,41 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
               "If checked, every single model available on the API will be shown. This setting is recommended for APIs that serve models different from OpenAI's Official API. However, note that some models listed may not work with this extension."}
           </p>
         </div>
+        {/* Manual model input checkbox */}
+        {selectedTool?.manualModelInput && (
+          <div className="flex flex-col gap-2 mt-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="manualModelInput"
+                checked={settings.manualModelInput}
+                onChange={(e) => {
+                  dispatch(
+                    setExtensionSettings({
+                      newSettings: {
+                        ...settings,
+                        manualModelInput: e.target.checked,
+                      },
+                    })
+                  );
+
+                  backendMessenger.sendSetManualModelInput(e.target.checked);
+                }}
+                className="rounded cursor-pointer bg-input border-input"
+              />
+              <label
+                htmlFor="manualModelInput"
+                className="text-sm cursor-pointer"
+              >
+                {t?.apiKeySetup?.manualModelInput ?? "Manual model input"}
+              </label>
+            </div>
+            <p>
+              {t?.apiKeySetup?.manualModelInputDescription ??
+                "If checked, you can manually input the model ID in the model selection dropdown. This is useful for APIs that do not provide a list of models, such as ollama."}
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );

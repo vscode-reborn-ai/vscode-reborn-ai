@@ -3,7 +3,7 @@ import upath from 'upath';
 import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
 import { listItems } from "./helpers";
-import { ApiProvider } from "./openai-api-provider";
+import ChatGptViewProvider from "./main";
 import { ActionNames, ChatMessage, Conversation, Role } from "./renderer/types";
 
 /*
@@ -16,24 +16,31 @@ For example: Create a README.md file from the package.json (with chatgpt).
 */
 
 export class ActionRunner {
-  public static runAction(actionName: ActionNames, apiProvider: ApiProvider, systemContext: string, controller: AbortController, options?: any): Promise<void> {
-    const action = ActionRunner.getAction(actionName);
+  public mainProvider: ChatGptViewProvider;
+
+  constructor(chatgptViewProvider: ChatGptViewProvider) {
+    this.mainProvider = chatgptViewProvider;
+  }
+
+  public runAction(actionName: ActionNames, systemContext: string, controller: AbortController, options?: any): Promise<void> {
+    const action = this.getAction(actionName);
+
     if (!action) {
       throw new Error(`Action ${actionName} not found`);
     }
-    return action.run(apiProvider, systemContext, controller, options ?? {});
+    return action.run(systemContext, controller, options ?? {});
   }
 
-  private static getAction(actionName: ActionNames): Action | undefined {
+  private getAction(actionName: ActionNames): Action | undefined {
     switch (actionName) {
       case ActionNames.createReadmeFromPackageJson:
-        return new ReadmeFromPackageJSONAction() as Action;
+        return new ReadmeFromPackageJSONAction(this) as Action;
       case ActionNames.createReadmeFromFileStructure:
-        return new ReadmeFromFileStructure() as Action;
+        return new ReadmeFromFileStructure(this) as Action;
       case ActionNames.createGitignore:
-        return new GitignoreAction() as Action;
+        return new GitignoreAction(this) as Action;
       case ActionNames.createConversationTitle:
-        return new RetitleAction() as Action;
+        return new RetitleAction(this) as Action;
       default:
         console.error(`Action ${actionName} not found`);
         return undefined;
@@ -42,30 +49,15 @@ export class ActionRunner {
 }
 
 class Action {
+  private runner: ActionRunner;
+
+  constructor(runner: ActionRunner) {
+    this.runner = runner;
+  }
 
   // async iterator
-  protected async* streamChatCompletion(apiProvider: ApiProvider, systemContext: string, prompt: string, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
-    let modelId = 'gpt-3.5-turbo';
-    const supportedModels = (await apiProvider.getModelList());
-    const supportedModelIds = supportedModels.map((m) => m.id);
-
-    if (supportedModelIds.includes('gpt-4')) {
-      modelId = 'gpt-4';
-    }
-
-    if (supportedModelIds.includes('gp-3.5-turbo')) {
-      modelId = 'gpt-3.5-turbo';
-    }
-
-    if (supportedModelIds.includes('gpt-4-turbo')) {
-      modelId = 'gpt-4-turbo';
-    }
-
-    if (supportedModelIds.includes('gpt-4o')) {
-      modelId = 'gpt-4o';
-    }
-
-    const model = supportedModels.find((m) => m.id === modelId);
+  protected async* streamChatCompletion(systemContext: string, prompt: string, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
+    const model = this.runner.mainProvider.model;
 
     const systemMessage: ChatMessage = {
       id: uuidv4(),
@@ -92,12 +84,12 @@ class Action {
       autoscroll: true,
     };
 
-    for await (const token of apiProvider.streamChatCompletion(conversation, abortSignal)) {
+    for await (const token of this.runner.mainProvider.api.streamChatCompletion(conversation, abortSignal)) {
       yield token;
     }
   }
 
-  public run(apiProvider: ApiProvider,
+  public run(
     systemContext: string,
     controller: AbortController,
     options?: any
@@ -107,7 +99,7 @@ class Action {
 }
 
 class ReadmeFromPackageJSONAction extends Action {
-  public async run(apiProvider: ApiProvider,
+  public async run(
     systemContext: string,
     controller: AbortController
   ): Promise<void> {
@@ -194,7 +186,7 @@ Please ensure the README.md file is well-formatted, easy to read, and provides a
 
     try {
       // Stream ChatGPT response directly to the write stream
-      for await (const token of this.streamChatCompletion(apiProvider, systemContextModified, prompt, controller.signal)) {
+      for await (const token of this.streamChatCompletion(systemContextModified, prompt, controller.signal)) {
         writeStream.write(token);
       }
     } catch (error) {
@@ -207,7 +199,7 @@ Please ensure the README.md file is well-formatted, easy to read, and provides a
 }
 
 class ReadmeFromFileStructure extends Action {
-  public async run(apiProvider: ApiProvider,
+  public async run(
     systemContext: string,
     controller: AbortController
   ): Promise<void> {
@@ -265,7 +257,7 @@ Please ensure the README.md file is well-formatted, easy to read, and provides a
     const writeStream = fs.createWriteStream(readmePath, 'utf8');
 
     try {
-      for await (const token of this.streamChatCompletion(apiProvider, systemContextModified, prompt, controller.signal)) {
+      for await (const token of this.streamChatCompletion(systemContextModified, prompt, controller.signal)) {
         writeStream.write(token);
       }
     } catch (error) {
@@ -277,7 +269,7 @@ Please ensure the README.md file is well-formatted, easy to read, and provides a
 }
 
 class GitignoreAction extends Action {
-  public async run(apiProvider: ApiProvider, systemContext: string, controller: AbortController): Promise<void> {
+  public async run(systemContext: string, controller: AbortController): Promise<void> {
     if (!vscode.workspace.workspaceFolders) {
       throw new Error('No workspace folder found.');
     }
@@ -332,7 +324,7 @@ Please ensure the .gitignore file is well-organized, easy to understand. The typ
     const writeStream = fs.createWriteStream(gitignorePath, 'utf8');
 
     try {
-      for await (const token of this.streamChatCompletion(apiProvider, systemContextModified, prompt, controller.signal)) {
+      for await (const token of this.streamChatCompletion(systemContextModified, prompt, controller.signal)) {
         writeStream.write(token);
       }
     } catch (error) {
@@ -345,7 +337,7 @@ Please ensure the .gitignore file is well-organized, easy to understand. The typ
 
 // TODO: this doesn't need to be streamed
 class RetitleAction extends Action {
-  public async run(apiProvider: ApiProvider,
+  public async run(
     systemContext: string,
     controller: AbortController,
     options: {
@@ -365,7 +357,7 @@ class RetitleAction extends Action {
     let title: string | undefined = '';
 
     try {
-      for await (const token of this.streamChatCompletion(apiProvider, systemContextModified, prompt, controller.signal)) {
+      for await (const token of this.streamChatCompletion(systemContextModified, prompt, controller.signal)) {
         title += token;
       }
     } catch (error) {
@@ -376,6 +368,14 @@ class RetitleAction extends Action {
     title = title.trim();
     // remove any double quotes
     title = title.replace(/"/g, '');
+    // If it starts with title: remove it
+    title = title.replace(/^title:/i, '').replace(/^Title:/i, '');
+    // If it starts with answer: remove it
+    title = title.replace(/^answer:/i, '').replace(/^Answer:/i, '');
+    // Remove any markdown formatting
+    title = title.replace(/`/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/#/g, '');
+    // Remove any HTML tags
+    title = title.replace(/<[^>]*>/g, '');
     // Truncate to 50 characters
     title = title.slice(0, 25);
 

@@ -1,7 +1,6 @@
 import hljs from 'highlight.js';
 import { createServer } from 'http';
 import { marked } from "marked";
-import OpenAI, { ClientOptions } from "openai";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
 import { getSelectedModelId, getUpdatedModel } from "./helpers";
@@ -11,7 +10,7 @@ import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Auth from "./secrets-store";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
@@ -50,8 +49,8 @@ export interface ApiRequestOptions {
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
-	private api: ApiProvider = new ApiProvider('');
 	private authStore?: Auth;
+	private runner: ActionRunner;
 
 	private _temperature: number = 0.9;
 	private _topP: number = 1;
@@ -65,6 +64,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		controller: AbortController;
 	}[] = [];
 
+	public api: ApiProvider = new ApiProvider('');
 	public frontendMessenger: Messenger;
 	public subscribeToResponse: boolean;
 	public model: Model;
@@ -90,6 +90,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		};
 		this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
 		this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
+		this.runner = new ActionRunner(this);
 
 		// Check config settings for "chatgpt.gpt3.apiBaseUrl", if it is set to "https://api.openai.com", change it to "https://api.openai.com/v1"
 		const baseUrl = vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
@@ -259,8 +260,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			});
 
 		// Test the API key
-		const { status } = await this.testApiKey(finalApiKey, finalApiUrl);
+		const { status, models } = await this.testApiKey(this.api);
+
 		this.frontendMessenger.sendApiKeyStatus(status);
+		this.frontendMessenger.sendModels(models);
 	}
 
 	public async clearApiKey() {
@@ -319,46 +322,19 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		await this.rebuildApiProvider(apiKey);
 	}
 
-	// Test if the API can be accessed with the provided API key
-	async testApiKey(apiKey: string | undefined = undefined, apiUrl: string | undefined = undefined): Promise<{
+	// Test if the API can be accessed with the provided API provider
+	async testApiKey(apiProvider: ApiProvider | undefined = undefined): Promise<{
 		status: ApiKeyStatus,
 		models?: Model[],
 	}> {
-		if (apiUrl === undefined) {
-			apiUrl = this.api?.apiConfig.baseURL ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+		if (!apiProvider) {
+			apiProvider = this.api ?? new ApiProvider('');
 		}
 
-		if (apiKey === undefined) {
-			// Get OpenAI API key from secret store
-			apiKey = await this.authStore?.getApiKey(apiUrl) ?? '';
-		}
-
-		// If empty, return false
-		if (!apiKey) {
-			return {
-				status: ApiKeyStatus.Unset
-			};
-		}
-
-		let configuration: ClientOptions = {
-			apiKey,
-		};
-
-		// if the organization id is set in settings, use it
-		const organizationId = await vscode.workspace.getConfiguration("chatgpt").get("organizationId") as string;
-		if (organizationId) {
-			configuration.organization = organizationId;
-		}
-
-		configuration.baseURL = apiUrl;
+		const apiKey = apiProvider.apiConfig.apiKey ?? '';
 
 		try {
-			const openai = new OpenAI(configuration);
-			const response = await openai.models.list();
-			const models = response.data;
-
-			// Send model list to the frontend
-			this.frontendMessenger.sendModels(models);
+			const models = await apiProvider?.getModelList();
 
 			return {
 				status: apiKey.length === 0 ? ApiKeyStatus.Unset : ApiKeyStatus.Valid,
@@ -366,6 +342,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			};
 		} catch (error) {
 			console.error('Main Process - Error getting models', error);
+
 			return {
 				status: ApiKeyStatus.Invalid
 			};
@@ -481,8 +458,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					this.setApiKey(changeApiKeyData.apiKey);
 					break;
 				case BackendMessageType.getApiKeyStatus:
-					const { status } = await this.testApiKey();
+					const { status, models } = await this.testApiKey();
+
 					this.frontendMessenger.sendApiKeyStatus(status);
+					this.frontendMessenger.sendModels(models);
 					break;
 				case BackendMessageType.resetApiKey:
 					this.clearApiKey();
@@ -496,6 +475,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					const setShowAllModelsData = data as SetShowAllModelsMessage;
 					this.showAllModels = setShowAllModelsData.showAllModels;
 					vscode.workspace.getConfiguration("chatgpt").update("showAllModels", this.showAllModels, vscode.ConfigurationTarget.Global);
+					break;
+				case BackendMessageType.setManualModelInput:
+					const setManualModelInputData = data as SetManualModelInputMessage;
+					vscode.workspace.getConfiguration("chatgpt").update("manualModelInput", setManualModelInputData.useManualModelInput, vscode.ConfigurationTarget.Global);
 					break;
 				case BackendMessageType.setCurrentConversation:
 					const currentConversationData = data as SetCurrentConversationMessage;
@@ -539,7 +522,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					});
 
 					try {
-						const actionResult = await ActionRunner.runAction(actionId, this.api, this.systemContext, controller, runActionData?.actionOptions);
+						const actionResult = await this.runner.runAction(actionId, this.systemContext, controller, runActionData?.actionOptions);
 
 						this.frontendMessenger.sendActionComplete(actionId, actionResult);
 					} catch (error: any) {
@@ -653,47 +636,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		return newModel;
-	}
-
-	async getModels(): Promise<any[]> {
-		// Get OpenAI API key from secret store
-		const apiKey = await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') as string;
-
-		const configuration: ClientOptions = {
-			apiKey,
-		};
-
-		// if the organization id is set in settings, use it
-		const organizationId = await vscode.workspace.getConfiguration("chatgpt").get("organizationId") as string;
-		if (organizationId) {
-			configuration.organization = organizationId;
-		}
-
-		// if the api base url is set in settings, use it
-		const apiBaseUrl = await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
-		if (apiBaseUrl) {
-			configuration.baseURL = apiBaseUrl;
-		}
-
-		try {
-			const openai = new OpenAI(configuration);
-			const response = await openai.models.list();
-
-			return response.data;
-		} catch (error) {
-			console.error('Main Process - Error getting models', error);
-			return [];
-		}
-	}
-
-	async getChatGPTModels(): Promise<Model[]> {
-		const models = await this.api.getModelList();
-
-		if (this.showAllModels) {
-			return models;
-		} else {
-			return models.filter((model: Model) => SUPPORTED_CHATGPT_MODELS.includes(model.id));
-		}
 	}
 
 	private processQuestion(question: string, conversation: Conversation, code?: string, language?: string): string {

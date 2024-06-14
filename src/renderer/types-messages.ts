@@ -20,6 +20,7 @@ export enum BackendMessageType {
   openSettingsPrompt = "openSettingsPrompt",
   setVerbosity = "setVerbosity",
   setShowAllModels = "setShowAllModels",
+  setManualModelInput = "setManualModelInput",
   // Models
   getModels = "getModels",
   setModel = "setModel",
@@ -121,6 +122,11 @@ export interface SetVerbosityMessage extends BaseBackendMessage {
 export interface SetShowAllModelsMessage extends BaseBackendMessage {
   type: BackendMessageType.setShowAllModels;
   showAllModels: boolean;
+}
+
+export interface SetManualModelInputMessage extends BaseBackendMessage {
+  type: BackendMessageType.setManualModelInput;
+  useManualModelInput: boolean;
 }
 
 export interface SetCurrentConversationMessage extends BaseBackendMessage {

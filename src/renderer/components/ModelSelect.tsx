@@ -255,6 +255,16 @@ export default function ModelSelect({
     return num.toLocaleString();
   }, []);
 
+  // Convert bytes to human readable format
+  const formatSize = useCallback((bytes: number) => {
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    if (bytes === 0) {
+      return "0 B";
+    }
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return (bytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i];
+  }, []);
+
   // when the models popup is shown rerun search (since might have the previous search query)
   useEffect(() => {
     if (showModels || !hasOpenAIModels) {
@@ -353,65 +363,116 @@ export default function ModelSelect({
                               online
                             </span>
                           )}
+                          {model.top_provider?.is_moderated && (
+                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
+                              moderated
+                            </span>
+                          )}
                         </div>
                         <div className="w-full flex justify-around gap-2 divide-dropdown text-2xs">
-                          <div
-                            className={classNames("flex items-center gap-0.5", {
-                              "text-green-500": computedModelDataMap.get(
-                                model.id
-                              )?.isFree,
-                              "text-red-500": computedModelDataMap.get(model.id)
-                                ?.isExpensive,
-                              "opacity-75":
-                                sortBy === "context" || sortBy === "completion",
-                            })}
-                          >
-                            {computedModelDataMap.get(model.id)?.promptText}
-                            <ArrowUpIcon className="w-3 h-3" />
-                          </div>
-                          <div
-                            className={classNames("flex items-center gap-0.5", {
-                              "text-green-500": computedModelDataMap.get(
-                                model.id
-                              )?.isFree,
-                              "text-red-500": computedModelDataMap.get(model.id)
-                                ?.isExpensive,
-                              "opacity-75":
-                                sortBy === "context" || sortBy === "completion",
-                            })}
-                          >
-                            {computedModelDataMap.get(model.id)?.completeText}
-                            <ArrowDownIcon className="w-3 h-3" />
-                          </div>
-                          <div
-                            className={classNames("flex items-center gap-0.5", {
-                              "opacity-75":
-                                sortBy === "cost" || sortBy === "completion",
-                            })}
-                          >
-                            <span>
-                              {formatInteger(
-                                computedModelDataMap.get(model.id)?.promptLimit
-                              )}{" "}
-                              max
-                            </span>
-                            <ArrowUpIcon className="w-3 h-3" />
-                          </div>
-                          <div
-                            className={classNames("flex items-center gap-0.5", {
-                              "opacity-75":
-                                sortBy === "cost" || sortBy === "context",
-                            })}
-                          >
-                            <span>
-                              {formatInteger(
-                                computedModelDataMap.get(model.id)
-                                  ?.completeLimit
-                              )}{" "}
-                              max
-                            </span>
-                            <ArrowDownIcon className="w-3 h-3" />
-                          </div>
+                          {computedModelDataMap.get(model.id)?.prompt ===
+                            undefined &&
+                          (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
+                            settings.gpt3.apiBaseUrl.includes("localhost")) ? (
+                            <>
+                              {model.details?.family && (
+                                <span>{model.details.family}</span>
+                              )}
+                              {model.details?.parameter_size && (
+                                <span>{model.details.parameter_size}</span>
+                              )}
+                              {model.details?.quantization_level && (
+                                <span>{model.details.quantization_level}</span>
+                              )}
+                              {model.details?.format && (
+                                <span>{model.details.format}</span>
+                              )}
+                              {model.size && (
+                                <span>{formatSize(model.size)}</span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div
+                                className={classNames(
+                                  "flex items-center gap-0.5",
+                                  {
+                                    "text-green-500": computedModelDataMap.get(
+                                      model.id
+                                    )?.isFree,
+                                    "text-red-500": computedModelDataMap.get(
+                                      model.id
+                                    )?.isExpensive,
+                                    "opacity-75":
+                                      sortBy === "context" ||
+                                      sortBy === "completion",
+                                  }
+                                )}
+                              >
+                                {computedModelDataMap.get(model.id)?.promptText}
+                                <ArrowUpIcon className="w-3 h-3" />
+                              </div>
+                              <div
+                                className={classNames(
+                                  "flex items-center gap-0.5",
+                                  {
+                                    "text-green-500": computedModelDataMap.get(
+                                      model.id
+                                    )?.isFree,
+                                    "text-red-500": computedModelDataMap.get(
+                                      model.id
+                                    )?.isExpensive,
+                                    "opacity-75":
+                                      sortBy === "context" ||
+                                      sortBy === "completion",
+                                  }
+                                )}
+                              >
+                                {
+                                  computedModelDataMap.get(model.id)
+                                    ?.completeText
+                                }
+                                <ArrowDownIcon className="w-3 h-3" />
+                              </div>
+                              <div
+                                className={classNames(
+                                  "flex items-center gap-0.5",
+                                  {
+                                    "opacity-75":
+                                      sortBy === "cost" ||
+                                      sortBy === "completion",
+                                  }
+                                )}
+                              >
+                                <span>
+                                  {formatInteger(
+                                    computedModelDataMap.get(model.id)
+                                      ?.promptLimit
+                                  )}{" "}
+                                  max
+                                </span>
+                                <ArrowUpIcon className="w-3 h-3" />
+                              </div>
+                              <div
+                                className={classNames(
+                                  "flex items-center gap-0.5",
+                                  {
+                                    "opacity-75":
+                                      sortBy === "cost" || sortBy === "context",
+                                  }
+                                )}
+                              >
+                                <span>
+                                  {formatInteger(
+                                    computedModelDataMap.get(model.id)
+                                      ?.completeLimit
+                                  )}{" "}
+                                  max
+                                </span>
+                                <ArrowDownIcon className="w-3 h-3" />
+                              </div>
+                            </>
+                          )}
                         </div>
                       </button>
                     )
