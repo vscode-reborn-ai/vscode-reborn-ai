@@ -28,7 +28,6 @@ SOFTWARE.
 
 */
 
-
 /**
  * Creates an array of length `size` of random bytes
  * @param size
