@@ -96,9 +96,11 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 ### ✨ Next Release
 
 - ✨ **Feature** - Conversation tabs now auto-rename.
-- ✨ **Feature** - Improved local LLM support. New "Use Local LLM" page to easily connect to a local LLM. Custom models now appear in the model selector if "Show All Models" is enabled.
+- ✨ **Feature** - Improved local LLM support. New "Use Local LLM" page to easily connect to a local LLM.
+- ✨ **Feature** - Custom models now appear in the model selector if "Show All Models" is enabled. New UI for searching across custom models.
 - 🔧 **Fix** - Resolved `apiBaseUrl` config issue. *Thanks for the bug report @nossebro.*
 - 🎮 **QoL** - Local API keys are now associated with the API URL, allowing seamless API switching without re-entering keys.
+- 🎮 **QoL** - If you're using OpenRouter, the "Use Local LLM" UI supports automatic api key generation using OAuth.
 - 🎮 **QoL** - The model selector typically hides rarely used OpenAI models. The "Show All Models" setting now reveals all models for alternative APIs, like OpenRouter.
 
 ---
