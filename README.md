@@ -37,6 +37,7 @@ I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. I
 
 - [X] [text-generation-webui](https://github.com/oobabooga/text-generation-webui)
 - [X] [LocalAI](https://localai.io/)
+- [X] [ollama](https://github.com/ollama/ollama)
 
 Any local LLM that supports the OpenAI API *should* work with this extension. The list above are the tools I've personally tested.
 
@@ -93,7 +94,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## Changelog
 
-### June 14, 2024 (`v3.23.0`, `v3.23.1`)
+### June 14, 2024 (`v3.23.0` - `v3.23.2`)
 
 - ✨ **Feature** - Conversation tabs now auto-rename.
 - ✨ **Feature** - Improved local LLM support. New "Use Local LLM" page to easily connect to a local LLM.
@@ -102,6 +103,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 - 🎮 **QoL** - Local API keys are now associated with the API URL, allowing seamless API switching without re-entering keys.
 - 🎮 **QoL** - If you're using OpenRouter, the "Use Local LLM" UI supports automatic api key generation using OAuth.
 - 🎮 **QoL** - The model selector typically hides rarely used OpenAI models. The "Show All Models" setting now reveals all models for alternative APIs, like OpenRouter.
+- 🎮 **QoL** - Partial support for ollama's API. /api/models is now supported, but other ollama APIs are not yet supported.
 
 ### June 4, 2024 (`v3.22.0`)
 

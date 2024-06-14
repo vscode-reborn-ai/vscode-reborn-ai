@@ -304,7 +304,53 @@ export class ApiProvider {
   }
 
   private async repullModelList(): Promise<void> {
-    this._modelList = (await this._openai.models.list()).getPaginatedItems();
+    const modelEndpointNotFound = new Error('404');
+
+    try {
+      // if we call openai's function and it 404s, it breaks out of this try block
+      // so we're gonna first poke the endpoint to see if it's there first
+      const response = await fetch(`${this.apiConfig.baseURL}/models`, {
+        headers: {
+          "Authorization": `Bearer ${this.apiConfig.apiKey}`,
+        },
+      });
+
+      // If 404 error, this might be the ollama API
+      if (response.status === 404) {
+        console.warn('OpenAI API /models endpoint not found, attempting ollama\'s API');
+        throw modelEndpointNotFound;
+      }
+
+      // Did not 404, so we can fetch models from the OpenAI API
+      this._modelList = (await this._openai.models.list()).getPaginatedItems();
+    } catch (e: any | Error) {
+      // If 404 error, this might be the ollama API
+      if (e === modelEndpointNotFound) {
+        // Attempt to fetch models from the ollama API
+        try {
+          // const response = await fetch('http://localhost:11434/api/tags');
+          const response = await fetch(`${(this.apiConfig.baseURL ?? '').replace('/v1', '')}/api/tags`);
+          const data = await response.json();
+
+          this._modelList = data.models.map((model: any) => ({
+            id: model.name,
+            name: model.name,
+            created: Date.parse(model.modified_at),
+            object: "model",
+            owned_by: "user",
+            // Ollama-specific fields
+            size: model.size,
+            digest: model.digest,
+            details: model.details,
+          }));
+        } catch (e) {
+          console.error('Failed to fetch models from ollama API', e);
+        }
+      } else {
+        console.error('Failed to fetch models from OpenAI API', e);
+        throw e;
+      }
+    }
   }
 
   async getModelList(): Promise<Model[]> {

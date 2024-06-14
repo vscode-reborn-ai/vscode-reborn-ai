@@ -4,7 +4,7 @@
   "displayName": "VSCode Reborn AI",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. Bring your own OpenAI API key.",
-  "version": "3.23.1",
+  "version": "3.23.2",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"
@@ -582,6 +582,12 @@
           "default": false,
           "description": "If enabled, the model select dropdown will show ALL available models returned from the API.",
           "order": 48
+        },
+        "chatgpt.manualModelInput": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, you can manually input the model name in the model id in the select dropdown. This is required for some APIs, like ollama.",
+          "order": 49
         }
       }
     }

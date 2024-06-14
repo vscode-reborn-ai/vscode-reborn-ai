@@ -14,6 +14,7 @@ import {
 } from "../store/conversation";
 import { Conversation, MODEL_TOKEN_LIMITS } from "../types";
 import Icon from "./Icon";
+import ModelInput from "./ModelInput";
 import ModelSelect from "./ModelSelect";
 import MoreActionsMenu from "./MoreActionsMenu";
 import TokenCountPopup from "./TokenCountPopup";
@@ -49,6 +50,7 @@ export default ({
   // When APIs are changed, the current model might not be available
   const isCurrentModelAvailable = useMemo(() => {
     return (
+      settings.manualModelInput ||
       models.length === 0 ||
       models.some((model) => model.id === currentConversation.model?.id)
     );
@@ -270,13 +272,22 @@ export default ({
       {!settings?.minimalUI && (
         <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-2 px-4 overflow-x-auto">
           <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-2">
-            <ModelSelect
-              currentConversation={currentConversation}
-              vscode={vscode}
-              conversationList={conversationList}
-              className="hidden xs:flex items-end"
-              tooltipId="footer-tooltip"
-            />
+            {settings.manualModelInput ? (
+              <ModelInput
+                currentConversation={currentConversation}
+                vscode={vscode}
+                className="hidden xs:flex items-end"
+                tooltipId="footer-tooltip"
+              />
+            ) : (
+              <ModelSelect
+                currentConversation={currentConversation}
+                vscode={vscode}
+                conversationList={conversationList}
+                className="hidden xs:flex items-end"
+                tooltipId="footer-tooltip"
+              />
+            )}
             <VerbositySelect
               currentConversation={currentConversation}
               vscode={vscode}

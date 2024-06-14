@@ -117,6 +117,11 @@ export function useMessenger(vscode: any) {
       showAllModels
     });
   };
+  const sendSetManualModelInput = (useManualModelInput: boolean) => {
+    sendMessageToBackend(BackendMessageType.setManualModelInput, {
+      useManualModelInput
+    });
+  };
 
   return {
     sendGetSettings,
@@ -141,5 +146,6 @@ export function useMessenger(vscode: any) {
     sendStopGenerating,
     sendSetVerbosity,
     sendSetShowAllModels,
+    sendSetManualModelInput,
   };
 }

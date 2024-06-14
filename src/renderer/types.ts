@@ -29,7 +29,7 @@ export enum Role {
 }
 
 export interface Model extends OpenAI.Model {
-  // OpenRouter will send back additional fields on models:
+  // * OpenRouter will send back additional fields on models:
   name?: string; // friendly name
   description?: string;
   pricing?: {
@@ -55,6 +55,16 @@ export interface Model extends OpenAI.Model {
     prompt_tokens: string; // string integer
     completion_tokens: string; // string integer
   } | null;
+  // * Ollama will send back additional fields on models:
+  size?: number; // ie. 3825819519
+  digest?: string; // ie. "fe938a131f40e6f6d40083c9f0f430a515233eb2edaa6d72eb85c50d64f2300e"
+  details?: {
+    format: string; // ie. "gguf"
+    family: string; // ie. "llama"
+    families: string[] | null; // ie. ['phi3']
+    parameter_size: string; // ie. "7B"
+    quantization_level: string; // ie. "Q4_0"
+  };
 }
 
 // Maps ID to a friendly name
@@ -291,6 +301,7 @@ export interface ExtensionSettings {
   verbosity: Verbosity,
   renameTabTitles: boolean;
   showAllModels: boolean;
+  manualModelInput: boolean;
 }
 
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
@@ -340,5 +351,6 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   disableMultipleConversations: false,
   verbosity: Verbosity.normal,
   renameTabTitles: true,
-  showAllModels: false
+  showAllModels: false,
+  manualModelInput: false
 };
