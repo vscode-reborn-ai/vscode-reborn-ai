@@ -53,12 +53,13 @@ export default function ModelSelect({
     (state: RootState) => state.app?.apiKeyStatus
   );
   const models = useAppSelector((state: RootState) => state.app.models);
-  const [filteredModels, setFilteredModels] = useState<Model[]>([]);
+  const [filteredModels, setFilteredModels] = useState<Model[]>(models);
   const backendMessenger = useMessenger(vscode);
   const [sortBy, setSortBy] = useState<
     "name" | "cost" | "context" | "completion"
   >("name");
   const [ascending, setAscending] = useState(true);
+  const searchInputRef = React.createRef<HTMLInputElement>();
 
   const hasOpenAIModels = useMemo(() => {
     // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-3.5-turbo
@@ -220,48 +221,30 @@ export default function ModelSelect({
     setShowModels(false);
   };
 
-  const modelSearchHandler = useCallback(
-    (e: any) => {
-      const query = e.target.value.toLowerCase();
+  const runSearch = useCallback(() => {
+    const query = searchInputRef.current?.value.toLowerCase() ?? "";
 
-      // Search for models that match the query
-      const modelList: Model[] = Object.assign([], models);
-      const filteredModelList =
-        query.length > 0
-          ? modelList.filter(
-              (model) =>
-                model.id.toLowerCase().includes(query) ||
-                (model?.name && model.name.toLowerCase().includes(query))
-            )
-          : modelList;
+    // Search for models that match the query
+    const modelList: Model[] = Object.assign([], models);
+    const filteredModelList =
+      query.length > 0
+        ? modelList.filter(
+            (model) =>
+              model.id.toLowerCase().includes(query) ||
+              (model?.name && model.name.toLowerCase().includes(query))
+          )
+        : modelList;
 
-      setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
-    },
-    [models]
-  );
+    setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
+  }, [models, sortBy, ascending, searchInputRef]);
 
   useEffect(() => {
     setFilteredModels(sortList(sortBy, models, !ascending));
-  }, [models]);
+  }, [models, currentConversation.model, isCurrentModelAvailable]);
 
   useEffect(() => {
     setFilteredModels(sortList(sortBy, filteredModels, !ascending));
   }, [sortBy, ascending]);
-
-  // Render 1500000 as 1.5M
-  // const formatInteger = useCallback((num: number | undefined) => {
-  //   if (num === undefined) {
-  //     return "varies";
-  //   }
-
-  //   if (num >= 1000000) {
-  //     return `${(num / 1000000).toFixed(1)}M`;
-  //   } else if (num >= 1000) {
-  //     return `${(num / 1000).toFixed(1)}K`;
-  //   } else {
-  //     return num;
-  //   }
-  // }, []);
 
   // Render 1500000 as 1,500,000
   const formatInteger = useCallback((num: number | undefined) => {
@@ -271,6 +254,13 @@ export default function ModelSelect({
 
     return num.toLocaleString();
   }, []);
+
+  // when the models popup is shown rerun search (since might have the previous search query)
+  useEffect(() => {
+    if (showModels || !hasOpenAIModels) {
+      runSearch();
+    }
+  }, [showModels]);
 
   return (
     <>
@@ -541,10 +531,11 @@ export default function ModelSelect({
                         </div>
                       </div>
                       <input
+                        ref={searchInputRef}
                         type="text"
                         placeholder="Search models..."
                         className="px-3 py-2 rounded border text-input text-sm border-input bg-menu-selection outline-0"
-                        onChange={modelSearchHandler}
+                        onChange={runSearch}
                         onKeyUp={(e) => {
                           if (e.key === "Escape") {
                             setShowModels(false);
