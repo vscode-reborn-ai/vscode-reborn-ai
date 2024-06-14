@@ -2,12 +2,12 @@ import hljs from 'highlight.js';
 import { createServer } from 'http';
 import { marked } from "marked";
 import OpenAI, { ClientOptions } from "openai";
-import pkceChallenge from "pkce-challenge";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
 import { getSelectedModelId, getUpdatedModel } from "./helpers";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
+import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
@@ -1111,7 +1111,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	// Send OAuth PKCE request to the OpenRouter
-	// with callback to const uri = await vscode.env.asExternalUri(vscode.Uri.parse(`${vscode.env.uriScheme}://chris-hayes.chatgpt-reborn`));
 	async generateOpenRouterApiKey() {
 		if (!this.authStore) {
 			console.error("Main Process - AuthStore not initialized");

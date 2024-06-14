@@ -37,24 +37,28 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
 
     switch (message.type) {
       case FrontendMessageType.showInProgress:
+        const showInProgressData = message as ShowInProgressMessage;
+
         dispatch(
           setInProgress({
-            conversationId: message?.conversationId ?? currentConversationId,
-            inProgress: message?.inProgress ?? true,
+            conversationId: showInProgressData?.conversationId ?? currentConversationId,
+            inProgress: showInProgressData?.inProgress ?? true,
           })
         );
         break;
       case FrontendMessageType.addMessage:
+        const addMessageData = message as AddMessageMessage;
+
         const question: ChatMessage = {
-          id: message.chatMessage?.id ?? uuidv4(),
-          role: message.chatMessage?.role ?? Role.user,
-          content: message.chatMessage?.content ?? "",
-          rawContent: message.chatMessage?.rawContent ?? "",
-          createdAt: message.chatMessage?.createdAt ?? Date.now(),
+          id: addMessageData.chatMessage?.id ?? uuidv4(),
+          role: addMessageData.chatMessage?.role ?? Role.user,
+          content: addMessageData.chatMessage?.content ?? "",
+          rawContent: addMessageData.chatMessage?.rawContent ?? "",
+          createdAt: addMessageData.chatMessage?.createdAt ?? Date.now(),
           done: true,
-          questionCode: message?.chatMessage?.code
+          questionCode: addMessageData?.chatMessage?.code
             ? (window as any)?.marked.parse(
-              `\`\`\`${message?.chatMessage?.editorLanguage ?? ''}\n${message?.chatMessage?.code}\n\`\`\``
+              `\`\`\`${addMessageData?.chatMessage?.editorLanguage ?? ''}\n${addMessageData?.chatMessage?.code}\n\`\`\``
             )
             : "",
         };
@@ -68,18 +72,20 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
 
         break;
       case FrontendMessageType.updateMessage:
-        if (message?.chatMessage) {
+        const updateMessageData = message as UpdateMessageMessage;
+
+        if (updateMessageData?.chatMessage) {
           dispatch(
             updateMessage({
-              conversationId: message?.conversationId ?? currentConversationId,
-              messageId: message?.chatMessage?.id ?? "",
-              message: message?.chatMessage,
+              conversationId: updateMessageData?.conversationId ?? currentConversationId,
+              messageId: updateMessageData?.chatMessage?.id ?? "",
+              message: updateMessageData?.chatMessage,
             })
           );
 
           if (
-            message?.chatMessage?.role === Role.assistant &&
-            (message?.chatMessage?.done || message?.chatMessage?.content.length > 200)
+            updateMessageData?.chatMessage?.role === Role.assistant &&
+            (message?.chatMessage?.done || updateMessageData?.chatMessage?.content.length > 200)
           ) {
             const conversation = conversationList.find(
               (conversation) => conversation.id === currentConversationId
@@ -95,59 +101,66 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
 
         break;
       case FrontendMessageType.messagesUpdated:
+        const messagesUpdatedData = message as MessagesUpdatedMessage;
+
         dispatch(
           updateConversationMessages({
-            conversationId: message?.conversationId ?? currentConversationId,
-            messages: message.chatMessages ?? [],
+            conversationId: messagesUpdatedData?.conversationId ?? currentConversationId,
+            messages: messagesUpdatedData.chatMessages ?? [],
           })
         );
 
         break;
       case FrontendMessageType.streamMessage:
+        const streamMessageData = message as StreamMessageMessage;
+
         dispatch(
           updateMessageContent({
-            conversationId: message?.conversationId ?? currentConversationId,
-            messageId: message?.chatMessageId ?? "",
-            content: message?.content ?? "",
+            conversationId: streamMessageData?.conversationId ?? currentConversationId,
+            messageId: streamMessageData?.chatMessageId ?? "",
+            content: streamMessageData?.content ?? "",
             done: false,
           })
         );
 
-        if (message.content?.length > 200) {
+        if (streamMessageData.content?.length > 200) {
           const conversation = conversationList.find(
             (conversation) => conversation.id === currentConversationId
           );
 
           if (conversation && !conversation?.aiRenamedTitle) {
-            renameTabTitleWithAI(conversation, message.content);
+            renameTabTitleWithAI(conversation, streamMessageData.content);
           }
         }
         break;
       case FrontendMessageType.addError:
+        const addErrorData = message as AddErrorMessage;
         const errorMessageText = "An error occurred. If this issue persists please clear your session token with `ChatGPT: Reset session` command and/or restart your Visual Studio Code. If you still experience issues, it may be due to an OpenAI outage. Take a look at https://status.openai.com to see if there's an OpenAI outage.";
         const errorMessage: ChatMessage = {
-          id: message.id,
+          id: addErrorData.id,
           role: Role.assistant,
-          content: message.value ?? errorMessageText,
-          rawContent: message.value ?? errorMessageText,
+          content: addErrorData.value ?? errorMessageText,
+          rawContent: addErrorData.value ?? errorMessageText,
           createdAt: Date.now(),
           isError: true,
         };
 
         dispatch(
           addMessage({
-            conversationId: message?.conversationId ?? currentConversationId,
+            conversationId: addErrorData?.conversationId ?? currentConversationId,
             message: errorMessage,
           })
         );
         break;
       case FrontendMessageType.settingsUpdate:
-        if (!message?.config) {
+        const settingsUpdateData = message as SettingsUpdateMessage;
+
+        if (!settingsUpdateData?.config) {
           console.warn("Renderer - No settings provided in settingsUpdate message");
           return;
         }
 
-        dispatch(setExtensionSettings({ newSettings: message.config }));
+        dispatch(setExtensionSettings({ newSettings: settingsUpdateData.config }));
 
         const currentConversation = conversationList.find(
           (conversation) => conversation.id === currentConversationId
@@ -158,7 +171,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             dispatch(
               setModel({
                 conversationId: currentConversationId,
-                model: models.find((model) => model.id === (message.config.gpt3?.model ?? settings?.gpt3?.model)
+                model: models.find((model) => model.id === (settingsUpdateData.config.gpt3?.model ?? settings?.gpt3?.model)
                 ) ?? models[0],
               })
             );
@@ -167,7 +180,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
               setModel({
                 conversationId: currentConversationId,
                 model: {
-                  id: message.config.gpt3?.model,
+                  id: settingsUpdateData.config.gpt3?.model,
                   // dummy values
                   created: 0,
                   object: "model",
@@ -180,26 +193,32 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           dispatch(
             setVerbosity({
               conversationId: currentConversationId,
-              verbosity: message.config.verbosity,
+              verbosity: settingsUpdateData.config.verbosity,
             })
           );
         }
         break;
       case FrontendMessageType.modelsUpdate:
+        const modelsUpdateData = message as ModelsUpdateMessage;
+
         dispatch(
           setModels({
-            models: message.models,
+            models: modelsUpdateData.models,
           })
         );
         break;
       case FrontendMessageType.updateApiKeyStatus:
-        dispatch(setApiKeyStatus(message.status));
+        const apiKeyStatusData = message as UpdateApiKeyStatusMessage;
+
+        dispatch(setApiKeyStatus(apiKeyStatusData.status));
         break;
       case FrontendMessageType.tokenCount:
+        const tokenCountData = message as UpdateTokenCountMessage;
+
         dispatch(
           updateConversationTokenCount({
-            conversationId: message.conversationId ?? currentConversationId,
-            tokenCount: message.tokenCount ?? {
+            conversationId: tokenCountData.conversationId ?? currentConversationId,
+            tokenCount: tokenCountData.tokenCount ?? {
               messages: 0,
               userInput: 0,
               minTotal: 0,
@@ -208,42 +227,50 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         );
         break;
       case FrontendMessageType.setTranslations:
-        if (message?.translations) {
-          dispatch(setTranslations(JSON.parse(message.translations)));
+        const translationsData = message as SetTranslationsMessage;
+
+        if (translationsData?.translations) {
+          dispatch(setTranslations(JSON.parse(translationsData.translations)));
         }
         break;
       case FrontendMessageType.actionComplete:
+        const actionCompleteData = message as ActionCompleteMessage;
+
         dispatch(
           setActionState({
-            actionId: message?.actionId,
+            actionId: actionCompleteData?.actionId,
             state: ActionRunState.idle,
           })
         );
 
-        switch (message?.actionId) {
+        switch (actionCompleteData?.actionId) {
           case ActionNames.createConversationTitle:
-            const newTitle = message?.actionResult?.newTitle;
+            const newTitle = actionCompleteData?.actionResult?.newTitle;
 
             if (newTitle) {
               dispatch(
                 updateConversationTitle({
-                  conversationId: message?.actionResult?.conversationId,
+                  conversationId: actionCompleteData?.actionResult?.conversationId,
                   title: newTitle,
                 })
               );
             }
             break;
           default:
-            console.warn(`Renderer - Unhandled result from action: ${message?.actionId}`);
+            console.warn(`Renderer - Unhandled result from action: ${actionCompleteData?.actionId}`);
         }
         break;
       case FrontendMessageType.actionError:
-        dispatch(setActionError({ error: message?.error, actionId: message?.actionId }));
+        const actionErrorData = message as ActionErrorMessage;
+
+        dispatch(setActionError({ error: actionErrorData?.error, actionId: actionErrorData?.actionId }));
         break;
       case FrontendMessageType.setConversationModel:
+        const setConversationModelData = message as SetConversationModelMessage;
+
         dispatch(setModel({
-          conversationId: message.conversationId,
-          model: message.model
+          conversationId: setConversationModelData.conversationId,
+          model: setConversationModelData.model
         }));
       default:
         console.error('Renderer - Uncaught message type: ', (message as BaseFrontendMessage)?.type);
