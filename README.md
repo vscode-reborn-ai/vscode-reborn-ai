@@ -37,6 +37,7 @@ I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. I
 
 - [X] [text-generation-webui](https://github.com/oobabooga/text-generation-webui)
 - [X] [LocalAI](https://localai.io/)
+- [X] [ollama](https://github.com/ollama/ollama)
 
 Any local LLM that supports the OpenAI API *should* work with this extension. The list above are the tools I've personally tested.
 
