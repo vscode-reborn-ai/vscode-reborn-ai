@@ -28,14 +28,16 @@ export default function TokenCountPopup({
     (state: RootState) => state.app.extensionSettings
   );
   const t = useAppSelector((state: RootState) => state.app.translations);
-  const [minCost, setMinCost] = useState(0);
-  const [maxCost, setMaxCost] = useState(0);
+  const [minCost, setMinCost] = useState<number | undefined>(undefined);
+  const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
   const [minPromptTokens, setMinPromptTokens] = useState(
     currentConversation.tokenCount?.minTotal ?? 0
   );
   const [maxCompleteTokens, setMaxCompleteTokens] = useState(0);
-  const [promptRate, setPromptRate] = useState(0);
-  const [completeRate, setCompleteRate] = useState(0);
+  const [promptRate, setPromptRate] = useState<number | undefined>(undefined);
+  const [completeRate, setCompleteRate] = useState<number | undefined>(
+    undefined
+  );
 
   // On model change and token count change, update the token count label
   useEffect(() => {
@@ -55,9 +57,15 @@ export default function TokenCountPopup({
 
     // Rates
     const rates = getModelRates(currentConversation.model);
-    let minCost = (minPromptTokens / 1000) * rates.prompt;
+    let minCost =
+      rates.prompt !== undefined
+        ? (minPromptTokens / 1000) * rates.prompt
+        : undefined;
     // maxCost is based on current convo text at ratePrompt pricing + theoretical maximum response at rateComplete pricing
-    let maxCost = minCost + (maxCompleteTokens / 1000) * rates.complete;
+    let maxCost =
+      minCost !== undefined && rates.complete !== undefined
+        ? minCost + (maxCompleteTokens / 1000) * rates.complete
+        : undefined;
 
     setMinPromptTokens(minPromptTokens);
     setMaxCompleteTokens(maxCompleteTokens);
@@ -99,8 +107,8 @@ export default function TokenCountPopup({
           </span>
           <code>{minPromptTokens}</code>{" "}
           {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
-            "tokens which is"}
-          <code> ${minCost?.toFixed(4) ?? 0}</code>
+            "tokens which is "}
+          <code>${minCost?.toFixed(4) ?? "???"}</code>
         </p>
         <p>
           <span className="block">
@@ -114,13 +122,13 @@ export default function TokenCountPopup({
               <br />(
               <code>{currentConversation.tokenCount?.messages ?? 0}</code> +{" "}
               <code>{currentConversation.tokenCount?.userInput ?? 0}</code> +{" "}
-              <code>{maxCompleteTokens})</code>
+              <code>{maxCompleteTokens}</code>)
             </span>
           </span>
           <code>{minPromptTokens + maxCompleteTokens}</code>{" "}
           {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
-            "tokens which is"}
-          <code> ${maxCost?.toFixed(4) ?? 0}</code>
+            "tokens which is "}
+          <code>${maxCost?.toFixed(4) ?? "???"}</code>
         </p>
         <p>
           {t?.questionInputField?.tokenBreakdownBasedOn ??
@@ -140,7 +148,9 @@ export default function TokenCountPopup({
           </a>{" "}
           {t?.questionInputField?.tokenBreakdownForPromptsAndCompletions ??
             "for prompts and completions."}
-          {`(prompt: $${promptRate} / 1000 tokens, completion: $${completeRate} / 1000 tokens)`}
+          {`(prompt: $${promptRate ?? "???"} / 1000 tokens, completion: $${
+            completeRate ?? "???"
+          } / 1000 tokens)`}
         </p>
         <p className="italic">
           {t?.questionInputField?.tokenBreakdownRecommendation ??

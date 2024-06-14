@@ -1,9 +1,17 @@
+import {
+  ArrowDownIcon,
+  ArrowTrendingDownIcon,
+  ArrowTrendingUpIcon,
+  ArrowUpIcon,
+} from "@heroicons/react/24/solid";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getModelCompletionLimit,
   getModelContextLimit,
   getModelRates,
+  isMultimodalModel,
+  isOnlineModel,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
@@ -76,8 +84,8 @@ export default function ModelSelect({
   interface ComputedModelData {
     promptLimit: number;
     completeLimit: number;
-    prompt: number;
-    complete: number;
+    prompt: number | undefined;
+    complete: number | undefined;
     promptText: string;
     completeText: string;
     isFree: boolean;
@@ -97,13 +105,19 @@ export default function ModelSelect({
         promptText:
           rate.prompt === 0
             ? "FREE"
-            : `$${(rate.prompt * 1000).toFixed(2)} / 1M`,
+            : rate.prompt === undefined
+            ? "varies"
+            : `$${(rate.prompt * 1000).toFixed(2)}/M`,
         completeText:
           rate.complete === 0
             ? "FREE"
-            : `$${(rate.complete * 1000).toFixed(2)} / 1M`,
+            : rate.complete === undefined
+            ? "varies"
+            : `$${(rate.complete * 1000).toFixed(2)}/M`,
         isFree: rate.prompt === 0 && rate.complete === 0,
-        isExpensive: rate.prompt > 0.01 || rate.complete > 0.03,
+        isExpensive:
+          (rate.prompt !== undefined && rate.prompt > 0.01) ||
+          (rate.complete !== undefined && rate.complete > 0.03),
       });
     });
 
@@ -228,11 +242,39 @@ export default function ModelSelect({
 
   useEffect(() => {
     setFilteredModels(sortList(sortBy, models, !ascending));
-  }, [models, sortBy, ascending]);
+  }, [models]);
+
+  useEffect(() => {
+    setFilteredModels(sortList(sortBy, filteredModels, !ascending));
+  }, [sortBy, ascending]);
+
+  // Render 1500000 as 1.5M
+  // const formatInteger = useCallback((num: number | undefined) => {
+  //   if (num === undefined) {
+  //     return "varies";
+  //   }
+
+  //   if (num >= 1000000) {
+  //     return `${(num / 1000000).toFixed(1)}M`;
+  //   } else if (num >= 1000) {
+  //     return `${(num / 1000).toFixed(1)}K`;
+  //   } else {
+  //     return num;
+  //   }
+  // }, []);
+
+  // Render 1500000 as 1,500,000
+  const formatInteger = useCallback((num: number | undefined) => {
+    if (num === undefined) {
+      return "varies";
+    }
+
+    return num.toLocaleString();
+  }, []);
 
   return (
     <>
-      <div className={`${className}`}>
+      <div className={className}>
         <button
           className={classNames(
             `rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary`,
@@ -295,7 +337,7 @@ export default function ModelSelect({
                     (model: Model) => (
                       <button
                         key={model.id}
-                        className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                        className="flex flex-col gap-1 items-start justify-start p-2 w-full hover:bg-menu-selection"
                         onClick={() => {
                           setModel(model);
                           if (showParentMenu) {
@@ -303,61 +345,98 @@ export default function ModelSelect({
                           }
                         }}
                       >
-                        <span className="font-bold">
-                          {model?.name ? (
-                            <span>{model.name}</span>
-                          ) : (
-                            <code>{model.id}</code>
+                        <div className="flex gap-2 items-center">
+                          <span className="mt-0.5 text-start font-bold">
+                            {model?.name ? (
+                              <span>{model.name}</span>
+                            ) : (
+                              <code>{model.id}</code>
+                            )}
+                          </span>
+                          {isMultimodalModel(model) && (
+                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
+                              multimodal
+                            </span>
                           )}
-                        </span>
-                        <p>
-                          Prompt:{" "}
-                          <span
-                            className={classNames({
+                          {isOnlineModel(model) && (
+                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
+                              online
+                            </span>
+                          )}
+                        </div>
+                        <div className="w-full flex justify-around gap-2 divide-dropdown text-2xs">
+                          <div
+                            className={classNames("flex items-center gap-0.5", {
                               "text-green-500": computedModelDataMap.get(
                                 model.id
                               )?.isFree,
                               "text-red-500": computedModelDataMap.get(model.id)
                                 ?.isExpensive,
+                              "opacity-75":
+                                sortBy === "context" || sortBy === "completion",
                             })}
                           >
-                            {computedModelDataMap.get(model.id)?.promptText},
-                          </span>{" "}
-                          Complete:{" "}
-                          <span
-                            className={classNames({
+                            {computedModelDataMap.get(model.id)?.promptText}
+                            <ArrowUpIcon className="w-3 h-3" />
+                          </div>
+                          <div
+                            className={classNames("flex items-center gap-0.5", {
                               "text-green-500": computedModelDataMap.get(
                                 model.id
                               )?.isFree,
                               "text-red-500": computedModelDataMap.get(model.id)
                                 ?.isExpensive,
+                              "opacity-75":
+                                sortBy === "context" || sortBy === "completion",
                             })}
                           >
-                            {computedModelDataMap.get(model.id)?.completeText},
-                          </span>{" "}
-                          Context:{" "}
-                          <code>
-                            {computedModelDataMap.get(model.id)?.promptLimit}
-                          </code>
-                          , Completion:{" "}
-                          <code>
-                            {computedModelDataMap.get(model.id)?.completeLimit}
-                          </code>
-                        </p>
+                            {computedModelDataMap.get(model.id)?.completeText}
+                            <ArrowDownIcon className="w-3 h-3" />
+                          </div>
+                          <div
+                            className={classNames("flex items-center gap-0.5", {
+                              "opacity-75":
+                                sortBy === "cost" || sortBy === "completion",
+                            })}
+                          >
+                            <span>
+                              {formatInteger(
+                                computedModelDataMap.get(model.id)?.promptLimit
+                              )}{" "}
+                              max
+                            </span>
+                            <ArrowUpIcon className="w-3 h-3" />
+                          </div>
+                          <div
+                            className={classNames("flex items-center gap-0.5", {
+                              "opacity-75":
+                                sortBy === "cost" || sortBy === "context",
+                            })}
+                          >
+                            <span>
+                              {formatInteger(
+                                computedModelDataMap.get(model.id)
+                                  ?.completeLimit
+                              )}{" "}
+                              max
+                            </span>
+                            <ArrowDownIcon className="w-3 h-3" />
+                          </div>
+                        </div>
                       </button>
                     )
                   )}
                   {models.length > 6 && (
                     <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
-                      <div className="flex flex-row items-center justify-between">
-                        <span className="text-button">
-                          Showing {filteredModels.length} of {models.length}{" "}
-                          models
+                      <div className="flex flex-wrap gap-2 items-center justify-between">
+                        <span className="flex-grow opacity-50 text-2xs">
+                          Showing {filteredModels.length} of {models.length}
                         </span>
                         {/* button list of sort by buttons, the current sort by button is highlighted */}
-                        <div className="flex flex-row items-center gap-2">
+                        <div className="flex flex-wrap justify-end gap-1">
                           <button
                             className={classNames(
+                              "flex items-center gap-1",
                               "hover:bg-menu-selection p-1 rounded",
                               {
                                 "bg-menu-selection": sortBy === "name",
@@ -366,15 +445,24 @@ export default function ModelSelect({
                             onClick={() => {
                               if (sortBy === "name") {
                                 setAscending(!ascending);
+                              } else {
+                                setAscending(true);
                               }
 
                               setSortBy("name");
                             }}
                           >
-                            Name
+                            <span>Name</span>
+                            {sortBy === "name" &&
+                              (ascending ? (
+                                <ArrowTrendingUpIcon className="w-3 h-3" />
+                              ) : (
+                                <ArrowTrendingDownIcon className="w-3 h-3" />
+                              ))}
                           </button>
                           <button
                             className={classNames(
+                              "flex items-center gap-1",
                               "hover:bg-menu-selection p-1 rounded",
                               {
                                 "bg-menu-selection": sortBy === "cost",
@@ -383,15 +471,24 @@ export default function ModelSelect({
                             onClick={() => {
                               if (sortBy === "cost") {
                                 setAscending(!ascending);
+                              } else {
+                                setAscending(true);
                               }
 
                               setSortBy("cost");
                             }}
                           >
-                            Cost
+                            <span>Cost</span>
+                            {sortBy === "cost" &&
+                              (ascending ? (
+                                <ArrowTrendingUpIcon className="w-3 h-3" />
+                              ) : (
+                                <ArrowTrendingDownIcon className="w-3 h-3" />
+                              ))}
                           </button>
                           <button
                             className={classNames(
+                              "flex items-center gap-1",
                               "hover:bg-menu-selection p-1 rounded",
                               {
                                 "bg-menu-selection": sortBy === "context",
@@ -400,15 +497,24 @@ export default function ModelSelect({
                             onClick={() => {
                               if (sortBy === "context") {
                                 setAscending(!ascending);
+                              } else {
+                                setAscending(true);
                               }
 
                               setSortBy("context");
                             }}
                           >
-                            Context
+                            <span>Context</span>
+                            {sortBy === "context" &&
+                              (!ascending ? (
+                                <ArrowTrendingUpIcon className="w-3 h-3" />
+                              ) : (
+                                <ArrowTrendingDownIcon className="w-3 h-3" />
+                              ))}
                           </button>
                           <button
                             className={classNames(
+                              "flex items-center gap-1",
                               "hover:bg-menu-selection p-1 rounded",
                               {
                                 "bg-menu-selection": sortBy === "completion",
@@ -417,12 +523,20 @@ export default function ModelSelect({
                             onClick={() => {
                               if (sortBy === "completion") {
                                 setAscending(!ascending);
+                              } else {
+                                setAscending(true);
                               }
 
                               setSortBy("completion");
                             }}
                           >
-                            Completion
+                            <span>Completion</span>
+                            {sortBy === "completion" &&
+                              (!ascending ? (
+                                <ArrowTrendingUpIcon className="w-3 h-3" />
+                              ) : (
+                                <ArrowTrendingDownIcon className="w-3 h-3" />
+                              ))}
                           </button>
                         </div>
                       </div>

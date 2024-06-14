@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import { getSelectedModelId, getUpdatedModel } from "./helpers";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
-import { unEscapeHTML } from "./renderer/helpers";
+import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
 import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
@@ -843,10 +843,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				this.frontendMessenger.sendAddMessage(message, options.conversation?.id ?? '');
 			}
 
-			// Try to see if the model is an instruct model
-			const isInstructModel = this.model?.architecture?.instruct_type || this.model?.id.includes("instruct");
-
-			if (this.chatMode && !isInstructModel) {
+			if (this.chatMode && !isInstructModel(this.model)) {
 				let lastMessageTime = 0;
 				const controller = new AbortController();
 				this.abortControllers.push({ conversationId: options.conversation?.id ?? '', controller });
@@ -878,7 +875,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 				// Send webview full updated message
 				this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
-			} else if (isInstructModel) {
+			} else if (isInstructModel(this.model)) {
 				// Instruct models are not streamed, they are completed in one go
 				const response = await this.api.getChatCompletion(options.conversation, {
 					temperature: options.temperature ?? this._temperature,

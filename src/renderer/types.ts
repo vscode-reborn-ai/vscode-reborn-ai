@@ -34,10 +34,11 @@ export interface Model extends OpenAI.Model {
   description?: string;
   pricing?: {
     // NOTE: These appear to be $ / 1 token, not $ / 1,000 token
-    prompt: string; // string decimal
-    completion: string; // string decimal
-    request: string; // string decimal
-    image: string; // string decimal
+    // -1 means "Pricing varied" (variable model)
+    prompt: string | '-1'; // string decimal
+    completion: string | '-1'; // string decimal
+    request: string | '-1'; // string decimal
+    image: string | '-1'; // string decimal
   };
   context_length?: number;
   architecture?: {

@@ -195,10 +195,15 @@ export function getModelCompletionLimit(model: Model | undefined) {
   return limit;
 }
 
-export function getModelRates(model: Model | undefined) {
-  const costs = {
-    prompt: 0,
-    complete: 0,
+interface ModelCosts {
+  prompt: number | undefined;
+  complete: number | undefined;
+}
+
+export function getModelRates(model: Model | undefined): ModelCosts {
+  const costs: ModelCosts = {
+    prompt: undefined,
+    complete: undefined,
   };
 
   if (!model) {
@@ -210,19 +215,35 @@ export function getModelRates(model: Model | undefined) {
     // Mutiply by 1,000 to convert from $ / 1 token to $ / 1,000 tokens
     costs.prompt = parseFloat(model.pricing.prompt) * 1000;
     costs.complete = parseFloat(model.pricing.completion) * 1000;
-    // If cost is < 0, set to 0
-    costs.prompt = Math.max(0, costs.prompt);
-    costs.complete = Math.max(0, costs.complete);
+    // If cost is < 0, set to undefined
+    // -1 means "Pricing varied" (variable model)
+    if (costs.prompt < 0) {
+      costs.prompt = undefined;
+    }
+    if (costs.complete < 0) {
+      costs.complete = undefined;
+    }
   } else {
     // Fallback to hardcoded costs
     costs.prompt = MODEL_COSTS.has(model.id)
-      ? MODEL_COSTS.get(model.id)?.prompt ?? 0
-      : 0;
+      ? MODEL_COSTS.get(model.id)?.prompt ?? undefined
+      : undefined;
     costs.complete = MODEL_COSTS.has(model.id)
-      ? MODEL_COSTS.get(model.id)?.complete ?? 0
-      : 0;
+      ? MODEL_COSTS.get(model.id)?.complete ?? undefined
+      : undefined;
   }
 
   return costs;
 }
 
+export function isInstructModel(model: Model | undefined) {
+  return model?.architecture?.instruct_type || model?.id.includes("instruct");
+}
+
+export function isMultimodalModel(model: Model | undefined) {
+  return model?.architecture?.modality === "multimodal";
+}
+
+export function isOnlineModel(model: Model | undefined) {
+  return model?.id.includes("online");
+}
