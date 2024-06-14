@@ -150,6 +150,14 @@ export default function Layout({ vscode }: { vscode: any }) {
     }
   }, [apiKeyStatus]);
 
+  // Keep the backend's conversation list in sync with the frontend's
+  useEffect(() => {
+    backendMessenger.sendConversationList(
+      conversationList,
+      currentConversation
+    );
+  }, [conversationList]);
+
   return (
     <>
       {!settings?.minimalUI && !settings?.disableMultipleConversations && (

@@ -1,15 +1,17 @@
 import hljs from 'highlight.js';
+import { createServer } from 'http';
 import { marked } from "marked";
 import OpenAI, { ClientOptions } from "openai";
+import pkceChallenge from "pkce-challenge";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
-import { getSelectedModelId, updateSelectedModel } from "./helpers";
+import { getSelectedModelId, getUpdatedModel } from "./helpers";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import { unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Auth from "./secrets-store";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
@@ -48,26 +50,27 @@ export interface ApiRequestOptions {
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	private webView?: vscode.WebviewView;
-
-	public frontendMessenger: Messenger;
-	public subscribeToResponse: boolean;
-	public model: Model;
-
 	private api: ApiProvider = new ApiProvider('');
+	private authStore?: Auth;
+
 	private _temperature: number = 0.9;
 	private _topP: number = 1;
 	private chatMode?: boolean = true;
 	private systemContext: string;
 	private showAllModels: boolean = false;
-
 	private throttling: number = 100;
 	private abortControllers: {
 		conversationId?: string,
 		actionName?: string,
 		controller: AbortController;
 	}[] = [];
-	private authStore?: Auth;
 
+	public frontendMessenger: Messenger;
+	public subscribeToResponse: boolean;
+	public model: Model;
+
+	// Updated by frontend when these change
+	public conversationList: Conversation[] = [];
 	public currentConversation?: Conversation;
 
 	/**
@@ -292,6 +295,19 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		// Update config
 		await vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", apiUrl, true);
+
+		// Look for model associated with this API URL
+		const model = await this.authStore?.getModelByApi(apiUrl);
+
+		if (model) {
+			// Update the model
+			this.model = await this.setModel(model);
+
+			// Update current conversation
+			if (this.currentConversation) {
+				this.frontendMessenger.setConversationModel(model, this.currentConversation);
+			}
+		}
 	}
 
 	public async setApiKey(apiKey: string) {
@@ -345,7 +361,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			this.frontendMessenger.sendModels(models);
 
 			return {
-				status: ApiKeyStatus.Valid,
+				status: apiKey.length === 0 ? ApiKeyStatus.Unset : ApiKeyStatus.Valid,
 				models,
 			};
 		} catch (error) {
@@ -406,7 +422,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				case BackendMessageType.setModel:
 					const setModelData = data as SetModelMessage;
 					// Note that due to some models being deprecated, this function may change the model
-					this.model = await updateSelectedModel(setModelData.model);
+					this.model = await this.setModel(setModelData.model);
 					this.logEvent("model-changed to ", setModelData.model);
 					break;
 				case BackendMessageType.openNew:
@@ -482,8 +498,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					vscode.workspace.getConfiguration("chatgpt").update("showAllModels", this.showAllModels, vscode.ConfigurationTarget.Global);
 					break;
 				case BackendMessageType.setCurrentConversation:
-					const setCurrentConversationData = data as SetCurrentConversationMessage;
-					this.currentConversation = setCurrentConversationData.conversation;
+					const currentConversationData = data as SetCurrentConversationMessage;
+					this.currentConversation = currentConversationData.conversation;
+					break;
+				case BackendMessageType.setConversationList:
+					const conversationListData = data as SetConversationListMessage;
+					this.conversationList = conversationListData.conversations;
+					this.currentConversation = conversationListData.currentConversation;
 					break;
 				case BackendMessageType.getTokenCount:
 					const getTokenCountData = data as GetTokenCountMessage;
@@ -536,6 +557,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					} else {
 						console.warn("Main Process - No actionName provided to stop action");
 					}
+					break;
+				case BackendMessageType.generateOpenRouterApiKey:
+					this.generateOpenRouterApiKey();
 					break;
 				default:
 					console.warn('Main Process - Uncaught message type: "' + data.type + '"');
@@ -605,6 +629,30 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	private async getApiKey(): Promise<string> {
 		return await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') ?? '';
+	}
+
+	async setModel(newModel: Model): Promise<Model> {
+		// Check and update the model if it's deprecated
+		const updatedModelId = getUpdatedModel(newModel.id);
+
+		await vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", updatedModelId, vscode.ConfigurationTarget.Global);
+
+		// Associate the model with the current API
+		const apiBaseUrl = vscode.workspace.getConfiguration("chatgpt").get("apiBaseUrl") as string;
+
+		if (apiBaseUrl && this.authStore) {
+			this.authStore.storeModelByApi(apiBaseUrl, newModel);
+		}
+
+		if (newModel.id !== updatedModelId) {
+			console.debug(`Updated deprecated model "${newModel.id}" to "${updatedModelId}".`);
+			return {
+				...newModel,
+				id: updatedModelId,
+			};
+		}
+
+		return newModel;
 	}
 
 	async getModels(): Promise<any[]> {
@@ -697,14 +745,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	public clearConversation(conversationId?: string) {
-		// If no conversationId is provided, use the current conversation
-		if (!conversationId) {
-			conversationId = this.currentConversation?.id;
-		}
-
 		// Clear the conversation
 		if (conversationId) {
 			this.frontendMessenger.sendMessagesUpdated([], conversationId);
+		} else {
+			console.error("Main Process - No conversation to clear");
 		}
 	}
 
@@ -799,9 +844,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			}
 
 			// Try to see if the model is an instruct model
-			const isInstructionModel = this.model?.id.includes("instruct");
+			const isInstructModel = this.model?.architecture?.instruct_type || this.model?.id.includes("instruct");
 
-			if (this.chatMode && !isInstructionModel) {
+			if (this.chatMode && !isInstructModel) {
 				let lastMessageTime = 0;
 				const controller = new AbortController();
 				this.abortControllers.push({ conversationId: options.conversation?.id ?? '', controller });
@@ -833,7 +878,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 				// Send webview full updated message
 				this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
-			} else if (isInstructionModel) {
+			} else if (isInstructModel) {
 				// Instruct models are not streamed, they are completed in one go
 				const response = await this.api.getChatCompletion(options.conversation, {
 					temperature: options.temperature ?? this._temperature,
@@ -927,33 +972,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
-	/**
-	 * Message sender, stores if a message cannot be delivered
-	 * @param message Message to be sent to WebView
-	 * @param ignoreMessageIfNullWebView We will ignore the command if webView is null/not-focused
-	 */
-	// public sendMessage(message: any, ignoreMessageIfNullWebView?: boolean) {
-	// 	if (this.webView) {
-	// 		this.webView?.webview.postMessage(message);
-	// 	} else if (!ignoreMessageIfNullWebView) {
-	// 		this.leftOverMessage = message;
-	// 	}
-	// }
-
-
 	private logEvent(eventName: string, properties?: {}): void {
 		console.debug(eventName, {
 			// eslint-disable-next-line @typescript-eslint/naming-convention
 			"chatgpt.model": this.model || "unknown", ...properties
 		}, {
 			"chatgpt.properties": properties,
-		});
-	}
-
-	private logError(eventName: string): void {
-		console.error(eventName, {
-			// eslint-disable-next-line @typescript-eslint/naming-convention
-			"chatgpt.model": this.model || "unknown"
 		});
 	}
 
@@ -1010,5 +1034,115 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			content: selection,
 			language
 		};
+	}
+
+	// * For OpenRouter API key exchange
+	// Listen for the OAuth callback from the OpenRouter
+	listenForOpenRouterCallback(code_verifier: string /* , correctState: string */) {
+		// Set up a really simple server to listen for the callback on localhost:7878
+		const server = createServer(async (req, res) => {
+			const url = new URL(req.url ?? '', `http://${req.headers.host}`);
+
+			// OpenRouter OAuth PKCE flow
+			if (url.searchParams.has('code')) {
+				const code = url.searchParams.get('code');
+				const state = url.searchParams.get('state');
+
+				if (code) {
+					if (!this.authStore) {
+						console.error('[PKCE] No auth store found');
+						return;
+					}
+
+					// check if the state matches
+					/* if (state !== correctState) {
+						console.error(`[PKCE] State mismatch. Expected: ${correctState}. Received: ${state}`);
+						return;
+					} */
+
+					// Make a request to the backend to exchange the code for an API key
+					try {
+						// Send the code to the backend with the built-in fetch API
+						const body = JSON.stringify({
+							code,
+							code_verifier,
+						});
+
+						const response = await fetch('https://openrouter.ai/api/v1/auth/keys', {
+							method: 'POST',
+							body,
+							headers: {
+								'Content-Type': 'application/json',
+								"HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
+								"X-Title": "VSCode Reborn AI",
+							},
+						});
+
+						if (response.ok) {
+							const data = await response.json();
+
+							this.setApiKey(data.key);
+
+							res.writeHead(200, { 'Content-Type': 'text/plain' });
+							res.end('API key successfully set. You can close this tab now.');
+						} else {
+							console.error(`Failed to exchange code for API key. Status: ${response.status}`);
+
+							res.writeHead(500, { 'Content-Type': 'text/plain' });
+							res.end('Failed to exchange code for API key');
+						}
+					} catch (error) {
+						console.error(`Error exchanging code for API key: ${error}`);
+
+						res.writeHead(500, { 'Content-Type': 'text/plain' });
+						res.end('Error exchanging code for API key');
+					} finally {
+						// Close the server
+						server.close();
+					}
+				} else {
+					console.error(`No code provided. uri: ${url.toString()}`);
+				}
+			} else {
+				console.error(`No code provided. uri: ${url.toString()}`);
+			}
+		});
+
+		server.listen(7878, 'localhost');
+
+		return server;
+	}
+
+	// Send OAuth PKCE request to the OpenRouter
+	// with callback to const uri = await vscode.env.asExternalUri(vscode.Uri.parse(`${vscode.env.uriScheme}://chris-hayes.chatgpt-reborn`));
+	async generateOpenRouterApiKey() {
+		if (!this.authStore) {
+			console.error("Main Process - AuthStore not initialized");
+			return;
+		}
+
+		const {
+			code_verifier,
+			code_challenge,
+		} = await pkceChallenge(256);
+
+		// Start a server to listen for the callback
+		const server = this.listenForOpenRouterCallback(code_verifier);
+
+		const uri = await vscode.env.asExternalUri(vscode.Uri.parse('http://localhost:7878'));
+		// Can't get the challenge working with openrouter
+		const openRouterAuthUrl = `https://openrouter.ai/auth?callback_url=${uri.toString()}&code_challenge=${code_challenge}&code_challenge_method=S256`;
+
+		vscode.env.openExternal(vscode.Uri.parse(openRouterAuthUrl));
+
+		// timeout the server after 5 minutes
+		setTimeout(() => {
+			if (server) {
+				try {
+					server.close();
+					console.warn('OpenRouter callback server closed (5 min timeout)');
+				} catch (error) { }
+			}
+		}, 300000);
 	}
 }

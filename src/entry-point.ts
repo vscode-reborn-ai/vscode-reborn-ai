@@ -7,7 +7,6 @@ import ChatGptViewProvider from './main';
 * entry-point.ts
 
 This is the entry point for the backend code of the extension.
-
 However, most of the backend code is in the `main.ts` file.
 
 */
@@ -72,10 +71,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		if (e.affectsConfiguration('chatgpt.response.showNotification')) {
 			provider.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
 		}
-
-		if (e.affectsConfiguration('chatgpt.promptPrefix') || e.affectsConfiguration('chatgpt.gpt3.generateCode-enabled') || e.affectsConfiguration('chatgpt.gpt3.model')) {
-			setContext();
-		}
 	});
 
 	const adhocCommand = vscode.commands.registerCommand("vscode-chatgpt.adhoc", async () => {
@@ -107,13 +102,11 @@ export async function activate(context: vscode.ExtensionContext) {
 				});
 
 			if (!dismissed && adhocCommandPrefix?.length > 0) {
-				const currentConversation = provider.currentConversation;
-
-				if (currentConversation) {
+				if (provider.currentConversation) {
 					provider?.sendApiRequest(adhocCommandPrefix, {
 						command: "adhoc",
 						code: selection,
-						conversation: currentConversation,
+						conversation: provider.currentConversation,
 						language: editor.document.languageId,
 					});
 				} else {
@@ -146,7 +139,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// Skip AdHoc - as it was registered earlier
 	const registeredCommands = menuCommands.filter(command => command !== "adhoc" && command !== "generateCode").map((command) => vscode.commands.registerCommand(`vscode-chatgpt.${command}`, () => {
 		const prompt = vscode.workspace.getConfiguration("chatgpt").get<string>(`promptPrefix.${command}`);
 		const editor = vscode.window.activeTextEditor;

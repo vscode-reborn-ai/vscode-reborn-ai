@@ -356,45 +356,88 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                   </span>
                 )}
               </label>
-              <div className="relative flex gap-x-4">
-                <input
-                  type="password"
-                  id="apiKey"
-                  onChange={(event) => debouncedSetApiKey(event.target.value)}
-                  onPaste={(event) =>
-                    handleApiKeyUpdate(
-                      event.clipboardData.getData("text/plain")
-                    )
-                  }
-                  placeholder={apiKeyPlaceholder}
-                  className="flex-grow px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
-                  disabled={apiKeyStatus === ApiKeyStatus.Pending}
-                />
-                {apiKeyStatus === ApiKeyStatus.Pending && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-yellow-500 border border-yellow-500 rounded bg-menu">
-                    Testing...
-                  </span>
-                )}
-                {apiKeyStatus === ApiKeyStatus.Valid && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-menu">
-                    Valid
-                  </span>
-                )}
-                {apiKeyStatus === ApiKeyStatus.Invalid && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-red-500 border border-red-500 rounded bg-menu">
-                    Invalid
-                  </span>
-                )}
-                {apiKeyStatus === ApiKeyStatus.Unknown && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-gray-500 border border-gray-500 rounded bg-menu">
-                    Unknown
-                  </span>
-                )}
-                {apiKeyStatus === ApiKeyStatus.Unset && (
-                  <span className="absolute top-2 right-2 transform px-2 py-0.5 text-gray-500 border border-gray-500 rounded bg-menu">
-                    Unset
-                  </span>
-                )}
+              <div className="flex flex-wrap gap-2 justify-end">
+                <div className="flex-grow relative">
+                  <input
+                    type="password"
+                    id="apiKey"
+                    onChange={(event) => debouncedSetApiKey(event.target.value)}
+                    onPaste={(event) =>
+                      handleApiKeyUpdate(
+                        event.clipboardData.getData("text/plain")
+                      )
+                    }
+                    placeholder={apiKeyPlaceholder}
+                    className="w-full px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
+                    disabled={apiKeyStatus === ApiKeyStatus.Pending}
+                  />
+                  {apiKeyStatus === ApiKeyStatus.Pending && (
+                    <span className="absolute top-2 right-2 transform px-2 py-0.5 text-yellow-500 border border-yellow-500 rounded bg-menu">
+                      Testing...
+                    </span>
+                  )}
+                  {apiKeyStatus === ApiKeyStatus.Valid && (
+                    <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-menu">
+                      Valid
+                    </span>
+                  )}
+                  {apiKeyStatus === ApiKeyStatus.Invalid && (
+                    <span className="absolute top-2 right-2 transform px-2 py-0.5 text-red-500 border border-red-500 rounded bg-menu">
+                      Invalid
+                    </span>
+                  )}
+                  {apiKeyStatus === ApiKeyStatus.Unknown && (
+                    <span className="absolute top-2 right-2 transform px-2 py-0.5 text-gray-500 border border-gray-500 rounded bg-menu">
+                      Unknown
+                    </span>
+                  )}
+                  {apiKeyStatus === ApiKeyStatus.Unset && (
+                    <span className="absolute top-2 right-2 transform px-2 py-0.5 text-gray-500 border border-gray-500 rounded bg-menu">
+                      Unset
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {apiKeyStatus === ApiKeyStatus.Valid && (
+                    <button
+                      className="px-3 py-2 text-sm rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      onClick={() => {
+                        dispatch(setApiKeyStatus(ApiKeyStatus.Unset));
+
+                        debouncedSetApiKey("");
+                      }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {selectedTool === "OpenRouter AI" && (
+                    <button
+                      className="px-3 py-2 text-sm rounded bg-button text-button-secondary hover:bg-button-hover hover:text-button focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      onClick={() => {
+                        // If the current api base url is not OpenRouter, then set it to OpenRouter
+                        if (
+                          settings.gpt3.apiBaseUrl !==
+                          "https://openrouter.ai/api/v1"
+                        ) {
+                          backendMessenger.sendChangeApiUrl(
+                            "https://openrouter.ai/api/v1"
+                          );
+                        }
+
+                        dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
+
+                        // hacky - wait for 500ms to ensure the API URL is set before generating the API key
+                        setTimeout(() => {
+                          backendMessenger.sendGenerateOpenRouterApiKey();
+                        }, 500);
+                      }}
+                    >
+                      {apiKeyStatus === ApiKeyStatus.Valid
+                        ? "Regenerate"
+                        : "Generate New"}
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="text-xs mt-2">
                 {t?.apiKeySetup?.apiKeyNote ??

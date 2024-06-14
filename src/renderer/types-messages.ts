@@ -6,12 +6,14 @@ export enum BackendMessageType {
   // Chat
   addFreeTextQuestion = "addFreeTextQuestion",
   stopGenerating = "stopGenerating",
-  setCurrentConversation = "setCurrentConversation",
   getTokenCount = "getTokenCount",
   editCode = "editCode",
   openNew = "openNew",
   cleargpt3 = "cleargpt3",
   exportToMarkdown = "exportToMarkdown",
+  // Conversation
+  setCurrentConversation = "setCurrentConversation",
+  setConversationList = "setConversationList",
   // Settings
   getSettings = "getSettings",
   openSettings = "openSettings",
@@ -27,6 +29,7 @@ export enum BackendMessageType {
   // API Key
   getApiKeyStatus = "getApiKeyStatus",
   resetApiKey = "resetApiKey",
+  generateOpenRouterApiKey = "generateOpenRouterApiKey",
   // Action
   runAction = "runAction",
   stopAction = "stopAction"
@@ -85,7 +88,7 @@ export interface GetSettingsMessage extends BaseBackendMessage {
 
 export interface ExportToMarkdownMessage extends BaseBackendMessage {
   type: BackendMessageType.exportToMarkdown;
-  conversation: any; // Replace 'any' with the actual type
+  conversation: Conversation;
 }
 
 export interface ChangeApiUrlMessage extends BaseBackendMessage {
@@ -106,6 +109,10 @@ export interface ResetApiKeyMessage extends BaseBackendMessage {
   type: BackendMessageType.resetApiKey;
 }
 
+export interface GenerateOpenRouterApiKeyMessage extends BaseBackendMessage {
+  type: BackendMessageType.generateOpenRouterApiKey;
+}
+
 export interface SetVerbosityMessage extends BaseBackendMessage {
   type: BackendMessageType.setVerbosity;
   verbosity: Verbosity;
@@ -118,19 +125,25 @@ export interface SetShowAllModelsMessage extends BaseBackendMessage {
 
 export interface SetCurrentConversationMessage extends BaseBackendMessage {
   type: BackendMessageType.setCurrentConversation;
-  conversation: any; // Replace 'any' with the actual type
+  conversation: Conversation;
+}
+
+export interface SetConversationListMessage extends BaseBackendMessage {
+  type: BackendMessageType.setConversationList;
+  conversations: Conversation[];
+  currentConversation: Conversation;
 }
 
 export interface GetTokenCountMessage extends BaseBackendMessage {
   type: BackendMessageType.getTokenCount;
-  conversation: any; // Replace 'any' with the actual type
+  conversation: Conversation;
   useEditorSelection?: boolean;
 }
 
 export interface RunActionMessage extends BaseBackendMessage {
   type: BackendMessageType.runAction;
-  actionId: string; // Replace with actual ActionNames enum or type
-  actionOptions?: any; // Replace 'any' with the actual options type if needed
+  actionId: string;
+  actionOptions?: any;
 }
 
 export interface StopActionMessage extends BaseBackendMessage {
@@ -153,6 +166,7 @@ export enum FrontendMessageType {
   exportToMarkdown = "exportToMarkdown",
   // Models
   modelsUpdate = "modelsUpdate",
+  setConversationModel = "setConversationModel",
   // Settings
   settingsUpdate = "settingsUpdate",
   // API Key
@@ -171,6 +185,12 @@ export interface BaseFrontendMessage {
 export interface ModelsUpdateMessage extends BaseFrontendMessage {
   type: FrontendMessageType.modelsUpdate;
   models: Model[];
+}
+
+export interface SetConversationModelMessage extends BaseFrontendMessage {
+  type: FrontendMessageType.setConversationModel;
+  model: Model;
+  conversationId: string;
 }
 
 export interface SettingsUpdateMessage extends BaseFrontendMessage {

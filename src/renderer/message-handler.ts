@@ -6,7 +6,7 @@ import { ActionRunState, setActionError, setActionState } from "./store/action";
 import { setApiKeyStatus, setExtensionSettings, setModels, setTranslations } from "./store/app";
 import { addMessage, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
 import { ActionNames, ChatMessage, Conversation, Role } from "./types";
-import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage } from "./types-messages";
+import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage } from "./types-messages";
 
 export const useBackendMessageHandler = (backendMessenger: any) => {
   const dispatch = useAppDispatch();
@@ -33,7 +33,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
       console.log("Renderer - Received message from main process: ", event.data);
     }
 
-    let message = event.data as ModelsUpdateMessage | SettingsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
+    let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
 
     switch (message.type) {
       case FrontendMessageType.showInProgress:
@@ -240,6 +240,11 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
       case FrontendMessageType.actionError:
         dispatch(setActionError({ error: message?.error, actionId: message?.actionId }));
         break;
+      case FrontendMessageType.setConversationModel:
+        dispatch(setModel({
+          conversationId: message.conversationId,
+          model: message.model
+        }));
       default:
         console.error('Renderer - Uncaught message type: ', (message as BaseFrontendMessage)?.type);
     }

@@ -101,8 +101,12 @@ export class ApiProvider {
         temperature,
         top_p: topP,
         stream: useStream,
+      }, {
+      headers: {
+        "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
+        "X-Title": "VSCode Reborn AI",
       }
-    );
+    });
 
     for await (const chunk of response) {
       if (abortSignal.aborted) {
@@ -143,9 +147,13 @@ export class ApiProvider {
         stream: false,
         max_tokens: completeTokensLeft,
         temperature,
-        top_p: topP,
+        top_p: topP
+      }, {
+      headers: {
+        "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
+        "X-Title": "VSCode Reborn AI",
       }
-    );
+    });
 
     return response.choices[0].message;
   }
@@ -171,8 +179,12 @@ export class ApiProvider {
         temperature,
         top_p: topP,
         stream: false,
+      }, {
+      headers: {
+        "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
+        "X-Title": "VSCode Reborn AI",
       }
-    );
+    });
 
     return {
       id: uuidv4(),
@@ -188,7 +200,7 @@ export class ApiProvider {
     try {
       return encodingForModel(modelId as TiktokenModel);
     } catch (e) {
-      console.info(`Failed to get encoding for model ${modelId}. Using default model ${FALLBACK_MODEL_ID}.`);
+      // This model is not in tiktoken, fallback to default
       return encodingForModel(FALLBACK_MODEL_ID as TiktokenModel);
     }
   }

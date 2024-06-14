@@ -282,6 +282,15 @@
         }
       ]
     },
+    "uriHandler": {
+      "schemes": [
+        "vscode",
+        "vscode-insiders",
+        "code-oss"
+      ],
+      "path": "./out/entry-point.js",
+      "method": "handleUri"
+    },
     "configuration": {
       "title": "ChatGPT",
       "properties": {
@@ -641,6 +650,7 @@
     "marked": "^4.3.0",
     "openai": "^4.47.3",
     "p-timeout": "^6.1.1",
+    "pkce-challenge": "^4.1.0",
     "postcss": "^8.4.21",
     "postcss-loader": "^7.1.0",
     "quick-lru": "^6.1.1",

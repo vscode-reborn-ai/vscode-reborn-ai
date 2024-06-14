@@ -139,6 +139,13 @@ export default ({
     }
   };
 
+  const isInstructModel = useMemo(
+    () =>
+      currentConversation.model?.architecture?.instruct_type ||
+      currentConversation.model?.id.includes("instruct"),
+    [currentConversation.model]
+  );
+
   return (
     <footer
       className={`fixed z-20 bottom-0 w-full flex flex-col gap-y-1 pt-2 bg
@@ -155,7 +162,7 @@ export default ({
                 className="w-5 h-5 mr-2 text stroke-current"
               />
               <span>{t?.questionInputField?.thinking ?? "Thinking..."}</span>
-              {currentConversation.model?.id.includes("instruct") && (
+              {isInstructModel && (
                 <span className="text-xs opacity-50 ml-2">
                   {t?.questionInputField?.streamingOnInstructModels ??
                     "(streaming is disabled on instruct models)"}

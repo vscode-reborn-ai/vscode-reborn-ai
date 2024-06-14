@@ -33,6 +33,7 @@ export default function Tabs({
     {} as Conversation
   );
   const selectRef = React.useRef<HTMLSelectElement>(null);
+  const tabListRef = React.useRef<HTMLUListElement>(null);
   const [showLocalLlmTab, setShowLocalLlmTab] = useState(false);
 
   useEffect(() => {
@@ -110,6 +111,13 @@ export default function Tabs({
 
     // switch to the new conversation
     navigate(`/chat/${encodeURI(newConversation.id)}`);
+
+    // scroll all the way to the right on delay to allow the tab to render
+    setTimeout(() => {
+      if (tabListRef.current) {
+        tabListRef.current.scrollLeft = tabListRef.current.scrollWidth;
+      }
+    }, 100);
   };
 
   return (
@@ -160,7 +168,11 @@ export default function Tabs({
       {/* Wider tab layout */}
       <div className={`${tabs.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
         <nav className="flex justify-between gap-2 py-1 px-1 xs:px-4">
-          <ul className="flex gap-2 overflow-x-auto" aria-label="Tabs">
+          <ul
+            ref={tabListRef}
+            className="flex gap-2 overflow-x-auto"
+            aria-label="Tabs"
+          >
             {/* /api */}
             <li>
               <Link
@@ -255,9 +267,9 @@ export default function Tabs({
                 </li>
               ))}
             {/* create new chat button */}
-            <li className="flex items-center sticky right-0 pl-4 -ml-2 bg-gradient-to-r from-transparent to-bg to-20%">
+            <li className="flex items-center sticky right-0 pl-4 -ml-2 bg-gradient-to-r from-transparent to-bg to-20% pointer-events-none">
               <button
-                className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-2xs rounded"
+                className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-2xs rounded pointer-events-auto"
                 onClick={createNewConversation}
               >
                 <Icon icon="plus" className="w-4 h-4" />

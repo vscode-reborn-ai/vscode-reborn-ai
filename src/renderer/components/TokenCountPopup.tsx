@@ -130,7 +130,7 @@ export default function TokenCountPopup({
           <a
             href={
               settings.gpt3.apiBaseUrl.includes("openrouter.ai")
-                ? "https://openrouter.ai/docs/models"
+                ? `https://openrouter.ai/models/${currentConversation.model?.id}`
                 : "https://openai.com/pricing"
             }
             target="_blank"

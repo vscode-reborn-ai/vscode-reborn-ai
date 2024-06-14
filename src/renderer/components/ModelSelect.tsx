@@ -50,6 +50,7 @@ export default function ModelSelect({
   const [sortBy, setSortBy] = useState<
     "name" | "cost" | "context" | "completion"
   >("name");
+  const [ascending, setAscending] = useState(true);
 
   const hasOpenAIModels = useMemo(() => {
     // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-3.5-turbo
@@ -70,87 +71,6 @@ export default function ModelSelect({
       models.some((model) => model.id === currentConversation.model?.id)
     );
   }, [models, currentConversation.model]);
-
-  // Note: sorts the list in place
-  const sortList = useCallback(
-    (sortBy: "name" | "cost" | "context" | "completion", list: Model[]) => {
-      switch (sortBy) {
-        case "name":
-          return list.sort((a, b) =>
-            (a?.name ?? a.id).localeCompare(b?.name ?? b.id)
-          );
-        case "cost":
-          return list.sort((a, b) => {
-            const aCost = getModelRates(a).prompt + getModelRates(a).complete;
-            const bCost = getModelRates(b).prompt + getModelRates(b).complete;
-            return aCost - bCost;
-          });
-        case "context":
-          return list.sort(
-            (a, b) => getModelContextLimit(b) - getModelContextLimit(a)
-          );
-        case "completion":
-          return list.sort(
-            (a, b) => getModelCompletionLimit(b) - getModelCompletionLimit(a)
-          );
-        default:
-          return list;
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    const sortedModels: Model[] = Object.assign([], models);
-
-    sortList(sortBy, sortedModels);
-
-    setFilteredModels(sortedModels);
-  }, [models, sortBy]);
-
-  const currentModelFriendlyName = useMemo(() => {
-    let friendlyName =
-      currentConversation.model?.name ??
-      (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
-        ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
-        : currentConversation.model?.id ?? settings?.gpt3?.model) ??
-      "No model selected";
-
-    // if the friendly has a slash (ie perplexity/model-name), ignore everything before the slash
-    if (friendlyName.includes("/")) {
-      friendlyName = friendlyName.split("/")[1];
-    }
-
-    //  if the friendly name has a colon (ie model-name:version), ignore everything after the colon
-    if (friendlyName.includes(":")) {
-      friendlyName = friendlyName.split(":")[0];
-    }
-
-    return friendlyName;
-  }, [currentConversation.model, settings]);
-
-  useEffect(() => {
-    const sortedModels: Model[] = Object.assign([], models);
-
-    sortList(sortBy, sortedModels);
-
-    setFilteredModels(sortedModels);
-  }, [models]);
-
-  const setModel = (model: Model) => {
-    // Update settings
-    backendMessenger.sendModelUpdate(model);
-
-    dispatch(
-      updateConversationModel({
-        conversationId: currentConversation.id,
-        model,
-      })
-    );
-
-    // Close the menu
-    setShowModels(false);
-  };
 
   // computed model costs for all models
   interface ComputedModelData {
@@ -190,6 +110,102 @@ export default function ModelSelect({
     return costs;
   }, [models]);
 
+  // returns sorted list of models
+  const sortList = useCallback(
+    (
+      sortBy: "name" | "cost" | "context" | "completion",
+      list: Model[],
+      reverse: boolean
+    ) => {
+      const sortedModels: Model[] = Object.assign([], list);
+
+      switch (sortBy) {
+        case "name":
+          sortedModels.sort((a, b) =>
+            (a?.name ?? a.id).localeCompare(b?.name ?? b.id)
+          );
+          break;
+        case "cost":
+          sortedModels.sort((a, b) => {
+            const aModelData = computedModelDataMap.get(a.id);
+            const bModelData = computedModelDataMap.get(b.id);
+
+            const aCost =
+              (aModelData?.prompt ?? 0) + (aModelData?.complete ?? 0);
+            const bCost =
+              (bModelData?.prompt ?? 0) + (bModelData?.complete ?? 0);
+
+            return aCost - bCost;
+          });
+          break;
+        case "context":
+          sortedModels.sort((a, b) => {
+            const aModelData = computedModelDataMap.get(a.id);
+            const bModelData = computedModelDataMap.get(b.id);
+
+            return (
+              (bModelData?.promptLimit ?? 128000) -
+              (aModelData?.promptLimit ?? 128000)
+            );
+          });
+          break;
+        case "completion":
+          sortedModels.sort((a, b) => {
+            const aModelData = computedModelDataMap.get(a.id);
+            const bModelData = computedModelDataMap.get(b.id);
+
+            return (
+              (bModelData?.completeLimit ?? 4096) -
+              (aModelData?.completeLimit ?? 4096)
+            );
+          });
+      }
+
+      if (reverse) {
+        sortedModels.reverse();
+      }
+
+      return sortedModels;
+    },
+    [computedModelDataMap]
+  );
+
+  const currentModelFriendlyName = useMemo(() => {
+    let friendlyName =
+      currentConversation.model?.name ??
+      (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
+        ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
+        : currentConversation.model?.id ?? settings?.gpt3?.model) ??
+      "No model selected";
+
+    // if the friendly has a slash (ie perplexity/model-name), ignore everything before the slash
+    if (friendlyName.includes("/")) {
+      friendlyName = friendlyName.split("/")[1];
+    }
+
+    //  if the friendly name has a colon (ie model-name:version), ignore everything after the colon
+    if (friendlyName.includes(":")) {
+      friendlyName = friendlyName.split(":")[0];
+    }
+
+    return friendlyName;
+  }, [currentConversation.model, settings]);
+
+  const setModel = (model: Model) => {
+    // Update settings
+    backendMessenger.sendModelUpdate(model);
+
+    dispatch(
+      updateConversationModel({
+        conversationId: currentConversation.id,
+        model,
+      })
+    );
+
+    // Close the menu
+    setShowModels(false);
+  };
+
   const modelSearchHandler = useCallback(
     (e: any) => {
       const query = e.target.value.toLowerCase();
@@ -205,13 +221,14 @@ export default function ModelSelect({
             )
           : modelList;
 
-      sortList(sortBy, filteredModelList);
-
-      setFilteredModels(filteredModelList);
-      setFilteredModels(filteredModelList);
+      setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
     },
     [models]
   );
+
+  useEffect(() => {
+    setFilteredModels(sortList(sortBy, models, !ascending));
+  }, [models, sortBy, ascending]);
 
   return (
     <>
@@ -346,7 +363,13 @@ export default function ModelSelect({
                                 "bg-menu-selection": sortBy === "name",
                               }
                             )}
-                            onClick={() => setSortBy("name")}
+                            onClick={() => {
+                              if (sortBy === "name") {
+                                setAscending(!ascending);
+                              }
+
+                              setSortBy("name");
+                            }}
                           >
                             Name
                           </button>
@@ -357,7 +380,13 @@ export default function ModelSelect({
                                 "bg-menu-selection": sortBy === "cost",
                               }
                             )}
-                            onClick={() => setSortBy("cost")}
+                            onClick={() => {
+                              if (sortBy === "cost") {
+                                setAscending(!ascending);
+                              }
+
+                              setSortBy("cost");
+                            }}
                           >
                             Cost
                           </button>
@@ -368,7 +397,13 @@ export default function ModelSelect({
                                 "bg-menu-selection": sortBy === "context",
                               }
                             )}
-                            onClick={() => setSortBy("context")}
+                            onClick={() => {
+                              if (sortBy === "context") {
+                                setAscending(!ascending);
+                              }
+
+                              setSortBy("context");
+                            }}
                           >
                             Context
                           </button>
@@ -379,7 +414,13 @@ export default function ModelSelect({
                                 "bg-menu-selection": sortBy === "completion",
                               }
                             )}
-                            onClick={() => setSortBy("completion")}
+                            onClick={() => {
+                              if (sortBy === "completion") {
+                                setAscending(!ascending);
+                              }
+
+                              setSortBy("completion");
+                            }}
                           >
                             Completion
                           </button>

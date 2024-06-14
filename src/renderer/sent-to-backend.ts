@@ -1,5 +1,5 @@
 import { Conversation, Model, Verbosity } from "./types";
-import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage } from "./types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage } from "./types-messages";
 
 export function useMessenger(vscode: any) {
   const sendMessageToBackend = (type: string, data: any = {}) => {
@@ -37,10 +37,16 @@ export function useMessenger(vscode: any) {
   };
 
   // * SET
-  const sendSetCurrentConversation = (conversation: any) => {
+  const sendSetCurrentConversation = (conversation: Conversation) => {
     sendMessageToBackend(BackendMessageType.setCurrentConversation, {
       conversation
     } as SetCurrentConversationMessage);
+  };
+  const sendConversationList = (conversations: Conversation[], currentConversation: Conversation) => {
+    sendMessageToBackend(BackendMessageType.setConversationList, {
+      conversations,
+      currentConversation
+    } as SetConversationListMessage);
   };
   const sendRunAction = (actionId: string, actionOptions: any = {}) => {
     sendMessageToBackend(BackendMessageType.runAction, {
@@ -83,6 +89,9 @@ export function useMessenger(vscode: any) {
     } as ExportToMarkdownMessage);
   };
   const sendResetApiKey = () => sendMessageToBackend(BackendMessageType.resetApiKey);
+  const sendGenerateOpenRouterApiKey = () => {
+    sendMessageToBackend(BackendMessageType.generateOpenRouterApiKey);
+  };
   const sendAddFreeTextQuestion = (options: {
     conversation: Conversation,
     question: string,
@@ -113,10 +122,12 @@ export function useMessenger(vscode: any) {
     sendGetSettings,
     sendGetModels,
     sendGetApiKeyStatus,
+    sendGenerateOpenRouterApiKey,
     sendGetTokenCount,
 
     sendModelUpdate,
     sendSetCurrentConversation,
+    sendConversationList,
     sendRunAction,
     sendStopAction,
     sendChangeApiUrl,

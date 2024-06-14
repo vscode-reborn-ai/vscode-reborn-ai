@@ -1,7 +1,6 @@
 import fs from "fs";
 import upath from 'upath';
 import * as vscode from 'vscode';
-import { Model } from "./renderer/types";
 
 export function readDirRecursively(dir: string, maxDepth: number, currentDepth: number = 0): string[] {
   if (currentDepth > maxDepth) {
@@ -52,7 +51,7 @@ const deprecatedModelMap = new Map<string, string>([
   ['gpt-4-32k', 'gpt-4'],
 ]);
 
-function getUpdatedModel(modelId: string): string {
+export function getUpdatedModel(modelId: string): string {
   // Replace deprecated model with the newer equivalent
   return deprecatedModelMap.get(modelId) || modelId;
 }
@@ -68,21 +67,4 @@ export function getSelectedModelId(): string {
   }
 
   return updatedModelId;
-}
-
-export async function updateSelectedModel(newModel: Model): Promise<Model> {
-  // Check and update the model if it's deprecated
-  const updatedModelId = getUpdatedModel(newModel.id);
-
-  await vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", updatedModelId, vscode.ConfigurationTarget.Global);
-
-  if (newModel.id !== updatedModelId) {
-    console.debug(`Updated deprecated model "${newModel.id}" to "${updatedModelId}".`);
-    return {
-      ...newModel,
-      id: updatedModelId,
-    };
-  }
-
-  return newModel;
 }
