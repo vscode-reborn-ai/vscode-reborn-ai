@@ -1,7 +1,6 @@
 import fs from "fs";
 import upath from 'upath';
 import * as vscode from 'vscode';
-import { Model } from "./renderer/types";
 
 export function readDirRecursively(dir: string, maxDepth: number, currentDepth: number = 0): string[] {
   if (currentDepth > maxDepth) {
@@ -43,42 +42,29 @@ export function listItems(currentProjectDir: string): string[] {
   return filteredItems;
 }
 
-const deprecatedModelMap = new Map<string, Model>([
+const deprecatedModelMap = new Map<string, string>([
   // Legacy - gpt-4-turbo is no longer in preview, use the latest model alias
-  ['gpt-4-1106-preview', Model.gpt_4_turbo],
+  ['gpt-4-1106-preview', 'gpt-4-turbo'],
   // Legacy - All gpt-3.5-turbo models are now 16k
-  ['gpt-3.5-turbo-16k', Model.gpt_35_turbo],
+  ['gpt-3.5-turbo-16k', 'gpt-3.5-turbo'],
   // With gpt-4o and gpt-4-turbo, this model is of limited use
-  ['gpt-4-32k', Model.gpt_4],
+  ['gpt-4-32k', 'gpt-4'],
 ]);
 
-function getUpdatedModel(model: string): string {
+export function getUpdatedModel(modelId: string): string {
   // Replace deprecated model with the newer equivalent
-  return deprecatedModelMap.get(model) || model;
+  return deprecatedModelMap.get(modelId) || modelId;
 }
 
-export function getSelectedModel(): string {
+export function getSelectedModelId(): string {
   // Fetch the current model and update if it's deprecated
-  const currentModel = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model", 'gpt-4-turbo');
-  const updatedModel = getUpdatedModel(currentModel);
+  const currentModelId = vscode.workspace.getConfiguration("chatgpt").get("gpt3.model", 'gpt-4-turbo');
+  const updatedModelId = getUpdatedModel(currentModelId);
 
-  if (currentModel !== updatedModel) {
-    vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", updatedModel, vscode.ConfigurationTarget.Global);
-    console.debug(`Updated deprecated model "${currentModel}" to "${updatedModel}".`);
+  if (currentModelId !== updatedModelId) {
+    vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", updatedModelId, vscode.ConfigurationTarget.Global);
+    console.debug(`Updated deprecated model "${currentModelId}" to "${updatedModelId}".`);
   }
 
-  return updatedModel;
-}
-
-export async function updateSelectedModel(newModel: string): Promise<string> {
-  // Check and update the model if it's deprecated
-  const updatedModel = getUpdatedModel(newModel);
-
-  await vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", updatedModel, vscode.ConfigurationTarget.Global);
-
-  if (newModel !== updatedModel) {
-    console.debug(`Updated deprecated model "${newModel}" to "${updatedModel}".`);
-  }
-
-  return updatedModel;
+  return updatedModelId;
 }

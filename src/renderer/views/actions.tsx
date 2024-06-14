@@ -1,11 +1,12 @@
 import React from "react";
 import ActionItem from "../components/ActionItem";
 import { useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { Action } from "../store/action";
 
 export default function Actions({ vscode }: { vscode: any }) {
-  const t = useAppSelector((state: any) => state.app.translations);
-  const actions = useAppSelector((state: any) => state.action.actionList);
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const actions = useAppSelector((state: RootState) => state.action.actionList);
 
   return (
     <div className="h-full overflow-y-auto flex flex-col">

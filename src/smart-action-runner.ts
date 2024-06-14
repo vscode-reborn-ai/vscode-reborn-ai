@@ -2,17 +2,26 @@ import fs from "fs";
 import upath from 'upath';
 import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
-import { ApiProvider } from "./api-provider";
-import { ActionNames, Conversation, Message, Model, Role } from "./renderer/types";
-import { listItems } from "./utils";
+import { listItems } from "./helpers";
+import { ApiProvider } from "./openai-api-provider";
+import { ActionNames, ChatMessage, Conversation, Role } from "./renderer/types";
+
+/*
+
+* smart-action-runner.ts
+
+High-level module responsible for running "smart" / complex actions.
+For example: Create a README.md file from the package.json (with chatgpt).
+
+*/
 
 export class ActionRunner {
-  public static runAction(actionName: ActionNames, apiProvider: ApiProvider, systemContext: string, controller: AbortController): Promise<void> {
+  public static runAction(actionName: ActionNames, apiProvider: ApiProvider, systemContext: string, controller: AbortController, options?: any): Promise<void> {
     const action = ActionRunner.getAction(actionName);
     if (!action) {
       throw new Error(`Action ${actionName} not found`);
     }
-    return action.run(apiProvider, systemContext, controller);
+    return action.run(apiProvider, systemContext, controller, options ?? {});
   }
 
   private static getAction(actionName: ActionNames): Action | undefined {
@@ -23,6 +32,8 @@ export class ActionRunner {
         return new ReadmeFromFileStructure() as Action;
       case ActionNames.createGitignore:
         return new GitignoreAction() as Action;
+      case ActionNames.createConversationTitle:
+        return new RetitleAction() as Action;
       default:
         console.error(`Action ${actionName} not found`);
         return undefined;
@@ -34,7 +45,29 @@ class Action {
 
   // async iterator
   protected async* streamChatCompletion(apiProvider: ApiProvider, systemContext: string, prompt: string, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
-    const systemMessage: Message = {
+    let modelId = 'gpt-3.5-turbo';
+    const supportedModels = (await apiProvider.getModelList());
+    const supportedModelIds = supportedModels.map((m) => m.id);
+
+    if (supportedModelIds.includes('gpt-4')) {
+      modelId = 'gpt-4';
+    }
+
+    if (supportedModelIds.includes('gp-3.5-turbo')) {
+      modelId = 'gpt-3.5-turbo';
+    }
+
+    if (supportedModelIds.includes('gpt-4-turbo')) {
+      modelId = 'gpt-4-turbo';
+    }
+
+    if (supportedModelIds.includes('gpt-4o')) {
+      modelId = 'gpt-4o';
+    }
+
+    const model = supportedModels.find((m) => m.id === modelId);
+
+    const systemMessage: ChatMessage = {
       id: uuidv4(),
       content: systemContext,
       rawContent: systemContext,
@@ -42,7 +75,7 @@ class Action {
       createdAt: Date.now(),
     };
 
-    const message: Message = {
+    const message: ChatMessage = {
       id: uuidv4(),
       content: prompt,
       rawContent: prompt,
@@ -55,7 +88,7 @@ class Action {
       messages: [systemMessage, message],
       createdAt: Date.now(),
       inProgress: true,
-      model: Model.gpt_35_turbo,
+      model,
       autoscroll: true,
     };
 
@@ -66,8 +99,9 @@ class Action {
 
   public run(apiProvider: ApiProvider,
     systemContext: string,
-    controller: AbortController
-  ): Promise<void> {
+    controller: AbortController,
+    options?: any
+  ): Promise<any> {
     throw new Error('Not implemented');
   }
 }
@@ -306,5 +340,53 @@ Please ensure the .gitignore file is well-organized, easy to understand. The typ
     } finally {
       writeStream.end();
     }
+  }
+}
+
+// TODO: this doesn't need to be streamed
+class RetitleAction extends Action {
+  public async run(apiProvider: ApiProvider,
+    systemContext: string,
+    controller: AbortController,
+    options: {
+      messageText: string;
+      conversationId: string;
+    }
+  ): Promise<{
+    newTitle: string | undefined;
+    conversationId: string;
+  }> {
+    if (!options.messageText) {
+      throw new Error('No user message provided.');
+    }
+
+    const prompt = options.messageText;
+    const systemContextModified = 'Derive a concise conversation title from the provided user question and assistant response. ONLY respond with a 2 or 3 word title. For context, conversations are normally about software development. Shorter is better. Prepend an appropriate emoji to the title.';
+    let title: string | undefined = '';
+
+    try {
+      for await (const token of this.streamChatCompletion(apiProvider, systemContextModified, prompt, controller.signal)) {
+        title += token;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    // remove any leading/trailing whitespace
+    title = title.trim();
+    // remove any double quotes
+    title = title.replace(/"/g, '');
+    // Truncate to 50 characters
+    title = title.slice(0, 25);
+
+    // Avoid renaming to empty string if rename fails
+    if (title.length < 3) {
+      title = undefined;
+    }
+
+    return {
+      newTitle: title,
+      conversationId: options.conversationId
+    };
   }
 }

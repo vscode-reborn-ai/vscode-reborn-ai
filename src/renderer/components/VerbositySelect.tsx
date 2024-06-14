@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
+import { RootState } from "../store";
 import { setVerbosity } from "../store/conversation";
 import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
@@ -20,8 +22,9 @@ export default function VerbositySelect({
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
-  const t = useAppSelector((state: any) => state.app.translations);
+  const t = useAppSelector((state: RootState) => state.app.translations);
   const [showOptions, setShowOptions] = useState(false);
+  const backendMessenger = useMessenger(vscode);
 
   const getHumanFriendlyLabel = (verbosity: Verbosity) => {
     switch (verbosity) {
@@ -52,7 +55,7 @@ export default function VerbositySelect({
   return (
     <>
       <div
-        className={`relative ${className}`}
+        className={`${className}`}
         data-tooltip-id={tooltipId ?? "footer-tooltip"}
         data-tooltip-content={
           t?.verbosity?.parentTooltip ??
@@ -73,7 +76,7 @@ export default function VerbositySelect({
         <div
           className={`fixed border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10
           ${showOptions ? "block" : "hidden"}
-          ${dropdownClassName ? dropdownClassName : "bottom-8 -ml-11"}
+          ${dropdownClassName ? dropdownClassName : "mb-8 -ml-11"}
         `}
         >
           {Object.values(Verbosity).map((option) => (
@@ -89,10 +92,7 @@ export default function VerbositySelect({
                 );
 
                 // Update settings
-                vscode.postMessage({
-                  type: "setVerbosity",
-                  value: option,
-                });
+                backendMessenger.sendSetVerbosity(option);
 
                 // Close the menu
                 setShowOptions(false);

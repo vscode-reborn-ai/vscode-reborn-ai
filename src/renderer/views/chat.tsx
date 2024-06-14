@@ -5,8 +5,10 @@ import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
+import { RootState } from "../store";
 import { setAutoscroll, updateMessageContent } from "../store/conversation";
-import { Conversation, Message, Role } from "../types";
+import { ChatMessage, Conversation, Role } from "../types";
 
 export default function Chat({
   conversation,
@@ -18,14 +20,17 @@ export default function Chat({
   vscode: any;
 }) {
   const dispatch = useAppDispatch();
-  const t = useAppSelector((state: any) => state.app.translations);
-  const debug = useAppSelector((state: any) => state.app.debug);
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const debug = useAppSelector((state: RootState) => state.app.debug);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
   const conversationListRef = React.useRef<HTMLDivElement>(null);
   const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
     null
   );
   const editingMessageRef = React.useRef<HTMLTextAreaElement>(null);
+  const backendMessenger = useMessenger(vscode);
 
   (window as any)?.marked?.setOptions({
     renderer: new ((window as any)?.marked).Renderer(),
@@ -96,7 +101,7 @@ export default function Chat({
             second: "2-digit",
           })}
           <br />
-          Conversation Model: {conversation?.model}
+          Conversation Model: {conversation.model?.id}
           <br />
           Conversation inProgress: {conversation?.inProgress ? "true" : "false"}
         </div>
@@ -119,10 +124,10 @@ export default function Chat({
         >
           {conversation.messages
             .filter(
-              (message: Message) =>
+              (message: ChatMessage) =>
                 debug || (message.role !== Role.system && message.content)
             )
-            .map((message: Message, index: number) => {
+            .map((message: ChatMessage, index: number) => {
               return (
                 <div
                   className={`w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative
@@ -157,17 +162,17 @@ export default function Chat({
                             data-tooltip-content="Send this prompt"
                             onClick={() => {
                               const newQuestion =
-                                editingMessageRef.current?.value;
+                                editingMessageRef.current?.value ?? "";
 
-                              vscode.postMessage({
-                                type: "addFreeTextQuestion",
-                                value: newQuestion,
+                              backendMessenger.sendAddFreeTextQuestion({
+                                conversation,
+                                question: newQuestion,
+                                includeEditorSelection: false,
                                 questionId: message.id,
                                 // get message that comes after this one
                                 // Note - "2" is used here because the system message at [0] is removed before this map() function is called
                                 messageId:
                                   conversation.messages[index + 2]?.id ?? "",
-                                conversation: conversation,
                                 code: message?.questionCode ?? "",
                               });
 
@@ -221,6 +226,24 @@ export default function Chat({
                             {line}
                           </p>
                         ))}
+                      {message.rawContent.includes("Premature close") &&
+                        settings?.gpt3.apiBaseUrl.includes(
+                          "localhost:5000"
+                        ) && (
+                          <p className="py-1 text-xs">
+                            It looks like you're running{" "}
+                            <code className="text-xs">
+                              text-generation-webui
+                            </code>
+                            . If you're getting "Premature close" errors, you
+                            may be forgetting to load a model in the webui
+                            before trying to use the API. To do that, go to{" "}
+                            <a href="http://127.0.0.1:7860">
+                              http://127.0.0.1:7860
+                            </a>{" "}
+                            &gt; Model.
+                          </p>
+                        )}
                     </div>
                   ) : (
                     <div>

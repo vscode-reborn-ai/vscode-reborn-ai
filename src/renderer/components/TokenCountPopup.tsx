@@ -1,7 +1,15 @@
 import clsx from "clsx";
 import React, { useEffect, useState } from "react";
+import {
+  getModelCompletionLimit,
+  getModelContextLimit,
+  getModelRates,
+} from "../helpers";
 import { useAppSelector } from "../hooks";
-import { Conversation, MODEL_COSTS, MODEL_TOKEN_LIMITS, Model } from "../types";
+import { RootState } from "../store";
+import { Conversation } from "../types";
+
+const FALLBACK_MODEL_ID = "gpt-4-turbo";
 
 export default function TokenCountPopup({
   currentConversation,
@@ -16,46 +24,53 @@ export default function TokenCountPopup({
   setTokenCountLabel: React.Dispatch<React.SetStateAction<string>>;
   className?: string;
 }) {
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
-  const t = useAppSelector((state: any) => state.app.translations);
-  const [minCost, setMinCost] = useState(0);
-  const [maxCost, setMaxCost] = useState(0);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const [minCost, setMinCost] = useState<number | undefined>(undefined);
+  const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
   const [minPromptTokens, setMinPromptTokens] = useState(
     currentConversation.tokenCount?.minTotal ?? 0
   );
   const [maxCompleteTokens, setMaxCompleteTokens] = useState(0);
-  const [promptRate, setPromptRate] = useState(0);
-  const [completeRate, setCompleteRate] = useState(0);
+  const [promptRate, setPromptRate] = useState<number | undefined>(undefined);
+  const [completeRate, setCompleteRate] = useState<number | undefined>(
+    undefined
+  );
 
   // On model change and token count change, update the token count label
   useEffect(() => {
     const minPromptTokens =
       (currentConversation.tokenCount?.messages ?? 0) +
       (currentConversation.tokenCount?.userInput ?? 0);
-    const modelContextLimit =
-      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo]
-        .context;
+    const modelId = currentConversation.model?.id ?? FALLBACK_MODEL_ID;
 
-    const modelMax =
-      MODEL_TOKEN_LIMITS[currentConversation.model ?? Model.gpt_35_turbo].max;
+    // Limits
+    const modelContextLimit = getModelContextLimit(currentConversation.model);
+    const modelMax = getModelCompletionLimit(currentConversation.model);
     let maxCompleteTokens = modelContextLimit - minPromptTokens;
 
     if (modelMax) {
       maxCompleteTokens = Math.min(maxCompleteTokens, modelMax);
     }
 
-    let ratePrompt =
-      MODEL_COSTS[currentConversation.model ?? Model.gpt_35_turbo].prompt;
-    let rateComplete =
-      MODEL_COSTS[currentConversation.model ?? Model.gpt_35_turbo].complete;
-    let minCost = (minPromptTokens / 1000) * ratePrompt;
+    // Rates
+    const rates = getModelRates(currentConversation.model);
+    let minCost =
+      rates.prompt !== undefined
+        ? (minPromptTokens / 1000) * rates.prompt
+        : undefined;
     // maxCost is based on current convo text at ratePrompt pricing + theoretical maximum response at rateComplete pricing
-    let maxCost = minCost + (maxCompleteTokens / 1000) * rateComplete;
+    let maxCost =
+      minCost !== undefined && rates.complete !== undefined
+        ? minCost + (maxCompleteTokens / 1000) * rates.complete
+        : undefined;
 
     setMinPromptTokens(minPromptTokens);
     setMaxCompleteTokens(maxCompleteTokens);
-    setPromptRate(ratePrompt);
-    setCompleteRate(rateComplete);
+    setPromptRate(rates.prompt);
+    setCompleteRate(rates.complete);
     setMinCost(minCost);
     setMaxCost(maxCost);
     setTokenCountLabel(minPromptTokens.toString());
@@ -65,7 +80,7 @@ export default function TokenCountPopup({
     <div
       className={clsx(
         "TokenCountPopup",
-        "absolute w-[calc(100% - 3em) max-w-[25em] items-center border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10 bottom-6 right-4",
+        "mb-4 absolute w-[calc(100% - 3em) max-w-[25em] items-center border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10 right-4",
         className,
         showTokenBreakdown ? "block" : "hidden"
       )}
@@ -92,8 +107,8 @@ export default function TokenCountPopup({
           </span>
           <code>{minPromptTokens}</code>{" "}
           {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
-            "tokens which is"}
-          <code> ${minCost?.toFixed(4) ?? 0}</code>
+            "tokens which is "}
+          <code>${minCost?.toFixed(4) ?? "???"}</code>
         </p>
         <p>
           <span className="block">
@@ -107,25 +122,35 @@ export default function TokenCountPopup({
               <br />(
               <code>{currentConversation.tokenCount?.messages ?? 0}</code> +{" "}
               <code>{currentConversation.tokenCount?.userInput ?? 0}</code> +{" "}
-              <code>{maxCompleteTokens})</code>
+              <code>{maxCompleteTokens}</code>)
             </span>
           </span>
           <code>{minPromptTokens + maxCompleteTokens}</code>{" "}
           {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
-            "tokens which is"}
-          <code> ${maxCost?.toFixed(4) ?? 0}</code>
+            "tokens which is "}
+          <code>${maxCost?.toFixed(4) ?? "???"}</code>
         </p>
         <p>
           {t?.questionInputField?.tokenBreakdownBasedOn ??
             "This is calculated based on"}{" "}
-          <code>{currentConversation.model ?? Model.gpt_35_turbo}</code>
+          <code>{currentConversation.model?.id ?? "gpt-3.5-turbo"}</code>
           's{" "}
-          <a href="https://openai.com/pricing" target="_blank" rel="noreferrer">
+          <a
+            href={
+              settings.gpt3.apiBaseUrl.includes("openrouter.ai")
+                ? `https://openrouter.ai/models/${currentConversation.model?.id}`
+                : "https://openai.com/pricing"
+            }
+            target="_blank"
+            rel="noreferrer"
+          >
             {t?.questionInputField?.tokenBreakdownPricing ?? "pricing"}
           </a>{" "}
           {t?.questionInputField?.tokenBreakdownForPromptsAndCompletions ??
             "for prompts and completions."}
-          {`(prompt: $${promptRate} / 1000 tokens, completion: $${completeRate} / 1000 tokens)`}
+          {`(prompt: $${promptRate ?? "???"} / 1000 tokens, completion: $${
+            completeRate ?? "???"
+          } / 1000 tokens)`}
         </p>
         <p className="italic">
           {t?.questionInputField?.tokenBreakdownRecommendation ??
@@ -133,16 +158,16 @@ export default function TokenCountPopup({
         </p>
 
         {/* if gpt-4 or gpt-4-32k is the model, add an additional warning about cost */}
-        {(currentConversation.model === Model.gpt_4 ||
-          currentConversation.model === Model.gpt_4_32k) && (
+        {(currentConversation.model?.id === "gpt-4" ||
+          currentConversation.model?.id === "gpt-4-32k") && (
           <p className="font-bold">
             {t?.questionInputField?.tokenBreakdownGpt4Warning ??
               `Warning: You are currently using ${
-                currentConversation.model
+                currentConversation.model?.id
               }, which is ${
-                currentConversation.model === Model.gpt_4
+                currentConversation.model?.id === "gpt-4"
                   ? "30x"
-                  : currentConversation.model === Model.gpt_4_32k
+                  : currentConversation.model?.id === "gpt-4-32k"
                   ? "60x"
                   : "3x"
               } more expensive than gpt-3.5-turbo. Consider using gpt-4-turbo, which is 3x cheaper than gpt-4 and 6x cheaper than gpt-4-32k.`}
@@ -150,7 +175,7 @@ export default function TokenCountPopup({
         )}
 
         {/* gpt_4_turbo cost warning */}
-        {currentConversation.model === Model.gpt_4_turbo && (
+        {currentConversation.model?.id === "gpt-4-turbo" && (
           <p className="font-bold">
             {t?.questionInputField?.tokenBreakdownGpt4TurboWarning ??
               `Note: You are currently using gpt-4-turbo. Keep in mind that gpt-3.5-turbo is still 10x cheaper.`}

@@ -1,6 +1,15 @@
 import * as vscode from "vscode";
-import ChatGptViewProvider from './chatgpt-view-provider';
-import { getSelectedModel } from "./utils";
+import { getSelectedModelId } from "./helpers";
+import ChatGptViewProvider from './main';
+
+/*
+
+* entry-point.ts
+
+This is the entry point for the backend code of the extension.
+However, most of the backend code is in the `main.ts` file.
+
+*/
 
 const menuCommands = [
 	"addTests", "findProblems", "optimize", "explain",
@@ -43,12 +52,15 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	const resetThread = vscode.commands.registerCommand("vscode-chatgpt.clearConversation", async () => {
-		provider?.sendMessage({ type: 'clearConversation' }, true);
+		provider.clearConversation();
 	});
 
 	const exportConversation = vscode.commands.registerCommand("vscode-chatgpt.exportConversation", async () => {
 		const currentConversation = provider.currentConversation;
-		provider?.sendMessage({ type: 'exportToMarkdown', conversation: currentConversation }, true);
+
+		if (currentConversation) {
+			await provider.exportToMarkdown(currentConversation);
+		}
 	});
 
 	const clearSession = vscode.commands.registerCommand("vscode-chatgpt.clearSession", () => {
@@ -58,14 +70,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	const configChanged = vscode.workspace.onDidChangeConfiguration(e => {
 		if (e.affectsConfiguration('chatgpt.response.showNotification')) {
 			provider.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
-		}
-
-		if (e.affectsConfiguration('chatgpt.gpt3.model')) {
-			provider.model = getSelectedModel();
-		}
-
-		if (e.affectsConfiguration('chatgpt.promptPrefix') || e.affectsConfiguration('chatgpt.gpt3.generateCode-enabled') || e.affectsConfiguration('chatgpt.gpt3.model')) {
-			setContext();
 		}
 	});
 
@@ -98,13 +102,11 @@ export async function activate(context: vscode.ExtensionContext) {
 				});
 
 			if (!dismissed && adhocCommandPrefix?.length > 0) {
-				const currentConversation = provider.currentConversation;
-
-				if (currentConversation) {
+				if (provider.currentConversation) {
 					provider?.sendApiRequest(adhocCommandPrefix, {
 						command: "adhoc",
 						code: selection,
-						conversation: currentConversation,
+						conversation: provider.currentConversation,
 						language: editor.document.languageId,
 					});
 				} else {
@@ -137,7 +139,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// Skip AdHoc - as it was registered earlier
 	const registeredCommands = menuCommands.filter(command => command !== "adhoc" && command !== "generateCode").map((command) => vscode.commands.registerCommand(`vscode-chatgpt.${command}`, () => {
 		const prompt = vscode.workspace.getConfiguration("chatgpt").get<string>(`promptPrefix.${command}`);
 		const editor = vscode.window.activeTextEditor;
@@ -169,7 +170,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		menuCommands.forEach(command => {
 			if (command === "generateCode") {
 				let generateCodeEnabled = !!vscode.workspace.getConfiguration("chatgpt").get<boolean>("gpt3.generateCode-enabled");
-				const modelName = getSelectedModel();
+				const modelName = getSelectedModelId();
 				const method = vscode.workspace.getConfiguration("chatgpt").get("method") as string;
 				generateCodeEnabled = generateCodeEnabled && method === "GPT3 OpenAI API Key" && modelName.startsWith("code-");
 				vscode.commands.executeCommand('setContext', "generateCode-enabled", generateCodeEnabled);

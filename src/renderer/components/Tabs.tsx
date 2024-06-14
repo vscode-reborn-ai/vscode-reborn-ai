@@ -1,14 +1,12 @@
+import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import { addConversation, removeConversation } from "../store/conversation";
 import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
 import TabsDropdown from "./TabsDropdown";
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export default function Tabs({
   conversationList,
@@ -19,8 +17,10 @@ export default function Tabs({
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
-  const t = useAppSelector((state: any) => state.app.translations);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
+  const t = useAppSelector((state: RootState) => state.app.translations);
   const location = useLocation();
   const [tabs, setTabs] = useState(
     [] as {
@@ -33,6 +33,14 @@ export default function Tabs({
     {} as Conversation
   );
   const selectRef = React.useRef<HTMLSelectElement>(null);
+  const tabListRef = React.useRef<HTMLUListElement>(null);
+  const [showLocalLlmTab, setShowLocalLlmTab] = useState(false);
+
+  useEffect(() => {
+    if (location.pathname === "/api") {
+      setShowLocalLlmTab(true);
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     if (conversationList && conversationList.find) {
@@ -103,6 +111,13 @@ export default function Tabs({
 
     // switch to the new conversation
     navigate(`/chat/${encodeURI(newConversation.id)}`);
+
+    // scroll all the way to the right on delay to allow the tab to render
+    setTimeout(() => {
+      if (tabListRef.current) {
+        tabListRef.current.scrollLeft = tabListRef.current.scrollWidth;
+      }
+    }, 100);
   };
 
   return (
@@ -123,14 +138,14 @@ export default function Tabs({
           />
           {/* button for new chat */}
           <button
-            className="flex gap-x-2 items-center bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap rounded p-2 pr-3 text-xs"
+            className="flex gap-x-2 items-center bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap rounded p-2 pr-3 text-2xs"
             onClick={createNewConversation}
           >
             <Icon icon="plus" className="w-4 h-4" />
             {t?.tabs?.new_chat ?? "New"}
           </button>
           <Link
-            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 pr-3 text-xs
+            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 pr-3 text-2xs
             ${
               location.pathname === "/actions"
                 ? "bg-tab-active border-secondary text-tab-active-unfocused"
@@ -153,22 +168,65 @@ export default function Tabs({
       {/* Wider tab layout */}
       <div className={`${tabs.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
         <nav className="flex justify-between gap-2 py-1 px-1 xs:px-4">
-          <ul className="flex gap-2 overflow-x-auto" aria-label="Tabs">
+          <ul
+            ref={tabListRef}
+            className="flex gap-2 overflow-x-auto"
+            aria-label="Tabs"
+          >
+            {/* /api */}
+            <li>
+              <Link
+                className={classNames(
+                  location.pathname === "/api"
+                    ? "bg-tab-active border-secondary text-tab-active-unfocused hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
+                    : "border-transparent hover:bg-tab-selection hover:text-tab-inactive text-tab-inactive-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
+                  "flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap border text-2xs rounded focus:outline-none",
+                  {
+                    hidden: !showLocalLlmTab,
+                  }
+                )}
+                to="/api"
+                aria-current={location.pathname === "/api" ? "page" : undefined}
+              >
+                <span className="pt-0.5">⚙️ Local LLM Settings</span>
+                {/* close tab button */}
+                <button
+                  className="ml-2 p-1 opacity-40 group-hover:opacity-100 group-focus-within:opacity-100 focus:outline-none hover:bg-opacity-40 hover:bg-red-900 focus:bg-red-900 rounded-md"
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    // If there's no conversations, create a new one
+                    if (conversationList.length === 0) {
+                      createNewConversation();
+                    }
+
+                    // Navigate to the first conversation
+                    navigate(`/chat/${encodeURI(conversationList[0].id)}`);
+
+                    // Hide the tab
+                    setShowLocalLlmTab(false);
+                  }}
+                >
+                  <Icon icon="close" className="w-4 h-4" />
+                  <span className="sr-only">
+                    {t?.tabs?.close_tab ?? "Close tab"}
+                  </span>
+                </button>
+              </Link>
+            </li>
             {tabs &&
               tabs.map((tab) => (
                 <li key={tab.id}>
                   <Link
-                    // className="flex items-center pb-1 pt-1.5 px-2 text-inherit rounded"
-
                     className={classNames(
-                      currentConversation.title === tab.name
+                      location.pathname === `/chat/${encodeURI(tab.id)}`
                         ? "bg-tab-active border-secondary text-tab-active-unfocused hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
                         : "border-transparent hover:bg-tab-selection hover:text-tab-inactive text-tab-inactive-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
-                      "flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap border text-xs rounded focus:outline-none"
+                      "flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap border text-2xs rounded focus:outline-none"
                     )}
                     to={tab.href}
                     aria-current={
-                      currentConversation.title === tab.name
+                      location.pathname === `/chat/${encodeURI(tab.id)}`
                         ? "page"
                         : undefined
                     }
@@ -209,9 +267,9 @@ export default function Tabs({
                 </li>
               ))}
             {/* create new chat button */}
-            <li className="flex items-center">
+            <li className="flex items-center sticky right-0 pl-4 -ml-2 bg-gradient-to-r from-transparent to-bg to-20% pointer-events-none">
               <button
-                className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-xs rounded"
+                className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-2xs rounded pointer-events-auto"
                 onClick={createNewConversation}
               >
                 <Icon icon="plus" className="w-4 h-4" />
@@ -220,7 +278,7 @@ export default function Tabs({
             </li>
           </ul>
           <Link
-            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 pr-3 text-xs
+            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 max-h-[32px] text-2xs
             ${
               location.pathname === "/actions"
                 ? "bg-button border-button text-button"

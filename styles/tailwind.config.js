@@ -3,12 +3,16 @@ module.exports = {
     content: ["./src/**/*.{js,ts,jsx,tsx}"],
     theme: {
         extend: {
+            colors: {
+                bg: 'var(--vscode-editor-background)',
+            },
             fontFamily: {
                 code: ['var(--vscode-editor-font-family)'],
                 DEFAULT: ['var(--vscode-font-family)'],
             },
             fontSize: {
                 code: ['var(--vscode-editor-font-size)'],
+                '2xs': ['11px', { lineHeight: '1rem' }],
                 DEFAULT: ['var(--vscode-font-size)'],
             },
             fontWeight: {

@@ -1,6 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import classNames from "classnames";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
+import { isInstructModel } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
+import { RootState } from "../store";
 import { setUseEditorSelection } from "../store/app";
 import {
   clearMessages,
@@ -8,7 +12,7 @@ import {
   setInProgress,
   updateUserInput,
 } from "../store/conversation";
-import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
+import { Conversation, MODEL_TOKEN_LIMITS } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 import MoreActionsMenu from "./MoreActionsMenu";
@@ -25,7 +29,9 @@ export default ({
   vscode: any;
 }) => {
   const dispatch = useAppDispatch();
-  const settings = useAppSelector((state: any) => state.app.extensionSettings);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
   const t = useAppSelector((state: any) => state.app.translations);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
@@ -36,6 +42,17 @@ export default ({
   // Animation on token count value change
   const [tokenCountAnimation, setTokenCountAnimation] = useState(false);
   const tokenCountAnimationTimer = useRef(null);
+  const backendMessenger = useMessenger(vscode);
+  const models = useAppSelector((state: RootState) => state.app.models);
+
+  // Check if the current model is in the model list
+  // When APIs are changed, the current model might not be available
+  const isCurrentModelAvailable = useMemo(() => {
+    return (
+      models.length === 0 ||
+      models.some((model) => model.id === currentConversation.model?.id)
+    );
+  }, [models, currentConversation.model]);
 
   // when includeEditorSelection changes, update the store (needed for token calculations elsewhere), one-way binding for now
   useEffect(() => {
@@ -68,6 +85,11 @@ export default ({
   }, [currentConversation.id]);
 
   const askQuestion = () => {
+    if (!isCurrentModelAvailable) {
+      console.error("Model not available. Select a model first.");
+      return;
+    }
+
     const question = questionInputRef?.current?.value;
 
     if (question && question.length > 0) {
@@ -79,10 +101,9 @@ export default ({
         })
       );
 
-      vscode.postMessage({
-        type: "addFreeTextQuestion",
-        value: questionInputRef.current.value,
+      backendMessenger.sendAddFreeTextQuestion({
         conversation: currentConversation,
+        question: questionInputRef.current.value,
         includeEditorSelection: useEditorSelection,
       });
 
@@ -135,6 +156,12 @@ export default ({
                 className="w-5 h-5 mr-2 text stroke-current"
               />
               <span>{t?.questionInputField?.thinking ?? "Thinking..."}</span>
+              {isInstructModel(currentConversation.model) && (
+                <span className="text-xs opacity-50 ml-2">
+                  {t?.questionInputField?.streamingOnInstructModels ??
+                    "(streaming is disabled on instruct models)"}
+                </span>
+              )}
             </div>
           )}
           {!currentConversation.inProgress && (
@@ -201,10 +228,7 @@ export default ({
               title="Stop"
               className="px-2 py-1 h-full flex flex-row items-center border border-red-900 rounded hover:bg-button-secondary focus:bg-button-secondary"
               onClick={(e) => {
-                vscode.postMessage({
-                  type: "stopGenerating",
-                  conversationId: currentConversation.id,
-                });
+                backendMessenger.sendStopGenerating(currentConversation.id);
 
                 // Set the conversation to not in progress
                 dispatch(
@@ -222,13 +246,23 @@ export default ({
           {!currentConversation.inProgress && (
             <button
               title="Submit prompt"
-              className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover"
+              className={classNames(
+                "ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover",
+                {
+                  "opacity-50 cursor-not-allowed": !isCurrentModelAvailable,
+                }
+              )}
               onClick={() => {
                 askQuestion();
               }}
+              disabled={
+                currentConversation.inProgress || !isCurrentModelAvailable
+              }
             >
-              {t?.questionInputField?.ask ?? "Ask"}
-              <Icon icon="send" className="w-5 h-5 ml-1" />
+              {isCurrentModelAvailable
+                ? t?.questionInputField?.ask ?? "Ask"
+                : "Select a model first"}
+              <Icon icon="send" className="w-5 h-5 ml-1 hidden 2xs:block" />
             </button>
           )}
         </div>
@@ -240,13 +274,13 @@ export default ({
               currentConversation={currentConversation}
               vscode={vscode}
               conversationList={conversationList}
-              className="hidden xs:block"
+              className="hidden xs:flex items-end"
               tooltipId="footer-tooltip"
             />
             <VerbositySelect
               currentConversation={currentConversation}
               vscode={vscode}
-              className="hidden xs:block"
+              className="hidden xs:flex items-end"
               tooltipId="footer-tooltip"
             />
             <button
@@ -270,8 +304,14 @@ export default ({
                 setIncludeEditorSelection(!useEditorSelection);
               }}
             >
-              <Icon icon="plus" className="w-3 h-3" />
-              {t?.questionInputField?.useEditorSelection ?? "Editor selection"}
+              <Icon icon="plus" className="w-3 h-3 hidden 2xs:block" />
+              <span className="hidden 2xs:block">
+                {t?.questionInputField?.useEditorSelection ??
+                  "Editor selection"}
+              </span>
+              <span className="block 2xs:hidden">
+                {t?.questionInputField?.useEditorSelectionShort ?? "Editor"}
+              </span>
             </button>
             <button
               className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary`}
@@ -286,30 +326,36 @@ export default ({
                 );
               }}
             >
-              <Icon icon="cancel" className="w-3 h-3" />
+              <Icon icon="cancel" className="w-3 h-3 hidden 2xs:block" />
               {t?.questionInputField?.clear ?? "Clear"}
             </button>
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
-          <MoreActionsMenu
-            vscode={vscode}
-            showMoreActions={showMoreActions}
-            currentConversation={currentConversation}
-            setShowMoreActions={setShowMoreActions}
-            conversationList={conversationList}
-          />
+          <div className="flex items-end self-start">
+            <MoreActionsMenu
+              vscode={vscode}
+              showMoreActions={showMoreActions}
+              currentConversation={currentConversation}
+              setShowMoreActions={setShowMoreActions}
+              conversationList={conversationList}
+            />
+          </div>
           <div className="flex flex-row items-start gap-2">
             <div
-              className={`rounded flex gap-1 items-center justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
+              className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
                 tokenCountAnimation
                   ? "duration-200 bg-blue-300 bg-opacity-20"
                   : "duration-500"
               }
                 ${
                   parseInt(tokenCountLabel) >
-                  MODEL_TOKEN_LIMITS[
-                    currentConversation?.model ?? Model.gpt_35_turbo
-                  ].context
+                  (MODEL_TOKEN_LIMITS.has(
+                    currentConversation.model?.id ?? "gpt-4-turbo"
+                  )
+                    ? MODEL_TOKEN_LIMITS.get(
+                        currentConversation.model?.id ?? "gpt-4-turbo"
+                      )?.context ?? 128000
+                    : 128000)
                     ? "duration-200 bg-red-700 bg-opacity-20"
                     : ""
                 }
@@ -345,7 +391,7 @@ export default ({
                 setShowMoreActions(!showMoreActions);
               }}
             >
-              <Icon icon="zap" className="w-3.5 h-3.5" />
+              <Icon icon="zap" className="w-3.5 h-3.5 hidden 2xs:block" />
               {t?.questionInputField?.moreActions ?? "More Actions"}
             </button>
           </div>

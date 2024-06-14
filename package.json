@@ -1,10 +1,10 @@
 {
   "name": "chatgpt-reborn",
   "publisher": "chris-hayes",
-  "displayName": "ChatGPT Reborn AI",
+  "displayName": "VSCode Reborn AI",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. Bring your own OpenAI API key.",
-  "version": "3.22.0",
+  "version": "3.23.0",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"
@@ -29,7 +29,7 @@
   "activationEvents": [
     "onStartupFinished"
   ],
-  "main": "./out/extension.js",
+  "main": "./out/entry-point.js",
   "contributes": {
     "menus": {
       "editor/context": [
@@ -468,7 +468,7 @@
             "code-davinci-002",
             "code-cushman-001"
           ],
-          "default": "gpt-3.5-turbo",
+          "default": "gpt-4o",
           "markdownDescription": "OpenAI models to use for your prompts. [Documentation](https://beta.openai.com/docs/models/models). \n\n**If you face 400 Bad Request please make sure you are using the right model for your integration method.**",
           "order": 36,
           "enumItemLabels": [
@@ -496,7 +496,7 @@
         },
         "chatgpt.gpt3.maxTokens": {
           "type": "number",
-          "default": 4000,
+          "default": 4096,
           "markdownDescription": "NOTE - THIS CONFIG IS NOW DISABLED, and might be totally removed in the future. If you think this config setting should stay, please comment it in the GitHub repository that you find it useful.",
           "order": 37
         },
@@ -570,20 +570,32 @@
             "Normal explanations",
             "Detailed, full explanations"
           ]
+        },
+        "chatgpt.renameTabTitles": {
+          "type": "boolean",
+          "default": true,
+          "description": "If enabled, after the first user message, gpt-4o will be used to rename the tab title.",
+          "order": 47
+        },
+        "chatgpt.showAllModels": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, the model select dropdown will show ALL available models returned from the API.",
+          "order": 48
         }
       }
     }
   },
   "scripts": {
-    "vscode:prepublish": "rimraf out && yarn esbuild-base -- --minify && yarn build-webview",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-    "build": "yarn esbuild-base -- --sourcemap && yarn build-webview",
+    "vscode:prepublish": "rimraf out && yarn esbuild-base --minify && yarn build-webview",
+    "esbuild-base": "esbuild ./src/entry-point.ts --bundle --outfile=out/entry-point.js --external:vscode --format=cjs --platform=node",
+    "build": "yarn esbuild-base --sourcemap && yarn build-webview",
     "dev": "yarn watch",
     "watch": "npm-run-all -p watch:*",
-    "watch:esbuild": "yarn esbuild-base -- --sourcemap --watch",
+    "watch:esbuild": "yarn esbuild-base --sourcemap --watch",
     "watch:webview": "webpack --mode development --watch",
     "build-webview": "webpack --mode production",
-    "fmt": "prettier --write \"src/**/*.ts\" && yarn test -- --fix",
+    "fmt": "prettier --write \"src/**/*.ts\" && yarn test --fix",
     "test": "eslint src --ext ts && tsc --noEmit"
   },
   "devDependencies": {
@@ -608,13 +620,14 @@
     "mocha": "^10.1.0",
     "npm-run-all": "^4.1.5",
     "react-tooltip": "^5.10.0",
-    "tailwindcss": "^3.2.7",
+    "tailwindcss": "^3.4.4",
     "ts-loader": "^9.4.2",
     "typescript": "^4.9.3",
     "webpack": "^5.76.2",
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
+    "@heroicons/react": "^2.1.3",
     "@reduxjs/toolkit": "^1.9.3",
     "autoprefixer": "^10.4.14",
     "clsx": "^2.0.0",
@@ -629,6 +642,7 @@
     "marked": "^4.3.0",
     "openai": "^4.47.3",
     "p-timeout": "^6.1.1",
+    "pkce-challenge": "^4.1.0",
     "postcss": "^8.4.21",
     "postcss-loader": "^7.1.0",
     "quick-lru": "^6.1.1",

@@ -1,12 +1,25 @@
 import { encodingForModel, Tiktoken, TiktokenModel } from "js-tiktoken";
 import OpenAI, { ClientOptions } from 'openai';
 import { v4 as uuidv4 } from "uuid";
-import { Conversation, Message, Model, MODEL_TOKEN_LIMITS, Role } from "./renderer/types";
+import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
+import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
+
+const FALLBACK_MODEL_ID = 'gpt-4-turbo';
+
+/*
+
+* openai-api-provider.ts
+
+Responsible for handling API calls to OpenAI's API
+(or any server that implements the OpenAI API).
+
+*/
 
 export class ApiProvider {
   private _openai: OpenAI;
   private _temperature: number;
   private _topP: number;
+  private _modelList: Model[] | undefined;
 
   public apiConfig: ClientOptions;
 
@@ -31,16 +44,18 @@ export class ApiProvider {
     this.apiConfig = {
       apiKey: apiKey,
       organization: organizationId,
-      // baseURL: apiBaseUrl,
+      baseURL: apiBaseUrl,
     };
     this._openai = new OpenAI(this.apiConfig);
     this._temperature = temperature;
     this._topP = topP;
   }
 
-  getRemainingTokens(model: Model, promptTokensUsed: number) {
-    const modelContext = MODEL_TOKEN_LIMITS[model].context;
-    const modelMax = MODEL_TOKEN_LIMITS[model].max;
+  getRemainingTokens(model: Model | undefined, promptTokensUsed: number) {
+    // const modelContext = MODEL_TOKEN_LIMITS.get(modelId)?.context ?? 128000;
+    // const modelMax = MODEL_TOKEN_LIMITS.get(modelId)?.max ?? 4096;
+    const modelContext = getModelContextLimit(model);
+    const modelMax = getModelCompletionLimit(model);
 
     // OpenAI's maxTokens is used as max (prompt + complete) tokens
     // We must calculate total context window - prompt tokens being sent to determine max response size
@@ -56,7 +71,7 @@ export class ApiProvider {
     }
 
     if (tokensLeft < 0) {
-      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${model}) only supports ${modelContext} context tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
+      throw new Error(`This conversation uses ${promptTokensUsed} tokens, but this model (${model?.name ?? model?.id}) only supports ${modelContext} context tokens. Please reduce the amount of code you're including, clear the conversation to reduce past messages size or use a different model with a bigger prompt token limit.`);
     }
 
     return tokensLeft;
@@ -70,15 +85,14 @@ export class ApiProvider {
     temperature?: number;
     topP?: number;
   } = {}): AsyncGenerator<any, any, unknown> {
-    const model = conversation.model ?? Model.gpt_35_turbo;
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
     // Only stream if not using a proxy
     const useStream = true; // this.apiConfig.basePath === 'https://api.openai.com/v1';
     const response = await this._openai.chat.completions.create(
       {
-        model,
+        model: conversation.model?.id ?? FALLBACK_MODEL_ID,
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -87,8 +101,12 @@ export class ApiProvider {
         temperature,
         top_p: topP,
         stream: useStream,
+      }, {
+      headers: {
+        "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
+        "X-Title": "VSCode Reborn AI",
       }
-    );
+    });
 
     for await (const chunk of response) {
       if (abortSignal.aborted) {
@@ -105,6 +123,8 @@ export class ApiProvider {
         console.error('api JSON parse error. Message:', e?.message, 'Error:', e);
       }
     }
+
+    console.error('api stream ended');
   }
 
   async getChatCompletion(conversation: Conversation, {
@@ -114,13 +134,12 @@ export class ApiProvider {
     temperature?: number;
     topP?: number;
   } = {}): Promise<OpenAI.Chat.Completions.ChatCompletionMessage | undefined> {
-    const model = conversation.model ?? Model.gpt_35_turbo;
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
     const response = await this._openai.chat.completions.create(
       {
-        model,
+        model: conversation.model?.id ?? FALLBACK_MODEL_ID,
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -128,9 +147,13 @@ export class ApiProvider {
         stream: false,
         max_tokens: completeTokensLeft,
         temperature,
-        top_p: topP,
+        top_p: topP
+      }, {
+      headers: {
+        "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
+        "X-Title": "VSCode Reborn AI",
       }
-    );
+    });
 
     return response.choices[0].message;
   }
@@ -144,21 +167,24 @@ export class ApiProvider {
   }: {
     temperature?: number;
     topP?: number;
-  } = {}): Promise<Message | undefined> {
-    const model = conversation.model ?? Model.gpt_35_turbo;
+  } = {}): Promise<ChatMessage | undefined> {
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(model, promptTokensUsed);
+    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
     const response = await this._openai.chat.completions.create(
       {
-        model,
+        model: conversation.model?.id ?? FALLBACK_MODEL_ID,
         messages: [{ "role": "user", "content": prompt }],
         max_tokens: completeTokensLeft,
         temperature,
         top_p: topP,
         stream: false,
+      }, {
+      headers: {
+        "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
+        "X-Title": "VSCode Reborn AI",
       }
-    );
+    });
 
     return {
       id: uuidv4(),
@@ -170,30 +196,21 @@ export class ApiProvider {
   }
 
   // * Utility token counting methods
-  // Use this.getEncodingForModel() instead of encodingForModel() due to missing model support
-  public static getEncodingForModel(model: Model): Tiktoken {
-    let adjustedModel = model;
-
-    switch (model) {
-      case Model.gpt_35_turbo_16k:
-        // June 27, 2023 - Tiktoken@1.0.7 does not recognize the 3.5-16k model version.
-        adjustedModel = Model.gpt_35_turbo;
-        break;
-      case Model.gpt_4_turbo:
-        // Nov 24, 2023 - Adding gpt-4-turbo, will update tiktoken at another date
-        adjustedModel = Model.gpt_4;
-        break;
+  public static getEncodingForModel(modelId: string): Tiktoken {
+    try {
+      return encodingForModel(modelId as TiktokenModel);
+    } catch (e) {
+      // This model is not in tiktoken, fallback to default
+      return encodingForModel(FALLBACK_MODEL_ID as TiktokenModel);
     }
-
-    return encodingForModel(adjustedModel as TiktokenModel);
   }
 
   public static countConversationTokens(conversation: Conversation): number {
-    const enc = this.getEncodingForModel(conversation.model ?? Model.gpt_35_turbo);
+    const enc = this.getEncodingForModel(conversation.model?.id ?? FALLBACK_MODEL_ID);
     let tokensUsed = 0;
 
     for (const message of conversation.messages) {
-      tokensUsed += ApiProvider.countMessageTokens(message, conversation.model ?? Model.gpt_35_turbo, enc);
+      tokensUsed += ApiProvider.countMessageTokens(message, conversation.model, enc);
     }
 
     tokensUsed += 3; // every reply is primed with <im_start>assistant
@@ -201,8 +218,8 @@ export class ApiProvider {
     return tokensUsed;
   }
 
-  public static countMessageTokens(message: Message, model: Model, encoder?: Tiktoken): number {
-    let enc = encoder ?? this.getEncodingForModel(model);
+  public static countMessageTokens(message: ChatMessage, model: Model | undefined, encoder?: Tiktoken): number {
+    let enc = encoder ?? this.getEncodingForModel(model?.id ?? FALLBACK_MODEL_ID);
     let tokensUsed = 4; // every message follows <im_start>{role/name}\n{content}<im_end>\n
 
     const openAIMessage = {
@@ -225,12 +242,12 @@ export class ApiProvider {
   }
 
   // Calculate tokens remaining for OpenAI's response
-  public static getRemainingPromptTokens(maxTokens: number, prompt: string, model: Model): number {
-    return maxTokens - ApiProvider.countPromptTokens(prompt, model);
+  public static getRemainingPromptTokens(maxTokens: number, prompt: string, modelId: string): number {
+    return maxTokens - ApiProvider.countPromptTokens(prompt, modelId);
   }
 
-  public static countPromptTokens(prompt: string, model: Model): number {
-    const enc = this.getEncodingForModel(model);
+  public static countPromptTokens(prompt: string, modelId: string): number {
+    const enc = this.getEncodingForModel(modelId);
     const tokens = enc.encode(prompt).length;
 
     return tokens;
@@ -245,35 +262,56 @@ export class ApiProvider {
     this._topP = value;
   }
 
-  updateApiKey(apiKey: string) {
+  async updateApiKey(apiKey: string) {
     // OpenAI API config
     this.apiConfig = {
       apiKey: apiKey,
       organization: this.apiConfig.organization,
-      // baseURL: this.apiConfig.baseURL,
+      baseURL: this.apiConfig.baseURL,
     };
+
     this._openai = new OpenAI(this.apiConfig);
+
+    this.repullModelList();
   }
 
-  updateOrganizationId(organizationId: string) {
+  async updateOrganizationId(organizationId: string) {
     // OpenAI API config
     this.apiConfig = {
       apiKey: this.apiConfig.apiKey,
       organization: organizationId,
-      // baseURL: this.apiConfig.baseURL,
+      baseURL: this.apiConfig.baseURL,
     };
+
     this._openai = new OpenAI(this.apiConfig);
+
+    this.repullModelList();
   }
 
-  updateApiBaseUrl(apiBaseUrl: string) {
+  async updateApiBaseUrl(apiBaseUrl: string) {
     // If apiBaseUrl ends with slash, remove it
     apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
     // OpenAI API config
     this.apiConfig = {
       apiKey: this.apiConfig.apiKey,
       organization: this.apiConfig.organization,
-      // baseURL: this.apiConfig.baseURL,
+      baseURL: this.apiConfig.baseURL,
     };
+
     this._openai = new OpenAI(this.apiConfig);
+
+    this.repullModelList();
+  }
+
+  private async repullModelList(): Promise<void> {
+    this._modelList = (await this._openai.models.list()).getPaginatedItems();
+  }
+
+  async getModelList(): Promise<Model[]> {
+    if (!this._modelList) {
+      await this.repullModelList();
+    }
+
+    return this._modelList ?? [];
   }
 }

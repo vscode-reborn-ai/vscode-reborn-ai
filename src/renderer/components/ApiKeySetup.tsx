@@ -1,5 +1,8 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
+import { useMessenger } from "../sent-to-backend";
+import { RootState } from "../store";
 import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
 import Icon from "./Icon";
 
@@ -20,23 +23,21 @@ export default function ({
   const [apiUrl, setApiUrl] = useState("");
   const [showApiUrl, setShowApiUrl] = useState(false);
   const dispatch = useAppDispatch();
-  const t = useAppSelector((state: any) => state.app.translations);
-  const apiKeyStatus = useAppSelector((state: any) => state.app?.apiKeyStatus);
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const apiKeyStatus = useAppSelector(
+    (state: RootState) => state.app?.apiKeyStatus
+  );
+  const backendMessenger = useMessenger(vscode);
+  const apiUrlInputRef = React.createRef<HTMLInputElement>();
 
   function handleSubmit() {
     dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
 
-    if (showApiUrl) {
-      vscode.postMessage({
-        type: "changeApiUrl",
-        value: apiUrl,
-      });
+    if (showApiUrl && apiUrl) {
+      backendMessenger.sendChangeApiUrl(apiUrl);
     }
 
-    vscode.postMessage({
-      type: "changeApiKey",
-      value: apiKey,
-    });
+    backendMessenger.sendChangeApiKey(apiKey);
   }
 
   return (
@@ -116,21 +117,22 @@ export default function ({
           </div>
         </div>
         {/* API key: error message */}
-        {apiKeyStatus === ApiKeyStatus.Invalid && (
-          <div className="flex flex-col gap-2 p-4 bg-red-500 text bg-opacity-10 rounded">
-            <h2 className="font-medium">
-              {t?.apiKeySetup?.invalidApiKey?.title ?? "Invalid API Key"}
-            </h2>
-            <p>
-              {t?.apiKeySetup?.invalidApiKey?.description ??
-                "The API key you entered has failed to get an OK response from OpenAI. Please double check the key was copied in correctly. Also, check that OpenAI is not currently experiencing an API outage. ("}
-              <a href="https://status.openai.com/" target="_blank">
-                https://status.openai.com/
-              </a>
-              {t?.apiKeySetup?.invalidApiKey?.closingParenthesis ?? ")"}
-            </p>
-          </div>
-        )}
+        {apiKeyStatus === ApiKeyStatus.Invalid &&
+          !!apiUrlInputRef.current?.value.length && (
+            <div className="flex flex-col gap-2 p-4 bg-red-500 text bg-opacity-10 rounded">
+              <h2 className="font-medium">
+                {t?.apiKeySetup?.invalidApiKey?.title ?? "Invalid API Key"}
+              </h2>
+              <p>
+                {t?.apiKeySetup?.invalidApiKey?.description ??
+                  "The API key you entered has failed to get an OK response from OpenAI. Please double check the key was copied in correctly. Also, check that OpenAI is not currently experiencing an API outage. ("}
+                <a href="https://status.openai.com/" target="_blank">
+                  https://status.openai.com/
+                </a>
+                {t?.apiKeySetup?.invalidApiKey?.closingParenthesis ?? ")"}
+              </p>
+            </div>
+          )}
         {/* API URL: user input */}
         {showApiUrl && (
           <div>
@@ -144,6 +146,7 @@ export default function ({
             <div className="flex gap-x-4">
               <input
                 type="text"
+                ref={apiUrlInputRef}
                 id="apiUrl"
                 value={apiUrl}
                 onChange={(event) => setApiUrl(event.target.value)}
@@ -158,12 +161,18 @@ export default function ({
         <div className="flex gap-x-4 justify-end">
           {/* "I'm using an alternative API" button */}
           {!showApiUrl && (
-            <button
-              onClick={() => setShowApiUrl(true)}
-              className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button-secondary hover:bg-button-secondary-hover focus:bg-button-secondary-hover"
+            // <button
+            //   onClick={() => setShowApiUrl(true)}
+            //   className="ask-button rounded px-4 py-2 flex flex-row items-center bg-button-secondary hover:bg-button-secondary-hover focus:bg-button-secondary-hover"
+            // >
+            //   {t?.apiUrlSetup?.setApiUrl ?? "I'm using an alternative API"}
+            // </button>
+            <Link
+              to="/api"
+              className="rounded px-4 py-2 flex flex-row items-center text-button-secondary bg-button-secondary hover:bg-button-secondary-hover focus:bg-button-secondary-hover hover:text-button-secondary-hover focus:text-button-secondary-hover"
             >
               {t?.apiUrlSetup?.setApiUrl ?? "I'm using an alternative API"}
-            </button>
+            </Link>
           )}
           {/* "Set API Key" button */}
           <button

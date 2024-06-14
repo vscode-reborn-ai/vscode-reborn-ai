@@ -1,9 +1,10 @@
 import React from "react";
 import { useAppSelector } from "../hooks";
+import { RootState } from "../store";
 import Icon from "./Icon";
 
 export default function ({ className }: { vscode: any; className?: string }) {
-  const t = useAppSelector((state: any) => state.app.translations);
+  const t = useAppSelector((state: RootState) => state.app.translations);
 
   return (
     <div

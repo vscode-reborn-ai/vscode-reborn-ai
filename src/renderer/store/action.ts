@@ -52,12 +52,12 @@ export const appSlice = createSlice({
   name: 'conversations',
   initialState,
   reducers: {
-    setActionError: (state, action: PayloadAction<{
+    setActionError: (state: any, action: PayloadAction<{
       actionId: string;
       error: string;
     }>) => {
       const { actionId, error } = action.payload;
-      const actionIndex = state.actionList.findIndex((action) => action.id === actionId);
+      const actionIndex = state.actionList.findIndex((action: Action) => action.id === actionId);
 
       state.actionList[actionIndex].state = ActionRunState.error;
       state.actionList[actionIndex].error = error;
@@ -87,7 +87,11 @@ export const appSlice = createSlice({
       const { actionId, state: newState } = action.payload;
       const actionIndex = state.actionList.findIndex((action) => action.id === actionId);
 
-      state.actionList[actionIndex].state = newState;
+      // Some actions are not in the list (ie set convo title)
+      // TODO: Separate UI actions from backend actions
+      if (actionIndex >= 0) {
+        state.actionList[actionIndex].state = newState;
+      }
     },
   },
 });

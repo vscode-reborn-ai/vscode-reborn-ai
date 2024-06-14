@@ -24,7 +24,7 @@ export default function CodeBlockActionsButton({
     <button
       data-tooltip-id="code-actions-tooltip"
       data-tooltip-content={tooltipContent}
-      className={`code-element-ext px-1 py-0.5 flex gap-x-1 justify-center items-center rounded border
+      className={`code-element-ext px-1 py-0.5 flex gap-x-1 justify-center items-center rounded border pointer-events-auto
             bg-menu hover:bg-menu-selection
             ${showSuccess ? "text-green-500 border-green-500" : ""}
           `}
