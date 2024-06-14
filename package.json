@@ -4,7 +4,7 @@
   "displayName": "VSCode Reborn AI",
   "icon": "images/ai-logo.jpg",
   "description": "Refactor, improve, and debug your code with GPT-4. Bring your own OpenAI API key.",
-  "version": "3.23.0",
+  "version": "3.23.1",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"

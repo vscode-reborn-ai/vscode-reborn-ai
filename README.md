@@ -93,7 +93,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## Changelog
 
-### June 14, 2024 (`v3.23.0`)
+### June 14, 2024 (`v3.23.0`, `v3.23.1`)
 
 - ✨ **Feature** - Conversation tabs now auto-rename.
 - ✨ **Feature** - Improved local LLM support. New "Use Local LLM" page to easily connect to a local LLM.
