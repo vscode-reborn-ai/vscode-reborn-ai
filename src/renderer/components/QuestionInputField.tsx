@@ -88,7 +88,7 @@ export default ({
 
   const askQuestion = () => {
     if (!isCurrentModelAvailable) {
-      console.error("Model not available. Select a model first.");
+      console.error("[Reborn AI] Model not available. Select a model first.");
       return;
     }
 

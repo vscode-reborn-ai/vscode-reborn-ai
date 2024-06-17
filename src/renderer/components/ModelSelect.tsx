@@ -190,7 +190,9 @@ export default function ModelSelect({
       currentConversation.model?.name ??
       (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
         ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
-        : currentConversation.model?.id ?? settings?.gpt3?.model) ??
+        : currentConversation.model?.id ??
+          models.find((model) => model.id === settings?.gpt3?.model)?.name ??
+          settings?.gpt3?.model) ??
       "No model selected";
 
     // if the friendly has a slash (ie perplexity/model-name), ignore everything before the slash

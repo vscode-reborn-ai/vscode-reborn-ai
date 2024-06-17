@@ -51,7 +51,7 @@ export default function Tabs({
       );
     } else {
       console.warn(
-        "conversationList is null",
+        "[Reborn AI] conversationList is null",
         JSON.stringify(conversationList)
       );
     }
@@ -77,7 +77,7 @@ export default function Tabs({
       ]);
     } else {
       console.warn(
-        "conversationList is null",
+        "[Reborn AI] conversationList is null",
         JSON.stringify(conversationList)
       );
     }

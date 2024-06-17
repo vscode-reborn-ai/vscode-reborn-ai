@@ -302,6 +302,7 @@ export interface ExtensionSettings {
   renameTabTitles: boolean;
   showAllModels: boolean;
   manualModelInput: boolean;
+  apiVersion: string;
 }
 
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
@@ -352,5 +353,6 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   verbosity: Verbosity.normal,
   renameTabTitles: true,
   showAllModels: false,
-  manualModelInput: false
+  manualModelInput: false,
+  apiVersion: "2024-02-01"
 };

@@ -10,7 +10,7 @@ import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Auth from "./secrets-store";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
@@ -112,7 +112,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				const apiBaseUrl = this.api?.apiConfig.baseURL ?? baseUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 				await this.authStore.storeApiKey(apiKey, apiBaseUrl);
 			} else {
-				console.error("Auth store not initialized");
+				console.error("[Reborn AI] Auth store not initialized");
 			}
 		});
 		vscode.commands.registerCommand("chatgptReborn.getOpenAIApiKey", async () => {
@@ -121,7 +121,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				const tokenOutput = await this.authStore.getApiKey(apiBaseUrl);
 				return tokenOutput;
 			} else {
-				console.error("Auth store not initialized");
+				console.error("[Reborn AI] Auth store not initialized");
 				return undefined;
 			}
 		});
@@ -234,7 +234,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		loadTranslations(context.extensionPath).then((translations) => {
 			this.frontendMessenger.sendTranslations(translations);
 		}).catch((err) => {
-			console.error("Failed to load translations", err);
+			console.error("[Reborn AI] Failed to load translations", err);
 		});
 	}
 
@@ -340,11 +340,18 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				status: apiKey.length === 0 ? ApiKeyStatus.Unset : ApiKeyStatus.Valid,
 				models,
 			};
-		} catch (error) {
-			console.error('Main Process - Error getting models', error);
+		} catch (error: any | Error) {
+			console.error('[Reborn AI] Main Process - Error getting models', error);
+
+			// if 401, the API key is invalid
+			if ((error as Error)?.message?.includes("401") || (typeof error === 'string' && (error as string).includes("403"))) {
+				return {
+					status: ApiKeyStatus.Invalid
+				};
+			}
 
 			return {
-				status: ApiKeyStatus.Invalid
+				status: ApiKeyStatus.Error
 			};
 		}
 	}
@@ -435,7 +442,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					if (stopGeneratingData?.conversationId) {
 						this.stopGenerating(stopGeneratingData.conversationId);
 					} else {
-						console.warn("Main Process - No conversationId provided to stop generating");
+						console.warn("[Reborn AI] Main Process - No conversationId provided to stop generating");
 					}
 					break;
 				case BackendMessageType.getSettings:
@@ -456,6 +463,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				case BackendMessageType.changeApiKey:
 					const changeApiKeyData = data as ChangeApiKeyMessage;
 					this.setApiKey(changeApiKeyData.apiKey);
+					break;
+				case BackendMessageType.setApiVersion:
+					const setApiVersionData = data as SetApiVersionMessage;
+					this.api.apiConfig.apiVersion = setApiVersionData.apiVersion;
+					vscode.workspace.getConfiguration("chatgpt").update("apiVersion", setApiVersionData.apiVersion, vscode.ConfigurationTarget.Global);
 					break;
 				case BackendMessageType.getApiKeyStatus:
 					const { status, models } = await this.testApiKey();
@@ -526,7 +538,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 						this.frontendMessenger.sendActionComplete(actionId, actionResult);
 					} catch (error: any) {
-						console.error("Main Process - Error running action: " + actionId);
+						console.error("[Reborn AI] Main Process - Error running action: " + actionId);
 						console.error(error);
 
 						this.frontendMessenger.sendActionError(actionId, error);
@@ -538,14 +550,14 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					if (stopActionData?.actionId) {
 						this.stopAction(stopActionData.actionId);
 					} else {
-						console.warn("Main Process - No actionName provided to stop action");
+						console.warn("[Reborn AI] Main Process - No actionName provided to stop action");
 					}
 					break;
 				case BackendMessageType.generateOpenRouterApiKey:
 					this.generateOpenRouterApiKey();
 					break;
 				default:
-					console.warn('Main Process - Uncaught message type: "' + data.type + '"');
+					console.warn('[Reborn AI] Main Process - Uncaught message type: "' + data.type + '"');
 					break;
 			}
 		});
@@ -628,7 +640,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		if (newModel.id !== updatedModelId) {
-			console.debug(`Updated deprecated model "${newModel.id}" to "${updatedModelId}".`);
+			console.debug(`[Reborn AI] Updated deprecated model "${newModel.id}" to "${updatedModelId}".`);
 			return {
 				...newModel,
 				id: updatedModelId,
@@ -691,7 +703,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		if (conversationId) {
 			this.frontendMessenger.sendMessagesUpdated([], conversationId);
 		} else {
-			console.error("Main Process - No conversation to clear");
+			console.error("[Reborn AI] Main Process - No conversation to clear");
 		}
 	}
 
@@ -707,7 +719,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 			vscode.window.showTextDocument(markdownExport);
 		} else {
-			console.error("Main Process - No conversation to export to markdown");
+			console.error("[Reborn AI] Main Process - No conversation to export to markdown");
 		}
 	}
 
@@ -861,8 +873,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			let message;
 			let apiMessage = error?.response?.data?.error?.message || error?.tostring?.() || error?.message || error?.name;
 
-			console.error("api-request-failed info:", JSON.stringify(error, null, 2));
-			console.error("api-request-failed error obj:", error);
+			console.error("[Reborn AI] api-request-failed info:", JSON.stringify(error, null, 2));
+			console.error("[Reborn AI] api-request-failed error obj:", error);
 
 			// For whatever reason error.status is undefined, but the below works
 			const status = JSON.parse(JSON.stringify(error)).status ?? error?.status ?? error?.response?.status ?? error?.response?.data?.error?.status;
@@ -989,7 +1001,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 				if (code) {
 					if (!this.authStore) {
-						console.error('[PKCE] No auth store found');
+						console.error('[Reborn AI] [PKCE] No auth store found');
 						return;
 					}
 
@@ -1023,7 +1035,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 							res.writeHead(200, { 'Content-Type': 'text/plain' });
 							res.end('API key successfully set. You can close this tab now.');
 						} else {
-							console.error(`Failed to exchange code for API key. Status: ${response.status}`);
+							console.error(`[Reborn AI] Failed to exchange code for API key. Status: ${response.status}`);
 
 							res.writeHead(500, { 'Content-Type': 'text/plain' });
 							res.end('Failed to exchange code for API key');
@@ -1032,7 +1044,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 							this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Error);
 						}
 					} catch (error) {
-						console.error(`Error exchanging code for API key: ${error}`);
+						console.error(`[Reborn AI] Error exchanging code for API key: ${error}`);
 
 						res.writeHead(500, { 'Content-Type': 'text/plain' });
 						res.end('Error exchanging code for API key');
@@ -1044,10 +1056,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						server.close();
 					}
 				} else {
-					console.error(`No code provided. uri: ${url.toString()}`);
+					console.error(`[Reborn AI] No code provided. uri: ${url.toString()}`);
 				}
 			} else {
-				console.error(`No code provided. uri: ${url.toString()}`);
+				console.error(`[Reborn AI] No code provided. uri: ${url.toString()}`);
 			}
 		});
 
@@ -1059,7 +1071,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	// Send OAuth PKCE request to the OpenRouter
 	async generateOpenRouterApiKey() {
 		if (!this.authStore) {
-			console.error("Main Process - AuthStore not initialized");
+			console.error("[Reborn AI] Main Process - AuthStore not initialized");
 			return;
 		}
 
@@ -1085,7 +1097,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			if (server) {
 				try {
 					server.close();
-					console.warn('OpenRouter callback server closed (5 min timeout)');
+					console.warn('[Reborn AI] OpenRouter callback server closed (5 min timeout)');
 				} catch (error) { }
 			}
 		}, 300000);

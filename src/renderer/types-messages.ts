@@ -31,6 +31,8 @@ export enum BackendMessageType {
   getApiKeyStatus = "getApiKeyStatus",
   resetApiKey = "resetApiKey",
   generateOpenRouterApiKey = "generateOpenRouterApiKey",
+  // API Version
+  setApiVersion = "setApiVersion",
   // Action
   runAction = "runAction",
   stopAction = "stopAction"
@@ -100,6 +102,11 @@ export interface ChangeApiUrlMessage extends BaseBackendMessage {
 export interface ChangeApiKeyMessage extends BaseBackendMessage {
   type: BackendMessageType.changeApiKey;
   apiKey: string;
+}
+
+export interface SetApiVersionMessage extends BaseBackendMessage {
+  type: BackendMessageType.setApiVersion;
+  apiVersion: string;
 }
 
 export interface GetApiKeyStatusMessage extends BaseBackendMessage {

@@ -30,7 +30,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
 
   return (event: any) => {
     if (debug) {
-      console.log("Renderer - Received message from main process: ", event.data);
+      console.info("[Reborn AI] Renderer - Received message from main process: ", event.data);
     }
 
     let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
@@ -96,7 +96,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             }
           }
         } else {
-          console.error("updateMessage event: No message provided");
+          console.error("[Reborn AI] updateMessage event: No message provided");
         }
 
         break;
@@ -156,7 +156,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         const settingsUpdateData = message as SettingsUpdateMessage;
 
         if (!settingsUpdateData?.config) {
-          console.warn("Renderer - No settings provided in settingsUpdate message");
+          console.warn("[Reborn AI] Renderer - No settings provided in settingsUpdate message");
           return;
         }
 
@@ -257,7 +257,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             }
             break;
           default:
-            console.warn(`Renderer - Unhandled result from action: ${actionCompleteData?.actionId}`);
+            console.warn(`[Reborn AI] Renderer - Unhandled result from action: ${actionCompleteData?.actionId}`);
         }
         break;
       case FrontendMessageType.actionError:
@@ -273,7 +273,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           model: setConversationModelData.model
         }));
       default:
-        console.error('Renderer - Uncaught message type: ', (message as BaseFrontendMessage)?.type);
+        console.error('[Reborn AI] Renderer - Uncaught message type: ', (message as BaseFrontendMessage)?.type);
     }
   };
 };

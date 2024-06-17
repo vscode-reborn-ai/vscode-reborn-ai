@@ -1,54 +1,61 @@
-import { encodingForModel, Tiktoken, TiktokenModel } from "js-tiktoken";
-import OpenAI, { ClientOptions } from 'openai';
-import { v4 as uuidv4 } from "uuid";
+import { Tiktoken, TiktokenModel, encodingForModel } from "js-tiktoken";
+import OpenAI, { AzureClientOptions, AzureOpenAI, ClientOptions } from 'openai';
+import * as vscode from 'vscode';
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
 import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
 
-const FALLBACK_MODEL_ID = 'gpt-4-turbo';
-
-/*
-
-* openai-api-provider.ts
+/** openai-api-provider.ts
 
 Responsible for handling API calls to OpenAI's API
 (or any server that implements the OpenAI API).
 
 */
 
+// Fallback model ID used for token counting
+const FALLBACK_MODEL_ID = 'gpt-4-turbo';
+
 export class ApiProvider {
-  private _openai: OpenAI;
+  private _openai: OpenAI | AzureOpenAI | undefined;
   private _temperature: number;
   private _topP: number;
   private _modelList: Model[] | undefined;
 
-  public apiConfig: ClientOptions;
+  public apiConfig: ClientOptions & AzureClientOptions;
+  public isAzure: boolean = false;
+  public baseApiUrl: string = 'https://api.openai.com/v1';
+
+  // Cache the model list, requests within 5 seconds to the same api base url will use the cached list
+  // Keep track of when the list was last fetched to use as a cache invalidation mechanism
+  private _lastModelListFetch: number = 0;
+  private _modelListCacheDuration: number = 5000;
+  private _cachedModelList: Model[] | undefined;
 
   constructor(apiKey: string, {
     organizationId = '',
-    apiBaseUrl = 'https://api.openai.com/v1',
-    maxTokens = 4096,
-    maxResponseTokens,
+    apiBaseUrl: baseApiUrl = 'https://api.openai.com/v1',
     temperature = 0.9,
     topP = 1,
   }: {
     organizationId?: string;
     apiBaseUrl?: string;
-    maxTokens?: number;
-    maxResponseTokens?: number;
     temperature?: number;
     topP?: number;
   } = {}) {
-    // If apiBaseUrl ends with slash, remove it
-    apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
-    // OpenAI API config
-    this.apiConfig = {
-      apiKey: apiKey,
-      organization: organizationId,
-      baseURL: apiBaseUrl,
-    };
-    this._openai = new OpenAI(this.apiConfig);
     this._temperature = temperature;
     this._topP = topP;
+
+    // If apiBaseUrl ends with slash, remove it
+    this.baseApiUrl = baseApiUrl.replace(/\/$/, '');
+
+    this.apiConfig = {
+      apiKey,
+      organization: organizationId,
+      baseURL: this.baseApiUrl,
+      // Allow this extension to work in the browser
+      dangerouslyAllowBrowser: true,
+    };
+
+    this.rebuildOpenAIProvider();
   }
 
   getRemainingTokens(model: Model | undefined, promptTokensUsed: number) {
@@ -88,6 +95,11 @@ export class ApiProvider {
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
     const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
+    if (!this._openai) {
+      console.error('[Reborn AI] OpenAI API not initialized');
+      return;
+    }
+
     // Only stream if not using a proxy
     const useStream = true; // this.apiConfig.basePath === 'https://api.openai.com/v1';
     const response = await this._openai.chat.completions.create(
@@ -114,17 +126,17 @@ export class ApiProvider {
       }
 
       try {
-        const token = chunk.choices[0].delta.content;
+        if (chunk.choices.length > 0) {
+          const token = chunk.choices[0].delta.content;
 
-        if (token) {
-          yield token;
+          if (token) {
+            yield token;
+          }
         }
       } catch (e: any) {
-        console.error('api JSON parse error. Message:', e?.message, 'Error:', e);
+        console.error('[Reborn AI] api JSON parse error. Message:', e?.message, 'Error:', e);
       }
     }
-
-    console.error('api stream ended');
   }
 
   async getChatCompletion(conversation: Conversation, {
@@ -136,6 +148,11 @@ export class ApiProvider {
   } = {}): Promise<OpenAI.Chat.Completions.ChatCompletionMessage | undefined> {
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
     const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
+
+    if (!this._openai) {
+      console.error('[Reborn AI] OpenAI API not initialized');
+      return;
+    }
 
     const response = await this._openai.chat.completions.create(
       {
@@ -161,6 +178,7 @@ export class ApiProvider {
   // Note: PromptCompletion is LEGACY
   // Using prompt as a param instead of the last message in the conversation to
   // allow for special formatting of the prompt before sending it to OpenAI
+  /*
   async getPromptCompletion(prompt: string, conversation: Conversation, {
     temperature = this._temperature,
     topP = this._topP,
@@ -194,8 +212,9 @@ export class ApiProvider {
       createdAt: Date.now(),
     };
   }
+  */
 
-  // * Utility token counting methods
+  // Utility token counting methods
   public static getEncodingForModel(modelId: string): Tiktoken {
     try {
       return encodingForModel(modelId as TiktokenModel);
@@ -262,6 +281,45 @@ export class ApiProvider {
     this._topP = value;
   }
 
+  private async rebuildOpenAIProvider(newConfig?: ClientOptions) {
+    if (newConfig) {
+      this.apiConfig = newConfig;
+    }
+
+    if ((this.apiConfig?.baseURL ?? '').includes('.azure.com')) {
+      // Azure docs: https://learn.microsoft.com/en-us/javascript/api/@azure/openai/
+      console.info('[Reborn AI] Using Azure OpenAI API');
+
+      // Azure OpenAI API
+      this.isAzure = true;
+
+      this.apiConfig.deployment = this.apiConfig.deployment ?? '';
+
+      // If baseURL contains "/deployments/{deployment}", remove it, and assign the deployment as the modelId
+      if (this.baseApiUrl.includes('/deployments/')) {
+        const urlParts = this.baseApiUrl.split('/');
+        this.apiConfig.deployment = urlParts[urlParts.length - 1];
+      }
+
+      // `endpoint` and `baseURL` are mutually exclusive.
+      this.apiConfig.endpoint = this.baseApiUrl.replace(`/deployments/${this.apiConfig.deployment}`, '');
+      this.apiConfig.baseURL = null;
+
+      this.apiConfig.apiVersion = await vscode.workspace.getConfiguration("chatgpt").get("apiVersion") as string ?? process.env.OPENAI_API_VERSION ?? '2024-02-01';
+
+      if (!this.apiConfig.deployment) {
+        console.warn('[Reborn AI] Attempting to set up Azure OpenAI API without a deployment ID. This will likely fail.');
+      }
+
+      this._openai = new AzureOpenAI(this.apiConfig);
+    } else {
+      // All non-Azure APIs
+      this.isAzure = false;
+
+      this._openai = new OpenAI(this.apiConfig);
+    }
+  }
+
   async updateApiKey(apiKey: string) {
     // OpenAI API config
     this.apiConfig = {
@@ -270,9 +328,8 @@ export class ApiProvider {
       baseURL: this.apiConfig.baseURL,
     };
 
-    this._openai = new OpenAI(this.apiConfig);
-
-    this.repullModelList();
+    await this.rebuildOpenAIProvider();
+    await this.repullModelList();
   }
 
   async updateOrganizationId(organizationId: string) {
@@ -283,12 +340,16 @@ export class ApiProvider {
       baseURL: this.apiConfig.baseURL,
     };
 
-    this._openai = new OpenAI(this.apiConfig);
-
-    this.repullModelList();
+    await this.rebuildOpenAIProvider();
+    await this.repullModelList();
   }
 
   async updateApiBaseUrl(apiBaseUrl: string) {
+    if (apiBaseUrl === this.apiConfig.baseURL) {
+      console.warn('[Reborn AI] API base URL is the same, not updating');
+      return;
+    }
+
     // If apiBaseUrl ends with slash, remove it
     apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
     // OpenAI API config
@@ -298,12 +359,35 @@ export class ApiProvider {
       baseURL: this.apiConfig.baseURL,
     };
 
-    this._openai = new OpenAI(this.apiConfig);
-
-    this.repullModelList();
+    await this.rebuildOpenAIProvider();
+    await this.repullModelList();
   }
 
   private async repullModelList(): Promise<void> {
+    if (this.isAzure) {
+      this._modelList = [{
+        id: this.apiConfig.deployment ?? '',
+        name: 'Default Azure Model',
+        created: Date.now(),
+        object: "model",
+        owned_by: "user",
+      }];
+
+      return;
+    }
+
+    if (!this._openai) {
+      console.error('[Reborn AI] OpenAI API not initialized');
+      return;
+    }
+
+    // check if we've fetched the model list in the last 5 seconds from the same base url
+    if (this._cachedModelList && Date.now() - this._lastModelListFetch < this._modelListCacheDuration) {
+      this._modelList = this._cachedModelList;
+      console.info('[Reborn AI] Using cached model list.');
+      return;
+    }
+
     const modelEndpointNotFound = new Error('404');
 
     try {
@@ -317,12 +401,16 @@ export class ApiProvider {
 
       // If 404 error, this might be the ollama API
       if (response.status === 404) {
-        console.warn('OpenAI API /models endpoint not found, attempting ollama\'s API');
+        console.warn('[Reborn AI] OpenAI API /models endpoint not found, attempting ollama\'s API..');
         throw modelEndpointNotFound;
       }
 
       // Did not 404, so we can fetch models from the OpenAI API
       this._modelList = (await this._openai.models.list()).getPaginatedItems();
+
+      // Cache result
+      this._lastModelListFetch = Date.now();
+      this._cachedModelList = this._modelList;
     } catch (e: any | Error) {
       // If 404 error, this might be the ollama API
       if (e === modelEndpointNotFound) {
@@ -343,11 +431,17 @@ export class ApiProvider {
             digest: model.digest,
             details: model.details,
           }));
+
+          // Cache result
+          this._lastModelListFetch = Date.now();
+          this._cachedModelList = this._modelList;
+
+          console.info('[Reborn AI] Successfully fetched models from ollama API');
         } catch (e) {
-          console.error('Failed to fetch models from ollama API', e);
+          console.error('[Reborn AI] Failed to fetch models from ollama API', e);
         }
       } else {
-        console.error('Failed to fetch models from OpenAI API', e);
+        console.error('[Reborn AI] Failed to fetch models from OpenAI API', e);
         throw e;
       }
     }
@@ -359,5 +453,15 @@ export class ApiProvider {
     }
 
     return this._modelList ?? [];
+  }
+
+  // Utilities
+  // Is the API an Azure API?
+  isApiAzure(apiUrl?: string): boolean {
+    if (apiUrl) {
+      return apiUrl.includes('cognitiveservices.azure.com');
+    } else {
+      return (this.apiConfig.baseURL ?? '').includes('cognitiveservices.azure.com');
+    }
   }
 }

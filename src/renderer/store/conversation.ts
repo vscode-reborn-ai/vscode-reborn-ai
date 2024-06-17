@@ -134,7 +134,7 @@ export const conversationSlice = createSlice({
           state.currentConversation.messages = state.conversations[conversationId].messages;
         }
       } else {
-        console.error('addMessage - Conversation not found', conversationId);
+        console.error('[Reborn AI] addMessage - Conversation not found', conversationId);
       }
     },
     updateMessage: (

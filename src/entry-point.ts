@@ -46,7 +46,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					language: vscode.window.activeTextEditor?.document.languageId,
 				});
 			} else {
-				console.error("freeText - No current conversation found");
+				console.error("[Reborn AI] freeText - No current conversation found");
 			}
 		}
 	});
@@ -110,7 +110,7 @@ export async function activate(context: vscode.ExtensionContext) {
 						language: editor.document.languageId,
 					});
 				} else {
-					console.error("adhoc - No current conversation found");
+					console.error("[Reborn AI] adhoc - No current conversation found");
 				}
 			}
 		}
@@ -134,7 +134,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					conversation: currentConversation,
 				});
 			} else {
-				console.error("generateCode - No current conversation found");
+				console.error("[Reborn AI] generateCode - No current conversation found");
 			}
 		}
 	});
@@ -159,7 +159,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					conversation: currentConversation,
 				});
 			} else {
-				console.error(`${command} - No current conversation found`);
+				console.error(`[Reborn AI] ${command} - No current conversation found`);
 			}
 		}
 	}));

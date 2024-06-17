@@ -42,7 +42,7 @@ export class ActionRunner {
       case ActionNames.createConversationTitle:
         return new RetitleAction(this) as Action;
       default:
-        console.error(`Action ${actionName} not found`);
+        console.error(`[Reborn AI] Action ${actionName} not found`);
         return undefined;
     }
   }
@@ -369,13 +369,15 @@ class RetitleAction extends Action {
     // remove any double quotes
     title = title.replace(/"/g, '');
     // If it starts with title: remove it
-    title = title.replace(/^title:/i, '').replace(/^Title:/i, '');
+    // title = title.replace(/^title:/i, '').replace(/^Title:/i, '');
     // If it starts with answer: remove it
-    title = title.replace(/^answer:/i, '').replace(/^Answer:/i, '');
+    // title = title.replace(/^answer:/i, '').replace(/^Answer:/i, '');
     // Remove any markdown formatting
     title = title.replace(/`/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/#/g, '');
     // Remove any HTML tags
     title = title.replace(/<[^>]*>/g, '');
+    // If the title matches the format "<text>:<text>", only show text after the colon
+    title = title.replace(/.*:/, '');
     // Truncate to 50 characters
     title = title.slice(0, 25);
 

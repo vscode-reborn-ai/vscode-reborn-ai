@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import CodeBlock from "../components/CodeBlock";
 import { useDebounce } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -16,10 +16,12 @@ interface LlmTemplate {
   name: string;
   instructions: string;
   apiUrl?: URL;
+  apiVersion?: string;
   docsUrl?: URL;
   showApiKeyInput?: boolean;
   showAllModelSuggestion?: boolean;
   manualModelInput?: boolean;
+  showApiVersionInput?: boolean;
   tested?: boolean;
 }
 const LLM_TEMPLATES: LlmTemplate[] = [
@@ -45,6 +47,22 @@ const LLM_TEMPLATES: LlmTemplate[] = [
     ),
     showApiKeyInput: true,
     showAllModelSuggestion: false,
+    tested: true,
+  },
+  {
+    name: "Azure OpenAI API",
+    instructions:
+      "1. Create an Azure account.\n2. Create a deployment in Azure OpenAI Studio > Deployments.\n3. Enter the endpoint URL with the deployment ID.\nRemember to place `my-service-name` and `my-deployment-id` with your own values.",
+    apiUrl: new URL(
+      "https://my-service-name.openai.azure.com/deployments/my-deployment-id"
+    ),
+    apiVersion: "2024-02-01",
+    docsUrl: new URL(
+      "https://learn.microsoft.com/en-us/azure/ai-services/openai/overview"
+    ),
+    showApiKeyInput: true,
+    showAllModelSuggestion: false,
+    showApiVersionInput: true,
     tested: true,
   },
   {
@@ -80,7 +98,7 @@ const LLM_TEMPLATES: LlmTemplate[] = [
   {
     name: "ollama",
     instructions:
-      "ollama automatically runs its API in the background after install. If it's not running, you can start it with `ollama serve` in your terminal.\n\nOnly installed models will be shown. This extension does not support installing new models (yet).",
+      "ollama automatically runs its API in the background after install. If it's not running, you can start it with `ollama serve` in your terminal.\nOnly installed models will be shown.\nThis extension does not support installing new models (yet).",
     apiUrl: new URL("http://localhost:11434/v1"),
     docsUrl: new URL(
       "https://github.com/ollama/ollama/blob/main/docs/openai.md"
@@ -132,12 +150,14 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
     LLM_TEMPLATES.find((tool) => tool.name === "Other") ??
       LLM_TEMPLATES[LLM_TEMPLATES.length - 1]
   );
-  const [showSaved, setShowSaved] = useState(false);
+  const [showUrlSaved, setShowUrlSaved] = useState(false);
+  const [showVersionSaved, setShowVersionSaved] = useState(false);
   const apiUrlInputRef = React.createRef<HTMLInputElement>();
+  const apiVersionInputRef = React.createRef<HTMLInputElement>();
   const [lastApiKeyTest, setLastApiKeyTest] = useState<string | null>(null);
   const backendMessenger = useMessenger(vscode);
 
-  const handleApiKeyUpdate = (apiKey: string) => {
+  const handleApiKeyUpdate = useCallback((apiKey: string) => {
     if (apiKey === lastApiKeyTest) {
       return;
     }
@@ -147,42 +167,73 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
     backendMessenger.sendChangeApiKey(apiKey);
 
     setLastApiKeyTest(apiKey);
-  };
+  }, []);
 
   const debouncedSetApiKey = useDebounce(handleApiKeyUpdate, 2000);
 
-  const handleApiUrlUpdate = (apiUrl: string) => {
+  const handleApiUrlUpdate = useCallback((apiUrl: string) => {
     backendMessenger.sendChangeApiUrl(apiUrl);
 
-    setShowSaved(true);
+    setShowUrlSaved(true);
 
     setTimeout(() => {
-      setShowSaved(false);
+      setShowUrlSaved(false);
     }, 2000);
-  };
+  }, []);
 
   const debouncedSetApiUrl = useDebounce(handleApiUrlUpdate, 1000);
 
+  // If the API URL changes, update the selected tool
   useEffect(() => {
-    const matchingTool = LLM_TEMPLATES.find(
-      (tool) => tool.apiUrl && tool.apiUrl.href === settings.gpt3.apiBaseUrl
+    const apiOrigin = new URL(settings.gpt3.apiBaseUrl).origin;
+    let matchingTool = LLM_TEMPLATES.find(
+      (tool) => tool.apiUrl && tool.apiUrl.origin === apiOrigin
     );
+
+    // Azure uses unique subdomains for each deployment, so we need to check the hostname
+    if (!matchingTool && apiOrigin.includes("openai.azure.com")) {
+      matchingTool = LLM_TEMPLATES.find(
+        (tool) => tool.name === "Azure OpenAI API"
+      );
+    }
+
     if (matchingTool) {
       setSelectedTool(matchingTool);
     }
   }, [settings.gpt3.apiBaseUrl]);
 
-  const handleToolChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedTool(
-      LLM_TEMPLATES.find((tool) => tool.name === event.target.value) ??
-        LLM_TEMPLATES[LLM_TEMPLATES.length - 1]
-    );
-  };
-
-  // On mount, set the API URL input to the current API URL
+  // If the API url changes, update the text input
   useEffect(() => {
     if (apiUrlInputRef.current) {
       apiUrlInputRef.current.value = settings.gpt3.apiBaseUrl;
+    }
+  }, [settings.gpt3.apiBaseUrl]);
+
+  // If the API Version changes, update the text input
+  useEffect(() => {
+    if (apiVersionInputRef.current) {
+      apiVersionInputRef.current.value = settings.apiVersion;
+    }
+  }, [settings.apiVersion]);
+
+  const handleToolChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      setSelectedTool(
+        LLM_TEMPLATES.find((tool) => tool.name === event.target.value) ??
+          LLM_TEMPLATES[LLM_TEMPLATES.length - 1]
+      );
+    },
+    []
+  );
+
+  useEffect(() => {
+    // On mount, set the API URL input to the current API URL
+    if (apiUrlInputRef.current) {
+      apiUrlInputRef.current.value = settings.gpt3.apiBaseUrl;
+    }
+    // On mount, set the API version input to the current API version
+    if (apiVersionInputRef.current) {
+      apiVersionInputRef.current.value = settings.apiVersion;
     }
   }, []);
 
@@ -267,7 +318,9 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                     />
                   );
                 } else {
-                  return <p>{item}</p>;
+                  return item
+                    .split("\n")
+                    .map((paragraph) => <p>{paragraph}</p>);
                 }
               })}
             {selectedTool.docsUrl && (
@@ -309,14 +362,51 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                       selectedTool.apiUrl?.href ?? "";
                   }
 
-                  setShowSaved(true);
+                  setShowUrlSaved(true);
 
                   setTimeout(() => {
-                    setShowSaved(false);
+                    setShowUrlSaved(false);
                   }, 2000);
                 }}
               >
                 Use this API URL
+              </button>
+            </div>
+          </div>
+        )}
+        {selectedTool && selectedTool.apiVersion && (
+          <div>
+            <strong className="inline-block mt-2 mb-1">
+              Suggested API Version:
+            </strong>
+            <div className="flex flex-wrap gap-2">
+              <CodeBlock
+                margins={false}
+                className="flex-grow"
+                code={selectedTool.apiVersion}
+                vscode={vscode}
+              />
+              <button
+                type="button"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
+                onClick={() => {
+                  backendMessenger.sendSetApiVersion(
+                    selectedTool.apiVersion ?? ""
+                  );
+
+                  if (apiVersionInputRef.current) {
+                    apiVersionInputRef.current.value =
+                      selectedTool.apiVersion ?? "";
+                  }
+
+                  setShowVersionSaved(true);
+
+                  setTimeout(() => {
+                    setShowVersionSaved(false);
+                  }, 2000);
+                }}
+              >
+                Use this API Version
               </button>
             </div>
           </div>
@@ -327,15 +417,18 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             all models" checkbox below to see all models.
           </p>
         )}
-        {selectedTool && !selectedTool.showAllModelSuggestion && (
-          <p className="mt-2">
-            It is recommended you do <strong>not</strong> check the "Show all
-            models" checkbox below or a lot of unnecessary models will be shown.
-          </p>
-        )}
+        {selectedTool &&
+          !selectedTool.showAllModelSuggestion &&
+          !selectedTool.showApiVersionInput && (
+            <p className="mt-2">
+              It is recommended you do <strong>not</strong> check the "Show all
+              models" checkbox below or a lot of unnecessary models will be
+              shown.
+            </p>
+          )}
         {selectedTool &&
           selectedTool.manualModelInput &&
-          selectedTool.name !== "other" && (
+          selectedTool.name !== "Other" && (
             <p className="mt-2">
               This tool requires <strong>manual model input</strong>. It does
               not support fetching models from the /models endpoint.
@@ -345,7 +438,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
 
       <section>
         <label htmlFor="apiUrl" className="block text-md font-medium my-2">
-          <strong>Current</strong> API URL:
+          <span className="underline">Current</span> API URL:
         </label>
         <div className="relative">
           <input
@@ -354,14 +447,45 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             type="text"
             onChange={(e) => debouncedSetApiUrl(e.target.value)}
             className="block w-full p-2 text-sm rounded border border-input text-input bg-input outline-0"
+            placeholder={selectedTool?.apiUrl?.href ?? "https://..."}
           />
-          {showSaved && (
+          {showUrlSaved && (
             <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-menu">
               Saved
             </span>
           )}
         </div>
       </section>
+
+      {/* Azure only */}
+      {selectedTool?.showApiVersionInput && (
+        <section>
+          <label
+            htmlFor="apiVersion"
+            className="block text-md font-medium my-2"
+          >
+            <span className="underline">Current</span> API Version of the
+            deployment:
+          </label>
+          <div className="relative">
+            <input
+              id="apiVersion"
+              ref={apiVersionInputRef}
+              type="text"
+              onChange={(e) => {
+                backendMessenger.sendSetApiVersion(e.target.value);
+              }}
+              className="block w-full p-2 text-sm rounded border border-input text-input bg-input outline-0"
+              placeholder={DEFAULT_EXTENSION_SETTINGS.apiVersion}
+            />
+            {showVersionSaved && (
+              <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-menu">
+                Saved
+              </span>
+            )}
+          </div>
+        </section>
+      )}
 
       <section>
         {/* API key: user input */}
@@ -372,7 +496,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                 htmlFor="apiKey"
                 className="block text-md font-medium my-2"
               >
-                <strong>Current</strong> API key{" "}
+                <span className="underline">Current</span> API key{" "}
                 {selectedTool?.apiUrl && (
                   <span className="text-xs">
                     for {new URL(settings.gpt3.apiBaseUrl).hostname}
