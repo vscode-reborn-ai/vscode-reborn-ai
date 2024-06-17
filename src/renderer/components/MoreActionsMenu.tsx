@@ -44,7 +44,7 @@ export default function MoreActionsMenu({
           }
         )}
       >
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-1">
           <li>
             <a
               className="flex gap-1 items-center py-0.5 px-1 whitespace-nowrap hover:underline focus-within:underline"
@@ -76,6 +76,22 @@ export default function MoreActionsMenu({
             >
               <Icon icon="ai" className="w-3 h-3" />
               {t?.questionInputField?.localAPI ?? "Use Local LLM"}
+            </Link>
+          </li>
+          <li>
+            <Link
+              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
+              to="/actions"
+              onClick={(e) => {
+                // if the actions tab is already open, close it
+                if (location.pathname === "/actions") {
+                  e.preventDefault();
+                  navigate(`/chat/${encodeURI(currentConversation.id)}`);
+                }
+              }}
+            >
+              <Icon icon="zap" className="w-3 h-3" />
+              Actions
             </Link>
           </li>
           {process.env.NODE_ENV === "development" && (

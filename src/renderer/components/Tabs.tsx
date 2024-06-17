@@ -277,25 +277,6 @@ export default function Tabs({
               </button>
             </li>
           </ul>
-          <Link
-            className={`flex items-center justify-center text-button-secondary whitespace-nowrap rounded p-2 max-h-[32px] text-2xs
-            ${
-              location.pathname === "/actions"
-                ? "bg-button border-button text-button"
-                : "bg-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover"
-            }`}
-            to="/actions"
-            onClick={(e) => {
-              // if the actions tab is already open, close it
-              if (location.pathname === "/actions") {
-                e.preventDefault();
-                navigate(`/chat/${encodeURI(currentConversation.id)}`);
-              }
-            }}
-          >
-            <Icon icon="zap" className="w-4 h-4" />
-            <span className="sr-only">Actions</span>
-          </Link>
         </nav>
       </div>
     </div>
