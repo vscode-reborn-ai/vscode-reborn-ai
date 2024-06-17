@@ -1,17 +1,17 @@
-# ChatGPT Reborn
+# VSCode Reborn AI
 
-ChatGPT Reborn is a Visual Studio Code extension that allows you to use the ChatGPT API to write, refactor, and improve your code.
+VSCode Reborn AI is a Visual Studio Code extension that allows you to use the ChatGPT API to write, refactor, and improve your code.
 
 ## Get for VSCode
 
-Search for "ChatGPT Reborn" in the VSCode extension search.
+Search for "VSCode Reborn AI" in the VSCode extension search.
 
 Or install directly:
 
 - [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn)
 - [Open VSX Registry](https://open-vsx.org/extension/chris-hayes/chatgpt-reborn)
 
-Or build this extension yourself (see below).
+Or build this extension yourself (scroll further down).
 
 ## About this fork
 
@@ -19,7 +19,7 @@ This is a fork of the popular, but now discontinued [vscode-chatgpt](https://git
 
 Gencay has since released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work: <https://github.com/ai-genie/chatgpt-vscode>.
 
-How these extensions differ is that Genie AI is a proprietary extension, and "reborn" is an open-source extension.
+How these extensions differ is that Genie AI is a proprietary extension, and VSCode Reborn AI is an open-source extension.
 
 ## Local LLMs and Proxies
 
@@ -44,7 +44,7 @@ I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. I
 
 Most of this extension has been translated to a ~dozen languages, but the translations are not complete and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20)
 
-## Installation
+## Build this extension yourself
 
 To set up the project, first clone the repository:
 
@@ -75,7 +75,7 @@ yarn run build
 yarn run watch
 ```
 
-## Testing the Extension in Visual Studio Code
+## Developing this extension in VS Code
 
 To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these steps:
 
@@ -93,9 +93,9 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## Changelog
 
-### Next Release (`v3.24.0`)
+### Next Release
 
-- ✨ **Feature** - Added support for Azure's OpenAI API. - *Thank you for the suggestion @PeterDaveHello && @rambalachandran*
+- ✨ **Feature** - Added support for Azure's OpenAI API. - *Thank you for the suggestion @PeterDaveHello & @rambalachandran*
 
 ### June 14, 2024 (`v3.23.0` - `v3.23.2`)
 
