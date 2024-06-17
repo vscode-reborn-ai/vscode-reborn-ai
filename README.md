@@ -23,15 +23,13 @@ How these extensions differ is that Genie AI is a proprietary extension, and "re
 
 ## Local LLMs and Proxies
 
-This extension can be used with a proxy either for geographical reasons or if you're using a local LLM. The "Api Base Url" just needs to be changed.
+Any tool that is "compatible" with the OpenAI API should work with this extension. The tools listed below are the ones I've personally tested.
 
 ### Local LLMs tested to work with this extension
 
 - [X] [text-generation-webui](https://github.com/oobabooga/text-generation-webui)
-- [X] [LocalAI](https://localai.io/)
 - [X] [ollama](https://github.com/ollama/ollama)
-
-Any local LLM that supports the OpenAI API *should* work with this extension. The list above is the tools I've personally tested.
+- [X] [LocalAI](https://localai.io/)
 
 ### Alternative APIs tested to work with this extension
 
@@ -40,7 +38,7 @@ Any local LLM that supports the OpenAI API *should* work with this extension. Th
 
 ### Proxies
 
-I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers.
+I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers. This is mainly for anyone who wants to use OpenAI, but cannot due to api.openai.com being blocked.
 
 ## Internationalization
 
