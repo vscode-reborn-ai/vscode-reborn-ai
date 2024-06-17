@@ -21,17 +21,9 @@ Gencay has since released a *new* extension, "ChatGPT: Genie AI", that is a cont
 
 How these extensions differ is that Genie AI is a proprietary extension, and "reborn" is an open-source extension.
 
-## Proxy and Local LLMs
+## Local LLMs and Proxies
 
 This extension can be used with a proxy either for geographical reasons or if you're using a local LLM. The "Api Base Url" just needs to be changed.
-
-### Proxies
-
-I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers.
-
-### Alternative APIs tested to work with this extension
-
-- [X] [OpenRouter](https://openrouter.ai/)
 
 ### Local LLMs tested to work with this extension
 
@@ -39,7 +31,16 @@ I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. I
 - [X] [LocalAI](https://localai.io/)
 - [X] [ollama](https://github.com/ollama/ollama)
 
-Any local LLM that supports the OpenAI API *should* work with this extension. The list above are the tools I've personally tested.
+Any local LLM that supports the OpenAI API *should* work with this extension. The list above is the tools I've personally tested.
+
+### Alternative APIs tested to work with this extension
+
+- [X] [OpenRouter](https://openrouter.ai/)
+- [X] [Azure OpenAI Service](https://azure.microsoft.com/en-us/products/ai-services/openai-service/)
+
+### Proxies
+
+I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers.
 
 ## Internationalization
 
@@ -93,6 +94,10 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 6. Once you are satisfied with your changes, submit a pull request to this repository.
 
 ## Changelog
+
+### Next Release (`v3.24.0`)
+
+- ✨ **Feature** - Added support for Azure's OpenAI API. - *Thank you for the suggestion @PeterDaveHello && @rambalachandran*
 
 ### June 14, 2024 (`v3.23.0` - `v3.23.2`)
 
