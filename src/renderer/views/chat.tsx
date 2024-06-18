@@ -84,7 +84,7 @@ export default function Chat({
   };
 
   return (
-    <>
+    <div className="pt-16 overflow-y-auto flex-1">
       {debug && (
         <div className="text-gray-500 text-[10px] font-mono">
           Conversation ID: {conversation?.id}
@@ -112,11 +112,7 @@ export default function Chat({
         vscode={vscode}
       />
       {/* Conversation messages */}
-      <div
-        className="flex-1 overflow-y-auto"
-        ref={conversationListRef}
-        onScroll={handleScroll}
-      >
+      <div ref={conversationListRef} onScroll={handleScroll}>
         <div
           className={`flex flex-col 
           ${settings?.minimalUI ? "pb-20" : "pb-24"}
@@ -353,6 +349,6 @@ export default function Chat({
         vscode={vscode}
         conversationList={conversationList}
       />
-    </>
+    </div>
   );
 }

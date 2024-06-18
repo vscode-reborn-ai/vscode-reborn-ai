@@ -238,7 +238,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
   }, []);
 
   return (
-    <div className="api-settings-view p-4 flex flex-col gap-4 overflow-y-auto">
+    <div className="api-settings-view pt-16 p-4 flex flex-col gap-4 overflow-y-auto">
       <header>
         <h1 className="text-xl font-semibold inline-flex flex-wrap gap-2">
           Connect to

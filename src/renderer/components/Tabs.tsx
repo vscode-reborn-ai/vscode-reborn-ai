@@ -121,7 +121,7 @@ export default function Tabs({
   };
 
   return (
-    <div>
+    <div className="fixed top-0 z-30 w-screen bg-gradient-to-b from-bg from-30% to-transparent to-80%">
       {/* Tab layout specifically for a skinny UI (switches to dropdown) or when the tab count exceeds 5 */}
       <div className={`py-1 px-2 ${tabs.length > 5 ? "" : "2xs:hidden"}`}>
         <label htmlFor="tabs" className="sr-only">
@@ -178,8 +178,8 @@ export default function Tabs({
               <Link
                 className={classNames(
                   location.pathname === "/api"
-                    ? "bg-tab-active border-secondary text-tab-active-unfocused hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
-                    : "border-transparent hover:bg-tab-selection hover:text-tab-inactive text-tab-inactive-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
+                    ? "border-secondary bg-tab-active text-tab-active-unfocused hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
+                    : "border-transparent bg-tab-inactive hover:bg-tab-selection hover:text-tab-inactive text-tab-inactive-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
                   "flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap border text-2xs rounded focus:outline-none",
                   {
                     hidden: !showLocalLlmTab,
@@ -220,8 +220,8 @@ export default function Tabs({
                   <Link
                     className={classNames(
                       location.pathname === `/chat/${encodeURI(tab.id)}`
-                        ? "bg-tab-active border-secondary text-tab-active-unfocused hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
-                        : "border-transparent hover:bg-tab-selection hover:text-tab-inactive text-tab-inactive-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
+                        ? "border-secondary bg-tab-active focus-within:bg-tab-active"
+                        : "border-transparent bg-tab-inactive hover:bg-tab-selection focus-within:bg-tab-selection",
                       "flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap border text-2xs rounded focus:outline-none"
                     )}
                     to={tab.href}
@@ -231,7 +231,16 @@ export default function Tabs({
                         : undefined
                     }
                   >
-                    <span className="pt-0.5">{tab.name}</span>
+                    <span
+                      className={classNames(
+                        "pt-0.5",
+                        location.pathname === `/chat/${encodeURI(tab.id)}`
+                          ? "text-tab-active hover:text-tab-active focus-within:text-tab-active"
+                          : "hover:text-tab-inactive text-tab-inactive-unfocused focus-within:text-tab-inactive"
+                      )}
+                    >
+                      {tab.name}
+                    </span>
                     {/* close tab button */}
                     {tab.name !== "Prompts" && tab.name !== "Actions" && (
                       <button

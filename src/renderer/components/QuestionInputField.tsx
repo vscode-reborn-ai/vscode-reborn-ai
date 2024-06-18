@@ -144,15 +144,15 @@ export default ({
 
   return (
     <footer
-      className={`fixed z-20 bottom-0 w-full flex flex-col gap-y-1 pt-2 bg
+      className={`fixed z-20 bottom-0 w-full flex flex-col gap-y-1 pt-2 bg-gradient-to-t from-bg from-50% to-transparent
       ${settings?.minimalUI ? "pb-2" : "pb-1"}
     `}
     >
       <div className="px-4 flex items-center gap-x-4">
-        <div className="flex-1 textarea-wrapper w-full flex items-center">
+        <div className="bg flex-1 textarea-wrapper w-full flex items-center">
           {currentConversation.inProgress && (
             // show the text "Thinking..." when the conversation is in progress in place of the question input
-            <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-full">
+            <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border bg-input text-input w-full">
               <Icon
                 icon="ripples"
                 className="w-5 h-5 mr-2 text stroke-current"
@@ -223,7 +223,7 @@ export default ({
           )}
         </div>
 
-        <div id="question-input-buttons">
+        <div className="bg" id="question-input-buttons">
           {currentConversation.inProgress && (
             // show the "stop" button when the conversation is in progress
             <button
@@ -249,7 +249,7 @@ export default ({
             <button
               title="Submit prompt"
               className={classNames(
-                "ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover",
+                "ask-button rounded px-4 py-2 flex flex-row items-center text-button bg-button hover:bg-button-hover focus:bg-button-hover",
                 {
                   "opacity-50 cursor-not-allowed": !isCurrentModelAvailable,
                 }
