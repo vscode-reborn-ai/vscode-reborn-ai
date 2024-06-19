@@ -149,7 +149,7 @@ export default function Tabs({
       </div>
       {/* Wider tab layout */}
       <div className={`${tabs.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
-        <nav className="flex justify-between border-b border-tab-editor-focus">
+        <nav className="flex justify-between border-b border-tab">
           <ul
             ref={tabListRef}
             className="flex overflow-x-auto divide-x divide-tab"
@@ -159,10 +159,10 @@ export default function Tabs({
             <li>
               <Link
                 className={classNames(
+                  "border-t h-full flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap text-2xs focus:outline-none",
                   location.pathname === "/api"
-                    ? "border-secondary bg-tab-active text-tab-active-unfocused hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
-                    : "border-transparent bg-tab-inactive hover:bg-tab-selection hover:text-tab-inactive text-tab-active-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
-                  "h-full flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap text-2xs focus:outline-none",
+                    ? "border-t-tab-editor-focus bg-tab-active text-tab-active hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
+                    : "border-t-tab-inactive bg-tab-inactive hover:bg-tab-selection hover:text-tab-inactive text-tab-active-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
                   {
                     hidden: !showLocalLlmTab,
                   }
@@ -204,10 +204,10 @@ export default function Tabs({
                 <li key={tab.id}>
                   <Link
                     className={classNames(
+                      "border-t h-full flex items-center group whitespace-nowrap text-2xs focus:outline-none",
                       location.pathname === `/chat/${encodeURI(tab.id)}`
-                        ? "bg-tab-active focus-within:bg-tab-active"
-                        : "bg-tab-inactive hover:bg-tab-selection focus-within:bg-tab-selection",
-                      "h-full flex items-center group whitespace-nowrap text-2xs focus:outline-none"
+                        ? "border-t-tab-editor-focus bg-tab-active focus-within:bg-tab-active"
+                        : "border-t-tab-inactive bg-tab-inactive hover:bg-tab-selection focus-within:bg-tab-selection"
                     )}
                     to={tab.href}
                     aria-current={
