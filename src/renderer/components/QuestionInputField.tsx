@@ -148,7 +148,7 @@ export default ({
       ${settings?.minimalUI ? "pb-2" : "pb-1"}
     `}
     >
-      <div className="px-4 flex items-center gap-x-4">
+      <div className="px-4 flex items-center gap-x-2">
         <div className="bg flex-1 textarea-wrapper w-full flex items-center">
           {currentConversation.inProgress && (
             // show the text "Thinking..." when the conversation is in progress in place of the question input
@@ -270,8 +270,8 @@ export default ({
         </div>
       </div>
       {!settings?.minimalUI && (
-        <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-2 px-4 overflow-x-auto">
-          <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-2">
+        <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-1 px-4 overflow-x-auto">
+          <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-1">
             {settings.manualModelInput ? (
               <ModelInput
                 currentConversation={currentConversation}
