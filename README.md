@@ -17,7 +17,7 @@ Or build this extension yourself (scroll further down).
 
 This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for working on the original extension and later open-sourcing it.
 
-Gencay has since released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work: <https://github.com/ai-genie/chatgpt-vscode>.
+Gencay has since released a *new* extension, "Reborn AI: Genie AI", that is a continuation of his work: <https://github.com/ai-genie/chatgpt-vscode>.
 
 How these extensions differ is that Genie AI is a proprietary extension, and VSCode Reborn AI is an open-source extension.
 

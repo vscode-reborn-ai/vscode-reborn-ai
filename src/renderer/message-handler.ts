@@ -135,7 +135,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         break;
       case FrontendMessageType.addError:
         const addErrorData = message as AddErrorMessage;
-        const errorMessageText = "An error occurred. If this issue persists please clear your session token with `ChatGPT: Reset session` command and/or restart your Visual Studio Code. If you still experience issues, it may be due to an OpenAI outage. Take a look at https://status.openai.com to see if there's an OpenAI outage.";
+        const errorMessageText = "An error occurred. If this issue persists please clear your session token with `Reborn AI: Reset session` command and/or restart your Visual Studio Code. If you still experience issues, it may be due to an OpenAI outage. Take a look at https://status.openai.com to see if there's an OpenAI outage.";
         const errorMessage: ChatMessage = {
           id: addErrorData.id,
           role: Role.assistant,

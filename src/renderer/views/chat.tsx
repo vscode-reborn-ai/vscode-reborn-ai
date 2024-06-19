@@ -1,9 +1,10 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Tooltip } from "react-tooltip";
 import CodeBlock from "../components/CodeBlock";
 import Icon from "../components/Icon";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
+import { getModelFriendlyName } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
@@ -26,11 +27,16 @@ export default function Chat({
     (state: RootState) => state.app.extensionSettings
   );
   const conversationListRef = React.useRef<HTMLDivElement>(null);
+  const models = useAppSelector((state: RootState) => state.app.models);
   const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
     null
   );
   const editingMessageRef = React.useRef<HTMLTextAreaElement>(null);
   const backendMessenger = useMessenger(vscode);
+
+  const modelFriendlyName = useMemo(() => {
+    return getModelFriendlyName(conversation, models, settings);
+  }, [conversation, models, settings]);
 
   (window as any)?.marked?.setOptions({
     renderer: new ((window as any)?.marked).Renderer(),
@@ -140,8 +146,9 @@ export default function Chat({
                         </>
                       ) : (
                         <>
-                          <Icon icon="ai" className="w-6 h-6 mr-2" />
-                          {t?.chat?.ai ?? "ChatGPT"}
+                          <Icon icon="box" className="w-6 h-6 mr-2" />
+                          {/* {t?.chat?.ai ?? "ChatGPT"} */}
+                          {modelFriendlyName ?? "ChatGPT"}
                         </>
                       )}
                     </h2>
