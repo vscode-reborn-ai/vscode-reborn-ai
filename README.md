@@ -96,6 +96,8 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 ### Next Release
 
 - ✨ **Feature** - Added support for Azure's OpenAI API. - *Thank you for the suggestion @PeterDaveHello & @rambalachandran*
+- 🖥️ **UI** - Redesigned conversation tabs to match the design of VS Code's editor tabs.
+- 🔧 **Fix** - UI color fixes to ensure the extension is usable across all themes.
 
 ### June 14, 2024 (`v3.23.0` - `v3.23.2`)
 
