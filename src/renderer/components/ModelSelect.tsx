@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getModelCompletionLimit,
   getModelContextLimit,
+  getModelFriendlyName,
   getModelRates,
   isMultimodalModel,
   isOnlineModel,
@@ -18,12 +19,7 @@ import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { ApiKeyStatus } from "../store/app";
 import { updateConversationModel } from "../store/conversation";
-import {
-  Conversation,
-  MODEL_FRIENDLY_NAME,
-  MODEL_TOKEN_LIMITS,
-  Model,
-} from "../types";
+import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
@@ -125,6 +121,10 @@ export default function ModelSelect({
     return costs;
   }, [models]);
 
+  const currentModelFriendlyName = useMemo(() => {
+    return getModelFriendlyName(currentConversation, models, settings, true);
+  }, [currentConversation, models, settings]);
+
   // returns sorted list of models
   const sortList = useCallback(
     (
@@ -184,29 +184,6 @@ export default function ModelSelect({
     },
     [computedModelDataMap]
   );
-
-  const currentModelFriendlyName = useMemo(() => {
-    let friendlyName =
-      currentConversation.model?.name ??
-      (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
-        ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
-        : currentConversation.model?.id ??
-          models.find((model) => model.id === settings?.gpt3?.model)?.name ??
-          settings?.gpt3?.model) ??
-      "No model selected";
-
-    // if the friendly has a slash (ie perplexity/model-name), ignore everything before the slash
-    if (friendlyName.includes("/")) {
-      friendlyName = friendlyName.split("/")[1];
-    }
-
-    //  if the friendly name has a colon (ie model-name:version), ignore everything after the colon
-    if (friendlyName.includes(":")) {
-      friendlyName = friendlyName.split(":")[0];
-    }
-
-    return friendlyName;
-  }, [currentConversation.model, settings]);
 
   const setModel = (model: Model) => {
     // Update settings

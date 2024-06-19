@@ -3,7 +3,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import { useAppDispatch } from "./hooks";
 import { aiRenamedTitle } from "./store/conversation";
-import { ActionNames, ChatMessage, Conversation, ExtensionSettings, MODEL_COSTS, MODEL_TOKEN_LIMITS, Model, Role } from "./types";
+import { ActionNames, ChatMessage, Conversation, ExtensionSettings, MODEL_COSTS, MODEL_FRIENDLY_NAME, MODEL_TOKEN_LIMITS, Model, Role } from "./types";
 
 export const unEscapeHTML = (unsafe: any) => {
   return unsafe
@@ -151,6 +151,56 @@ export function useRenameTabTitleWithAI(
       }
     }
   }, [settings]);
+}
+
+export function getModelFriendlyName(
+  currentConversation: Conversation,
+  models: Model[],
+  settings: ExtensionSettings,
+  shortVersion: boolean = false
+) {
+  let friendlyName: string;
+  let usingModelId = false;
+
+  if (currentConversation.model?.name) {
+    friendlyName = currentConversation.model.name;
+  } else if (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")) {
+    friendlyName = MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "") ?? "";
+  } else if (currentConversation.model?.id) {
+    friendlyName = currentConversation.model.id;
+    usingModelId = true;
+  } else if (models.find((model) => model.id === settings?.gpt3?.model)?.name) {
+    friendlyName = models.find((model) => model.id === settings?.gpt3?.model)?.name ?? "";
+  } else if (settings?.gpt3?.model) {
+    friendlyName = settings.gpt3.model;
+    usingModelId = true;
+  } else {
+    friendlyName = "No model selected";
+  }
+
+  if (usingModelId) {
+    // Expect a format like "google/gemma-7b-it:free"
+    // if the friendly has a slash (ie perplexity/model-name), ignore everything before the slash
+    if (friendlyName.includes("/")) {
+      friendlyName = friendlyName.split("/")[1];
+    }
+
+    //  if the friendly name has a colon (ie model-name:version), ignore everything after the colon
+    if (friendlyName.includes(":")) {
+      friendlyName = friendlyName.split(":")[0];
+    }
+  } else if (shortVersion) {
+    // Expect a format like "Google: Gemini Pro 1.0"
+    // If it includes a colon, ignore everything before the colon
+    if (friendlyName.includes(":")) {
+      friendlyName = friendlyName.split(":")[1];
+    }
+  }
+
+  // trim
+  friendlyName = friendlyName.trim();
+
+  return friendlyName;
 }
 
 // Model token limit for context (input)
