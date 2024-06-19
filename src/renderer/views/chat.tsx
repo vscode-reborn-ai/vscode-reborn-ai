@@ -89,6 +89,16 @@ export default function Chat({
     }
   };
 
+  useEffect(() => {
+    // check if the scroll listener is already attached
+    if (conversationListRef.current && !conversationListRef.current.onscroll) {
+      // attach the scroll listener
+      conversationListRef.current.addEventListener("scroll", handleScroll, {
+        passive: true, // do not block scrolling
+      });
+    }
+  }, [conversationListRef.current]);
+
   return (
     <div className="overflow-y-auto flex-1">
       {debug && (
@@ -118,7 +128,7 @@ export default function Chat({
         vscode={vscode}
       />
       {/* Conversation messages */}
-      <div ref={conversationListRef} onScroll={handleScroll}>
+      <div ref={conversationListRef}>
         <div
           className={`flex flex-col 
           ${settings?.minimalUI ? "pb-20" : "pb-24"}
