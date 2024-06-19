@@ -282,7 +282,7 @@ export default function Tabs({
                 onClick={createNewConversation}
               >
                 <Icon icon="plus" className="w-4 h-4" />
-                {t?.tabs?.new_chat ?? "New Chat"}
+                {t?.tabs?.new_chat ?? "New"}
               </button>
             </li>
           </ul>

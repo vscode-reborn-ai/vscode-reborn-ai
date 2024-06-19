@@ -301,7 +301,7 @@ export default function ModelSelect({
             : "No model selected"}
         </button>
         <div
-          className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-7em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+          className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}
@@ -339,7 +339,7 @@ export default function ModelSelect({
                     (model: Model) => (
                       <button
                         key={model.id}
-                        className="flex flex-col gap-1 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                        className="group flex flex-col gap-1 items-start justify-start p-2 w-full hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection"
                         onClick={() => {
                           setModel(model);
                           if (showParentMenu) {
@@ -356,17 +356,17 @@ export default function ModelSelect({
                             )}
                           </span>
                           {isMultimodalModel(model) && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
+                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
                               multimodal
                             </span>
                           )}
                           {isOnlineModel(model) && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
+                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
                               online
                             </span>
                           )}
                           {model.top_provider?.is_moderated && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
+                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
                               moderated
                             </span>
                           )}
@@ -408,7 +408,8 @@ export default function ModelSelect({
                                     "opacity-75":
                                       sortBy === "context" ||
                                       sortBy === "completion",
-                                  }
+                                  },
+                                  "group-hover:text-menu-selection group-focus:text-menu-selection"
                                 )}
                               >
                                 {computedModelDataMap.get(model.id)?.promptText}
@@ -427,7 +428,8 @@ export default function ModelSelect({
                                     "opacity-75":
                                       sortBy === "context" ||
                                       sortBy === "completion",
-                                  }
+                                  },
+                                  "group-hover:text-menu-selection group-focus:text-menu-selection"
                                 )}
                               >
                                 {
@@ -489,10 +491,11 @@ export default function ModelSelect({
                         <div className="flex flex-wrap justify-end gap-1">
                           <button
                             className={classNames(
-                              "flex items-center gap-1",
-                              "hover:bg-menu-selection p-1 rounded",
+                              "flex items-center gap-1 p-1 rounded",
+                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                               {
-                                "bg-menu-selection": sortBy === "name",
+                                "text-menu-selection bg-menu-selection":
+                                  sortBy === "name",
                               }
                             )}
                             onClick={() => {
@@ -515,8 +518,8 @@ export default function ModelSelect({
                           </button>
                           <button
                             className={classNames(
-                              "flex items-center gap-1",
-                              "hover:bg-menu-selection p-1 rounded",
+                              "flex items-center gap-1 p-1 rounded",
+                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                               {
                                 "bg-menu-selection": sortBy === "cost",
                               }
@@ -541,8 +544,8 @@ export default function ModelSelect({
                           </button>
                           <button
                             className={classNames(
-                              "flex items-center gap-1",
-                              "hover:bg-menu-selection p-1 rounded",
+                              "flex items-center gap-1 p-1 rounded",
+                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                               {
                                 "bg-menu-selection": sortBy === "context",
                               }
@@ -567,8 +570,8 @@ export default function ModelSelect({
                           </button>
                           <button
                             className={classNames(
-                              "flex items-center gap-1",
-                              "hover:bg-menu-selection p-1 rounded",
+                              "flex items-center gap-1 p-1 rounded",
+                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                               {
                                 "bg-menu-selection": sortBy === "completion",
                               }
@@ -597,7 +600,7 @@ export default function ModelSelect({
                         ref={searchInputRef}
                         type="text"
                         placeholder="Search models..."
-                        className="px-3 py-2 rounded border text-input text-sm border-input bg-menu-selection outline-0"
+                        className="px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
                         onChange={runSearch}
                         onKeyUp={(e) => {
                           if (e.key === "Escape") {

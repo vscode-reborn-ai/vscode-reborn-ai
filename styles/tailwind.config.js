@@ -106,6 +106,7 @@ module.exports = {
                 },
                 menu: {
                     DEFAULT: 'var(--vscode-menu-border)',
+                    selection: 'var(--vscode-menu-selectionBorder)',
                 },
                 input: {
                     DEFAULT: 'var(--vscode-settings-textInputBorder)',
