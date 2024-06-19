@@ -127,6 +127,11 @@ export function useMessenger(vscode: any) {
       useManualModelInput
     });
   };
+  const sendOpenExternalUrl = (url: string) => {
+    sendMessageToBackend(BackendMessageType.openExternalUrl, {
+      url
+    });
+  };
 
   return {
     sendGetSettings,
@@ -153,5 +158,6 @@ export function useMessenger(vscode: any) {
     sendSetVerbosity,
     sendSetShowAllModels,
     sendSetManualModelInput,
+    sendOpenExternalUrl,
   };
 }

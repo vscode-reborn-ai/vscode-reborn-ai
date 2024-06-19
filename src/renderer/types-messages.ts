@@ -35,7 +35,9 @@ export enum BackendMessageType {
   setApiVersion = "setApiVersion",
   // Action
   runAction = "runAction",
-  stopAction = "stopAction"
+  stopAction = "stopAction",
+  // Misc
+  openExternalUrl = "openExternalUrl",
 }
 
 export interface BaseBackendMessage {
@@ -162,6 +164,11 @@ export interface RunActionMessage extends BaseBackendMessage {
 export interface StopActionMessage extends BaseBackendMessage {
   type: BackendMessageType.stopAction;
   actionId: string;
+}
+
+export interface OpenExternalUrlMessage extends BaseBackendMessage {
+  type: BackendMessageType.openExternalUrl;
+  url: string;
 }
 
 // * Frontend messages

@@ -15,6 +15,10 @@ const App = () => {
       vscode = acquireVsCodeApi();
     } catch (error) {
       vscode = (window as any).acquireVsCodeApi();
+    } finally {
+      if (!(window as any).vscode) {
+        (window as any).vscode = vscode;
+      }
     }
   }
 

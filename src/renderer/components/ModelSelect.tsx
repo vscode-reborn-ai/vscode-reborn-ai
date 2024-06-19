@@ -13,6 +13,7 @@ import {
   getModelRates,
   isMultimodalModel,
   isOnlineModel,
+  useConvertMarkdownToComponent,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
@@ -56,6 +57,10 @@ export default function ModelSelect({
   >("name");
   const [ascending, setAscending] = useState(true);
   const searchInputRef = React.createRef<HTMLInputElement>();
+  const [showDescriptionOn, setShowDescriptionOn] = useState<string | null>(
+    null
+  );
+  const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 
   const hasOpenAIModels = useMemo(() => {
     // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-3.5-turbo
@@ -79,6 +84,7 @@ export default function ModelSelect({
 
   // computed model costs for all models
   interface ComputedModelData {
+    descriptionComponent: React.ReactNode;
     promptLimit: number;
     completeLimit: number;
     prompt: number | undefined;
@@ -88,13 +94,17 @@ export default function ModelSelect({
     isFree: boolean;
     isExpensive: boolean;
   }
+
   const computedModelDataMap = useMemo(() => {
-    const costs = new Map<string, ComputedModelData>();
+    const modelData = new Map<string, ComputedModelData>();
 
     models.forEach((model) => {
       const rate = getModelRates(model);
 
-      costs.set(model.id, {
+      modelData.set(model.id, {
+        descriptionComponent: convertMarkdownToComponent(
+          model.description ?? ""
+        ),
         promptLimit: getModelContextLimit(model),
         completeLimit: getModelCompletionLimit(model),
         prompt: rate.prompt,
@@ -118,7 +128,7 @@ export default function ModelSelect({
       });
     });
 
-    return costs;
+    return modelData;
   }, [models]);
 
   const currentModelFriendlyName = useMemo(() => {
@@ -251,6 +261,23 @@ export default function ModelSelect({
     }
   }, [showModels]);
 
+  const descriptionIconClickHandler = useCallback(
+    (event: any, model: Model) => {
+      event.stopPropagation();
+
+      const newShowDescriptionOn =
+        showDescriptionOn === model.id ? null : model.id;
+
+      setShowDescriptionOn(newShowDescriptionOn);
+
+      // Unfocus the button when the description is hidden
+      if (!newShowDescriptionOn) {
+        event.currentTarget.blur();
+      }
+    },
+    [showDescriptionOn]
+  );
+
   return (
     <>
       <div className={className}>
@@ -278,7 +305,7 @@ export default function ModelSelect({
             : "No model selected"}
         </button>
         <div
-          className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+          className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}
@@ -324,30 +351,65 @@ export default function ModelSelect({
                           }
                         }}
                       >
-                        <div className="flex gap-2 items-center">
-                          <span className="mt-0.5 text-start font-bold">
-                            {model?.name ? (
-                              <span>{model.name}</span>
-                            ) : (
-                              <code>{model.id}</code>
+                        {/* Line 1 - Model name, badges, description icon */}
+                        <div className="w-full flex gap-2 items-center justify-between">
+                          <div className="flex gap-2 items-center">
+                            {/* Model name and badges */}
+                            <span className="mt-0.5 text-start font-bold">
+                              {model?.name ? (
+                                <span>{model.name}</span>
+                              ) : (
+                                <code>{model.id}</code>
+                              )}
+                            </span>
+                            {isMultimodalModel(model) && (
+                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                                multimodal
+                              </span>
                             )}
-                          </span>
-                          {isMultimodalModel(model) && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
-                              multimodal
-                            </span>
-                          )}
-                          {isOnlineModel(model) && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
-                              online
-                            </span>
-                          )}
-                          {model.top_provider?.is_moderated && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
-                              moderated
-                            </span>
+                            {isOnlineModel(model) && (
+                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                                online
+                              </span>
+                            )}
+                            {model.top_provider?.is_moderated && (
+                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                                moderated
+                              </span>
+                            )}
+                          </div>
+                          {/* Icon to show full model description */}
+                          {!!model.description?.length && (
+                            <button
+                              className={classNames(
+                                "p-1 rounded text-menu opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-hover:text-menu-selection group-focus:text-menu-selection",
+                                "hover:bg-menu focus:bg-menu-selection"
+                              )}
+                              onClick={(event) =>
+                                descriptionIconClickHandler(event, model)
+                              }
+                            >
+                              <Icon icon="help" className="w-3 h-3" />
+                              <span className="sr-only">
+                                Show model description
+                              </span>
+                            </button>
                           )}
                         </div>
+                        {/* Line 2 - Model description */}
+                        {showDescriptionOn === model.id &&
+                          !!model.description?.length && (
+                            <div
+                              className="text-xs text-start text-menu group-hover:text-menu-selection group-focus:text-menu-selection prose prose-a:text-menu prose-a:underline cursor-auto"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              {
+                                computedModelDataMap.get(model.id)
+                                  ?.descriptionComponent
+                              }
+                            </div>
+                          )}
+                        {/* Line 2/3 - Model stats */}
                         <div className="w-full flex justify-around gap-2 divide-dropdown text-2xs">
                           {computedModelDataMap.get(model.id)?.prompt ===
                             undefined &&

@@ -8,7 +8,90 @@ import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
 import TabsDropdown from "./TabsDropdown";
 
-// TODO: Create sub components to reuse tabs
+// Subcomponent for the "Link" tab
+function TabLink({
+  tab,
+  conversationList,
+  currentConversation,
+  createNewConversation,
+}: {
+  tab: { name: string; id: string; href: string };
+  conversationList: Conversation[];
+  currentConversation: Conversation;
+  createNewConversation: any;
+}) {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const location = useLocation();
+  const t = useAppSelector((state: RootState) => state.app.translations);
+
+  return (
+    <li key={tab.id}>
+      <Link
+        className={classNames(
+          "border-t h-full flex items-center group whitespace-nowrap text-2xs focus:outline-none",
+          location.pathname === `/chat/${encodeURI(tab.id)}`
+            ? "border-t-tab-editor-focus bg-tab-active focus-within:bg-tab-active"
+            : "border-t-tab-inactive bg-tab-inactive hover:bg-tab-selection focus-within:bg-tab-selection"
+        )}
+        to={tab.href}
+        aria-current={
+          location.pathname === `/chat/${encodeURI(tab.id)}`
+            ? "page"
+            : undefined
+        }
+      >
+        <span
+          className={classNames(
+            "flex items-center gap-x-1 py-1 pl-2 pr-1",
+            location.pathname === `/chat/${encodeURI(tab.id)}`
+              ? "text-tab-active hover:text-tab-active focus-within:text-tab-active"
+              : "hover:text-tab-inactive text-tab-active-unfocused focus-within:text-tab-inactive"
+          )}
+        >
+          <span className="pt-0.5">{tab.name}</span>
+          {/* close tab button */}
+          {tab.name !== "Prompts" && tab.name !== "Actions" && (
+            <button
+              className={classNames(
+                "ml-2 p-0.5 group-hover:opacity-100 group-focus-within:opacity-100 focus:outline-none hover:bg-opacity-40 hover:bg-button-secondary focus:bg-button-secondary rounded",
+                location.pathname === `/chat/${encodeURI(tab.id)}`
+                  ? "opacity-100"
+                  : "opacity-0"
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+
+                // navigate to the first tab
+                // if there's no more chats, create a new one
+                if (conversationList.length === 1) {
+                  createNewConversation();
+                } else if (currentConversation.title === tab.name) {
+                  navigate(
+                    `/chat/${encodeURI(
+                      conversationList[0].id === tab.id
+                        ? conversationList[1].id
+                        : conversationList[0].id
+                    )}`
+                  );
+                }
+
+                // remove the tab from the list
+                dispatch(removeConversation(tab.id));
+              }}
+            >
+              <Icon icon="close" className="w-4 h-4" />
+              <span className="sr-only">
+                {t?.tabs?.close_tab ?? "Close tab"}
+              </span>
+            </button>
+          )}
+        </span>
+      </Link>
+    </li>
+  );
+}
+
 export default function Tabs({
   conversationList,
   currentConversationId,
@@ -201,69 +284,13 @@ export default function Tabs({
             </li>
             {tabs &&
               tabs.map((tab) => (
-                <li key={tab.id}>
-                  <Link
-                    className={classNames(
-                      "border-t h-full flex items-center group whitespace-nowrap text-2xs focus:outline-none",
-                      location.pathname === `/chat/${encodeURI(tab.id)}`
-                        ? "border-t-tab-editor-focus bg-tab-active focus-within:bg-tab-active"
-                        : "border-t-tab-inactive bg-tab-inactive hover:bg-tab-selection focus-within:bg-tab-selection"
-                    )}
-                    to={tab.href}
-                    aria-current={
-                      location.pathname === `/chat/${encodeURI(tab.id)}`
-                        ? "page"
-                        : undefined
-                    }
-                  >
-                    <span
-                      className={classNames(
-                        "flex items-center gap-x-1 py-1 pl-2 pr-1",
-                        location.pathname === `/chat/${encodeURI(tab.id)}`
-                          ? "text-tab-active hover:text-tab-active focus-within:text-tab-active"
-                          : "hover:text-tab-inactive text-tab-active-unfocused focus-within:text-tab-inactive"
-                      )}
-                    >
-                      <span className="pt-0.5">{tab.name}</span>
-                      {/* close tab button */}
-                      {tab.name !== "Prompts" && tab.name !== "Actions" && (
-                        <button
-                          className={classNames(
-                            "ml-2 p-0.5 group-hover:opacity-100 group-focus-within:opacity-100 focus:outline-none hover:bg-opacity-40 hover:bg-button-secondary focus:bg-button-secondary rounded",
-                            location.pathname === `/chat/${encodeURI(tab.id)}`
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                          onClick={(e) => {
-                            e.preventDefault();
-
-                            // navigate to the first tab
-                            // if there's no more chats, create a new one
-                            if (conversationList.length === 1) {
-                              createNewConversation();
-                            } else if (currentConversation.title === tab.name) {
-                              navigate(
-                                `/chat/${encodeURI(
-                                  conversationList[0].id === tab.id
-                                    ? conversationList[1].id
-                                    : conversationList[0].id
-                                )}`
-                              );
-                            }
-
-                            // remove the tab from the list
-                            dispatch(removeConversation(tab.id));
-                          }}
-                        >
-                          <Icon icon="close" className="w-4 h-4" />
-                          <span className="sr-only">
-                            {t?.tabs?.close_tab ?? "Close tab"}
-                          </span>
-                        </button>
-                      )}
-                    </span>
-                  </Link>
-                </li>
+                <TabLink
+                  key={tab.id}
+                  tab={tab}
+                  conversationList={conversationList}
+                  currentConversation={currentConversation}
+                  createNewConversation={createNewConversation}
+                />
               ))}
             {/* create new chat button */}
             <li className="flex items-center sticky right-0">

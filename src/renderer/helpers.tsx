@@ -1,9 +1,20 @@
-// Convenience functions for the renderer code
-
-import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import { WebviewApi } from "vscode-webview";
 import { useAppDispatch } from "./hooks";
+import { useMessenger } from "./sent-to-backend";
 import { aiRenamedTitle } from "./store/conversation";
-import { ActionNames, ChatMessage, Conversation, ExtensionSettings, MODEL_COSTS, MODEL_FRIENDLY_NAME, MODEL_TOKEN_LIMITS, Model, Role } from "./types";
+import {
+  ActionNames,
+  ChatMessage,
+  Conversation,
+  ExtensionSettings,
+  MODEL_COSTS,
+  MODEL_FRIENDLY_NAME,
+  MODEL_TOKEN_LIMITS,
+  Model,
+  Role,
+} from "./types";
 
 export const unEscapeHTML = (unsafe: any) => {
   return unsafe
@@ -58,99 +69,101 @@ export const addChatMessage = (
     prev.map((conversation: Conversation) =>
       conversation.id === currentConversationId
         ? {
-          ...conversation,
-          // Add message to conversation; filter is here to prevent duplicate messages
-          messages: [...conversation.messages, newMessage].filter(
-            (message: ChatMessage, index: number, self: ChatMessage[]) =>
-              index === self.findIndex((m: ChatMessage) => m.id === message.id)
-          ),
-        }
+            ...conversation,
+            // Add message to conversation; filter is here to prevent duplicate messages
+            messages: [...conversation.messages, newMessage].filter(
+              (message: ChatMessage, index: number, self: ChatMessage[]) =>
+                index ===
+                self.findIndex((m: ChatMessage) => m.id === message.id)
+            ),
+          }
         : conversation
     )
   );
 };
 
+export const useDebounce = (
+  callback: (...args: any[]) => void,
+  delay: number
+) => {
+  const callbackRef = useRef(callback);
 
-export const useDebounce =
-  (callback: (...args: any[]) => void,
-    delay: number) => {
+  useLayoutEffect(() => {
+    callbackRef.current = callback;
+  });
 
-    const callbackRef = useRef(callback);
+  let timer: NodeJS.Timeout;
 
-    useLayoutEffect(() => {
-      callbackRef.current = callback;
-    });
+  const naiveDebounce = (
+    func: (...args: any[]) => void,
+    delayMs: number,
+    ...args: any[]
+  ) => {
+    clearTimeout(timer);
 
-    let timer: NodeJS.Timeout;
-
-    const naiveDebounce = (
-      func: (...args: any[]) => void,
-      delayMs: number,
-      ...args: any[]
-    ) => {
-      clearTimeout(timer);
-
-      timer = setTimeout(() => {
-        func(...args);
-      }, delayMs);
-    };
-
-    return useMemo(() => (...args: any) =>
-      naiveDebounce(callbackRef.current, delay,
-        ...args), [delay]);
+    timer = setTimeout(() => {
+      func(...args);
+    }, delayMs);
   };
 
+  return useMemo(
+    () =>
+      (...args: any) =>
+        naiveDebounce(callbackRef.current, delay, ...args),
+    [delay]
+  );
+};
 
 // Hook - Rename the tab title with AI
 export function useRenameTabTitleWithAI(
   backendMessenger: any,
-  settings: ExtensionSettings,
+  settings: ExtensionSettings
 ) {
   const dispatch = useAppDispatch();
 
-  return useCallback((
-    conversation: Conversation,
-    firstAssistantMessage?: string
-  ) => {
-    if (
-      conversation &&
-      // Has the AI already renamed the title?
-      !conversation?.aiRenamedTitle
-    ) {
-      dispatch(
-        aiRenamedTitle({
-          conversationId: conversation.id,
-          aiRenamedTitle: true,
-        })
-      );
-
-      const firstUserMessage =
-        conversation.messages.find(
-          (message: ChatMessage) => message.role === Role.user
-        )?.content ?? "";
-
-      if (!firstAssistantMessage) {
-        firstAssistantMessage =
-          conversation.messages.find(
-            (message: ChatMessage) => message.role === Role.assistant
-          )?.content ?? "";
-      }
-      // Use ChatGPT to rename the tab title
+  return useCallback(
+    (conversation: Conversation, firstAssistantMessage?: string) => {
       if (
-        settings.renameTabTitles &&
-        !settings.minimalUI &&
-        !settings.disableMultipleConversations
+        conversation &&
+        // Has the AI already renamed the title?
+        !conversation?.aiRenamedTitle
       ) {
-        backendMessenger.sendRunAction(ActionNames.createConversationTitle, {
-          messageText: `
+        dispatch(
+          aiRenamedTitle({
+            conversationId: conversation.id,
+            aiRenamedTitle: true,
+          })
+        );
+
+        const firstUserMessage =
+          conversation.messages.find(
+            (message: ChatMessage) => message.role === Role.user
+          )?.content ?? "";
+
+        if (!firstAssistantMessage) {
+          firstAssistantMessage =
+            conversation.messages.find(
+              (message: ChatMessage) => message.role === Role.assistant
+            )?.content ?? "";
+        }
+        // Use ChatGPT to rename the tab title
+        if (
+          settings.renameTabTitles &&
+          !settings.minimalUI &&
+          !settings.disableMultipleConversations
+        ) {
+          backendMessenger.sendRunAction(ActionNames.createConversationTitle, {
+            messageText: `
             Question: ${firstUserMessage.substring(0, 200)}...
             Answer: ${firstAssistantMessage.substring(0, 200)}...
           `,
-          conversationId: conversation.id,
-        });
+            conversationId: conversation.id,
+          });
+        }
       }
-    }
-  }, [settings]);
+    },
+    [settings]
+  );
 }
 
 export function getModelFriendlyName(
@@ -165,12 +178,14 @@ export function getModelFriendlyName(
   if (currentConversation.model?.name) {
     friendlyName = currentConversation.model.name;
   } else if (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")) {
-    friendlyName = MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "") ?? "";
+    friendlyName =
+      MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "") ?? "";
   } else if (currentConversation.model?.id) {
     friendlyName = currentConversation.model.id;
     usingModelId = true;
   } else if (models.find((model) => model.id === settings?.gpt3?.model)?.name) {
-    friendlyName = models.find((model) => model.id === settings?.gpt3?.model)?.name ?? "";
+    friendlyName =
+      models.find((model) => model.id === settings?.gpt3?.model)?.name ?? "";
   } else if (settings?.gpt3?.model) {
     friendlyName = settings.gpt3.model;
     usingModelId = true;
@@ -296,4 +311,57 @@ export function isMultimodalModel(model: Model | undefined) {
 
 export function isOnlineModel(model: Model | undefined) {
   return model?.id.includes("online");
+}
+
+export function useConvertMarkdownToComponent(
+  vscode: WebviewApi<unknown> | undefined
+) {
+  const backendMessenger = useMessenger(vscode);
+
+  const renderLink = (href: string, children: React.ReactNode) => {
+    const baseUrl = "https://openrouter.ai";
+    const baseUrlNoSlash = baseUrl.endsWith("/")
+      ? baseUrl.slice(0, -1)
+      : baseUrl;
+    const adjustedHref = href.startsWith("/") ? baseUrlNoSlash + href : href;
+    let domain = new URL(adjustedHref).hostname;
+    // only get the highest level domain
+    domain = domain.split(".").slice(-2).join(".");
+
+    const handleClick = (
+      event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+    ) => {
+      event.preventDefault();
+
+      backendMessenger.sendOpenExternalUrl(adjustedHref);
+    };
+
+    return (
+      <a
+        href={adjustedHref}
+        title={`Open ${domain} in the browser.`}
+        target="_blank"
+        onClick={handleClick}
+      >
+        {children}
+      </a>
+    );
+  };
+
+  const markdownToComponent = useCallback(
+    (markdown: string) => {
+      return (
+        <ReactMarkdown
+          components={{
+            a: ({ href, children }) => renderLink(href ?? "", children),
+          }}
+        >
+          {markdown}
+        </ReactMarkdown>
+      );
+    },
+    [vscode]
+  );
+
+  return markdownToComponent;
 }

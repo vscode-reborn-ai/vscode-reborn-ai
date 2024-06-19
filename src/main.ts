@@ -10,7 +10,7 @@ import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Auth from "./secrets-store";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
@@ -370,7 +370,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 			localResourceRoots: [
 				this.context.extensionUri
-			]
+			],
 		};
 
 		webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
@@ -555,6 +555,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					break;
 				case BackendMessageType.generateOpenRouterApiKey:
 					this.generateOpenRouterApiKey();
+					break;
+				case BackendMessageType.openExternalUrl:
+					const openExternalUrlData = data as OpenExternalUrlMessage;
+					vscode.env.openExternal(vscode.Uri.parse(openExternalUrlData.url));
 					break;
 				default:
 					console.warn('[Reborn AI] Main Process - Uncaught message type: "' + data.type + '"');
