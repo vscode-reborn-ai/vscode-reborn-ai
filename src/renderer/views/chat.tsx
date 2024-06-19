@@ -84,7 +84,7 @@ export default function Chat({
   };
 
   return (
-    <div className="pt-16 overflow-y-auto flex-1">
+    <div className="overflow-y-auto flex-1">
       {debug && (
         <div className="text-gray-500 text-[10px] font-mono">
           Conversation ID: {conversation?.id}

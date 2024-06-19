@@ -238,7 +238,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
   }, []);
 
   return (
-    <div className="api-settings-view pt-16 p-4 flex flex-col gap-4 overflow-y-auto">
+    <div className="api-settings-view p-4 flex flex-col gap-4 overflow-y-auto">
       <header>
         <h1 className="text-xl font-semibold inline-flex flex-wrap gap-2">
           Connect to
@@ -446,7 +446,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             ref={apiUrlInputRef}
             type="text"
             onChange={(e) => debouncedSetApiUrl(e.target.value)}
-            className="block w-full p-2 text-sm rounded border border-input text-input bg-input outline-0"
+            className="block w-full p-2 text-sm rounded-sm border border-input text-input bg-input outline-0"
             placeholder={selectedTool?.apiUrl?.href ?? "https://..."}
           />
           {showUrlSaved && (
@@ -475,7 +475,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
               onChange={(e) => {
                 backendMessenger.sendSetApiVersion(e.target.value);
               }}
-              className="block w-full p-2 text-sm rounded border border-input text-input bg-input outline-0"
+              className="block w-full p-2 text-sm rounded-sm border border-input text-input bg-input outline-0"
               placeholder={DEFAULT_EXTENSION_SETTINGS.apiVersion}
             />
             {showVersionSaved && (
@@ -515,7 +515,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                       )
                     }
                     placeholder={API_KEY_PLACEHOLDER}
-                    className="w-full px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
+                    className="w-full px-3 py-2 rounded-sm border text-input text-sm border-input bg-input outline-0"
                     disabled={apiKeyStatus === ApiKeyStatus.Pending}
                   />
                   {apiKeyStatus === ApiKeyStatus.Pending && (

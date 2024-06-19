@@ -169,7 +169,7 @@ export default ({
           {!currentConversation.inProgress && (
             <textarea
               rows={1}
-              className="text-sm rounded border border-input text-input bg-input resize-none w-full outline-0"
+              className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
               id="question-input"
               placeholder="Ask a question..."
               ref={questionInputRef}

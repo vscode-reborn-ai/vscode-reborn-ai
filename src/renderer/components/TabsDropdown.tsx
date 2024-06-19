@@ -57,7 +57,7 @@ const Tabs: React.FC<Props> = ({
   return (
     <div className={`relative ${className}`} ref={parentRef}>
       <button
-        className="flex-grow w-full flex items-center px-2 py-1 border border-menu text-xs rounded-md cursor-pointer hover:bg-menu-selection focus:outline-none focus:ring-tab-active"
+        className="flex-grow w-full flex items-center px-2 py-1 border-b border-menu text-xs cursor-pointer hover:bg-menu-selection focus:outline-none focus:ring-tab-active"
         onClick={handleToggleOptions}
         ref={selectRef}
       >
@@ -68,7 +68,7 @@ const Tabs: React.FC<Props> = ({
         <Icon icon="caret-down" className="w-6 h-6 p-1" />
         <button
           type="button"
-          className="block p-1 hover:text-white focus:outline-none hover:bg-opacity-40 hover:bg-red-900 focus:bg-red-900 rounded-md"
+          className="block p-1 hover:text-white focus:outline-none hover:bg-opacity-40 hover:bg-button-secondary focus:bg-button-secondary rounded"
           // Close the tab and remove it from the list
           onClick={(e) => {
             // Prevent the dropdown from opening
@@ -97,7 +97,7 @@ const Tabs: React.FC<Props> = ({
       </button>
       {showOptions && (
         <div
-          className="absolute z-10 w-full bg-menu shadow-lg border border-menu max-h-60 overflow-auto top-[1.9rem] left-0 rounded-b-md"
+          className="absolute z-10 w-full bg-menu shadow-lg border border-menu max-h-60 overflow-auto top-8 left-0"
           role="menu"
         >
           {tabs.map((tab, index) => (

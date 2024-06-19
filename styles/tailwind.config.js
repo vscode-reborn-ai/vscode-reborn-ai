@@ -100,6 +100,8 @@ module.exports = {
                     'inactive': 'var(--vscode-tab-border)',
                     'active': 'var(--vscode-tab-activeBorder)',
                     'active-unfocused': 'var(--vscode-tab-unfocusedActiveBorder)',
+                    focus: 'var(--vscode-tab-focusBorder)',
+                    'editor-focus': 'var(--vscode-focusBorder)',
                 },
                 dropdown: {
                     DEFAULT: 'var(--vscode-dropdown-border)',

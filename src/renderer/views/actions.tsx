@@ -9,7 +9,7 @@ export default function Actions({ vscode }: { vscode: any }) {
   const actions = useAppSelector((state: RootState) => state.action.actionList);
 
   return (
-    <div className="pt-16 h-full overflow-y-auto flex flex-col">
+    <div className="h-full overflow-y-auto flex flex-col">
       <ul role="list" className="relative z-0 divide-y divide-menu">
         {/* @ts-ignore */}
         {actions.map((action: Action, index: React.Key | null | undefined) => (

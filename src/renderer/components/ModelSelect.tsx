@@ -600,7 +600,7 @@ export default function ModelSelect({
                         ref={searchInputRef}
                         type="text"
                         placeholder="Search models..."
-                        className="px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
+                        className="px-3 py-2 rounded-sm border text-input text-sm border-input bg-input outline-0"
                         onChange={runSearch}
                         onKeyUp={(e) => {
                           if (e.key === "Escape") {

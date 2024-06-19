@@ -74,7 +74,7 @@ export default function ModelInput({
               placeholder="Enter Model ID"
               value={modelId}
               onChange={handleModelChange}
-              className="px-3 py-2 rounded border text-input text-sm border-input bg-menu-selection outline-0"
+              className="px-3 py-2 rounded-sm border text-input text-sm border-input bg-menu-selection outline-0"
             />
             <button
               onClick={handleModelSubmit}
