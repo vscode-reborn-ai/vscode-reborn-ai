@@ -8,6 +8,35 @@ import { Conversation, Verbosity } from "../types";
 import Icon from "./Icon";
 import TabsDropdown from "./TabsDropdown";
 
+// Subcomponent for the "Close" button
+function TabCloseButton({
+  path,
+  onClick,
+}: {
+  path: string;
+  onClick: Function;
+}) {
+  const location = useLocation();
+  const t = useAppSelector((state: RootState) => state.app.translations);
+
+  return (
+    <button
+      className={classNames(
+        "ml-2 p-0.5 group-hover:opacity-100 group-focus-within:opacity-100 focus:outline-none hover:bg-opacity-40 hover:bg-button-secondary hover:text-button-secondary focus:bg-button-secondary focus:text-button-secondary rounded",
+        location.pathname === path ? "opacity-100" : "opacity-0"
+      )}
+      onClick={(e) => {
+        e.preventDefault();
+
+        onClick(e);
+      }}
+    >
+      <Icon icon="close" className="w-4 h-4" />
+      <span className="sr-only">{t?.tabs?.close_tab ?? "Close tab"}</span>
+    </button>
+  );
+}
+
 // Subcomponent for the "Link" tab
 function TabLink({
   tab,
@@ -29,7 +58,7 @@ function TabLink({
     <li key={tab.id}>
       <Link
         className={classNames(
-          "border-t h-full flex items-center group whitespace-nowrap text-2xs focus:outline-none",
+          "border-t h-full flex items-center group whitespace-nowrap text-2xs focus:outline-none focus:underline",
           location.pathname === `/chat/${encodeURI(tab.id)}`
             ? "border-t-tab-editor-focus bg-tab-active focus-within:bg-tab-active"
             : "border-t-tab-inactive bg-tab-inactive hover:bg-tab-selection focus-within:bg-tab-selection"
@@ -50,42 +79,27 @@ function TabLink({
           )}
         >
           <span className="pt-0.5">{tab.name}</span>
-          {/* close tab button */}
-          {tab.name !== "Prompts" && tab.name !== "Actions" && (
-            <button
-              className={classNames(
-                "ml-2 p-0.5 group-hover:opacity-100 group-focus-within:opacity-100 focus:outline-none hover:bg-opacity-40 hover:bg-button-secondary focus:bg-button-secondary rounded",
-                location.pathname === `/chat/${encodeURI(tab.id)}`
-                  ? "opacity-100"
-                  : "opacity-0"
-              )}
-              onClick={(e) => {
-                e.preventDefault();
+          <TabCloseButton
+            path={`/chat/${encodeURI(tab.id)}`}
+            onClick={() => {
+              // navigate to the first tab
+              // if there's no more chats, create a new one
+              if (conversationList.length === 1) {
+                createNewConversation();
+              } else if (currentConversation.title === tab.name) {
+                navigate(
+                  `/chat/${encodeURI(
+                    conversationList[0].id === tab.id
+                      ? conversationList[1].id
+                      : conversationList[0].id
+                  )}`
+                );
+              }
 
-                // navigate to the first tab
-                // if there's no more chats, create a new one
-                if (conversationList.length === 1) {
-                  createNewConversation();
-                } else if (currentConversation.title === tab.name) {
-                  navigate(
-                    `/chat/${encodeURI(
-                      conversationList[0].id === tab.id
-                        ? conversationList[1].id
-                        : conversationList[0].id
-                    )}`
-                  );
-                }
-
-                // remove the tab from the list
-                dispatch(removeConversation(tab.id));
-              }}
-            >
-              <Icon icon="close" className="w-4 h-4" />
-              <span className="sr-only">
-                {t?.tabs?.close_tab ?? "Close tab"}
-              </span>
-            </button>
-          )}
+              // remove the tab from the list
+              dispatch(removeConversation(tab.id));
+            }}
+          />
         </span>
       </Link>
     </li>
@@ -119,10 +133,13 @@ export default function Tabs({
   const selectRef = React.useRef<HTMLSelectElement>(null);
   const tabListRef = React.useRef<HTMLUListElement>(null);
   const [showLocalLlmTab, setShowLocalLlmTab] = useState(false);
+  const [showActionsTab, setShowActionsTab] = useState(false);
 
   useEffect(() => {
     if (location.pathname === "/api") {
       setShowLocalLlmTab(true);
+    } else if (location.pathname === "/actions") {
+      setShowActionsTab(true);
     }
   }, [location.pathname]);
 
@@ -254,15 +271,9 @@ export default function Tabs({
                 aria-current={location.pathname === "/api" ? "page" : undefined}
               >
                 <span className="pt-0.5">⚙️ Local LLM Settings</span>
-                {/* close tab button */}
-                <button
-                  className={classNames(
-                    "ml-2 p-0.5 group-hover:opacity-100 group-focus-within:opacity-100 focus:outline-none hover:bg-opacity-40 hover:bg-button-secondary focus:bg-button-secondary rounded",
-                    location.pathname === "/api" ? "opacity-100" : "opacity-0"
-                  )}
-                  onClick={(e) => {
-                    e.preventDefault();
-
+                <TabCloseButton
+                  path="/api"
+                  onClick={() => {
                     // If there's no conversations, create a new one
                     if (conversationList.length === 0) {
                       createNewConversation();
@@ -274,14 +285,45 @@ export default function Tabs({
                     // Hide the tab
                     setShowLocalLlmTab(false);
                   }}
-                >
-                  <Icon icon="close" className="w-4 h-4" />
-                  <span className="sr-only">
-                    {t?.tabs?.close_tab ?? "Close tab"}
-                  </span>
-                </button>
+                />
               </Link>
             </li>
+            {/* /actions */}
+            <li>
+              <Link
+                className={classNames(
+                  "border-t h-full flex items-center gap-x-1 py-1 pl-2 pr-1 group whitespace-nowrap text-2xs focus:outline-none",
+                  location.pathname === "/actions"
+                    ? "border-t-tab-editor-focus bg-tab-active text-tab-active hover:text-tab-active focus-within:text-tab-active focus-within:bg-tab-active"
+                    : "border-t-tab-inactive bg-tab-inactive hover:bg-tab-selection hover:text-tab-inactive text-tab-active-unfocused focus-within:text-tab-inactive focus-within:bg-tab-selection",
+                  {
+                    hidden: !showActionsTab,
+                  }
+                )}
+                to="/actions"
+                aria-current={
+                  location.pathname === "/actions" ? "page" : undefined
+                }
+              >
+                <span className="pt-0.5">🛠️ Actions</span>
+                <TabCloseButton
+                  path="/actions"
+                  onClick={() => {
+                    // If there's no conversations, create a new one
+                    if (conversationList.length === 0) {
+                      createNewConversation();
+                    }
+
+                    // Navigate to the first conversation
+                    navigate(`/chat/${encodeURI(conversationList[0].id)}`);
+
+                    // Hide the tab
+                    setShowActionsTab(false);
+                  }}
+                />
+              </Link>
+            </li>
+            {/* Chats */}
             {tabs &&
               tabs.map((tab) => (
                 <TabLink
@@ -295,7 +337,7 @@ export default function Tabs({
             {/* create new chat button */}
             <li className="flex items-center sticky right-0">
               <button
-                className="flex gap-x-1 bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap py-2 pl-2 pr-3 text-2xs"
+                className="flex gap-x-1 bg-button-secondary text-button-secondary whitespace-nowrap py-2 pl-2 pr-3 text-2xs hover:bg-button-secondary-hover hover:text-button-secondary-hover focus:outline-none"
                 onClick={createNewConversation}
               >
                 <Icon icon="plus" className="w-4 h-4" />

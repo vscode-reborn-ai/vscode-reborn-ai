@@ -35,6 +35,7 @@ export default function MoreActionsMenu({
   return (
     <>
       <div
+        id="more-actions-menu"
         className={classNames(
           "MoreActionsMenu",
           "fixed z-20 right-4 p-2 bg-menu rounded border border-menu overflow-hidden max-w-[calc(100vw-2em)]",

@@ -342,15 +342,6 @@ export default ({
             </button>
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
-          <div className="flex items-end self-start">
-            <MoreActionsMenu
-              vscode={vscode}
-              showMoreActions={showMoreActions}
-              currentConversation={currentConversation}
-              setShowMoreActions={setShowMoreActions}
-              conversationList={conversationList}
-            />
-          </div>
           <div className="flex flex-row items-start gap-2">
             <div
               className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
@@ -386,6 +377,13 @@ export default ({
               onBlur={() => {
                 setShowTokenBreakdown(false);
               }}
+              onKeyUp={(e) => {
+                if (e.key === "Escape") {
+                  setShowTokenBreakdown(false);
+                } else if (e.key === "Space") {
+                  setShowTokenBreakdown(!showTokenBreakdown);
+                }
+              }}
             >
               {tokenCountLabel}
               <TokenCountPopup
@@ -401,10 +399,44 @@ export default ({
               onClick={() => {
                 setShowMoreActions(!showMoreActions);
               }}
+              onKeyUp={(e) => {
+                if (e.key === "Escape") {
+                  setShowMoreActions(false);
+                } else if (e.key === "ArrowDown") {
+                  setShowMoreActions(true);
+                  // Focus the first element in the more actions menu
+                  const firstElem = document.querySelector(
+                    "#more-actions-menu ul li"
+                  ) as HTMLElement;
+                  if (firstElem) {
+                    firstElem.focus();
+                  }
+                } else if (e.key === "ArrowUp") {
+                  setShowMoreActions(true);
+                  // Focus the last element in the more actions menu
+                  const lastElem = document.querySelector(
+                    "#more-actions-menu ul li:last-child"
+                  ) as HTMLElement;
+                  if (lastElem) {
+                    lastElem.focus();
+                  }
+                } else if (e.key === "Space") {
+                  setShowMoreActions(!showMoreActions);
+                }
+              }}
             >
               <Icon icon="zap" className="w-3.5 h-3.5 hidden 2xs:block" />
               {t?.questionInputField?.moreActions ?? "More Actions"}
             </button>
+          </div>
+          <div className="flex items-end self-start">
+            <MoreActionsMenu
+              vscode={vscode}
+              showMoreActions={showMoreActions}
+              currentConversation={currentConversation}
+              setShowMoreActions={setShowMoreActions}
+              conversationList={conversationList}
+            />
           </div>
         </div>
       )}
