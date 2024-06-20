@@ -93,7 +93,7 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 ## Changelog
 
-### Next Release
+### June 20, 2024 (`v3.24.0`)
 
 - ✨ **Feature** - Added support for Azure's OpenAI API. - *Thank you for the suggestion @PeterDaveHello & @rambalachandran*
 - 🖥️ **UI** - When using OpenRouter, the model selector can now show descriptions.
