@@ -1,4 +1,5 @@
 import { Tiktoken, TiktokenModel, encodingForModel } from "js-tiktoken";
+import ky from 'ky';
 import OpenAI, { AzureClientOptions, AzureOpenAI, ClientOptions } from 'openai';
 import * as vscode from 'vscode';
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
@@ -205,7 +206,7 @@ export class ApiProvider {
     });
 
     return {
-      id: uuidv4(),
+      id: await uuidv4(),
       content: response.choices[0].message.content ?? '',
       rawContent: response.choices[0].message.content ?? '',
       role: Role.assistant,
@@ -393,7 +394,7 @@ export class ApiProvider {
     try {
       // if we call openai's function and it 404s, it breaks out of this try block
       // so we're gonna first poke the endpoint to see if it's there first
-      const response = await fetch(`${this.apiConfig.baseURL}/models`, {
+      const response = await ky(`${this.apiConfig.baseURL}/models`, {
         headers: {
           "Authorization": `Bearer ${this.apiConfig.apiKey}`,
         },
@@ -416,9 +417,8 @@ export class ApiProvider {
       if (e === modelEndpointNotFound) {
         // Attempt to fetch models from the ollama API
         try {
-          // const response = await fetch('http://localhost:11434/api/tags');
-          const response = await fetch(`${(this.apiConfig.baseURL ?? '').replace('/v1', '')}/api/tags`);
-          const data = await response.json();
+          const response = await ky(`${(this.apiConfig.baseURL ?? '').replace('/v1', '')}/api/tags`);
+          const data = await response.json() as { models: any[]; };
 
           this._modelList = data.models.map((model: any) => ({
             id: model.name,

@@ -1,3 +1,4 @@
+import { randomValues } from "@aws-crypto/random-source-browser";
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { WebviewApi } from "vscode-webview";
@@ -364,4 +365,19 @@ export function useConvertMarkdownToComponent(
   );
 
   return markdownToComponent;
+}
+
+// Not using the official UUID package because it uses crypto, which is not available in the browser
+export async function uuidv4(): Promise<string> {
+  const randomBytes = await randomValues(16);
+  randomBytes[6] = (randomBytes[6] & 0x0f) | 0x40; // Version 4
+  randomBytes[8] = (randomBytes[8] & 0x3f) | 0x80; // Variant 10
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+    /[xy]/g,
+    function (c, p) {
+      const r = randomBytes[p] % 16;
+      return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    }
+  );
 }

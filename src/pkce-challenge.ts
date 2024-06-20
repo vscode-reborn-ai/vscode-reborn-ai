@@ -3,6 +3,7 @@
 Pulled from: https://github.com/crouchcd/pkce-challenge
 
 * The source package is not used due to CJS top-level async/await issues.
+* Modifications have been made to use @aws-crypto packages.
 
 MIT License
 
@@ -27,25 +28,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
+import { randomValues } from '@aws-crypto/random-source-browser';
+import { Sha256 } from '@aws-crypto/sha256-universal';
 
 /**
  * Creates an array of length `size` of random bytes
  * @param size
  * @returns Array of random ints (0 to 255)
  */
-function getRandomValues(size: number) {
-  return crypto.getRandomValues(new Uint8Array(size));
+async function getRandomValues(size: number) {
+  return await randomValues(size);
 }
 
 /** Generate cryptographically strong random string
  * @param size The desired length of the string
  * @returns The random string
  */
-function random(size: number) {
+async function random(size: number) {
   const mask =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~";
   let result = "";
-  const randomUints = getRandomValues(size);
+  const randomUints = await getRandomValues(size);
   for (let i = 0; i < size; i++) {
     // cap the value of the randomIndex to mask.length - 1
     const randomIndex = randomUints[i] % mask.length;
@@ -58,8 +61,8 @@ function random(size: number) {
  * @param length Length of the verifier
  * @returns A random verifier `length` characters long
  */
-function generateVerifier(length: number): string {
-  return random(length);
+async function generateVerifier(length: number): Promise<string> {
+  return await random(length);
 }
 
 /** Generate a PKCE code challenge from a code verifier
@@ -67,10 +70,10 @@ function generateVerifier(length: number): string {
  * @returns The base64 url encoded code challenge
  */
 export async function generateChallenge(code_verifier: string) {
-  const buffer = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(code_verifier)
-  );
+  const hash = new Sha256();
+  hash.update(code_verifier);
+  const buffer = await hash.digest();
+
   // Generate base64url string
   // btoa is deprecated in Node.js but is used here for web browser compatibility
   // (which has no good replacement yet, see also https://github.com/whatwg/html/issues/6811)
@@ -94,7 +97,7 @@ export default async function pkceChallenge(length?: number): Promise<{
     throw new Error(`Expected a length between 43 and 128. Received ${length}.`);
   }
 
-  const verifier = generateVerifier(length);
+  const verifier = await generateVerifier(length);
   const challenge = await generateChallenge(verifier);
 
   return {

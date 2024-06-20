@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'path-browserify';
 
 import { runTests } from '@vscode/test-electron';
 

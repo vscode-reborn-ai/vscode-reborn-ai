@@ -1,10 +1,9 @@
-import fs from "fs";
-import upath from 'upath';
-import { v4 as uuidv4 } from "uuid";
+import path from 'path-browserify';
 import vscode from 'vscode';
-import { listItems } from "./helpers";
+import { WriteStream, fileExists, listItems, readFileIfExists, uuidv4 } from "./helpers";
 import ChatGptViewProvider from "./main";
 import { ActionNames, ChatMessage, Conversation, Role } from "./renderer/types";
+const fs = vscode.workspace.fs;
 
 /*
 
@@ -60,7 +59,7 @@ class Action {
     const model = this.runner.mainProvider.model;
 
     const systemMessage: ChatMessage = {
-      id: uuidv4(),
+      id: await uuidv4(),
       content: systemContext,
       rawContent: systemContext,
       role: Role.system,
@@ -68,7 +67,7 @@ class Action {
     };
 
     const message: ChatMessage = {
-      id: uuidv4(),
+      id: await uuidv4(),
       content: prompt,
       rawContent: prompt,
       role: Role.assistant,
@@ -76,7 +75,7 @@ class Action {
     };
 
     const conversation: Conversation = {
-      id: uuidv4(),
+      id: await uuidv4(),
       messages: [systemMessage, message],
       createdAt: Date.now(),
       inProgress: true,
@@ -103,45 +102,52 @@ class ReadmeFromPackageJSONAction extends Action {
     systemContext: string,
     controller: AbortController
   ): Promise<void> {
+    const encoder = new TextEncoder();
+
     if (!vscode.workspace.workspaceFolders) {
       throw new Error('No workspace folder found.');
     }
     const currentProjectDir = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
     // 0. Check if README.md exists. If it does, exit with an error.
-    const readmePath = upath.join(currentProjectDir, 'README.md');
-    if (fs.existsSync(readmePath)) {
+    const readmePath = path.join(currentProjectDir, 'README.md');
+    const readmeExists = await fileExists(readmePath);
+
+    if (readmeExists) {
       throw new Error('README.md already exists.');
     } else {
       // Create an empty README.md file and open it in the editor
-      fs.writeFileSync(readmePath, '');
+      fs.writeFile(vscode.Uri.file(readmePath), encoder.encode(''));
       const document = await vscode.workspace.openTextDocument(readmePath);
       await vscode.window.showTextDocument(document);
     }
 
     // 1. Look for a package.json file in the current directory
-    const packageJsonPath = upath.join(currentProjectDir, 'package.json');
-    if (!fs.existsSync(packageJsonPath)) {
+    const packageJsonPath = path.join(currentProjectDir, 'package.json');
+    if (!fileExists(packageJsonPath)) {
       throw new Error('package.json not found.');
     }
 
     // 2. Read the package.json file and extract the necessary fields
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const packageJson = JSON.parse(await readFileIfExists(packageJsonPath) ?? '{}');
     const { name, displayName, license, description, repository, scripts, dependencies, devDependencies, homepage, engines, main } = packageJson;
 
     // 3. Check if either a package-lock.json or yarn.lock file exists. Save into a variable which lockfile is used.
-    const lockfile = fs.existsSync(upath.join(currentProjectDir, 'package-lock.json')) ? 'package-lock.json' : (fs.existsSync(upath.join(currentProjectDir, 'yarn.lock')) ? 'yarn.lock' : '');
+    const packageLockExists = await fileExists(path.join(currentProjectDir, 'package-lock.json')) ? 'package-lock.json' : '';
+    const yarnLockExists = await fileExists(path.join(currentProjectDir, 'yarn.lock')) ? 'yarn.lock' : '';
+    const lockfileType = packageLockExists ?? yarnLockExists;
 
     // Get files + folders in the current project directory (note: this only goes 3 levels deep and ignores .gitignore files)
-    let filesAndFolders = listItems(currentProjectDir);
+    let filesAndFolders = await listItems(currentProjectDir);
     // Convert absolute paths to relative paths
     filesAndFolders = filesAndFolders.map((fileOrFolder: string) => fileOrFolder.replace(`${currentProjectDir}/`, ''));
 
     // If .git/config exists, attempt to extract the repository URL from it
-    const gitConfigPath = upath.join(currentProjectDir, '.git/config');
+    const gitConfigPath = path.join(currentProjectDir, '.git/config');
+    const gitConfigContents = await readFileIfExists(gitConfigPath);
     let repositoryUrl = '';
-    if (fs.existsSync(gitConfigPath)) {
-      const gitConfigContents = fs.readFileSync(gitConfigPath, 'utf8');
+
+    if (gitConfigContents) {
       // Find the repository URL in the git config using some string matching or parsing
       // For example, if the URL is always surrounded by square brackets:
       const matches = gitConfigContents.match(/\[remote "origin"\]\s*url\s*=\s*(.*)/);
@@ -165,7 +171,7 @@ class ReadmeFromPackageJSONAction extends Action {
     - Homepage: ${homepage}
     - Engines: ${JSON.stringify(engines)}
     - Main: ${main}
-    - Lockfile: ${lockfile}
+    - Lockfile: ${lockfileType}
     - Files/folders in this project: ${JSON.stringify(filesAndFolders)}
     `;
 
@@ -182,7 +188,7 @@ class ReadmeFromPackageJSONAction extends Action {
 Please ensure the README.md file is well-formatted, easy to read, and provides all necessary information for users to understand, install, and utilize the project effectively.`;
 
     // Create a write stream for the README.md file
-    const writeStream = fs.createWriteStream(readmePath, 'utf8');
+    const writeStream = new WriteStream(readmePath);
 
     try {
       // Stream ChatGPT response directly to the write stream
@@ -192,7 +198,6 @@ Please ensure the README.md file is well-formatted, easy to read, and provides a
     } catch (error) {
       console.error(error);
     } finally {
-      // Close the write stream
       writeStream.end();
     }
   }
@@ -208,23 +213,27 @@ class ReadmeFromFileStructure extends Action {
     }
     const currentProjectDir = vscode.workspace.workspaceFolders[0].uri.fsPath;
 
-    const readmePath = upath.join(currentProjectDir, 'README.md');
-    if (fs.existsSync(readmePath)) {
+    const readmePath = path.join(currentProjectDir, 'README.md');
+    const readmeExists = await fileExists(readmePath);
+
+    if (readmeExists) {
       throw new Error('README.md already exists.');
     } else {
-      fs.writeFileSync(readmePath, '');
+      fs.writeFile(vscode.Uri.file(readmePath), new Uint8Array());
+
       const document = await vscode.workspace.openTextDocument(readmePath);
       await vscode.window.showTextDocument(document);
     }
 
-    let filesAndFolders = listItems(currentProjectDir);
+    let filesAndFolders = await listItems(currentProjectDir);
     filesAndFolders = filesAndFolders.map((fileOrFolder: string) => fileOrFolder.replace(`${currentProjectDir}/`, ''));
 
     // If .git/config exists, attempt to extract the repository URL from it
-    const gitConfigPath = upath.join(currentProjectDir, '.git/config');
+    const gitConfigPath = path.join(currentProjectDir, '.git/config');
+    const gitConfigContents = await readFileIfExists(gitConfigPath);
     let repositoryUrl = '';
-    if (fs.existsSync(gitConfigPath)) {
-      const gitConfigContents = fs.readFileSync(gitConfigPath, 'utf8');
+
+    if (gitConfigContents) {
       // Find the repository URL in the git config using some string matching or parsing
       // For example, if the URL is always surrounded by square brackets:
       const matches = gitConfigContents.match(/\[remote "origin"\]\s*url\s*=\s*(.*)/);
@@ -234,12 +243,14 @@ class ReadmeFromFileStructure extends Action {
     }
 
     // Check if either a package-lock.json or yarn.lock file exists. Save into a variable which lockfile is used.
-    const lockfile = fs.existsSync(upath.join(currentProjectDir, 'package-lock.json')) ? 'package-lock.json' : (fs.existsSync(upath.join(currentProjectDir, 'yarn.lock')) ? 'yarn.lock' : '');
+    const packageLockExists = await fileExists(path.join(currentProjectDir, 'package-lock.json')) ? 'package-lock.json' : '';
+    const yarnLockExists = await fileExists(path.join(currentProjectDir, 'yarn.lock')) ? 'yarn.lock' : '';
+    const lockfileType = packageLockExists ?? yarnLockExists;
 
     const prompt = `Generate a README.md GitHub markdown file for a project based on the following files/folders in this project: ${JSON.stringify(filesAndFolders)}
 
 - Repository URL: ${repositoryUrl}
-- Lockfile: ${lockfile}
+- Lockfile: ${lockfileType}
 `;
 
     const systemContextModified = `Using the information provided from the project structure, generate a comprehensive and well-structured README.md file in GitHub markdown format. Organize the information into the following sections:
@@ -254,7 +265,7 @@ class ReadmeFromFileStructure extends Action {
 - Acknowledgements: Mention any noteworthy contributors, libraries, or frameworks used in the project.
 Please ensure the README.md file is well-formatted, easy to read, and provides all necessary information for users to understand, install, and utilize the project effectively.`;
 
-    const writeStream = fs.createWriteStream(readmePath, 'utf8');
+    const writeStream = new WriteStream(readmePath);
 
     try {
       for await (const token of this.streamChatCompletion(systemContextModified, prompt, controller.signal)) {
@@ -274,12 +285,13 @@ class GitignoreAction extends Action {
       throw new Error('No workspace folder found.');
     }
     const currentProjectDir = vscode.workspace.workspaceFolders[0].uri.fsPath;
-    const packageJsonPath = upath.join(currentProjectDir, 'package.json');
-    const gitignorePath = upath.join(currentProjectDir, '.gitignore');
-
+    const packageJsonPath = path.join(currentProjectDir, 'package.json');
+    const packageJsonContents = await readFileIfExists(packageJsonPath);
+    const gitignorePath = path.join(currentProjectDir, '.gitignore');
     let packageJsonData = {} as any;
-    if (fs.existsSync(packageJsonPath)) {
-      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+
+    if (packageJsonContents) {
+      const packageJson = JSON.parse(packageJsonContents);
       const installedPackages = Object.keys({ ...packageJson.dependencies, ...packageJson.devDependencies }).join(', ');
       packageJsonData = {
         installedPackages,
@@ -290,12 +302,14 @@ class GitignoreAction extends Action {
     }
 
     // Check if either a package-lock.json or yarn.lock file exists. Save into a variable which lockfile is used.
-    const lockfile = fs.existsSync(upath.join(currentProjectDir, 'package-lock.json')) ? 'package-lock.json' : (fs.existsSync(upath.join(currentProjectDir, 'yarn.lock')) ? 'yarn.lock' : '');
+    const packageLockExists = await fileExists(path.join(currentProjectDir, 'package-lock.json')) ? 'package-lock.json' : '';
+    const yarnLockExists = await fileExists(path.join(currentProjectDir, 'yarn.lock')) ? 'yarn.lock' : '';
+    const lockfileType = packageLockExists ?? yarnLockExists;
 
     const document = await vscode.workspace.openTextDocument(gitignorePath);
     await vscode.window.showTextDocument(document);
 
-    const filesAndFolders = listItems(currentProjectDir)
+    const filesAndFolders = (await listItems(currentProjectDir))
       .filter((f: string) => !/^\..*/.test(f) && !f.includes('node_modules'))
       .map((f: string) => f.replace(`${currentProjectDir}/`, ''));
 
@@ -307,7 +321,7 @@ class GitignoreAction extends Action {
     - Engines: ${packageJsonData.engines}
     - Main: ${packageJsonData.main}
     ` : ''}
-    - Lockfile: ${lockfile}
+    - Lockfile: ${lockfileType}
     - Files/folders in this project: ${JSON.stringify(filesAndFolders)}
     `;
 
@@ -321,7 +335,7 @@ class GitignoreAction extends Action {
 
 Please ensure the .gitignore file is well-organized, easy to understand. The types of files in the .gitignore should be relevant to the project, and not just a generic list of common patterns.`;
 
-    const writeStream = fs.createWriteStream(gitignorePath, 'utf8');
+    const writeStream = new WriteStream(gitignorePath);
 
     try {
       for await (const token of this.streamChatCompletion(systemContextModified, prompt, controller.signal)) {
