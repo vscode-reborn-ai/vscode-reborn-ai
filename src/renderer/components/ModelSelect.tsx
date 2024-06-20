@@ -49,7 +49,9 @@ export default function ModelSelect({
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
   );
-  const models = useAppSelector((state: RootState) => state.app.models);
+  const models: Model[] = useAppSelector(
+    (state: RootState) => state.app.models
+  );
   const [filteredModels, setFilteredModels] = useState<Model[]>(models);
   const backendMessenger = useMessenger(vscode);
   const [sortBy, setSortBy] = useState<

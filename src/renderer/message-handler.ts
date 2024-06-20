@@ -206,6 +206,24 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             models: modelsUpdateData.models,
           })
         );
+
+        // For each conversation, if the model id is found in the new models list, update the model
+        conversationList.forEach((conversation) => {
+          if (modelsUpdateData.models.some((model) => model.id === conversation.model?.id)) {
+            const updatedModel = modelsUpdateData.models.find(
+              (model) => model.id === conversation.model?.id
+            );
+
+            if (updatedModel) {
+              dispatch(
+                setModel({
+                  conversationId: conversation.id,
+                  model: updatedModel,
+                })
+              );
+            }
+          }
+        });
         break;
       case FrontendMessageType.updateApiKeyStatus:
         const apiKeyStatusData = message as UpdateApiKeyStatusMessage;
