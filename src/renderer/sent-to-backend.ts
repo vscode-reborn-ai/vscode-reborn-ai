@@ -7,9 +7,9 @@ export function useMessenger(vscode: any) {
     try {
       JSON.stringify(data);
     } catch (error) {
-      console.error("Error serializing message data", error);
-      console.error("Type", type);
-      console.error("Message data", data);
+      console.error("[Reborn AI] Error serializing message data", error);
+      console.error("[Reborn AI] Type", type);
+      console.error("[Reborn AI] Message data", data);
       return;
     }
 
@@ -69,6 +69,11 @@ export function useMessenger(vscode: any) {
       apiKey
     } as ChangeApiKeyMessage);
   };
+  const sendSetApiVersion = (apiVersion: string) => {
+    sendMessageToBackend(BackendMessageType.setApiVersion, {
+      apiVersion
+    });
+  };
   const sendEditCode = (code: string) => {
     sendMessageToBackend(BackendMessageType.editCode, {
       code,
@@ -122,6 +127,11 @@ export function useMessenger(vscode: any) {
       useManualModelInput
     });
   };
+  const sendOpenExternalUrl = (url: string) => {
+    sendMessageToBackend(BackendMessageType.openExternalUrl, {
+      url
+    });
+  };
 
   return {
     sendGetSettings,
@@ -137,6 +147,7 @@ export function useMessenger(vscode: any) {
     sendStopAction,
     sendChangeApiUrl,
     sendChangeApiKey,
+    sendSetApiVersion,
     sendEditCode,
     sendOpenNew,
     sendOpenSettings,
@@ -147,5 +158,6 @@ export function useMessenger(vscode: any) {
     sendSetVerbosity,
     sendSetShowAllModels,
     sendSetManualModelInput,
+    sendOpenExternalUrl,
   };
 }

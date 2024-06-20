@@ -1,51 +1,50 @@
-# ChatGPT Reborn
+# VSCode Reborn AI
 
-ChatGPT Reborn is a Visual Studio Code extension that allows you to use the ChatGPT API to write, refactor, and improve your code.
+VSCode Reborn AI is a Visual Studio Code extension that allows you to use the ChatGPT API to write, refactor, and improve your code.
 
 ## Get for VSCode
 
-Search for "ChatGPT Reborn" in the VSCode extension search.
+Search for "VSCode Reborn AI" in the VSCode extension search.
 
 Or install directly:
 
 - [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn)
 - [Open VSX Registry](https://open-vsx.org/extension/chris-hayes/chatgpt-reborn)
 
-Or build this extension yourself (see below).
+Or build this extension yourself (scroll further down).
 
 ## About this fork
 
 This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for working on the original extension and later open-sourcing it.
 
-Gencay has since released a *new* extension, "ChatGPT: Genie AI", that is a continuation of his work: <https://github.com/ai-genie/chatgpt-vscode>.
+Gencay has since released a *new* extension, "Reborn AI: Genie AI", that is a continuation of his work: <https://github.com/ai-genie/chatgpt-vscode>.
 
-How these extensions differ is that Genie AI is a proprietary extension, and "reborn" is an open-source extension.
+How these extensions differ is that Genie AI is a proprietary extension, and VSCode Reborn AI is an open-source extension.
 
-## Proxy and Local LLMs
+## Local LLMs and Proxies
 
-This extension can be used with a proxy either for geographical reasons or if you're using a local LLM. The "Api Base Url" just needs to be changed.
-
-### Proxies
-
-I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers.
-
-### Alternative APIs tested to work with this extension
-
-- [X] [OpenRouter](https://openrouter.ai/)
+Any tool that is "compatible" with the OpenAI API should work with this extension. The tools listed below are the ones I've personally tested.
 
 ### Local LLMs tested to work with this extension
 
 - [X] [text-generation-webui](https://github.com/oobabooga/text-generation-webui)
-- [X] [LocalAI](https://localai.io/)
 - [X] [ollama](https://github.com/ollama/ollama)
+- [X] [LocalAI](https://localai.io/)
 
-Any local LLM that supports the OpenAI API *should* work with this extension. The list above are the tools I've personally tested.
+### Alternative APIs tested to work with this extension
+
+- [X] [OpenRouter](https://openrouter.ai/)
+- [X] [Azure OpenAI Service](https://azure.microsoft.com/en-us/products/ai-services/openai-service/)
+
+### Proxies
+
+I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers. This is mainly for anyone who wants to use OpenAI, but cannot due to api.openai.com being blocked.
 
 ## Internationalization
 
 Most of this extension has been translated to a ~dozen languages, but the translations are not complete and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20)
 
-## Installation
+## Build this extension yourself
 
 To set up the project, first clone the repository:
 
@@ -76,7 +75,7 @@ yarn run build
 yarn run watch
 ```
 
-## Testing the Extension in Visual Studio Code
+## Developing this extension in VS Code
 
 To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these steps:
 
@@ -93,6 +92,13 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 6. Once you are satisfied with your changes, submit a pull request to this repository.
 
 ## Changelog
+
+### June 20, 2024 (`v3.24.0`)
+
+- ✨ **Feature** - Added support for Azure's OpenAI API. - *Thank you for the suggestion @PeterDaveHello & @rambalachandran*
+- 🖥️ **UI** - When using OpenRouter, the model selector can now show descriptions.
+- 🖥️ **UI** - Redesigned conversation tabs to match the design of VS Code's editor tabs.
+- 🔧 **Fix** - UI color fixes to ensure the extension is usable across all themes.
 
 ### June 14, 2024 (`v3.23.0` - `v3.23.2`)
 

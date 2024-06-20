@@ -88,7 +88,7 @@ export default ({
 
   const askQuestion = () => {
     if (!isCurrentModelAvailable) {
-      console.error("Model not available. Select a model first.");
+      console.error("[Reborn AI] Model not available. Select a model first.");
       return;
     }
 
@@ -144,15 +144,15 @@ export default ({
 
   return (
     <footer
-      className={`fixed z-20 bottom-0 w-full flex flex-col gap-y-1 pt-2 bg
+      className={`fixed z-20 bottom-0 w-full flex flex-col gap-y-1 pt-2 bg-gradient-to-t from-bg from-50% to-transparent
       ${settings?.minimalUI ? "pb-2" : "pb-1"}
     `}
     >
-      <div className="px-4 flex items-center gap-x-4">
-        <div className="flex-1 textarea-wrapper w-full flex items-center">
+      <div className="px-4 flex items-center gap-x-2">
+        <div className="bg flex-1 textarea-wrapper w-full flex items-center">
           {currentConversation.inProgress && (
             // show the text "Thinking..." when the conversation is in progress in place of the question input
-            <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border text-input w-full">
+            <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border bg-input text-input w-full">
               <Icon
                 icon="ripples"
                 className="w-5 h-5 mr-2 text stroke-current"
@@ -169,7 +169,7 @@ export default ({
           {!currentConversation.inProgress && (
             <textarea
               rows={1}
-              className="text-sm rounded border border-input text-input bg-input resize-none w-full outline-0"
+              className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
               id="question-input"
               placeholder="Ask a question..."
               ref={questionInputRef}
@@ -223,7 +223,7 @@ export default ({
           )}
         </div>
 
-        <div id="question-input-buttons">
+        <div className="bg" id="question-input-buttons">
           {currentConversation.inProgress && (
             // show the "stop" button when the conversation is in progress
             <button
@@ -249,7 +249,7 @@ export default ({
             <button
               title="Submit prompt"
               className={classNames(
-                "ask-button rounded px-4 py-2 flex flex-row items-center bg-button hover:bg-button-hover focus:bg-button-hover",
+                "ask-button rounded px-4 py-2 flex flex-row items-center text-button bg-button hover:bg-button-hover focus:bg-button-hover",
                 {
                   "opacity-50 cursor-not-allowed": !isCurrentModelAvailable,
                 }
@@ -270,8 +270,8 @@ export default ({
         </div>
       </div>
       {!settings?.minimalUI && (
-        <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-2 px-4 overflow-x-auto">
-          <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-2">
+        <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-1 px-4 overflow-x-auto">
+          <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-1">
             {settings.manualModelInput ? (
               <ModelInput
                 currentConversation={currentConversation}
@@ -342,15 +342,6 @@ export default ({
             </button>
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
-          <div className="flex items-end self-start">
-            <MoreActionsMenu
-              vscode={vscode}
-              showMoreActions={showMoreActions}
-              currentConversation={currentConversation}
-              setShowMoreActions={setShowMoreActions}
-              conversationList={conversationList}
-            />
-          </div>
           <div className="flex flex-row items-start gap-2">
             <div
               className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
@@ -386,6 +377,13 @@ export default ({
               onBlur={() => {
                 setShowTokenBreakdown(false);
               }}
+              onKeyUp={(e) => {
+                if (e.key === "Escape") {
+                  setShowTokenBreakdown(false);
+                } else if (e.key === "Space") {
+                  setShowTokenBreakdown(!showTokenBreakdown);
+                }
+              }}
             >
               {tokenCountLabel}
               <TokenCountPopup
@@ -401,10 +399,44 @@ export default ({
               onClick={() => {
                 setShowMoreActions(!showMoreActions);
               }}
+              onKeyUp={(e) => {
+                if (e.key === "Escape") {
+                  setShowMoreActions(false);
+                } else if (e.key === "ArrowDown") {
+                  setShowMoreActions(true);
+                  // Focus the first element in the more actions menu
+                  const firstElem = document.querySelector(
+                    "#more-actions-menu ul li"
+                  ) as HTMLElement;
+                  if (firstElem) {
+                    firstElem.focus();
+                  }
+                } else if (e.key === "ArrowUp") {
+                  setShowMoreActions(true);
+                  // Focus the last element in the more actions menu
+                  const lastElem = document.querySelector(
+                    "#more-actions-menu ul li:last-child"
+                  ) as HTMLElement;
+                  if (lastElem) {
+                    lastElem.focus();
+                  }
+                } else if (e.key === "Space") {
+                  setShowMoreActions(!showMoreActions);
+                }
+              }}
             >
               <Icon icon="zap" className="w-3.5 h-3.5 hidden 2xs:block" />
               {t?.questionInputField?.moreActions ?? "More Actions"}
             </button>
+          </div>
+          <div className="flex items-end self-start">
+            <MoreActionsMenu
+              vscode={vscode}
+              showMoreActions={showMoreActions}
+              currentConversation={currentConversation}
+              setShowMoreActions={setShowMoreActions}
+              conversationList={conversationList}
+            />
           </div>
         </div>
       )}

@@ -59,7 +59,7 @@ export default class Auth {
       // Store the default key
       await this.secretStorage.store(DEFAULT_KEY_NAME, token);
     } else {
-      console.warn("No api key provided to store");
+      console.warn("[Reborn AI] No api key provided to store");
     }
   }
 

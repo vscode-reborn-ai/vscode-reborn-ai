@@ -63,7 +63,8 @@ export function getSelectedModelId(): string {
 
   if (currentModelId !== updatedModelId) {
     vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", updatedModelId, vscode.ConfigurationTarget.Global);
-    console.debug(`Updated deprecated model "${currentModelId}" to "${updatedModelId}".`);
+
+    console.debug(`[Reborn AI] Updated deprecated model "${currentModelId}" to "${updatedModelId}".`);
   }
 
   return updatedModelId;

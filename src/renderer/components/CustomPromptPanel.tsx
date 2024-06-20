@@ -67,7 +67,7 @@ function CustomPromptManager() {
               type="text"
               value={prompt}
               onChange={(e) => updatePrompt(index, e.target.value)}
-              className="border-2 border-gray-300 p-2 rounded w-full mr-2"
+              className="border-2 border-gray-300 p-2 rounded-sm w-full mr-2"
             />
             <button
               onClick={() => removePrompt(index)}

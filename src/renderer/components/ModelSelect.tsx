@@ -9,21 +9,18 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getModelCompletionLimit,
   getModelContextLimit,
+  getModelFriendlyName,
   getModelRates,
   isMultimodalModel,
   isOnlineModel,
+  useConvertMarkdownToComponent,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { ApiKeyStatus } from "../store/app";
 import { updateConversationModel } from "../store/conversation";
-import {
-  Conversation,
-  MODEL_FRIENDLY_NAME,
-  MODEL_TOKEN_LIMITS,
-  Model,
-} from "../types";
+import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
 import Icon from "./Icon";
 
 export default function ModelSelect({
@@ -52,7 +49,9 @@ export default function ModelSelect({
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
   );
-  const models = useAppSelector((state: RootState) => state.app.models);
+  const models: Model[] = useAppSelector(
+    (state: RootState) => state.app.models
+  );
   const [filteredModels, setFilteredModels] = useState<Model[]>(models);
   const backendMessenger = useMessenger(vscode);
   const [sortBy, setSortBy] = useState<
@@ -60,6 +59,10 @@ export default function ModelSelect({
   >("name");
   const [ascending, setAscending] = useState(true);
   const searchInputRef = React.createRef<HTMLInputElement>();
+  const [showDescriptionOn, setShowDescriptionOn] = useState<string | null>(
+    null
+  );
+  const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 
   const hasOpenAIModels = useMemo(() => {
     // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-3.5-turbo
@@ -83,6 +86,7 @@ export default function ModelSelect({
 
   // computed model costs for all models
   interface ComputedModelData {
+    descriptionComponent: React.ReactNode;
     promptLimit: number;
     completeLimit: number;
     prompt: number | undefined;
@@ -92,13 +96,17 @@ export default function ModelSelect({
     isFree: boolean;
     isExpensive: boolean;
   }
+
   const computedModelDataMap = useMemo(() => {
-    const costs = new Map<string, ComputedModelData>();
+    const modelData = new Map<string, ComputedModelData>();
 
     models.forEach((model) => {
       const rate = getModelRates(model);
 
-      costs.set(model.id, {
+      modelData.set(model.id, {
+        descriptionComponent: convertMarkdownToComponent(
+          model.description ?? ""
+        ),
         promptLimit: getModelContextLimit(model),
         completeLimit: getModelCompletionLimit(model),
         prompt: rate.prompt,
@@ -122,8 +130,12 @@ export default function ModelSelect({
       });
     });
 
-    return costs;
+    return modelData;
   }, [models]);
+
+  const currentModelFriendlyName = useMemo(() => {
+    return getModelFriendlyName(currentConversation, models, settings, true);
+  }, [currentConversation, models, settings]);
 
   // returns sorted list of models
   const sortList = useCallback(
@@ -184,27 +196,6 @@ export default function ModelSelect({
     },
     [computedModelDataMap]
   );
-
-  const currentModelFriendlyName = useMemo(() => {
-    let friendlyName =
-      currentConversation.model?.name ??
-      (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")
-        ? MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "")
-        : currentConversation.model?.id ?? settings?.gpt3?.model) ??
-      "No model selected";
-
-    // if the friendly has a slash (ie perplexity/model-name), ignore everything before the slash
-    if (friendlyName.includes("/")) {
-      friendlyName = friendlyName.split("/")[1];
-    }
-
-    //  if the friendly name has a colon (ie model-name:version), ignore everything after the colon
-    if (friendlyName.includes(":")) {
-      friendlyName = friendlyName.split(":")[0];
-    }
-
-    return friendlyName;
-  }, [currentConversation.model, settings]);
 
   const setModel = (model: Model) => {
     // Update settings
@@ -272,6 +263,23 @@ export default function ModelSelect({
     }
   }, [showModels]);
 
+  const descriptionIconClickHandler = useCallback(
+    (event: any, model: Model) => {
+      event.stopPropagation();
+
+      const newShowDescriptionOn =
+        showDescriptionOn === model.id ? null : model.id;
+
+      setShowDescriptionOn(newShowDescriptionOn);
+
+      // Unfocus the button when the description is hidden
+      if (!newShowDescriptionOn) {
+        event.currentTarget.blur();
+      }
+    },
+    [showDescriptionOn]
+  );
+
   return (
     <>
       <div className={className}>
@@ -299,7 +307,7 @@ export default function ModelSelect({
             : "No model selected"}
         </button>
         <div
-          className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-7em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+          className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}
@@ -337,7 +345,7 @@ export default function ModelSelect({
                     (model: Model) => (
                       <button
                         key={model.id}
-                        className="flex flex-col gap-1 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                        className="group flex flex-col gap-1 items-start justify-start p-2 w-full hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection"
                         onClick={() => {
                           setModel(model);
                           if (showParentMenu) {
@@ -345,30 +353,65 @@ export default function ModelSelect({
                           }
                         }}
                       >
-                        <div className="flex gap-2 items-center">
-                          <span className="mt-0.5 text-start font-bold">
-                            {model?.name ? (
-                              <span>{model.name}</span>
-                            ) : (
-                              <code>{model.id}</code>
+                        {/* Line 1 - Model name, badges, description icon */}
+                        <div className="w-full flex gap-2 items-center justify-between">
+                          <div className="flex gap-2 items-center">
+                            {/* Model name and badges */}
+                            <span className="mt-0.5 text-start font-bold">
+                              {model?.name ? (
+                                <span>{model.name}</span>
+                              ) : (
+                                <code>{model.id}</code>
+                              )}
+                            </span>
+                            {isMultimodalModel(model) && (
+                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                                multimodal
+                              </span>
                             )}
-                          </span>
-                          {isMultimodalModel(model) && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
-                              multimodal
-                            </span>
-                          )}
-                          {isOnlineModel(model) && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
-                              online
-                            </span>
-                          )}
-                          {model.top_provider?.is_moderated && (
-                            <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75">
-                              moderated
-                            </span>
+                            {isOnlineModel(model) && (
+                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                                online
+                              </span>
+                            )}
+                            {model.top_provider?.is_moderated && (
+                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                                moderated
+                              </span>
+                            )}
+                          </div>
+                          {/* Icon to show full model description */}
+                          {!!model.description?.length && (
+                            <button
+                              className={classNames(
+                                "p-1 rounded text-menu opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-hover:text-menu-selection group-focus:text-menu-selection",
+                                "hover:bg-menu focus:bg-menu-selection"
+                              )}
+                              onClick={(event) =>
+                                descriptionIconClickHandler(event, model)
+                              }
+                            >
+                              <Icon icon="help" className="w-3 h-3" />
+                              <span className="sr-only">
+                                Show model description
+                              </span>
+                            </button>
                           )}
                         </div>
+                        {/* Line 2 - Model description */}
+                        {showDescriptionOn === model.id &&
+                          !!model.description?.length && (
+                            <div
+                              className="text-xs text-start text-menu group-hover:text-menu-selection group-focus:text-menu-selection prose prose-a:text-menu prose-a:underline cursor-auto"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              {
+                                computedModelDataMap.get(model.id)
+                                  ?.descriptionComponent
+                              }
+                            </div>
+                          )}
+                        {/* Line 2/3 - Model stats */}
                         <div className="w-full flex justify-around gap-2 divide-dropdown text-2xs">
                           {computedModelDataMap.get(model.id)?.prompt ===
                             undefined &&
@@ -406,7 +449,8 @@ export default function ModelSelect({
                                     "opacity-75":
                                       sortBy === "context" ||
                                       sortBy === "completion",
-                                  }
+                                  },
+                                  "group-hover:text-menu-selection group-focus:text-menu-selection"
                                 )}
                               >
                                 {computedModelDataMap.get(model.id)?.promptText}
@@ -425,7 +469,8 @@ export default function ModelSelect({
                                     "opacity-75":
                                       sortBy === "context" ||
                                       sortBy === "completion",
-                                  }
+                                  },
+                                  "group-hover:text-menu-selection group-focus:text-menu-selection"
                                 )}
                               >
                                 {
@@ -487,10 +532,11 @@ export default function ModelSelect({
                         <div className="flex flex-wrap justify-end gap-1">
                           <button
                             className={classNames(
-                              "flex items-center gap-1",
-                              "hover:bg-menu-selection p-1 rounded",
+                              "flex items-center gap-1 p-1 rounded",
+                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                               {
-                                "bg-menu-selection": sortBy === "name",
+                                "text-menu-selection bg-menu-selection":
+                                  sortBy === "name",
                               }
                             )}
                             onClick={() => {
@@ -513,8 +559,8 @@ export default function ModelSelect({
                           </button>
                           <button
                             className={classNames(
-                              "flex items-center gap-1",
-                              "hover:bg-menu-selection p-1 rounded",
+                              "flex items-center gap-1 p-1 rounded",
+                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                               {
                                 "bg-menu-selection": sortBy === "cost",
                               }
@@ -539,8 +585,8 @@ export default function ModelSelect({
                           </button>
                           <button
                             className={classNames(
-                              "flex items-center gap-1",
-                              "hover:bg-menu-selection p-1 rounded",
+                              "flex items-center gap-1 p-1 rounded",
+                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                               {
                                 "bg-menu-selection": sortBy === "context",
                               }
@@ -565,8 +611,8 @@ export default function ModelSelect({
                           </button>
                           <button
                             className={classNames(
-                              "flex items-center gap-1",
-                              "hover:bg-menu-selection p-1 rounded",
+                              "flex items-center gap-1 p-1 rounded",
+                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                               {
                                 "bg-menu-selection": sortBy === "completion",
                               }
@@ -595,7 +641,7 @@ export default function ModelSelect({
                         ref={searchInputRef}
                         type="text"
                         placeholder="Search models..."
-                        className="px-3 py-2 rounded border text-input text-sm border-input bg-menu-selection outline-0"
+                        className="px-3 py-2 rounded-sm border text-input text-sm border-input bg-input outline-0"
                         onChange={runSearch}
                         onKeyUp={(e) => {
                           if (e.key === "Escape") {

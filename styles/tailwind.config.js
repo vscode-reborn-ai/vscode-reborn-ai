@@ -100,12 +100,15 @@ module.exports = {
                     'inactive': 'var(--vscode-tab-border)',
                     'active': 'var(--vscode-tab-activeBorder)',
                     'active-unfocused': 'var(--vscode-tab-unfocusedActiveBorder)',
+                    focus: 'var(--vscode-tab-focusBorder)',
+                    'editor-focus': 'var(--vscode-focusBorder)',
                 },
                 dropdown: {
                     DEFAULT: 'var(--vscode-dropdown-border)',
                 },
                 menu: {
                     DEFAULT: 'var(--vscode-menu-border)',
+                    selection: 'var(--vscode-menu-selectionBorder)',
                 },
                 input: {
                     DEFAULT: 'var(--vscode-settings-textInputBorder)',
@@ -133,6 +136,7 @@ module.exports = {
     },
     plugins: [
         require('@tailwindcss/forms'),
+        require('@tailwindcss/typography'),
     ],
 };
 

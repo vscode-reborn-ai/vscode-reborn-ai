@@ -111,7 +111,7 @@ export default function ({
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
               placeholder={apiKeyPlaceholder}
-              className="flex-grow px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
+              className="flex-grow px-3 py-2 rounded-sm border text-input text-sm border-input bg-input outline-0"
               disabled={apiKeyStatus === ApiKeyStatus.Pending}
             />
           </div>
@@ -151,7 +151,7 @@ export default function ({
                 value={apiUrl}
                 onChange={(event) => setApiUrl(event.target.value)}
                 placeholder={apiUrlPlaceholder}
-                className="flex-grow px-3 py-2 rounded border text-input text-sm border-input bg-input outline-0"
+                className="flex-grow px-3 py-2 rounded-sm border text-input text-sm border-input bg-input outline-0"
                 disabled={apiKeyStatus === ApiKeyStatus.Pending}
               />
             </div>

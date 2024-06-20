@@ -30,7 +30,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
 
   return (event: any) => {
     if (debug) {
-      console.log("Renderer - Received message from main process: ", event.data);
+      console.info("[Reborn AI] Renderer - Received message from main process: ", event.data);
     }
 
     let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
@@ -96,7 +96,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             }
           }
         } else {
-          console.error("updateMessage event: No message provided");
+          console.error("[Reborn AI] updateMessage event: No message provided");
         }
 
         break;
@@ -135,7 +135,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         break;
       case FrontendMessageType.addError:
         const addErrorData = message as AddErrorMessage;
-        const errorMessageText = "An error occurred. If this issue persists please clear your session token with `ChatGPT: Reset session` command and/or restart your Visual Studio Code. If you still experience issues, it may be due to an OpenAI outage. Take a look at https://status.openai.com to see if there's an OpenAI outage.";
+        const errorMessageText = "An error occurred. If this issue persists please clear your session token with `Reborn AI: Reset session` command and/or restart your Visual Studio Code. If you still experience issues, it may be due to an OpenAI outage. Take a look at https://status.openai.com to see if there's an OpenAI outage.";
         const errorMessage: ChatMessage = {
           id: addErrorData.id,
           role: Role.assistant,
@@ -156,7 +156,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         const settingsUpdateData = message as SettingsUpdateMessage;
 
         if (!settingsUpdateData?.config) {
-          console.warn("Renderer - No settings provided in settingsUpdate message");
+          console.warn("[Reborn AI] Renderer - No settings provided in settingsUpdate message");
           return;
         }
 
@@ -206,6 +206,24 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             models: modelsUpdateData.models,
           })
         );
+
+        // For each conversation, if the model id is found in the new models list, update the model
+        conversationList.forEach((conversation) => {
+          if (modelsUpdateData.models.some((model) => model.id === conversation.model?.id)) {
+            const updatedModel = modelsUpdateData.models.find(
+              (model) => model.id === conversation.model?.id
+            );
+
+            if (updatedModel) {
+              dispatch(
+                setModel({
+                  conversationId: conversation.id,
+                  model: updatedModel,
+                })
+              );
+            }
+          }
+        });
         break;
       case FrontendMessageType.updateApiKeyStatus:
         const apiKeyStatusData = message as UpdateApiKeyStatusMessage;
@@ -257,7 +275,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             }
             break;
           default:
-            console.warn(`Renderer - Unhandled result from action: ${actionCompleteData?.actionId}`);
+            console.warn(`[Reborn AI] Renderer - Unhandled result from action: ${actionCompleteData?.actionId}`);
         }
         break;
       case FrontendMessageType.actionError:
@@ -273,7 +291,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           model: setConversationModelData.model
         }));
       default:
-        console.error('Renderer - Uncaught message type: ', (message as BaseFrontendMessage)?.type);
+        console.error('[Reborn AI] Renderer - Uncaught message type: ', (message as BaseFrontendMessage)?.type);
     }
   };
 };

@@ -74,7 +74,7 @@ export default function Layout({ vscode }: { vscode: any }) {
         const serialized = JSON.stringify(vscode);
         dispatch(setVSCode(serialized));
       } catch (e) {
-        console.error("Error serializing vscode object", e);
+        console.error("[Reborn AI] Error serializing vscode object", e);
       }
     }
   }, [vscode]);
