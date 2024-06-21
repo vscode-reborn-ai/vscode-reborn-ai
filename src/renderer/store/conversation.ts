@@ -20,6 +20,7 @@ const initialConversation: Conversation = {
   model: undefined,
   autoscroll: true,
   verbosity: undefined,
+  tools: {},
 };
 
 const initialState: ConversationState = {

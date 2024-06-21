@@ -82,6 +82,7 @@ class Action {
       inProgress: true,
       model,
       autoscroll: true,
+      tools: {},
     };
 
     for await (const token of this.runner.mainProvider.api.streamChatCompletion(conversation, abortSignal)) {

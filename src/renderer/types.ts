@@ -150,20 +150,20 @@ interface OpenAIMessage {
   role: Role;
   content: string;
 }
-interface OpenAIChatRequest {
-  model: string;
-  messages: OpenAIMessage[];
-  temperature?: number;
-  top_p?: number;
-  n?: number;
-  stream?: boolean;
-  stop?: string | string[];
-  max_tokens?: number;
-  presence_penalty?: number;
-  frequency_penalty?: number;
-  logit_bias?: { [token: number]: number; };
-  user?: string;
-}
+// interface OpenAIChatRequest {
+//   model: string;
+//   messages: OpenAIMessage[];
+//   temperature?: number;
+//   top_p?: number;
+//   n?: number;
+//   stream?: boolean;
+//   stop?: string | string[];
+//   max_tokens?: number;
+//   presence_penalty?: number;
+//   frequency_penalty?: number;
+//   logit_bias?: { [token: number]: number; };
+//   user?: string;
+// }
 
 // * Interfaces for this extension - built on top of OpenAI's API
 export interface ChatMessage extends OpenAIMessage {
@@ -203,6 +203,12 @@ export enum Verbosity {
   full = "full"
 }
 
+export interface CoreTool {
+  description: string;
+  parameters: any;
+  execute?: Function;
+}
+
 export interface Conversation {
   id: string;
   createdAt: string | number;
@@ -222,6 +228,8 @@ export interface Conversation {
     userInput: number; // User input
     minTotal: number; // Minimum tokens to be used (messages + userInput)
   },
+  tools: Record<string, CoreTool>;
+  toolChoice?: 'auto' | 'none' | 'required' | { type: 'tool', toolName: any; };
 }
 
 export interface SendMessageOptions {

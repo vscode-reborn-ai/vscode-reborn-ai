@@ -206,6 +206,7 @@ export default function Tabs({
         settings?.verbosity ??
         currentConversation?.verbosity ??
         Verbosity.normal,
+      tools: {},
     } as Conversation;
 
     dispatch(addConversation(newConversation));

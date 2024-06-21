@@ -3,6 +3,7 @@ import { OpenAIProvider, OpenAIProviderSettings, createOpenAI } from '@ai-sdk/op
 import { generateText, streamText } from 'ai';
 import { Tiktoken, TiktokenModel, encodingForModel } from "js-tiktoken";
 import ky from "ky";
+import { z } from 'zod';
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
 import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
 
@@ -16,14 +17,34 @@ Responsible for handling API calls to OpenAI's API
 // Fallback model ID used for token counting
 const FALLBACK_MODEL_ID = 'gpt-4-turbo';
 
+const azureSettingsSchema = z.object({
+  apiKey: z.string().default(''),
+  resourceName: z.string().default(''),
+}).strict();
+
+const openaiSettingsSchema = z.object({
+  apiKey: z.string().default(''),
+  baseURL: z.string().default('https://api.openai.com/v1'),
+  organization: z.string().optional(),
+  project: z.string().optional(),
+  headers: z.record(z.string()).optional(),
+  compatibility: z.enum(['strict', 'compatible']).default('compatible'),
+  fetch: z.function().optional(),
+});
+
+
 export class ApiProvider {
   private _openai: OpenAIProvider | AzureOpenAIProvider | undefined;
   private _temperature: number;
   private _topP: number;
   private _modelList: Model[] = [];
 
-  public config: OpenAIProviderSettings = {};
+  public config: OpenAIProviderSettings | AzureOpenAIProviderSettings = {};
+
+  // For Azure
   public isAzure: boolean = false;
+  public deploymentName: string | undefined;
+
   // public baseApiUrl: string = 'https://api.openai.com/v1';
   // Testing this out, right now not used to maximum potential
   // For every new provider, you have to rebuild the provider registry, which is a pain
@@ -51,24 +72,24 @@ export class ApiProvider {
     this._temperature = temperature;
     this._topP = topP;
 
-    this.config = this.updateConfig({
-      apiKey,
-      organization,
-      baseURL: baseApiUrl.replace(/\/$/, ''),
-      // temperature,
-      // topP,
-    });
+    if (this.checkIfAzure(baseApiUrl)) {
+      this.updateAzureConfig({
+        apiKey,
+      }, baseApiUrl);
+    } else {
+      this.updateConfig({
+        apiKey,
+        organization,
+        baseURL: baseApiUrl.replace(/\/$/, ''),
+      } as OpenAIProviderSettings);
+    }
 
     // this.providerRegistry = createProviderRegistry({});
-
-    this.rebuildOpenAIProvider();
   }
 
   // setModel(modelId: string) {
 
   getRemainingTokens(model: Model | undefined, promptTokensUsed: number) {
-    // const modelContext = MODEL_TOKEN_LIMITS.get(modelId)?.context ?? 128000;
-    // const modelMax = MODEL_TOKEN_LIMITS.get(modelId)?.max ?? 4096;
     const modelContext = getModelContextLimit(model);
     const modelMax = getModelCompletionLimit(model);
 
@@ -107,31 +128,18 @@ export class ApiProvider {
       return;
     }
 
-    // Only stream if not using a proxy
-    /*
-    const useStream = true;
-    const response = await this._openai.chat.completions.create(
-      {
-        model: conversation.model?.id ?? FALLBACK_MODEL_ID,
-        messages: conversation.messages.map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
-        max_tokens: completeTokensLeft,
-        temperature,
-        top_p: topP,
-        stream: useStream,
-      }, {
-    });
-    */
+    let model = conversation.model?.id ?? FALLBACK_MODEL_ID;
+
+    if (this.isAzure) {
+      // sample api url: https://reborn-testing.openai.azure.com/openai/deployments/gpt-4o
+      // if the "model" contains /deployments/, then extract the deployment name
+      model = model.split('/deployments/').pop() ?? model;
+    }
 
     const { textStream } = await
-      // this._openai.chat(
-      // conversation.model?.id ?? FALLBACK_MODEL_ID,
-      // {
       streamText({
         // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
-        model: this._openai.languageModel(conversation.model?.id ?? FALLBACK_MODEL_ID),
+        model: this._openai.languageModel(model),
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -149,25 +157,6 @@ export class ApiProvider {
 
       yield textPart;
     }
-
-
-    // for await (const chunk of response) {
-    //   if (abortSignal.aborted) {
-    //     return;
-    //   }
-
-    //   try {
-    //     if (chunk.choices.length > 0) {
-    //       const token = chunk.choices[0].delta.content;
-
-    //       if (token) {
-    //         yield token;
-    //       }
-    //     }
-    //   } catch (e: any) {
-    //     console.error('[Reborn AI] api JSON parse error. Message:', e?.message, 'Error:', e);
-    //   }
-    // }
   }
 
   async getChatCompletion(conversation: Conversation, {
@@ -185,29 +174,17 @@ export class ApiProvider {
       return;
     }
 
-    // const response = await this._openai.chat.completions.create(
-    //   {
-    //     model: conversation.model?.id ?? FALLBACK_MODEL_ID,
-    //     messages: conversation.messages.map((message) => ({
-    //       role: message.role,
-    //       content: message.content,
-    //     })),
-    //     stream: false,
-    //     max_tokens: completeTokensLeft,
-    //     temperature,
-    //     top_p: topP
-    //   }, {
-    //   headers: {
-    //     "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
-    //     "X-Title": "VSCode Reborn AI",
-    //   }
-    // });
+    let model = conversation.model?.id ?? FALLBACK_MODEL_ID;
 
-    // return response.choices[0].message;
+    if (this.isAzure) {
+      // sample api url: https://reborn-testing.openai.azure.com/openai/deployments/gpt-4o
+      // if the "model" contains /deployments/, then extract the deployment name
+      model = model.split('/deployments/').pop() ?? model;
+    }
 
     const { text } = await generateText({
       // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
-      model: this._openai.languageModel(conversation.model?.id ?? FALLBACK_MODEL_ID),
+      model: this._openai.languageModel(model),
       messages: conversation.messages.map((message) => ({
         role: message.role,
         content: message.content,
@@ -219,45 +196,6 @@ export class ApiProvider {
 
     return text;
   }
-
-  // Note: PromptCompletion is LEGACY
-  // Using prompt as a param instead of the last message in the conversation to
-  // allow for special formatting of the prompt before sending it to OpenAI
-  /*
-  async getPromptCompletion(prompt: string, conversation: Conversation, {
-    temperature = this._temperature,
-    topP = this._topP,
-  }: {
-    temperature?: number;
-    topP?: number;
-  } = {}): Promise<ChatMessage | undefined> {
-    const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
-
-    const response = await this._openai.chat.completions.create(
-      {
-        model: conversation.model?.id ?? FALLBACK_MODEL_ID,
-        messages: [{ "role": "user", "content": prompt }],
-        max_tokens: completeTokensLeft,
-        temperature,
-        top_p: topP,
-        stream: false,
-      }, {
-      headers: {
-        "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
-        "X-Title": "VSCode Reborn AI",
-      }
-    });
-
-    return {
-      id: uuidv4(),
-      content: response.choices[0].message.content ?? '',
-      rawContent: response.choices[0].message.content ?? '',
-      role: Role.assistant,
-      createdAt: Date.now(),
-    };
-  }
-  */
 
   // Utility token counting methods
   public static getEncodingForModel(modelId: string): Tiktoken {
@@ -326,148 +264,166 @@ export class ApiProvider {
     this._topP = value;
   }
 
-  private updateConfig(config: Partial<OpenAIProviderSettings & AzureOpenAIProviderSettings>) {
-    const baseURL = config.baseURL ?? this.config.baseURL ?? '';
+  private updateConfig(config: OpenAIProviderSettings) {
+    const validGlobalConfig = openaiSettingsSchema.parse(this.config);
+    const validConfig = openaiSettingsSchema.parse(config);
 
     this.config = {
-      ...this.config,
-      ...config,
-      baseURL,
-      // Use 'compatible' for non-OpenAI tools that mimic the OpenAI API.
-      compatibility: config.compatibility ?? (baseURL.includes('openai.com') || baseURL.includes('azure.com') ? 'strict' : 'compatible'),
+      // Default values
+
+      ...validGlobalConfig,
+      ...validConfig,
       // The way 'ai' uses fetch may be okay.
       // But, going to give the cross-platform library, ky, a try
       // Where 'got' is only for node.js, 'ky' is for the browser (and node.js).
       // fetch: ky,
       // On OpenRouter, this allows the Reborn AI to show on the app leaderboard.
       headers: {
-        ...this.config.headers,
+        ...(this.config as OpenAIProviderSettings).headers,
         ...config.headers,
         "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
         "X-Title": "VSCode Reborn AI",
       }
-    };
+    } as OpenAIProviderSettings;
 
-    return this.config;
+    // Use 'compatible' for non-OpenAI tools that mimic the OpenAI API.
+    (this.config as OpenAIProviderSettings).compatibility = ((this.config as OpenAIProviderSettings).baseURL ?? '').includes('openai.com') ? 'strict' : 'compatible';
+
+    this.rebuildOpenAIProvider();
   }
 
-  private async rebuildOpenAIProvider() {
-    if ((this.config?.baseURL ?? '').includes('.azure.com')) {
-      // Azure OpenAI API
-      // Azure docs: https://learn.microsoft.com/en-us/javascript/api/@azure/openai/
-      this.isAzure = true;
+  private updateAzureConfig(config: AzureOpenAIProviderSettings, baseURL?: string) {
+    this.isAzure = true;
 
-      /*
-        Azure's AI dashboard calls it "endpoint".
-        Vercel's AI package calls is "resource name".
-        Same thing.
-      */
+    this.config = {
+      resourceName: config?.resourceName ?? (this.config as AzureOpenAIProviderSettings).resourceName ?? '',
+      apiKey: config?.apiKey ?? (this.config as AzureOpenAIProviderSettings).apiKey ?? '',
+      // The way 'ai' uses fetch may be okay.
+      // But, going to give the cross-platform library, ky, a try
+      // Where 'got' is only for node.js, 'ky' is for the browser (and node.js).
+      // fetch: ky,
+    } as AzureOpenAIProviderSettings;
 
-      // this.config.deployment = this.config.deployment ?? '';
+    this.rebuildAzureOpenAIProvider(baseURL);
+  }
 
-      // If baseURL contains "/deployments/{deployment}", remove it, and assign the deployment as the modelId
-      let deployment: string | undefined = undefined;
+  private rebuildAzureOpenAIProvider(baseURL?: string) {
+    // Azure OpenAI API
+    // Azure docs: https://learn.microsoft.com/en-us/javascript/api/@azure/openai/
+    this.isAzure = true;
 
-      if (this.config.baseURL && this.config.baseURL.includes('/deployments/')) {
-        const urlParts = this.config.baseURL.split('/');
-        deployment = urlParts[urlParts.length - 1];
-      }
+    /*
+      From the user, we get a URL like: https://reborn-testing.openai.azure.com/deployments/gpt-4o
 
-      const endpoint = (this.config.baseURL ?? '').replace(`/deployments/${deployment}`, '');
+      Azure's AI dashboard mentions "endpoint".     ie, https://reborn-testing.openai.azure.com/
+      Azure's AI also mentions "deployment".        ie, gpt-4o
+      Vercel's AI package mentions "resource name". ie, reborn-testing
+    */
 
-      // `endpoint` and `baseURL` are mutually exclusive.
-      // TODO: not sure if this is needed with the 'ai' package
-      this.config.baseURL = undefined;
-
-      // TODO: Vercel's 'ai' package doesn't take an API version?
-      // this.config.apiVersion = await vscode.workspace.getConfiguration("chatgpt").get("apiVersion") as string ?? process.env.OPENAI_API_VERSION ?? '2024-02-01';
-
-      if (!deployment) {
-        console.warn('[Reborn AI] Attempting to set up Azure OpenAI API without a deployment ID. This will likely fail.');
-      }
-
-      this.updateConfig({
-        resourceName: endpoint,
-      });
-
-      this._openai = createAzure(this.config);
-      // this.providerRegistry = createProviderRegistry({
-      //   azure: this._openai,
-      // });
+    if (baseURL && baseURL.includes('/deployments/')) {
+      const urlParts = baseURL.split('/');
+      this.deploymentName = urlParts[urlParts.length - 1];
     } else {
-      // All non-Azure APIs
-      this.isAzure = false;
-
-      this._openai = createOpenAI(this.config);
-      // this.providerRegistry = createProviderRegistry({
-      //   openai: this._openai,
-      // });
+      console.warn('[Reborn AI] Azure OpenAI API deployment ID not found in URL:', baseURL);
     }
+
+    const endpoint = (baseURL ?? '').replace(`/deployments/${this.deploymentName}`, '');
+    const resourceName = (endpoint.split('.').shift() ?? endpoint).replace('https://', '');
+
+    // TODO: Vercel's 'ai' package doesn't take an API version?
+    // this.config.apiVersion = await vscode.workspace.getConfiguration("chatgpt").get("apiVersion") as string ?? process.env.OPENAI_API_VERSION ?? '2024-02-01';
+    // const apiVersion = await vscode.workspace.getConfiguration("chatgpt").get("apiVersion") as string ?? process.env.OPENAI_API_VERSION ?? '2024-02-01';
+
+    if (!this.deploymentName) {
+      console.warn('[Reborn AI] Attempting to set up Azure OpenAI API without a deployment ID. This will likely fail.');
+    }
+
+    (this.config as AzureOpenAIProviderSettings).resourceName = resourceName;
+
+    this._openai = createAzure(this.config);
+    // this.providerRegistry = createProviderRegistry({
+    //   azure: this._openai,
+    // });
+  }
+
+  private rebuildOpenAIProvider() {
+    // All non-Azure APIs
+    this.isAzure = false;
+
+    this._openai = createOpenAI(this.config);
+    // this.providerRegistry = createProviderRegistry({
+    //   openai: this._openai,
+    // });
   }
 
   async updateApiKey(apiKey: string) {
-    this.updateConfig({
-      apiKey,
-    });
+    if (this.isAzure) {
+      this.updateAzureConfig({
+        apiKey,
+      });
+    } else {
+      this.updateConfig({
+        apiKey,
+      });
+    }
 
-    await this.rebuildOpenAIProvider();
     await this.repullModelListOnce();
   }
 
   async updateOrganizationId(organization: string) {
-    this.updateConfig({
-      organization
-    });
+    if (this.isAzure) {
+      console.info('[Reborn AI] organization updated, ignored. Azure API does not use an organization ID');
+    } else {
+      this.updateConfig({
+        organization,
+      });
+    }
 
-    await this.rebuildOpenAIProvider();
     await this.repullModelListOnce();
   }
 
   async updateApiBaseUrl(apiBaseUrl: string) {
-    // Only update if the base URL has changed
-    // This can trigger twice when propagating changes to the extension settings.
-    if (apiBaseUrl === this.config.baseURL) {
-      return;
-    }
-
     // If apiBaseUrl ends with slash, remove it
     apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
 
-    this.updateConfig({
-      baseURL: apiBaseUrl
-    });
-    console.log('[Reborn AI] Updated API base URL:', apiBaseUrl, 'config:', this.config);
+    this.isAzure = this.checkIfAzure(apiBaseUrl);
 
-    await this.rebuildOpenAIProvider();
+    // Only update if the base URL has changed
+    // This can trigger twice when propagating changes to the extension settings.
+    if (!this.isAzure && apiBaseUrl === (this.config as OpenAIProviderSettings).baseURL) {
+      return;
+    }
+
+    if (this.isAzure) {
+      this.updateAzureConfig({}, apiBaseUrl);
+    } else {
+      this.updateConfig({
+        baseURL: apiBaseUrl
+      });
+    }
+
     await this.repullModelListOnce();
-
-    console.log('[Reborn AI] Rebuilt api provider with new base URL:', this.config);
-    console.log('[Reborn AI] repulled model list', this._modelList);
   }
 
-  // Vercel's ai package doesn't yet have a way to fetch the model list
-  // Issue: https://github.com/vercel/ai/issues/1896
-  // private async fetchModelList(): Promise<Model[]> {
-  //   if (!this.config.baseURL) {
-  //     console.error('[Reborn AI] API base URL not set');
-  //     return [];
-  //   }
+  async updateApiKeyAndBaseUrl(apiKey: string, apiBaseUrl: string) {
+    // If apiBaseUrl ends with slash, remove it
+    apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
 
-  //   try {
-  //     const data = await ky.get(`${this.config.baseURL}/models`, {
-  //       headers: {
-  //         "Authorization": `Bearer ${this.config.apiKey}`,
-  //       },
-  //     }).json() as { data: Model[]; };
+    this.isAzure = this.checkIfAzure(apiBaseUrl);
 
-  //     console.log('[Reborn AI] model list', data.data);
+    if (this.isAzure) {
+      this.updateAzureConfig({
+        apiKey,
+      }, apiBaseUrl);
+    } else {
+      this.updateConfig({
+        apiKey,
+        baseURL: apiBaseUrl,
+      });
+    }
 
-  //     return data.data;
-  //   } catch (e) {
-  //     console.error('[Reborn AI] Failed to fetch model list', e);
-  //     return [];
-  //   }
-  // }
+    await this.repullModelListOnce();
+  }
 
   // Ensures that only a single model list fetch is in progress at a time
   private async repullModelListOnce(): Promise<void> {
@@ -481,7 +437,7 @@ export class ApiProvider {
   private async repullModelList(): Promise<void> {
     if (this.isAzure) {
       this._modelList = [{
-        id: (this.config as AzureOpenAIProviderSettings).resourceName ?? '',
+        id: this.deploymentName ?? FALLBACK_MODEL_ID,
         name: 'Default Azure Model',
         created: Date.now(),
         object: "model",
@@ -499,10 +455,22 @@ export class ApiProvider {
     const modelEndpointNotFound = new Error('Model endpoint not found.');
     const missingApiKey = new Error('Missing API key.');
 
+    // Vercel's ai package doesn't yet have a way to fetch the model list
+    // Issue: https://github.com/vercel/ai/issues/1896
     try {
       // if we call openai's function and it 404s, it breaks out of this try block
       // so we're gonna first poke the endpoint to see if it's there first
-      const data = await ky.get(`${this.config.baseURL}/models`, {
+      let url = '';
+
+      if (this.isAzure) {
+        const config = this.config as AzureOpenAIProviderSettings;
+        url = `https://${config.resourceName}.openai.azure.com/openai/deployments/${this.deploymentName}/models`;
+      } else {
+        const config = this.config as OpenAIProviderSettings;
+        url = `${config.baseURL}/models`;
+      }
+
+      const data = await ky.get(url, {
         headers: {
           "Authorization": `Bearer ${this.config.apiKey}`,
         },
@@ -533,7 +501,7 @@ export class ApiProvider {
         // Attempt to fetch models from the ollama API
         try {
           // const response = await ky.get('http://localhost:11434/api/tags');
-          const data = await ky.get(`${(this.config.baseURL ?? '').replace('/v1', '')}/api/tags`).json() as {
+          const data = await ky.get(`${((this.config as OpenAIProviderSettings).baseURL ?? '').replace('/v1', '')}/api/tags`).json() as {
             // ollama /models endpoint response
             models: {
               name: string;
@@ -563,7 +531,7 @@ export class ApiProvider {
       } else if (error === missingApiKey) {
         // print out the request URL, body, and headers
         console.error('[Reborn AI] Missing API key', error, {
-          url: `${this.config.baseURL}/models`,
+          url: `${(this.config as OpenAIProviderSettings).baseURL}/models`,
           headers: {
             "Authorization": `Bearer ${this.config.apiKey}`,
           },
@@ -589,13 +557,22 @@ export class ApiProvider {
     return this._modelList ?? [];
   }
 
-  // Utilities
-  // Is the API an Azure API?
-  isApiAzure(apiUrl?: string): boolean {
-    if (apiUrl) {
-      return apiUrl.includes('cognitiveservices.azure.com');
+  getApiUrl(): string {
+    if (this.isAzure) {
+      return this.buildAzureApiUrl((this.config as AzureOpenAIProviderSettings).resourceName ?? '', this.deploymentName ?? '');
     } else {
-      return (this.config.baseURL ?? '').includes('cognitiveservices.azure.com');
+      return (this.config as OpenAIProviderSettings).baseURL ?? '';
     }
   }
+
+  // Utilities
+  // Is the API an Azure API?
+  checkIfAzure(apiUrl: string): boolean {
+    return apiUrl.includes('azure.com');
+  }
+
+  buildAzureApiUrl(resourceName: string, deploymentName: string): string {
+    return `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentName}`;
+  }
+
 }

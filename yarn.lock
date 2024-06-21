@@ -36,10 +36,10 @@
   dependencies:
     json-schema "0.4.0"
 
-"@ai-sdk/react@0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@ai-sdk/react/-/react-0.0.5.tgz#13846603499c3d2c7462bf5bbdc1eb42531da2c0"
-  integrity sha512-ifDnEzr2togqgobq3LARdH9Qp/lZ/bYuIfxO2/WXo0dOS1WeWi60vmtD16H8lj0xUFEToBNzzwUi95oDbyBXrw==
+"@ai-sdk/react@0.0.6":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@ai-sdk/react/-/react-0.0.6.tgz#5c8516b66e92a89997e326c84e159dc02d485489"
+  integrity sha512-k0gpsiUxDTkDMYsdWl0WhujXVPMZvfPMCSbxZtzGvEao0YZNFQ/9ct+SZJvb5t9126oiNG0a344COO9CZ1OdLg==
   dependencies:
     "@ai-sdk/provider-utils" "0.0.16"
     "@ai-sdk/ui-utils" "0.0.5"
@@ -905,14 +905,14 @@ agent-base@6:
   dependencies:
     debug "4"
 
-ai@^3.2.3:
-  version "3.2.3"
-  resolved "https://registry.yarnpkg.com/ai/-/ai-3.2.3.tgz#69f897d87cbcd89c7205ac0b595ca7fe9e813e0a"
-  integrity sha512-8mihlzCxM7H92GG6Ht2Z8CKdCa6YI7ECUpO4g7nux58VTiyvamLJQjpRgwJU2c0/f/0isOnbUrmOL8uhzizu4Q==
+ai@^3.2.5:
+  version "3.2.5"
+  resolved "https://registry.yarnpkg.com/ai/-/ai-3.2.5.tgz#d508bac3cf904018514544a35ff6ff0011fea00b"
+  integrity sha512-Af4prTiDL+PKGLuAkNmaCSc3JJWTefjYTuzoLqghj/jsHz61ldyV91JT0Lra3wa9Yt/uDBc8wf4wHd7vCOXbfg==
   dependencies:
     "@ai-sdk/provider" "0.0.10"
     "@ai-sdk/provider-utils" "0.0.16"
-    "@ai-sdk/react" "0.0.5"
+    "@ai-sdk/react" "0.0.6"
     "@ai-sdk/solid" "0.0.5"
     "@ai-sdk/svelte" "0.0.5"
     "@ai-sdk/ui-utils" "0.0.5"
