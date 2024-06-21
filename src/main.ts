@@ -86,7 +86,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			// dummy values
 			object: "model",
 			created: 0,
-			owned_by: 'system'
+			owned_by: Role.system
 		};
 		this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
 		this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
@@ -109,7 +109,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		this.authStore = Auth.instance;
 		vscode.commands.registerCommand("chatgptReborn.setOpenAIApiKey", async (apiKey: string) => {
 			if (this.authStore) {
-				const apiBaseUrl = this.api?.apiConfig.baseURL ?? baseUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+				const apiBaseUrl = this.api?.config.baseURL ?? baseUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 				await this.authStore.storeApiKey(apiKey, apiBaseUrl);
 			} else {
 				console.error("[Reborn AI] Auth store not initialized");
@@ -117,7 +117,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		});
 		vscode.commands.registerCommand("chatgptReborn.getOpenAIApiKey", async () => {
 			if (this.authStore) {
-				const apiBaseUrl = this.api?.apiConfig.baseURL ?? baseUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+				const apiBaseUrl = this.api?.config.baseURL ?? baseUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 				const tokenOutput = await this.authStore.getApiKey(apiBaseUrl);
 				return tokenOutput;
 			} else {
@@ -129,7 +129,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		// Check config settings for "chatgpt.gpt3.apiKey", if it exists, move it to the secret storage and remove it from the config
 		const apiKey = vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiKey") as string;
 		if (apiKey) {
-			const apiBaseUrl = this.api?.apiConfig.baseURL ?? baseUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+			const apiBaseUrl = this.api?.config.baseURL ?? baseUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 			this.authStore.storeApiKey(apiKey, apiBaseUrl);
 			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiKey", undefined, true);
 		}
@@ -148,7 +148,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			this.api = new ApiProvider(
 				apiKey ?? "",
 				{
-					organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string,
+					organization: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string ?? undefined,
 					apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
 					temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
 					topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
@@ -180,7 +180,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 							// dummy values
 							object: "model",
 							created: 0,
-							owned_by: 'system'
+							owned_by: Role.system
 						};
 					}
 				}
@@ -221,7 +221,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			}
 
 			if (rebuildApiProvider) {
-				this.rebuildApiProvider();
+				await this.rebuildApiProvider();
 			}
 		});
 
@@ -253,7 +253,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		this.api = new ApiProvider(
 			finalApiKey,
 			{
-				organizationId: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string,
+				organization: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string ?? undefined,
 				apiBaseUrl: finalApiUrl,
 				temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
 				topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
@@ -268,7 +268,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	public async clearApiKey() {
 		// Remake the API provider with a blank API key
-		this.rebuildApiProvider('');
+		this.api.config.apiKey = '';
 	}
 
 	public async setApiUrl(apiUrl: string) {
@@ -294,7 +294,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		const apiKey = await this.authStore?.getApiKey(apiUrl) ?? '';
 
 		// Update the API provider
-		this.rebuildApiProvider(apiKey, apiUrl);
+		await this.rebuildApiProvider(apiKey, apiUrl);
 
 		// Update config
 		await vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", apiUrl, true);
@@ -315,7 +315,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	public async setApiKey(apiKey: string) {
 		// Update the secret storage
-		const apiUrl = this.api.apiConfig?.baseURL ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+		const apiUrl = this.api.config?.baseURL ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
 		await this.authStore?.storeApiKey(apiKey, apiUrl);
 
 		// Update the API provider
@@ -331,7 +331,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			apiProvider = this.api ?? new ApiProvider('');
 		}
 
-		const apiKey = apiProvider.apiConfig.apiKey ?? '';
+		const apiKey = apiProvider.config.apiKey ?? '';
 
 		try {
 			const models = await apiProvider?.getModelList();
@@ -407,7 +407,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					const setModelData = data as SetModelMessage;
 					// Note that due to some models being deprecated, this function may change the model
 					this.model = await this.setModel(setModelData.model);
-					this.logEvent("model-changed to ", setModelData.model);
 					break;
 				case BackendMessageType.openNew:
 					const openNewData = data as OpenNewMessage;
@@ -466,7 +465,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					break;
 				case BackendMessageType.setApiVersion:
 					const setApiVersionData = data as SetApiVersionMessage;
-					this.api.apiConfig.apiVersion = setApiVersionData.apiVersion;
+					// this.api.config.apiVersion = setApiVersionData.apiVersion;
+					console.log('Not implemented: setApiVersion');
 					vscode.workspace.getConfiguration("chatgpt").update("apiVersion", setApiVersionData.apiVersion, vscode.ConfigurationTarget.Global);
 					break;
 				case BackendMessageType.getApiKeyStatus:
@@ -626,31 +626,36 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		return !!this.model?.id.startsWith("code-");
 	}
 
-	private async getApiKey(): Promise<string> {
-		return await vscode.commands.executeCommand('chatgptReborn.getOpenAIApiKey') ?? '';
-	}
-
 	async setModel(newModel: Model): Promise<Model> {
-		// Check and update the model if it's deprecated
-		const updatedModelId = getUpdatedModel(newModel.id);
+		// Associate the model with the current API
+		const apiBaseURL = this.api?.config.baseURL ?? await vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
+		let updatedModelId = newModel.id;
 
+		// If using the official OpenAI API, swap out deprecated models.
+		// To avoid breaking anything unintentionally, all other APIs are left alone.
+		if (apiBaseURL.includes("openai.com")) {
+			// Check and update the model if it's deprecated
+			updatedModelId = getUpdatedModel(newModel.id);
+
+			// If the model was swapped, quitely let the user know.
+			if (newModel.id !== updatedModelId) {
+				console.info(`[Reborn AI] Updated deprecated model "${newModel.id}" to "${updatedModelId}".`);
+				return {
+					...newModel,
+					id: updatedModelId,
+				};
+			}
+		}
+
+		// Update the extension's model setting
 		await vscode.workspace.getConfiguration("chatgpt").update("gpt3.model", updatedModelId, vscode.ConfigurationTarget.Global);
 
-		// Associate the model with the current API
-		const apiBaseUrl = vscode.workspace.getConfiguration("chatgpt").get("apiBaseUrl") as string;
-
-		if (apiBaseUrl && this.authStore) {
-			this.authStore.storeModelByApi(apiBaseUrl, newModel);
+		// Associate the model with the API
+		if (apiBaseURL && this.authStore) {
+			this.authStore.storeModelByApi(apiBaseURL, newModel);
 		}
 
-		if (newModel.id !== updatedModelId) {
-			console.debug(`[Reborn AI] Updated deprecated model "${newModel.id}" to "${updatedModelId}".`);
-			return {
-				...newModel,
-				id: updatedModelId,
-			};
-		}
-
+		// Return the model (in case it was updated)
 		return newModel;
 	}
 
@@ -835,13 +840,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 				this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
 			} else if (isInstructModel(this.model)) {
 				// Instruct models are not streamed, they are completed in one go
-				const response = await this.api.getChatCompletion(options.conversation, {
-					temperature: options.temperature ?? this._temperature,
-					topP: options.topP ?? this._topP,
-				});
+				const content = await this.api.getChatCompletion(options.conversation);
 
-				if (response?.content) {
-					message.rawContent = response.content;
+				if (content) {
+					message.rawContent = content;
 					message.content = this.formatMessageContent(message.rawContent, responseInMarkdown);
 
 					this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
@@ -899,7 +901,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					message = `404 Not Found\n\n`;
 
 					// For certain certain proxy paths, recommand a fix
-					if (this.api.apiConfig.baseURL?.includes("openai.1rmb.tk") && this.api.apiConfig.baseURL !== "https://openai.1rmb.tk/v1") {
+					if (this.api.config.baseURL?.includes("openai.1rmb.tk") && this.api.config.baseURL !== "https://openai.1rmb.tk/v1") {
 						message += "It looks like you are using the openai.1rmb.tk proxy server, but the path might be wrong.\nThe recommended path is https://openai.1rmb.tk/v1";
 					} else {
 						message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model?.id}' may be incompatible or you may have exhausted your ChatGPT subscription allowance. \n\nServer message: ${apiMessage}`;
@@ -1023,7 +1025,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 							// code_verifier: encodeURIComponent(code_verifier), not working
 						});
 
-						const response = await fetch(`${this.api.apiConfig.baseURL}/auth/keys`, {
+						const response = await fetch(`${this.api.config.baseURL}/auth/keys`, {
 							method: 'POST',
 							body,
 							headers: {
@@ -1092,7 +1094,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 		const uri = await vscode.env.asExternalUri(vscode.Uri.parse('http://localhost:7878'));
 		// Can't get the challenge working with openrouter
-		const openRouterAuthUrl = `${(new URL(this.api.apiConfig.baseURL ?? '')).origin}/auth?callback_url=${uri.toString()}`; // &code_challenge=${encodeURIComponent(code_challenge)}`; not working
+		const openRouterAuthUrl = `${(new URL(this.api.config.baseURL ?? '')).origin}/auth?callback_url=${uri.toString()}`; // &code_challenge=${encodeURIComponent(code_challenge)}`; not working
 
 		vscode.env.openExternal(vscode.Uri.parse(openRouterAuthUrl));
 

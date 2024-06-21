@@ -42,16 +42,17 @@ export default class Messenger {
 
   async sendModels(models: Model[] = []) {
     if (!this.api) {
+      console.error("[Reborn AI] Unable to send models, API provider is not set.");
       return;
     }
 
-    if (models.length === 0) {
-      models = await this.api.getModelList();
+    if (!models.length) {
+      models = await this.api.getModelList() ?? [];
     }
 
     this.sendMessage({
       type: FrontendMessageType.modelsUpdate,
-      models
+      models,
     } as ModelsUpdateMessage);
   }
 

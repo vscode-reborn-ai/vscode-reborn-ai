@@ -47,7 +47,7 @@ export const appSlice = createSlice({
     setModels: (state, action: PayloadAction<{
       models: Model[];
     }>) => {
-      state.models = action.payload.models;
+      state.models = action.payload.models ?? [];
     },
     setApiKeyStatus: (state, action: PayloadAction<ApiKeyStatus>) => {
       state.apiKeyStatus = action.payload;

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useRenameTabTitleWithAI } from "./helpers";
 import { useAppDispatch, useAppSelector } from "./hooks";
@@ -27,6 +28,27 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
   );
   const vscode = useAppSelector((state: RootState) => state.app.vscode);
   const renameTabTitleWithAI = useRenameTabTitleWithAI(backendMessenger, settings);
+
+  // Update the model for each conversation when the models list is updated
+  useEffect(() => {
+    // For each conversation, if the model id is found in the new models list, update the model
+    conversationList.forEach((conversation) => {
+      if (models.some((model) => model.id === conversation.model?.id)) {
+        const updatedModel = models.find(
+          (model) => model.id === conversation.model?.id
+        );
+
+        if (updatedModel) {
+          dispatch(
+            setModel({
+              conversationId: conversation.id,
+              model: updatedModel,
+            })
+          );
+        }
+      }
+    });
+  }, [models]);
 
   return (event: any) => {
     if (debug) {
@@ -184,7 +206,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
                   // dummy values
                   created: 0,
                   object: "model",
-                  owned_by: "system",
+                  owned_by: Role.system,
                 }
               })
             );
@@ -203,27 +225,10 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
 
         dispatch(
           setModels({
-            models: modelsUpdateData.models,
+            models: modelsUpdateData.models ?? [],
           })
         );
 
-        // For each conversation, if the model id is found in the new models list, update the model
-        conversationList.forEach((conversation) => {
-          if (modelsUpdateData.models.some((model) => model.id === conversation.model?.id)) {
-            const updatedModel = modelsUpdateData.models.find(
-              (model) => model.id === conversation.model?.id
-            );
-
-            if (updatedModel) {
-              dispatch(
-                setModel({
-                  conversationId: conversation.id,
-                  model: updatedModel,
-                })
-              );
-            }
-          }
-        });
         break;
       case FrontendMessageType.updateApiKeyStatus:
         const apiKeyStatusData = message as UpdateApiKeyStatusMessage;
@@ -290,6 +295,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           conversationId: setConversationModelData.conversationId,
           model: setConversationModelData.model
         }));
+        break;
       default:
         console.error('[Reborn AI] Renderer - Uncaught message type: ', (message as BaseFrontendMessage)?.type);
     }

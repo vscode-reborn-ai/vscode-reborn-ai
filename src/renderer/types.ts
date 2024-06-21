@@ -1,7 +1,6 @@
 // * Interfaces for OpenAI's API
 // For network requests - based on OpenAI API docs - https://platform.openai.com/docs/api-reference/
 
-import OpenAI from "openai";
 
 // TODO: just import directly from openai types
 interface OpenAIPromptRequest {
@@ -28,7 +27,13 @@ export enum Role {
   system = 'system'
 }
 
-export interface Model extends OpenAI.Model {
+export interface Model {
+  // OpenAI model properties
+  id: string;
+  owned_by: Role;
+  created: number;
+  object: 'model';
+
   // * OpenRouter will send back additional fields on models:
   name?: string; // friendly name
   description?: string;
