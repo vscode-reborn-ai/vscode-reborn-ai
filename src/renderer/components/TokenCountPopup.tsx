@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import classNames from "classnames";
 import React, { useEffect, useState } from "react";
 import {
   getModelCompletionLimit,
@@ -78,7 +78,7 @@ export default function TokenCountPopup({
 
   return (
     <div
-      className={clsx(
+      className={classNames(
         "TokenCountPopup",
         "mb-4 absolute w-[calc(100% - 3em) max-w-[25em] items-center border text-menu bg-menu border-menu shadow-xl text-xs rounded z-10 right-4",
         className,
