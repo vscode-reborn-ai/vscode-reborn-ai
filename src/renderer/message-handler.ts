@@ -1,12 +1,11 @@
 import { useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { useRenameTabTitleWithAI } from "./helpers";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { RootState } from "./store";
 import { ActionRunState, setActionError, setActionState } from "./store/action";
 import { setApiKeyStatus, setExtensionSettings, setModels, setTranslations } from "./store/app";
 import { addMessage, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
-import { ActionNames, ChatMessage, Conversation, Role } from "./types";
+import { ActionNames, ChatMessage, Conversation, Model, Role } from "./types";
 import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage } from "./types-messages";
 
 export const useBackendMessageHandler = (backendMessenger: any) => {
@@ -72,7 +71,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         const addMessageData = message as AddMessageMessage;
 
         const question: ChatMessage = {
-          id: addMessageData.chatMessage?.id ?? uuidv4(),
+          id: addMessageData.chatMessage?.id ?? `${Date.now()}`,
           role: addMessageData.chatMessage?.role ?? Role.user,
           content: addMessageData.chatMessage?.content ?? "",
           rawContent: addMessageData.chatMessage?.rawContent ?? "",
@@ -193,7 +192,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             dispatch(
               setModel({
                 conversationId: currentConversationId,
-                model: models.find((model) => model.id === (settingsUpdateData.config.gpt3?.model ?? settings?.gpt3?.model)
+                model: models.find((model: Model) => model.id === (settingsUpdateData.config.gpt3?.model ?? settings?.gpt3?.model)
                 ) ?? models[0],
               })
             );

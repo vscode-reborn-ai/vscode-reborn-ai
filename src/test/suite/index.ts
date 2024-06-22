@@ -1,6 +1,6 @@
 import glob from 'glob';
 import Mocha from 'mocha';
-import * as path from 'path';
+import * as path from 'path-browserify';
 
 export function run(): Promise<void> {
 	// Create the mocha test

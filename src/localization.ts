@@ -1,11 +1,12 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import path from 'path-browserify';
 import * as vscode from 'vscode';
+import { readFileIfExists } from "./helpers";
+const fs = vscode.workspace.fs;
 
 export async function loadTranslations(extensionPath: string): Promise<Record<string, string>> {
   // Load default package.nls.json file
   const defaultTranslationsPath = path.join(extensionPath, 'package.nls.json');
-  const defaultTranslations = JSON.parse(await fs.promises.readFile(defaultTranslationsPath, 'utf8'));
+  const defaultTranslations = JSON.parse(await readFileIfExists(defaultTranslationsPath) ?? '');
 
   // Detect the current locale
   const locale = vscode.env.language;
@@ -15,8 +16,7 @@ export async function loadTranslations(extensionPath: string): Promise<Record<st
   let localeTranslations = {};
 
   try {
-    await fs.promises.access(localeTranslationsPath, fs.constants.F_OK);
-    localeTranslations = JSON.parse(await fs.promises.readFile(localeTranslationsPath, 'utf8'));
+    localeTranslations = JSON.parse(await readFileIfExists(localeTranslationsPath) ?? '');
   } catch (err: any) {
     console.error(`[Reborn AI] Locale translations not found: ${err.message}`);
   }

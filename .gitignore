@@ -6,3 +6,5 @@ node_modules
 *.vsix
 !node_modules/chatgpt/build/index.js
 yarn-error.log
+.vscode-test-web/
+out

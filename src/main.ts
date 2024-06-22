@@ -1,9 +1,8 @@
 import hljs from 'highlight.js';
-import { createServer } from 'http';
+import ky from "ky";
 import { marked } from "marked";
-import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
-import { getSelectedModelId, getUpdatedModel } from "./helpers";
+import { getSelectedModelId, getUpdatedModel, uuidv4 } from "./helpers";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
@@ -730,7 +729,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		// 1. First check if the conversation has any messages, if not add the system message
 		if (options.conversation?.messages.length === 0) {
 			options.conversation?.messages.push({
-				id: uuidv4(),
+				id: await uuidv4(),
 				content: this.systemContext,
 				rawContent: this.systemContext,
 				role: Role.system,
@@ -754,7 +753,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			}
 		} else {
 			options.conversation?.messages.push({
-				id: uuidv4(),
+				id: await uuidv4(),
 				content: formattedPrompt,
 				rawContent: prompt,
 				questionCode: options?.code
@@ -783,7 +782,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		try {
 			const message: ChatMessage = {
 				// Normally random ID is generated, but when editing a question, the response update the same message
-				id: options?.messageId ?? uuidv4(),
+				id: options?.messageId ?? await uuidv4(),
 				content: '',
 				rawContent: '',
 				role: Role.assistant,
@@ -913,7 +912,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					}
 			}
 
-			this.frontendMessenger.sendAddError(uuidv4(), options.conversation?.id ?? '', message);
+			this.frontendMessenger.sendAddError(await uuidv4(), options.conversation?.id ?? '', message);
 
 			return;
 		} finally {
@@ -986,8 +985,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 	}
 
 	// * For OpenRouter API key exchange
+	// TODO: None of this is needed if vscode is running in the browser
 	// Listen for the OAuth callback from the OpenRouter
-	listenForOpenRouterCallback(code_verifier: string /* , correctState: string */) {
+	async listenForOpenRouterCallback(code_verifier: string /* , correctState: string */) {
+		const { createServer } = await import('http');
+
 		// Set up a really simple server to listen for the callback on localhost:7878
 		const server = createServer(async (req, res) => {
 			const url = new URL(req.url ?? '', `http://${req.headers.host}`);
@@ -1017,8 +1019,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 							// code_verifier: encodeURIComponent(code_verifier), not working
 						});
 
-						const response = await fetch(`${this.api.getApiUrl()}/auth/keys`, {
-							method: 'POST',
+						const response = await ky.post(`${this.api.getApiUrl()}/auth/keys`, {
 							body,
 							headers: {
 								'Content-Type': 'application/json',
@@ -1026,7 +1027,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						});
 
 						if (response.ok) {
-							const data = await response.json();
+							const data = await response.json() as {
+								key: string;
+							};
 
 							this.setApiKey(data.key);
 
@@ -1081,13 +1084,28 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			code_challenge,
 		} = await pkceChallenge();
 
-		// Start a server to listen for the callback
-		const server = this.listenForOpenRouterCallback(code_verifier);
+		// If this extension is  running in the browser, the uri will be a vscode uri
+		const isBrowser = vscode.env.uiKind === vscode.UIKind.Web;
 
-		const uri = await vscode.env.asExternalUri(vscode.Uri.parse('http://localhost:7878'));
+		if (isBrowser) {
+			// If browser, get the current uri
+			// TODO
+			console.error("[Reborn AI] [PKCE] Running in the browser, not implemented.");
+			// temp - update status
+			this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Error);
+			return;
+		}
+
+		// Start a server to listen for the callback
+		const server = await this.listenForOpenRouterCallback(code_verifier);
+
+		// Node.js server to listen for the callback
+		let uri = await vscode.env.asExternalUri(vscode.Uri.parse('http://localhost:7878'));
+
 		// Can't get the challenge working with openrouter
 		const openRouterAuthUrl = `${(new URL(this.api.getApiUrl() ?? '')).origin}/auth?callback_url=${uri.toString()}`; // &code_challenge=${encodeURIComponent(code_challenge)}`; not working
 
+		// Open the browser to the OpenRouter OAuth page
 		vscode.env.openExternal(vscode.Uri.parse(openRouterAuthUrl));
 
 		// timeout the server after 5 minutes

@@ -14,4 +14,4 @@ temp/**
 !images/ai-logo.png
 !images/ai-logo.jpg
 !images/openai-logo.svg
-chatgpt-4.7.2
+.vscode-test-web/**
