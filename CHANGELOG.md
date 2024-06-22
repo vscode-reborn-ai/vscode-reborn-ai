@@ -6,6 +6,8 @@
 
 ## [unreleased]
 
+- 🌐 **i18n** - Translations updated for `gpt-4o`. - *Thank you for the PR @PeterDaveHello*
+
 ## June 20, 2024 [v3.24.0]
 
 - ✨ **Feature** - Added support for Azure's OpenAI API. - *Thank you for the suggestion @PeterDaveHello & @rambalachandran*
