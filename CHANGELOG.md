@@ -7,6 +7,7 @@
 ## [unreleased]
 
 - 🌐 **i18n** - Translations updated for `gpt-4o`. - *Thank you for the PR @PeterDaveHello*
+- 🔩 **Behind the scenes** - We've moved from OpenAI's library to Vercel's `ai` library. This will make it simpler and faster to introduce new features to non-OpenAI LLMs.
 
 ## June 20, 2024 [v3.24.0]
 
