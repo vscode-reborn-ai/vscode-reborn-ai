@@ -12,7 +12,7 @@ export async function loadTranslations(extensionPath: string): Promise<Record<st
   const locale = vscode.env.language;
 
   // Load the locale-specific translations file if it exists
-  const localeTranslationFile = vscode.Uri.file(`${extensionPath}/localization/package.nls.${locale}.json`);
+  const localeTranslationFile = vscode.Uri.file(`${extensionPath}/package.nls.${locale}.json`);
   let translatedContent = {};
 
   try {
