@@ -331,8 +331,8 @@ export class ApiProvider {
     const resourceName = (endpoint.split('.').shift() ?? endpoint).replace('https://', '');
 
     // TODO: Vercel's 'ai' package doesn't take an API version?
-    // this.config.apiVersion = await vscode.workspace.getConfiguration("chatgpt").get("apiVersion") as string ?? process.env.OPENAI_API_VERSION ?? '2024-02-01';
-    // const apiVersion = await vscode.workspace.getConfiguration("chatgpt").get("apiVersion") as string ?? process.env.OPENAI_API_VERSION ?? '2024-02-01';
+    // this.config.azureApiVersion = await vscode.workspace.getConfiguration("chatgpt").get("azureApiVersion") as string ?? process.env.OPENAI_API_VERSION ?? '2024-02-01';
+    // const azureApiVersion = await vscode.workspace.getConfiguration("chatgpt").get("azureApiVersion") as string ?? process.env.OPENAI_API_VERSION ?? '2024-02-01';
 
     if (!this.deploymentName) {
       console.warn('[Reborn AI] Attempting to set up Azure OpenAI API without a deployment ID. This will likely fail.');

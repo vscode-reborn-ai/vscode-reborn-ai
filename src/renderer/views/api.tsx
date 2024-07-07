@@ -16,12 +16,12 @@ interface LlmTemplate {
   name: string;
   instructions: string;
   apiUrl?: URL;
-  apiVersion?: string;
+  azureApiVersion?: string;
   docsUrl?: URL;
   showApiKeyInput?: boolean;
   showAllModelSuggestion?: boolean;
   manualModelInput?: boolean;
-  showApiVersionInput?: boolean;
+  showAzureApiVersionInput?: boolean;
   tested?: boolean;
 }
 const LLM_TEMPLATES: LlmTemplate[] = [
@@ -56,13 +56,13 @@ const LLM_TEMPLATES: LlmTemplate[] = [
     apiUrl: new URL(
       "https://my-service-name.openai.azure.com/deployments/my-deployment-id"
     ),
-    apiVersion: "2024-02-01",
+    azureApiVersion: "2024-02-01",
     docsUrl: new URL(
       "https://learn.microsoft.com/en-us/azure/ai-services/openai/overview"
     ),
     showApiKeyInput: true,
     showAllModelSuggestion: false,
-    showApiVersionInput: true,
+    showAzureApiVersionInput: true,
     tested: true,
   },
   {
@@ -153,7 +153,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
   const [showUrlSaved, setShowUrlSaved] = useState(false);
   const [showVersionSaved, setShowVersionSaved] = useState(false);
   const apiUrlInputRef = React.createRef<HTMLInputElement>();
-  const apiVersionInputRef = React.createRef<HTMLInputElement>();
+  const azureApiVersionInputRef = React.createRef<HTMLInputElement>();
   const [lastApiKeyTest, setLastApiKeyTest] = useState<string | null>(null);
   const backendMessenger = useMessenger(vscode);
 
@@ -209,12 +209,12 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
     }
   }, [settings.gpt3.apiBaseUrl]);
 
-  // If the API Version changes, update the text input
+  // If the Azure API Version changes, update the text input
   useEffect(() => {
-    if (apiVersionInputRef.current) {
-      apiVersionInputRef.current.value = settings.apiVersion;
+    if (azureApiVersionInputRef.current) {
+      azureApiVersionInputRef.current.value = settings.azureApiVersion;
     }
-  }, [settings.apiVersion]);
+  }, [settings.azureApiVersion]);
 
   const handleToolChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -231,9 +231,9 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
     if (apiUrlInputRef.current) {
       apiUrlInputRef.current.value = settings.gpt3.apiBaseUrl;
     }
-    // On mount, set the API version input to the current API version
-    if (apiVersionInputRef.current) {
-      apiVersionInputRef.current.value = settings.apiVersion;
+    // On mount, set the Azure API version input to the current Azure API version
+    if (azureApiVersionInputRef.current) {
+      azureApiVersionInputRef.current.value = settings.azureApiVersion;
     }
   }, []);
 
@@ -374,29 +374,29 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             </div>
           </div>
         )}
-        {selectedTool && selectedTool.apiVersion && (
+        {selectedTool && selectedTool.azureApiVersion && (
           <div>
             <strong className="inline-block mt-2 mb-1">
-              Suggested API Version:
+              Suggested Azure API Version:
             </strong>
             <div className="flex flex-wrap gap-2">
               <CodeBlock
                 margins={false}
                 className="flex-grow"
-                code={selectedTool.apiVersion}
+                code={selectedTool.azureApiVersion}
                 vscode={vscode}
               />
               <button
                 type="button"
                 className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-button hover:text-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 bg-button hover:bg-button-hover"
                 onClick={() => {
-                  backendMessenger.sendSetApiVersion(
-                    selectedTool.apiVersion ?? ""
+                  backendMessenger.sendSetAzureApiVersion(
+                    selectedTool.azureApiVersion ?? ""
                   );
 
-                  if (apiVersionInputRef.current) {
-                    apiVersionInputRef.current.value =
-                      selectedTool.apiVersion ?? "";
+                  if (azureApiVersionInputRef.current) {
+                    azureApiVersionInputRef.current.value =
+                      selectedTool.azureApiVersion ?? "";
                   }
 
                   setShowVersionSaved(true);
@@ -406,7 +406,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                   }, 2000);
                 }}
               >
-                Use this API Version
+                Use this Azure API Version
               </button>
             </div>
           </div>
@@ -419,7 +419,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
         )}
         {selectedTool &&
           !selectedTool.showAllModelSuggestion &&
-          !selectedTool.showApiVersionInput && (
+          !selectedTool.showAzureApiVersionInput && (
             <p className="mt-2">
               It is recommended you do <strong>not</strong> check the "Show all
               models" checkbox below or a lot of unnecessary models will be
@@ -458,25 +458,25 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
       </section>
 
       {/* Azure only */}
-      {selectedTool?.showApiVersionInput && (
+      {selectedTool?.showAzureApiVersionInput && (
         <section>
           <label
-            htmlFor="apiVersion"
+            htmlFor="azureApiVersion"
             className="block text-md font-medium my-2"
           >
-            <span className="underline">Current</span> API Version of the
+            <span className="underline">Current</span> Azure API Version of the
             deployment:
           </label>
           <div className="relative">
             <input
-              id="apiVersion"
-              ref={apiVersionInputRef}
+              id="azureApiVersion"
+              ref={azureApiVersionInputRef}
               type="text"
               onChange={(e) => {
-                backendMessenger.sendSetApiVersion(e.target.value);
+                backendMessenger.sendSetAzureApiVersion(e.target.value);
               }}
               className="block w-full p-2 text-sm rounded-sm border border-input text-input bg-input outline-0"
-              placeholder={DEFAULT_EXTENSION_SETTINGS.apiVersion}
+              placeholder={DEFAULT_EXTENSION_SETTINGS.azureApiVersion}
             />
             {showVersionSaved && (
               <span className="absolute top-2 right-2 transform px-2 py-0.5 text-green-500 border border-green-500 rounded bg-menu">
