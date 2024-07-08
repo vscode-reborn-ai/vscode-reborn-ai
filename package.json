@@ -461,12 +461,6 @@
             "gpt-4o",
             "gpt-3.5-turbo",
             "gpt-3.5-turbo-16k",
-            "text-davinci-003",
-            "text-curie-001",
-            "text-babbage-001",
-            "text-ada-001",
-            "code-davinci-002",
-            "code-cushman-001"
           ],
           "default": "gpt-4o",
           "markdownDescription": "OpenAI models to use for your prompts. [Documentation](https://platform.openai.com/docs/models/models). \n\n**If you face 400 Bad Request please make sure you are using the right model for your integration method.**",
@@ -478,12 +472,6 @@
             "gpt-4o",
             "gpt-3.5-turbo",
             "gpt-3.5-turbo-16k",
-            "text-davinci-003",
-            "text-curie-001",
-            "text-babbage-001",
-            "text-ada-001",
-            "code-davinci-002",
-            "code-cushman-001"
           ],
           "markdownEnumDescriptions": [
             "GPT-4-TURBO, 3x cheaper than GPT-4. 16x longer inputs than GPT-4.",
