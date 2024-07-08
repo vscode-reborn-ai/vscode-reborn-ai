@@ -69,9 +69,9 @@ export function useMessenger(vscode: any) {
       apiKey
     } as ChangeApiKeyMessage);
   };
-  const sendSetApiVersion = (apiVersion: string) => {
-    sendMessageToBackend(BackendMessageType.setApiVersion, {
-      apiVersion
+  const sendSetAzureApiVersion = (azureApiVersion: string) => {
+    sendMessageToBackend(BackendMessageType.setAzureApiVersion, {
+      azureApiVersion
     });
   };
   const sendEditCode = (code: string) => {
@@ -147,7 +147,7 @@ export function useMessenger(vscode: any) {
     sendStopAction,
     sendChangeApiUrl,
     sendChangeApiKey,
-    sendSetApiVersion,
+    sendSetAzureApiVersion,
     sendEditCode,
     sendOpenNew,
     sendOpenSettings,

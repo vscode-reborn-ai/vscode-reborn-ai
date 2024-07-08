@@ -589,7 +589,7 @@
           "description": "If enabled, you can manually input the model name in the model id in the select dropdown. This is required for some APIs, like ollama.",
           "order": 49
         },
-        "chatgpt.apiVersion": {
+        "chatgpt.azureApiVersion": {
           "type": "string",
           "default": "2024-02-01",
           "description": "This is required by Azure's API. It must match the API version the deployment expects.",
