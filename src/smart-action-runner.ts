@@ -134,7 +134,7 @@ class ReadmeFromPackageJSONAction extends Action {
     const lockfile = fs.existsSync(upath.join(currentProjectDir, 'package-lock.json')) ? 'package-lock.json' : (fs.existsSync(upath.join(currentProjectDir, 'yarn.lock')) ? 'yarn.lock' : '');
 
     // Get files + folders in the current project directory (note: this only goes 3 levels deep and ignores .gitignore files)
-    let filesAndFolders = listItems(currentProjectDir);
+    let filesAndFolders = await listItems(currentProjectDir);
     // Convert absolute paths to relative paths
     filesAndFolders = filesAndFolders.map((fileOrFolder: string) => fileOrFolder.replace(`${currentProjectDir}/`, ''));
 
@@ -218,7 +218,7 @@ class ReadmeFromFileStructure extends Action {
       await vscode.window.showTextDocument(document);
     }
 
-    let filesAndFolders = listItems(currentProjectDir);
+    let filesAndFolders = await listItems(currentProjectDir);
     filesAndFolders = filesAndFolders.map((fileOrFolder: string) => fileOrFolder.replace(`${currentProjectDir}/`, ''));
 
     // If .git/config exists, attempt to extract the repository URL from it
@@ -296,7 +296,7 @@ class GitignoreAction extends Action {
     const document = await vscode.workspace.openTextDocument(gitignorePath);
     await vscode.window.showTextDocument(document);
 
-    const filesAndFolders = listItems(currentProjectDir)
+    const filesAndFolders = (await listItems(currentProjectDir))
       .filter((f: string) => !/^\..*/.test(f) && !f.includes('node_modules'))
       .map((f: string) => f.replace(`${currentProjectDir}/`, ''));
 

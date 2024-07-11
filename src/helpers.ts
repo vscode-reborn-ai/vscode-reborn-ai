@@ -1,40 +1,40 @@
-import fs from "fs";
-import upath from 'upath';
+import path from 'path';
 import * as vscode from 'vscode';
+const fs = vscode.workspace.fs;
 
-export function readDirRecursively(dir: string, maxDepth: number, currentDepth: number = 0): string[] {
+export async function readDirRecursively(dir: string, maxDepth: number, currentDepth: number = 0): Promise<string[]> {
   if (currentDepth > maxDepth) {
     return [];
   }
 
-  const items: string[] = [];
-  const entries = fs.readdirSync(dir);
+  const fileList: string[] = [];
+  const entryList = await fs.readDirectory(vscode.Uri.file(dir));
 
-  for (const entry of entries) {
-    const entryPath = upath.join(dir, entry);
-    const entryStat = fs.statSync(entryPath);
+  for (const [entryName, entryType] of entryList) {
+    const filePath = path.join(dir, entryName);
 
-    if (entryStat.isDirectory()) {
-      items.push(entryPath, ...readDirRecursively(entryPath, maxDepth, currentDepth + 1));
+    if (entryType === vscode.FileType.Directory) {
+      fileList.push(entryName, ...await readDirRecursively(filePath, maxDepth, currentDepth + 1));
     } else {
-      items.push(entryPath);
+      fileList.push(entryName);
     }
   }
 
-  return items;
+  return fileList;
 }
 
 // Get the list of items in the current project directory
-export function listItems(currentProjectDir: string): string[] {
+export async function listItems(currentProjectDir: string): Promise<string[]> {
   // Ignore .gitignore and .git entries
-  const gitignorePath = upath.join(currentProjectDir, '.gitignore');
-  let gitignoreContents = fs.existsSync(gitignorePath) ? fs.readFileSync(gitignorePath, 'utf-8') : '';
+  const gitignorePath = path.join(currentProjectDir, '.gitignore');
+  let gitignoreContents = await readFileIfExists(gitignorePath) ?? '';
+
   // Also ignore .git
   gitignoreContents += '\n.git';
   const gitignoreEntries = gitignoreContents.split('\n').map(line => line.trim()).filter(line => line.length > 0).filter(line => !line.startsWith('#'));
 
   // Read up to 50 items and up to 3 levels deep of the current project directory
-  const items = readDirRecursively(currentProjectDir, 2); // "2" for up to 3 levels (0, 1, 2)
+  const items = await readDirRecursively(currentProjectDir, 2); // "2" for up to 3 levels (0, 1, 2)
   const filteredItems = items
     .filter(item => !gitignoreEntries.some(gitignoreEntry => item.includes(gitignoreEntry)))
     .slice(0, 50);
@@ -68,4 +68,67 @@ export function getSelectedModelId(): string {
   }
 
   return updatedModelId;
+}
+
+// File system helpers
+export async function fileExists(filePath: string): Promise<vscode.Uri | null> {
+
+  try {
+    const uri = vscode.Uri.file(filePath);
+
+    await fs.stat(uri);
+
+    return uri;
+  } catch (err: any) {
+    return null;
+  }
+}
+
+export async function readFileIfExists(filePath: string): Promise<string | null> {
+  const uri = await fileExists(filePath);
+
+  if (uri) {
+    return (await fs.readFile(uri)).toString();
+  }
+
+  return null;
+}
+
+export function throttle(func: Function, timeFrame: number) {
+  var lastTime = 0;
+
+  return function (...args: any[]) {
+    var now: number = new Date().getTime();
+
+    if (now - lastTime >= timeFrame) {
+      func(...args);
+      lastTime = now;
+    }
+  };
+}
+
+// VS Code API has not write stream
+// We make our own, and add throttling to it for performance
+export class WriteStream {
+  private data: string = '';
+  private uri: vscode.Uri;
+
+  constructor(filePath: string) {
+    this.uri = vscode.Uri.file(filePath);
+  }
+
+  write(data: string): void {
+    this.data += data;
+
+    // Throttle the write operation
+    throttle(this.writeFile, 1000);
+  }
+
+  private writeFile(): void {
+    fs.writeFile(this.uri, Buffer.from(this.data));
+  }
+
+  end(): void {
+    this.writeFile();
+  }
 }
