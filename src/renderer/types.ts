@@ -79,6 +79,7 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "gpt-4": "GPT-4",
   "gpt-4-32k": "GPT-4 32k",
   "gpt-4o": "GPT-4o",
+  "gpt-4o-mini": "GPT-4o mini",
   "gpt-3.5-turbo": "GPT-3.5 Turbo",
   "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k"
 }));
@@ -104,6 +105,10 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
   'gpt-4o': {
     prompt: 0.005,
     complete: 0.015,
+  },
+  'gpt-4o-mini': {
+    prompt: 0.00015,
+    complete: 0.0006,
   },
   'gpt-3.5-turbo': {
     prompt: 0.0015,
@@ -135,6 +140,10 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
   'gpt-4o': {
     context: 128000,
     max: 4096,
+  },
+  'gpt-4o-mini': {
+    context: 128000,
+    max: 16384,
   },
   // TODO: Dec 11, 2023 gpt-35-turbo prompt will become 16385 (but complete will remain 4096)
   'gpt-3.5-turbo': {
@@ -271,7 +280,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k",
+    model: "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k",
     maxTokens: number,
     temperature: number,
     top_p: number;

@@ -65,12 +65,13 @@ export default function ModelSelect({
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 
   const hasOpenAIModels = useMemo(() => {
-    // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-3.5-turbo
+    // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
     return models.some(
       (model) =>
         model.id === "gpt-4" ||
         model.id === "gpt-4-turbo" ||
         model.id === "gpt-4o" ||
+        model.id === "gpt-4o-mini" ||
         model.id === "gpt-3.5-turbo"
     );
   }, [models]);
@@ -792,6 +793,40 @@ export default function ModelSelect({
                           <>
                             , Completion:{" "}
                             <code>{MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max}</code>
+                          </>
+                        )}
+                      </p>
+                    </button>
+                  );
+                })()}
+              {models &&
+                (() => {
+                  const gpt4omini = models.find((model) => model.id === "gpt-4o-mini");
+
+                  if (!gpt4omini) {
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      onClick={() => {
+                        setModel(gpt4omini);
+                        if (showParentMenu) {
+                          showParentMenu(false);
+                        }
+                      }}
+                    >
+                      <span>
+                        <code>gpt-4o-mini</code>
+                      </span>
+                      <p>
+                        Quality: ⭐⭐⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
+                        <code>{MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.context}</code>
+                        {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max && (
+                          <>
+                            , Completion:{" "}
+                            <code>{MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max}</code>
                           </>
                         )}
                       </p>
