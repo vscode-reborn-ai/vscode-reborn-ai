@@ -461,7 +461,7 @@
             "gpt-4o",
             "gpt-4o-mini",
             "gpt-3.5-turbo",
-            "gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-16k"
           ],
           "default": "gpt-4o",
           "markdownDescription": "OpenAI models to use for your prompts. [Documentation](https://platform.openai.com/docs/models/models). \n\n**If you face 400 Bad Request please make sure you are using the right model for your integration method.**",
@@ -473,7 +473,7 @@
             "gpt-4o",
             "gpt-4o-mini",
             "gpt-3.5-turbo",
-            "gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-16k"
           ],
           "markdownEnumDescriptions": [
             "GPT-4-TURBO, 3x cheaper than GPT-4. 16x longer inputs than GPT-4.",
