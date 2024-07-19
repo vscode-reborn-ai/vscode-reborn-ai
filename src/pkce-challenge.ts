@@ -85,7 +85,7 @@ export async function generateChallenge(code_verifier: string, method: "plain" |
       .replace(/\+/g, '-')
       .replace(/=/g, '');
   } else {
-    throw new Error(`Unsupported challenge method: `);
+    throw new Error(`Unsupported challenge method: ${method}`);
   }
 }
 
@@ -99,7 +99,7 @@ export default async function pkceChallenge(length: number = 43, method: "plain"
   code_challenge: string;
 }> {
   if (length < 43 || length > 128) {
-    throw new Error(`Expected a length between 43 and 128. Received .`);
+    throw new Error(`Expected a length between 43 and 128. Received ${length}.`);
   }
 
   const verifier = generateVerifier(length);
