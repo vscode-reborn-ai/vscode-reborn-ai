@@ -315,7 +315,7 @@ export interface ExtensionSettings {
   renameTabTitles: boolean;
   showAllModels: boolean;
   manualModelInput: boolean;
-  apiVersion: string;
+  azureApiVersion: string;
 }
 
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
@@ -367,5 +367,5 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   renameTabTitles: true,
   showAllModels: false,
   manualModelInput: false,
-  apiVersion: "2024-02-01"
+  azureApiVersion: "2024-02-01"
 };
