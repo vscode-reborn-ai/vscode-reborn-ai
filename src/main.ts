@@ -987,7 +987,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
 	// * For OpenRouter API key exchange
 	// Listen for the OAuth callback from the OpenRouter
-	listenForOpenRouterCallback(code_verifier: string /* , correctState: string */) {
+	listenForOpenRouterCallback(code_verifier: string,
+		pkceChallengeMethod: 'plain' | 'S256' = 'S256'
+		/* , correctState: string */) {
 		// Set up a really simple server to listen for the callback on localhost:7878
 		const server = createServer(async (req, res) => {
 			const url = new URL(req.url ?? '', `http://${req.headers.host}`);
@@ -1014,7 +1016,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 						// Send the code to the backend with the built-in fetch API
 						const body = JSON.stringify({
 							code: encodeURIComponent(code),
-							// code_verifier: encodeURIComponent(code_verifier), not working
+							code_verifier: encodeURIComponent(code_verifier),
+							code_challenge_method: pkceChallengeMethod,
 						});
 
 						const response = await fetch(`${this.api.getApiUrl()}/auth/keys`, {
@@ -1076,17 +1079,25 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 		// API key status
 		this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Authenticating);
 
+		const PKCE_CHALLENGE_METHOD: 'S256' | 'plain' = 'plain';
+
 		const {
 			code_verifier,
 			code_challenge,
-		} = await pkceChallenge();
+		} = await pkceChallenge(43, PKCE_CHALLENGE_METHOD);
 
 		// Start a server to listen for the callback
-		const server = this.listenForOpenRouterCallback(code_verifier);
+		const server = this.listenForOpenRouterCallback(code_verifier, PKCE_CHALLENGE_METHOD);
 
 		const uri = await vscode.env.asExternalUri(vscode.Uri.parse('http://localhost:7878'));
 		// Can't get the challenge working with openrouter
-		const openRouterAuthUrl = `${(new URL(this.api.getApiUrl() ?? '')).origin}/auth?callback_url=${uri.toString()}`; // &code_challenge=${encodeURIComponent(code_challenge)}`; not working
+		// const openRouterAuthUrl = `${(new URL(this.api.getApiUrl() ?? '')).origin}/auth?callback_url=${uri.toString()}`; // &code_challenge=${encodeURIComponent(code_challenge)}`; not working
+		let callbackUrl = encodeURIComponent(uri.toString());
+		// if callback url ends with a slash, remove it
+		if (callbackUrl.endsWith('/')) {
+			callbackUrl = callbackUrl.slice(0, -1);
+		}
+		const openRouterAuthUrl = `${(new URL(this.api.getApiUrl() ?? '')).origin}/auth?code_challenge_method=${PKCE_CHALLENGE_METHOD}&code_challenge=${code_challenge}&callback_url=${callbackUrl}`;
 
 		vscode.env.openExternal(vscode.Uri.parse(openRouterAuthUrl));
 
