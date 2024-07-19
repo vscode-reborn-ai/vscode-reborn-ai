@@ -13,14 +13,6 @@ Or install directly:
 
 Or build this extension yourself (scroll further down).
 
-## About this fork
-
-This is a fork of the popular, but now discontinued [vscode-chatgpt](https://github.com/gencay/vscode-chatgpt) extension. Full credit to @gencay for working on the original extension and later open-sourcing it.
-
-Gencay has since released a *new* extension, "Reborn AI: Genie AI", that is a continuation of his work: <https://github.com/ai-genie/chatgpt-vscode>.
-
-How these extensions differ is that Genie AI is a proprietary extension, and VSCode Reborn AI is an open-source extension.
-
 ## Local LLMs and Proxies
 
 Any tool that is "compatible" with the OpenAI API should work with this extension. The tools listed below are the ones I've personally tested.
