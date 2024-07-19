@@ -6,8 +6,9 @@
 
 ## [unreleased]
 
-- 🌐 **i18n** - Translations updated for `gpt-4o`. - *Thank you for the PR @PeterDaveHello*
-- 🔩 **Behind the scenes** - We've moved from OpenAI's library to Vercel's `ai` library. This will make it simpler and faster to introduce new features to non-OpenAI LLMs.
+- ✨ **Feature** - Added support for OpenAI's latest model, `gpt-4o-mini`, it's basically a more capable and cost-effective `gpt-3.5-turbo`. - *Thanks for the PR @PeterDaveHello*
+- 🌐 **i18n** - Translations updated for `gpt-4o`. - *Thanks for the PR @PeterDaveHello*
+- 🔩 **Behind the scenes** - We now use Vercel's `ai` library. This means we can do more with non-OpenAI models. We also renamed the azure api version config, to avoid confusion.
 
 ## June 20, 2024 [v3.24.0]
 
