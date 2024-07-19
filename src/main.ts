@@ -92,6 +92,16 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 			vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiBaseUrl", "https://api.openai.com/v1", true);
 		}
 
+		// The chatgpt.apiVersion setting was deprecated in favor of chatgpt.azureApiVersion
+		// Check config for chatgpt.apiVersion
+		const apiVersion = vscode.workspace.getConfiguration("chatgpt").get("apiVersion") as string;
+		if (apiVersion) {
+			// If it exists, move it to chatgpt.azureApiVersion
+			vscode.workspace.getConfiguration("chatgpt").update("azureApiVersion", apiVersion, true);
+			// Remove chatgpt.apiVersion from the config
+			vscode.workspace.getConfiguration("chatgpt").update("apiVersion", undefined, true);
+		}
+
 		// Secret storage
 		Auth.init(context);
 		this.authStore = Auth.instance;
