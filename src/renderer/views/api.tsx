@@ -374,7 +374,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
             </div>
           </div>
         )}
-        {selectedTool && selectedTool.azureApiVersion && (
+        {selectedTool?.azureApiVersion && (
           <div>
             <strong className="inline-block mt-2 mb-1">
               Suggested Azure API Version:

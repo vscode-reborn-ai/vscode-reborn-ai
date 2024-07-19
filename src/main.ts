@@ -452,11 +452,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 					const changeApiKeyData = data as ChangeApiKeyMessage;
 					this.setApiKey(changeApiKeyData.apiKey);
 					break;
-				case BackendMessageType.setAzureApiVersion:
+				case BackendMessageType.setAzureApiVersion: {
 					const setAzureApiVersionData = data as SetAzureApiVersionMessage;
-					// this.api.config.azureApiVersion = setAzureApiVersionData.azureApiVersion;
 					console.log('Not implemented: setAzureApiVersion');
 					vscode.workspace.getConfiguration("chatgpt").update("azureApiVersion", setAzureApiVersionData.azureApiVersion, vscode.ConfigurationTarget.Global);
+					break;
+				}
 					break;
 				case BackendMessageType.getApiKeyStatus:
 					const { status, models } = await this.testApiKey();
