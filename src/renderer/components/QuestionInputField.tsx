@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
-import { isInstructModel } from "../helpers";
+import { isInstructModel, useMaxCost } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
@@ -40,6 +40,7 @@ export default ({
   const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
   const tokenCountRef = React.useRef<HTMLDivElement>(null);
   const [tokenCountLabel, setTokenCountLabel] = useState("0");
+  const maxCost = useMaxCost(currentConversation);
   // Animation on token count value change
   const [tokenCountAnimation, setTokenCountAnimation] = useState(false);
   const tokenCountAnimationTimer = useRef(null);
@@ -73,7 +74,7 @@ export default ({
     // Start a new timer
     tokenCountAnimationTimer.current = setTimeout(() => {
       setTokenCountAnimation(false);
-    }, 200) as any;
+    }, 500) as any;
 
     return () => clearTimeout(tokenCountAnimationTimer.current as any); // Cleanup on unmount
   }, [tokenCountLabel]);
@@ -385,7 +386,8 @@ export default ({
                 }
               }}
             >
-              {tokenCountLabel}
+              {"≤ $"}
+              {maxCost?.toFixed(2) ?? "???"}
               <TokenCountPopup
                 showTokenBreakdown={showTokenBreakdown}
                 currentConversation={currentConversation}
