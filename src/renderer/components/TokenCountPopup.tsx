@@ -8,6 +8,7 @@ import {
 import { useAppSelector } from "../hooks";
 import { RootState } from "../store";
 import { Conversation } from "../types";
+import Icon from "./Icon";
 
 const FALLBACK_MODEL_ID = "gpt-4-turbo";
 
@@ -87,7 +88,8 @@ export default function TokenCountPopup({
     >
       {/* Show a breakdown of the token count with min tokens, max tokens, min cost, and max cost */}
       <div className="p-4 flex flex-col gap-2 whitespace-pre-wrap">
-        <h5>
+        <h5 className="flex items-center gap-1">
+          <Icon icon="help" className="w-3 h-3" />
           {t?.questionInputField?.tokenBreakdownHeading ??
             "Pressing Ask will cost..."}
         </h5>
@@ -106,9 +108,11 @@ export default function TokenCountPopup({
             </span>
           </span>
           <code>{minPromptTokens}</code>{" "}
-          {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
-            "tokens which is "}
-          <code>${minCost?.toFixed(4) ?? "???"}</code>
+          {/* {t?.questionInputField?.tokenBreakdownTokensWhichIs ?? */}
+          {/* TODO: update translations */}
+          {"tokens"}
+          {" = "}
+          <code>${minCost?.toFixed(3) ?? "???"}</code>
         </p>
         <p>
           <span className="block">
@@ -118,7 +122,8 @@ export default function TokenCountPopup({
             <br />
             <span className="font-italic text-[10px]">
               {t?.questionInputField?.tokenBreakdownAtMostNote ??
-                "(all messages + prompt + longest answer)"}
+                "(message history + prompt + longest answer)"}
+              {/* TODO: update translations from 'all messages' to 'message history' */}
               <br />(
               <code>{currentConversation.tokenCount?.messages ?? 0}</code> +{" "}
               <code>{currentConversation.tokenCount?.userInput ?? 0}</code> +{" "}
@@ -126,35 +131,16 @@ export default function TokenCountPopup({
             </span>
           </span>
           <code>{minPromptTokens + maxCompleteTokens}</code>{" "}
-          {t?.questionInputField?.tokenBreakdownTokensWhichIs ??
-            "tokens which is "}
-          <code>${maxCost?.toFixed(4) ?? "???"}</code>
-        </p>
-        <p>
-          {t?.questionInputField?.tokenBreakdownBasedOn ??
-            "This is calculated based on"}{" "}
-          <code>{currentConversation.model?.id ?? "gpt-3.5-turbo"}</code>
-          's{" "}
-          <a
-            href={
-              settings.gpt3.apiBaseUrl.includes("openrouter.ai")
-                ? `https://openrouter.ai/models/${currentConversation.model?.id}`
-                : "https://openai.com/pricing"
-            }
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t?.questionInputField?.tokenBreakdownPricing ?? "pricing"}
-          </a>{" "}
-          {t?.questionInputField?.tokenBreakdownForPromptsAndCompletions ??
-            "for prompts and completions."}
-          {`(prompt: $${promptRate ?? "???"} / 1000 tokens, completion: $${
-            completeRate ?? "???"
-          } / 1000 tokens)`}
+          {/* {t?.questionInputField?.tokenBreakdownTokensWhichIs ?? */}
+          {/* "tokens which is "} */}
+          {/* TODO: update translations */}
+          {"tokens"}
+          {" = "}
+          <code>${maxCost?.toFixed(3) ?? "???"}</code>
         </p>
         <p className="italic">
           {t?.questionInputField?.tokenBreakdownRecommendation ??
-            "Strongly recommended - clear the conversation routinely to keep the prompt short."}
+            "Tip: Make a new chat routinely to keep costs low."}
         </p>
 
         {/* if gpt-4 or gpt-4-32k is the model, add an additional warning about cost */}
