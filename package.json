@@ -455,34 +455,31 @@
         "chatgpt.gpt3.model": {
           "type": "string",
           "enum": [
+            "gpt-4o",
+            "gpt-4o-mini",
             "gpt-4-turbo",
             "gpt-4",
             "gpt-4-32k",
-            "gpt-4o",
-            "gpt-4o-mini",
-            "gpt-3.5-turbo",
-            "gpt-3.5-turbo-16k"
+            "gpt-3.5-turbo"
           ],
           "default": "gpt-4o",
           "markdownDescription": "OpenAI models to use for your prompts. [Documentation](https://platform.openai.com/docs/models/models). \n\n**If you face 400 Bad Request please make sure you are using the right model for your integration method.**",
           "order": 36,
           "enumItemLabels": [
-            "gpt-4-turbo",
-            "gpt-4",
-            "gpt-4-32k",
-            "gpt-4o",
-            "gpt-4o-mini",
-            "gpt-3.5-turbo",
-            "gpt-3.5-turbo-16k"
+            "OpenAI GPT-4o",
+            "OpenAI GPT-4o Mini",
+            "OpenAI GPT-4 Turbo",
+            "OpenAI GPT-4",
+            "OpenAI GPT-4 32k",
+            "OpenAI GPT-3.5 Turbo"
           ],
           "markdownEnumDescriptions": [
-            "GPT-4-TURBO, 3x cheaper than GPT-4. 16x longer inputs than GPT-4.",
-            "GPT-4, 2x longer inputs than GPT-3",
-            "GPT-4-32k, This is 4x GPT-4 max length and 8x GPT-3 max length.",
-            "GPT-4o, newest high speed and cheaper GPT-4 series model",
-            "GPT-4o mini, successor of GPT-3.5 Turbo, which is cheaper, more capable, and just fast.",
-            "GPT-3.5-TURBO is optimized for chat at 1/10th the cost of `text-davinci-003`.",
-            "GPT-3.5-TURBO-16K is the same as `gpt-3.5-turbo` but with 16k tokens."
+            "High-intelligence flagship model for complex, multi-step tasks.",
+            "Affordable and intelligent small model for fast, lightweight tasks",
+            "The previous set of high-intelligence models. 3x cheaper than GPT-4. 16x longer inputs than GPT-4.",
+            "The previous set of high-intelligence models. 2x longer inputs than GPT-3",
+            "The previous set of high-intelligence models. This is 4x GPT-4 max length and 8x GPT-3 max length.",
+            "A fast, inexpensive model for simple tasks. gpt-4o-mini should be used instead, it's better and cheaper."
           ]
         },
         "chatgpt.gpt3.maxTokens": {
