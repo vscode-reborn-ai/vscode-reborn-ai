@@ -7,6 +7,7 @@
 ## [unreleased]
 
 - ✨ **Feature** - Added support for OpenAI's latest model, `gpt-4o-mini`, it's basically a more capable and cost-effective `gpt-3.5-turbo`. - *Thanks for the PR @PeterDaveHello*
+- 🖥️ **UI** - Below the ask button, you'll now see the "Max Cost" instead of the "Max tokens". Token breakdown wording also consolidated. - *Thank you for the suggestions @moritztim*
 - 🌐 **i18n** - Translations updated for `gpt-4o`. - *Thanks for the PR @PeterDaveHello*
 - 🔩 **Behind the scenes** - We now use Vercel's `ai` library. This means we can do more with non-OpenAI models. We also renamed the azure api version config, to avoid confusion.
 
