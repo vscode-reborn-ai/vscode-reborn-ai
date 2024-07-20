@@ -1,4 +1,11 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import { WebviewApi } from "vscode-webview";
 import { useAppDispatch } from "./hooks";
@@ -364,4 +371,31 @@ export function useConvertMarkdownToComponent(
   );
 
   return markdownToComponent;
+}
+
+// Hook - Get the max cost of a conversation
+export function useMaxCost(conversation: Conversation) {
+  const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const minPromptTokens =
+      (conversation.tokenCount?.messages ?? 0) +
+      (conversation.tokenCount?.userInput ?? 0);
+    const modelContextLimit = getModelContextLimit(conversation.model);
+    const modelMax = getModelCompletionLimit(conversation.model);
+    const maxCompleteTokens = Math.min(
+      modelContextLimit - minPromptTokens,
+      modelMax ?? Infinity
+    );
+    const rates = getModelRates(conversation.model);
+
+    if (rates.prompt !== undefined && rates.complete !== undefined) {
+      const minCost = (minPromptTokens / 1000) * rates.prompt;
+      setMaxCost(minCost + (maxCompleteTokens / 1000) * rates.complete);
+    } else {
+      setMaxCost(undefined);
+    }
+  }, [conversation]);
+
+  return maxCost;
 }
