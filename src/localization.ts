@@ -17,7 +17,6 @@ export async function loadTranslations(extensionPath: string): Promise<Record<st
 
   try {
     translatedContent = JSON.parse(await readFileIfExists(localeTranslationFile.path) ?? '');
-    console.debug(`[Reborn AI] Loaded locale translations for ${locale}.`, translatedContent);
   } catch (err: any) {
     console.error(`[Reborn AI] Locale translations not found: ${err.message}`);
   }
