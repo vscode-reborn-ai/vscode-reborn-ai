@@ -360,7 +360,13 @@ export function useConvertMarkdownToComponent(
       return (
         <ReactMarkdown
           components={{
-            a: ({ href, children }) => renderLink(href ?? "", children),
+            a: ({
+              href,
+              children,
+            }: {
+              href: string;
+              children: React.ReactNode;
+            }) => renderLink(href ?? "", children),
           }}
         >
           {markdown}
