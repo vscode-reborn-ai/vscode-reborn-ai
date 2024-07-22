@@ -217,6 +217,11 @@ export function getModelFriendlyName(
     if (friendlyName.includes(":")) {
       friendlyName = friendlyName.split(":")[1];
     }
+
+    // If the name ends with " (some text here)", remove it
+    if (friendlyName.includes(" (")) {
+      friendlyName = friendlyName.split(" (")[0];
+    }
   }
 
   // trim
