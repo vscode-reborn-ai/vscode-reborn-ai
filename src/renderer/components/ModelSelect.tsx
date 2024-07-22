@@ -123,7 +123,7 @@ export default function ModelSelect({
             ? "FREE"
             : rate.complete === undefined
             ? "varies"
-            : `$${(rate.complete * 1000).toFixed(1)}/M`,
+            : `$${rate.complete.toFixed(1)}/M`,
         isFree: rate.prompt === 0 && rate.complete === 0,
         isExpensive:
           (rate.prompt !== undefined && rate.prompt > 10) ||
