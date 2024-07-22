@@ -60,12 +60,12 @@ export default function TokenCountPopup({
     const rates = getModelRates(currentConversation.model);
     let minCost =
       rates.prompt !== undefined
-        ? (minPromptTokens / 1000) * rates.prompt
+        ? (minPromptTokens / 1000000) * rates.prompt
         : undefined;
     // maxCost is based on current convo text at ratePrompt pricing + theoretical maximum response at rateComplete pricing
     let maxCost =
       minCost !== undefined && rates.complete !== undefined
-        ? minCost + (maxCompleteTokens / 1000) * rates.complete
+        ? minCost + (maxCompleteTokens / 1000000) * rates.complete
         : undefined;
 
     setMinPromptTokens(minPromptTokens);
@@ -112,7 +112,7 @@ export default function TokenCountPopup({
           {/* TODO: update translations */}
           {"tokens"}
           {" = "}
-          <code>${minCost?.toFixed(3) ?? "???"}</code>
+          <code>${minCost?.toFixed(2) ?? "???"}</code>
         </p>
         <p>
           <span className="block">
@@ -136,7 +136,7 @@ export default function TokenCountPopup({
           {/* TODO: update translations */}
           {"tokens"}
           {" = "}
-          <code>${maxCost?.toFixed(3) ?? "???"}</code>
+          <code>${maxCost?.toFixed(2) ?? "???"}</code>
         </p>
         <p className="italic">
           {t?.questionInputField?.tokenBreakdownRecommendation ??

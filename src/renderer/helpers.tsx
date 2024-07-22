@@ -284,9 +284,9 @@ export function getModelRates(model: Model | undefined): ModelCosts {
 
   // For OpenRouter models, check if the model has cost data with it
   if (model.pricing) {
-    // Mutiply by 1,000 to convert from $ / 1 token to $ / 1,000 tokens
-    costs.prompt = parseFloat(model.pricing.prompt) * 1000;
-    costs.complete = parseFloat(model.pricing.completion) * 1000;
+    // Mutiply by 1,000,000 to convert from $ / 1 token to $ / 1 million tokens
+    costs.prompt = parseFloat(model.pricing.prompt) * 1000000;
+    costs.complete = parseFloat(model.pricing.completion) * 1000000;
     // If cost is < 0, set to undefined
     // -1 means "Pricing varied" (variable model)
     if (costs.prompt < 0) {
@@ -396,8 +396,8 @@ export function useMaxCost(conversation: Conversation) {
     const rates = getModelRates(conversation.model);
 
     if (rates.prompt !== undefined && rates.complete !== undefined) {
-      const minCost = (minPromptTokens / 1000) * rates.prompt;
-      setMaxCost(minCost + (maxCompleteTokens / 1000) * rates.complete);
+      const minCost = (minPromptTokens / 1000000) * rates.prompt;
+      setMaxCost(minCost + (maxCompleteTokens / 1000000) * rates.complete);
     } else {
       setMaxCost(undefined);
     }
