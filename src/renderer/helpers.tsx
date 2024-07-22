@@ -23,14 +23,14 @@ import {
   Role,
 } from "./types";
 
-export const unEscapeHTML = (unsafe: any) => {
+export const unEscapeHTML = (unsafe: string): string => {
   return unsafe
-    .replaceAll("&amp;", "&")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
-    .replaceAll("&#039;", "'");
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#039;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
 };
 
 export const updateChatMessage = (
