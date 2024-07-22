@@ -101,7 +101,7 @@ export default function TokenCountPopup({
             <br />
             <span className="font-italic text-[10px]">
               {t?.questionInputField?.tokenBreakdownAtLeastNote ??
-                "(no answer)"}
+                "(message history + no answer)"}
               <br />(
               <code>{currentConversation.tokenCount?.messages ?? 0}</code> +{" "}
               <code>{currentConversation.tokenCount?.userInput ?? 0}</code>)
