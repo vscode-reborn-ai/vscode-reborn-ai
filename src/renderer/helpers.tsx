@@ -364,8 +364,8 @@ export function useConvertMarkdownToComponent(
               href,
               children,
             }: {
-              href: string;
-              children: React.ReactNode;
+              href?: string;
+              children?: React.ReactNode;
             }) => renderLink(href ?? "", children),
           }}
         >
