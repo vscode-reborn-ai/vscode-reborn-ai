@@ -132,22 +132,22 @@
 - 🎮 **QoL** - When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
 - 🎮 **QoL** - Configuring "System message" is now an extension setting.
 
-[unreleased]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.24.0...HEAD
-[v3.24.0]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.23.2...3.24.0
-[v3.23.0 - v3.23.2]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.22.0...3.23.2
-[v3.22.0]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.20.2...3.22.0
-[v3.20.2]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.20.1...3.20.2
-[v3.20.0 - v3.20.1]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.19.1...3.20.1
-[v3.19.0 - v3.19.1]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.18.1...3.19.1
-[v3.18.1]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.18.0...3.18.1
-[v3.18.0]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.17.0...3.18.0
-[v3.17.0]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.16.5...3.17.0
-[v3.16.5]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.16.4...3.16.5
-[v3.16.4]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.16.3...3.16.4
-[v3.16.3]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.16.1...3.16.3
-[v3.16.1]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.16.0...3.16.1
-[v3.15.2 - v3.16.0]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.15.1...3.16.0
-[v3.15.0 - v3.15.1]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.14.0...3.15.1
-[v3.14.0]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.13.1...3.14.0
-[v3.12.0 - v3.12.1, v3.13.0 - v3.13.1]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/3.11.5...3.13.1
-[v3.11.0 - v3.11.5]: https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/compare/4d4c1ec...3.11.5
+[unreleased]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.24.0...HEAD
+[v3.24.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.23.2...3.24.0
+[v3.23.0 - v3.23.2]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.22.0...3.23.2
+[v3.22.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.20.2...3.22.0
+[v3.20.2]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.20.1...3.20.2
+[v3.20.0 - v3.20.1]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.19.1...3.20.1
+[v3.19.0 - v3.19.1]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.18.1...3.19.1
+[v3.18.1]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.18.0...3.18.1
+[v3.18.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.17.0...3.18.0
+[v3.17.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.16.5...3.17.0
+[v3.16.5]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.16.4...3.16.5
+[v3.16.4]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.16.3...3.16.4
+[v3.16.3]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.16.1...3.16.3
+[v3.16.1]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.16.0...3.16.1
+[v3.15.2 - v3.16.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.15.1...3.16.0
+[v3.15.0 - v3.15.1]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.14.0...3.15.1
+[v3.14.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.13.1...3.14.0
+[v3.12.0 - v3.12.1, v3.13.0 - v3.13.1]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.11.5...3.13.1
+[v3.11.0 - v3.11.5]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/4d4c1ec...3.11.5

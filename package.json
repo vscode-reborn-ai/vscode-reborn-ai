@@ -7,7 +7,7 @@
   "version": "3.24.0",
   "license": "ISC",
   "repository": {
-    "url": "https://github.com/christopher-hayes/vscode-chatgpt-reborn"
+    "url": "https://github.com/vscode-reborn-ai/vscode-reborn-ai"
   },
   "engines": {
     "vscode": "^1.70.0"

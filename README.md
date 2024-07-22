@@ -40,7 +40,7 @@ I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. I
 
 Translated to:  🇩🇪 🇪🇸 🇫🇷 🇮🇹 🇯🇵 🇰🇷 🇳🇱 🇵🇱 🇵🇹 🇹🇷 🇺🇦 🇨🇳 🇹🇼
 
-Most of this extension has been translated to about a dozen languages. The translations are not perfect and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
+Most of this extension has been translated to about a dozen languages. The translations are not perfect and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/vscode-reborn-ai/vscode-reborn-ai/discussions/20).
 
 ## Development
 

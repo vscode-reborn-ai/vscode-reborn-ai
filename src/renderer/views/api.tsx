@@ -43,7 +43,7 @@ const LLM_TEMPLATES: LlmTemplate[] = [
       "This is a proxy of the official OpenAI API. It's for anyone in a geographical location where openai.com is blocked. It's hosted by the author of this extension using Cloudflare Workers.",
     apiUrl: new URL("https://openai-proxy.dev/v1"),
     docsUrl: new URL(
-      "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn#proxy-and-local-llms"
+      "https://github.com/vscode-reborn-ai/vscode-reborn-ai#proxy-and-local-llms"
     ),
     showApiKeyInput: true,
     showAllModelSuggestion: false,

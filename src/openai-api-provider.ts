@@ -281,7 +281,7 @@ export class ApiProvider {
       headers: {
         ...(this.config as OpenAIProviderSettings).headers,
         ...config.headers,
-        "HTTP-Referer": "https://github.com/Christopher-Hayes/vscode-chatgpt-reborn",
+        "HTTP-Referer": "https://github.com/vscode-reborn-ai/vscode-reborn-ai",
         "X-Title": "VSCode Reborn AI",
       }
     } as OpenAIProviderSettings;
