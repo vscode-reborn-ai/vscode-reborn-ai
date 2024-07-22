@@ -597,7 +597,8 @@
     "watch:webview": "webpack --mode development --watch",
     "build-webview": "webpack --mode production",
     "fmt": "prettier --write \"src/**/*.ts\" && yarn test --fix",
-    "test": "eslint src --ext ts && tsc --noEmit"
+    "test": "eslint src --ext ts && tsc --noEmit",
+    "package": "npx @vscode/vsce package"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.3",
@@ -610,6 +611,7 @@
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@types/react-redux": "^7.1.25",
+    "@types/sanitize-html": "^2.11.0",
     "@types/uuid": "^9.0.0",
     "@types/vscode": "1.70.0",
     "@types/vscode-webview": "^1.57.0",

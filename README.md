@@ -76,6 +76,12 @@ To test the vscode-chatgpt-reborn extension in VS Code, follow these steps:
 
 5. To make changes to the extension, update the code, vscode will automatically be running the `yarn run watch` script. But, for testing you'll need to reload the extension, do that by pressing `Ctrl + Shift + F5`/`Cmd + Shift + F5` (or click `Run > Restart Debugging`).
 
+### Package for VS Code
+
+```bash
+yarn run package # Runs `vsce package`
+```
+
 ## Changelog
 
 See the [CHANGELOG](CHANGELOG.md) for a list of past updates, and upcoming unreleased features.
