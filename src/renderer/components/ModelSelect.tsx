@@ -117,17 +117,17 @@ export default function ModelSelect({
             ? "FREE"
             : rate.prompt === undefined
             ? "varies"
-            : `$${(rate.prompt * 1000).toFixed(2)}/M`,
+            : `$${rate.prompt.toFixed(1)}/M`,
         completeText:
           rate.complete === 0
             ? "FREE"
             : rate.complete === undefined
             ? "varies"
-            : `$${(rate.complete * 1000).toFixed(2)}/M`,
+            : `$${(rate.complete * 1000).toFixed(1)}/M`,
         isFree: rate.prompt === 0 && rate.complete === 0,
         isExpensive:
-          (rate.prompt !== undefined && rate.prompt > 0.01) ||
-          (rate.complete !== undefined && rate.complete > 0.03),
+          (rate.prompt !== undefined && rate.prompt > 10) ||
+          (rate.complete !== undefined && rate.complete > 30),
       });
     });
 
@@ -801,7 +801,9 @@ export default function ModelSelect({
                 })()}
               {models &&
                 (() => {
-                  const gpt4omini = models.find((model) => model.id === "gpt-4o-mini");
+                  const gpt4omini = models.find(
+                    (model) => model.id === "gpt-4o-mini"
+                  );
 
                   if (!gpt4omini) {
                     return null;
@@ -822,11 +824,15 @@ export default function ModelSelect({
                       </span>
                       <p>
                         Quality: ⭐⭐⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
-                        <code>{MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.context}</code>
+                        <code>
+                          {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.context}
+                        </code>
                         {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max && (
                           <>
                             , Completion:{" "}
-                            <code>{MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max}</code>
+                            <code>
+                              {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max}
+                            </code>
                           </>
                         )}
                       </p>

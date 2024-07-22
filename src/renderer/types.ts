@@ -89,34 +89,36 @@ interface ModelCost {
   prompt: number;
   complete: number;
 }
+
+// Token cost per 1 million tokens
 export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
   'gpt-4-turbo': {
-    prompt: 0.01,
-    complete: 0.03,
+    prompt: 10,
+    complete: 30,
   },
   'gpt-4': {
-    prompt: 0.03,
-    complete: 0.06,
+    prompt: 30,
+    complete: 60,
   },
   'gpt-4-32k': {
-    prompt: 0.06,
-    complete: 0.12,
+    prompt: 60,
+    complete: 120,
   },
   'gpt-4o': {
-    prompt: 0.005,
-    complete: 0.015,
+    prompt: 5,
+    complete: 15,
   },
   'gpt-4o-mini': {
-    prompt: 0.00015,
-    complete: 0.0006,
+    prompt: 0.15,
+    complete: 0.6,
   },
   'gpt-3.5-turbo': {
-    prompt: 0.0005,
-    complete: 0.0015,
+    prompt: 0.5,
+    complete: 1.5,
   },
   'gpt-3.5-turbo-16k': {
-    prompt: 0.003,
-    complete: 0.004,
+    prompt: 3,
+    complete: 4,
   },
 }));
 
