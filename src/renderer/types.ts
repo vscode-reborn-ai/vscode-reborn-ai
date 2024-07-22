@@ -111,8 +111,8 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     complete: 0.0006,
   },
   'gpt-3.5-turbo': {
-    prompt: 0.0015,
-    complete: 0.002,
+    prompt: 0.0005,
+    complete: 0.0015,
   },
   'gpt-3.5-turbo-16k': {
     prompt: 0.003,
