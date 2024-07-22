@@ -130,7 +130,7 @@ export default function Chat({
       {/* Conversation messages */}
       <div ref={conversationListRef}>
         <div
-          className={`flex flex-col 
+          className={`flex flex-col
           ${settings?.minimalUI ? "pb-20" : "pb-24"}
         `}
         >
