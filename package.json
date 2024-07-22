@@ -648,6 +648,7 @@
     "react-markdown": "^9.0.1",
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.9.0",
+    "sanitize-html": "^2.13.0",
     "upath": "^2.0.1",
     "uuid": "^9.0.0",
     "zod": "^3.23.8"
