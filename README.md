@@ -1,6 +1,10 @@
 # VSCode Reborn AI
 
-VSCode Reborn AI is a Visual Studio Code extension that allows you to use the ChatGPT API to write, refactor, and improve your code.
+Write, refactor, and improve your code in VSCode using ai. With VSCode Reborn AI, you decide what AI you want to use.
+
+Code offline with ai using a local LLM.
+
+Enhanced support for: [OpenRouter.ai](https://openrouter.ai) (API), and [ollama](https://github.com/ollama/ollama) (local).
 
 ## Get for VSCode
 
@@ -11,7 +15,7 @@ Or install directly:
 - [VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=chris-hayes.chatgpt-reborn)
 - [Open VSX Registry](https://open-vsx.org/extension/chris-hayes/chatgpt-reborn)
 
-Or build this extension yourself (scroll further down).
+Or build this extension yourself [(scroll further down)](#development).
 
 ## Local LLMs and Proxies
 
@@ -34,26 +38,23 @@ I've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. I
 
 ## Internationalization
 
-Most of this extension has been translated to a ~dozen languages, but the translations are not complete and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20)
+Translated to:  🇩🇪 🇪🇸 🇫🇷 🇮🇹 🇯🇵 🇰🇷 🇳🇱 🇵🇱 🇵🇹 🇹🇷 🇺🇦 🇨🇳 🇹🇼
 
-## Build this extension yourself
+Most of this extension has been translated to about a dozen languages. The translations are not perfect and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/Christopher-Hayes/vscode-chatgpt-reborn/discussions/20).
 
-To set up the project, first clone the repository:
+## Development
 
-```bash
-git clone https://github.com/christopher-hayes/vscode-chatgpt-reborn.git
-```
-
-Next, change into the project directory and install the dependencies using Yarn:
+### Clone this repo
 
 ```bash
-cd vscode-chatgpt-reborn
-yarn install
+git clone https://github.com/vscode-chatgpt-reborn/vscode-chatgpt-reborn.git
 ```
 
-## Running Scripts
+### Setup
 
-You can run the following scripts using Yarn:
+```bash
+yarn
+```
 
 ### Build the extension
 
@@ -61,15 +62,9 @@ You can run the following scripts using Yarn:
 yarn run build
 ```
 
-### Watch for changes and rebuild automatically
+### Test new features in VS Code
 
-```bash
-yarn run watch
-```
-
-## Developing this extension in VS Code
-
-To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these steps:
+To test the vscode-chatgpt-reborn extension in VS Code, follow these steps:
 
 1. Open the project directory in Visual Studio Code.
 
@@ -79,20 +74,17 @@ To test the vscode-chatgpt-reborn extension in Visual Studio Code, follow these 
 
 4. Use the Debug Console in the main Visual Studio Code window to view any output or errors.
 
-5. To make changes to the extension, update the code, and then press `Ctrl + Shift + F5`/`Cmd + Shift + F5` (or click `Run > Restart Debugging`) to reload the extension.
-
-6. Once you are satisfied with your changes, submit a pull request to this repository.
+5. To make changes to the extension, update the code, vscode will automatically be running the `yarn run watch` script. But, for testing you'll need to reload the extension, do that by pressing `Ctrl + Shift + F5`/`Cmd + Shift + F5` (or click `Run > Restart Debugging`).
 
 ## Changelog
 
-See the [CHANGELOG](CHANGELOG.md) for a list of changes.
+See the [CHANGELOG](CHANGELOG.md) for a list of past updates, and upcoming unreleased features.
 
 ## Tech
 
 [Yarn](https://yarnpkg.com/) - [TypeScript](https://www.typescriptlang.org/) - [VSCode Extension API](https://code.visualstudio.com/api) - [React](https://reactjs.org/) - [Redux](https://redux.js.org/) - [React Router](https://reactrouter.com/) - [Tailwind CSS](https://tailwindcss.com/)
 
-- The UI is built with TailwindCSS. But, respecting VSCode's UI consistency and theme support is still a priority.
-- This does not use VSCode's [WebView UI Toolkit](https://github.com/microsoft/vscode-webview-ui-toolkit/tree/main/src). But, I'm open to switching to the WebView UI toolkit since it better aligns with VSCode's UI.
+- This extension has a custom UI with React + TailwindCSS, but theme support and remaining consistnet with VSCode's UI components is still a priority.
 
 ## License
 
