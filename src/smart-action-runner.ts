@@ -1,4 +1,5 @@
 import fs from "fs";
+import sanitizeHtml from 'sanitize-html';
 import upath from 'upath';
 import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
@@ -82,6 +83,7 @@ class Action {
       inProgress: true,
       model,
       autoscroll: true,
+      tools: {},
     };
 
     for await (const token of this.runner.mainProvider.api.streamChatCompletion(conversation, abortSignal)) {
@@ -133,7 +135,7 @@ class ReadmeFromPackageJSONAction extends Action {
     const lockfile = fs.existsSync(upath.join(currentProjectDir, 'package-lock.json')) ? 'package-lock.json' : (fs.existsSync(upath.join(currentProjectDir, 'yarn.lock')) ? 'yarn.lock' : '');
 
     // Get files + folders in the current project directory (note: this only goes 3 levels deep and ignores .gitignore files)
-    let filesAndFolders = listItems(currentProjectDir);
+    let filesAndFolders = await listItems(currentProjectDir);
     // Convert absolute paths to relative paths
     filesAndFolders = filesAndFolders.map((fileOrFolder: string) => fileOrFolder.replace(`${currentProjectDir}/`, ''));
 
@@ -217,7 +219,7 @@ class ReadmeFromFileStructure extends Action {
       await vscode.window.showTextDocument(document);
     }
 
-    let filesAndFolders = listItems(currentProjectDir);
+    let filesAndFolders = await listItems(currentProjectDir);
     filesAndFolders = filesAndFolders.map((fileOrFolder: string) => fileOrFolder.replace(`${currentProjectDir}/`, ''));
 
     // If .git/config exists, attempt to extract the repository URL from it
@@ -295,7 +297,7 @@ class GitignoreAction extends Action {
     const document = await vscode.workspace.openTextDocument(gitignorePath);
     await vscode.window.showTextDocument(document);
 
-    const filesAndFolders = listItems(currentProjectDir)
+    const filesAndFolders = (await listItems(currentProjectDir))
       .filter((f: string) => !/^\..*/.test(f) && !f.includes('node_modules'))
       .map((f: string) => f.replace(`${currentProjectDir}/`, ''));
 
@@ -354,7 +356,7 @@ class RetitleAction extends Action {
 
     const prompt = options.messageText;
     const systemContextModified = 'Derive a concise conversation title from the provided user question and assistant response. ONLY respond with a 2 or 3 word title. For context, conversations are normally about software development. Shorter is better. Prepend an appropriate emoji to the title.';
-    let title: string | undefined = '';
+    let title: string = '';
 
     try {
       for await (const token of this.streamChatCompletion(systemContextModified, prompt, controller.signal)) {
@@ -368,26 +370,21 @@ class RetitleAction extends Action {
     title = title.trim();
     // remove any double quotes
     title = title.replace(/"/g, '');
-    // If it starts with title: remove it
-    // title = title.replace(/^title:/i, '').replace(/^Title:/i, '');
-    // If it starts with answer: remove it
-    // title = title.replace(/^answer:/i, '').replace(/^Answer:/i, '');
     // Remove any markdown formatting
     title = title.replace(/`/g, '').replace(/\*/g, '').replace(/_/g, '').replace(/#/g, '');
     // Remove any HTML tags
-    title = title.replace(/<[^>]*>/g, '');
+    title = sanitizeHtml(title, {
+      allowedTags: [],
+      allowedAttributes: {}
+    }) ?? '';
     // If the title matches the format "<text>:<text>", only show text after the colon
     title = title.replace(/.*:/, '');
     // Truncate to 50 characters
     title = title.slice(0, 25);
 
-    // Avoid renaming to empty string if rename fails
-    if (title.length < 3) {
-      title = undefined;
-    }
-
     return {
-      newTitle: title,
+      // undefined means leave the title as is
+      newTitle: title === '' || title.length < 3 ? undefined : title,
       conversationId: options.conversationId
     };
   }

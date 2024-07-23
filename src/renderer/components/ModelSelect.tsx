@@ -65,12 +65,13 @@ export default function ModelSelect({
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 
   const hasOpenAIModels = useMemo(() => {
-    // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-3.5-turbo
+    // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
     return models.some(
       (model) =>
         model.id === "gpt-4" ||
         model.id === "gpt-4-turbo" ||
         model.id === "gpt-4o" ||
+        model.id === "gpt-4o-mini" ||
         model.id === "gpt-3.5-turbo"
     );
   }, [models]);
@@ -116,17 +117,17 @@ export default function ModelSelect({
             ? "FREE"
             : rate.prompt === undefined
             ? "varies"
-            : `$${(rate.prompt * 1000).toFixed(2)}/M`,
+            : `$${rate.prompt.toFixed(1)}/M`,
         completeText:
           rate.complete === 0
             ? "FREE"
             : rate.complete === undefined
             ? "varies"
-            : `$${(rate.complete * 1000).toFixed(2)}/M`,
+            : `$${rate.complete.toFixed(1)}/M`,
         isFree: rate.prompt === 0 && rate.complete === 0,
         isExpensive:
-          (rate.prompt !== undefined && rate.prompt > 0.01) ||
-          (rate.complete !== undefined && rate.complete > 0.03),
+          (rate.prompt !== undefined && rate.prompt > 10) ||
+          (rate.complete !== undefined && rate.complete > 30),
       });
     });
 
@@ -345,7 +346,15 @@ export default function ModelSelect({
                     (model: Model) => (
                       <button
                         key={model.id}
-                        className="group flex flex-col gap-1 items-start justify-start p-2 w-full hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection"
+                        className={classNames(
+                          "group flex flex-col gap-1 items-start justify-start p-2 w-full",
+                          "hover:bg-menu-selection hover:text-menu-selection",
+                          "focus:bg-menu-selection focus:text-menu-selection",
+                          {
+                            "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
+                              model.id === currentConversation.model?.id,
+                          }
+                        )}
                         onClick={() => {
                           setModel(model);
                           if (showParentMenu) {
@@ -668,7 +677,15 @@ export default function ModelSelect({
 
                   return (
                     <button
-                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      className={classNames(
+                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
+                        "hover:bg-menu-selection hover:text-menu-selection",
+                        "focus:bg-menu-selection focus:text-menu-selection",
+                        {
+                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
+                            gpt35Turbo.id === currentConversation.model?.id,
+                        }
+                      )}
                       onClick={() => {
                         setModel(gpt35Turbo);
                         if (showParentMenu) {
@@ -676,16 +693,18 @@ export default function ModelSelect({
                         }
                       }}
                     >
-                      <code>gpt-3.5-turbo</code>
+                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                        gpt-3.5-turbo
+                      </code>
                       <p>
                         Quality: ⭐⬜⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
-                        <code>
+                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
                           {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.context}
                         </code>
                         {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.max && (
                           <>
                             , Completion:{" "}
-                            <code>
+                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
                               {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.max}
                             </code>
                           </>
@@ -706,7 +725,15 @@ export default function ModelSelect({
 
                   return (
                     <button
-                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      className={classNames(
+                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
+                        "hover:bg-menu-selection hover:text-menu-selection",
+                        "focus:bg-menu-selection focus:text-menu-selection",
+                        {
+                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
+                            gpt4Turbo.id === currentConversation.model?.id,
+                        }
+                      )}
                       onClick={() => {
                         setModel(gpt4Turbo);
                         if (showParentMenu) {
@@ -714,16 +741,18 @@ export default function ModelSelect({
                         }
                       }}
                     >
-                      <code>gpt-4-turbo</code>
+                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                        gpt-4-turbo
+                      </code>
                       <p>
                         Quality: ⭐⭐⬜, Speed: ⚡⚡⬜, Cost: 💸💸💸, Context:{" "}
-                        <code>
+                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
                           {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.context}
                         </code>
                         {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.max && (
                           <>
                             , Completion:{" "}
-                            <code>
+                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
                               {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.max}
                             </code>
                           </>
@@ -742,7 +771,15 @@ export default function ModelSelect({
 
                   return (
                     <button
-                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      className={classNames(
+                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
+                        "hover:bg-menu-selection hover:text-menu-selection",
+                        "focus:bg-menu-selection focus:text-menu-selection",
+                        {
+                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
+                            gpt4.id === currentConversation.model?.id,
+                        }
+                      )}
                       onClick={() => {
                         setModel(gpt4);
                         if (showParentMenu) {
@@ -750,14 +787,20 @@ export default function ModelSelect({
                         }
                       }}
                     >
-                      <code>gpt-4</code>
+                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                        gpt-4
+                      </code>
                       <p>
                         Quality: ⭐⭐⬜, Speed: ⚡⬜⬜, Cost: 💸💸💸, Context:{" "}
-                        <code>{MODEL_TOKEN_LIMITS.get(gpt4.id)?.context}</code>
+                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                          {MODEL_TOKEN_LIMITS.get(gpt4.id)?.context}
+                        </code>
                         {MODEL_TOKEN_LIMITS.get(gpt4.id)?.max && (
                           <>
                             , Completion:{" "}
-                            <code>{MODEL_TOKEN_LIMITS.get(gpt4.id)?.max}</code>
+                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                              {MODEL_TOKEN_LIMITS.get(gpt4.id)?.max}
+                            </code>
                           </>
                         )}
                       </p>
@@ -774,7 +817,15 @@ export default function ModelSelect({
 
                   return (
                     <button
-                      className="flex flex-col gap-2 items-start justify-start p-2 w-full hover:bg-menu-selection"
+                      className={classNames(
+                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
+                        "hover:bg-menu-selection hover:text-menu-selection",
+                        "focus:bg-menu-selection focus:text-menu-selection",
+                        {
+                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
+                            gpt4o.id === currentConversation.model?.id,
+                        }
+                      )}
                       onClick={() => {
                         setModel(gpt4o);
                         if (showParentMenu) {
@@ -783,15 +834,72 @@ export default function ModelSelect({
                       }}
                     >
                       <span>
-                        <code>gpt-4o</code> <strong>(recommended)</strong>
+                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                          gpt-4o
+                        </code>{" "}
+                        <strong>(recommended)</strong>
                       </span>
                       <p>
                         Quality: ⭐⭐⭐, Speed: ⚡⚡⚡, Cost: 💸💸⬜, Context:{" "}
-                        <code>{MODEL_TOKEN_LIMITS.get(gpt4o.id)?.context}</code>
+                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                          {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.context}
+                        </code>
                         {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max && (
                           <>
                             , Completion:{" "}
-                            <code>{MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max}</code>
+                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                              {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max}
+                            </code>
+                          </>
+                        )}
+                      </p>
+                    </button>
+                  );
+                })()}
+              {models &&
+                (() => {
+                  const gpt4omini = models.find(
+                    (model) => model.id === "gpt-4o-mini"
+                  );
+
+                  if (!gpt4omini) {
+                    return null;
+                  }
+
+                  return (
+                    <button
+                      className={classNames(
+                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
+                        "hover:bg-menu-selection hover:text-menu-selection",
+                        "focus:bg-menu-selection focus:text-menu-selection",
+                        {
+                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
+                            gpt4omini.id === currentConversation.model?.id,
+                        }
+                      )}
+                      onClick={() => {
+                        setModel(gpt4omini);
+                        if (showParentMenu) {
+                          showParentMenu(false);
+                        }
+                      }}
+                    >
+                      <span>
+                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                          gpt-4o-mini
+                        </code>
+                      </span>
+                      <p>
+                        Quality: ⭐⭐⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
+                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                          {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.context}
+                        </code>
+                        {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max && (
+                          <>
+                            , Completion:{" "}
+                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+                              {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max}
+                            </code>
                           </>
                         )}
                       </p>

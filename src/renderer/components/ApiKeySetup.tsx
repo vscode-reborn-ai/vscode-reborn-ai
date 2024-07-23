@@ -89,7 +89,7 @@ export default function ({
               {t?.apiKeySetup?.instructions?.step5a ??
                 "On submit the key is securely stored on your computer using VSCode secret storage. It is never sent to any server. (This extension is open source, so"}{" "}
               <a
-                href="https://github.com/Christopher-Hayes/vscode-chatgpt-reborn"
+                href="https://github.com/vscode-reborn-ai/vscode-reborn-ai"
                 target="_blank"
               >
                 {t?.apiKeySetup?.instructions?.step5b ??

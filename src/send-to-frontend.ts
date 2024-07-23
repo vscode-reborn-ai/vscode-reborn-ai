@@ -19,10 +19,10 @@ export default class Messenger {
   }
 
   /**
-   * Message sender, stores in FIFO queue if a message cannot be delivered
-   * @param message Message to be sent to WebView
-   * @param ignoreMessageIfNullWebView We will ignore the command if webView is null/not-focused
-   */
+  * Message sender, stores in FIFO queue if a message cannot be delivered
+  * @param message Message to be sent to WebView
+  * @param ignoreMessageIfNullWebView We will ignore the command if webView is null/not-focused
+  */
   sendMessage(message: BaseFrontendMessage) {
     if (this.webView) {
       // Check if there are any messages in the queue
@@ -42,16 +42,17 @@ export default class Messenger {
 
   async sendModels(models: Model[] = []) {
     if (!this.api) {
+      console.error("[Reborn AI] Unable to send models, API provider is not set.");
       return;
     }
 
-    if (models.length === 0) {
-      models = await this.api.getModelList();
+    if (!models.length) {
+      models = await this.api.getModelList() ?? [];
     }
 
     this.sendMessage({
       type: FrontendMessageType.modelsUpdate,
-      models
+      models,
     } as ModelsUpdateMessage);
   }
 

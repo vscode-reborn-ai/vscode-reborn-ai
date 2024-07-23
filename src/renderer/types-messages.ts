@@ -32,7 +32,7 @@ export enum BackendMessageType {
   resetApiKey = "resetApiKey",
   generateOpenRouterApiKey = "generateOpenRouterApiKey",
   // API Version
-  setApiVersion = "setApiVersion",
+  setAzureApiVersion = "setAzureApiVersion",
   // Action
   runAction = "runAction",
   stopAction = "stopAction",
@@ -106,9 +106,9 @@ export interface ChangeApiKeyMessage extends BaseBackendMessage {
   apiKey: string;
 }
 
-export interface SetApiVersionMessage extends BaseBackendMessage {
-  type: BackendMessageType.setApiVersion;
-  apiVersion: string;
+export interface SetAzureApiVersionMessage extends BaseBackendMessage {
+  type: BackendMessageType.setAzureApiVersion;
+  azureApiVersion: string;
 }
 
 export interface GetApiKeyStatusMessage extends BaseBackendMessage {

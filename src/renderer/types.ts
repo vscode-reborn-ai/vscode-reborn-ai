@@ -1,7 +1,6 @@
 // * Interfaces for OpenAI's API
 // For network requests - based on OpenAI API docs - https://platform.openai.com/docs/api-reference/
 
-import OpenAI from "openai";
 
 // TODO: just import directly from openai types
 interface OpenAIPromptRequest {
@@ -28,7 +27,13 @@ export enum Role {
   system = 'system'
 }
 
-export interface Model extends OpenAI.Model {
+export interface Model {
+  // OpenAI model properties
+  id: string;
+  owned_by: Role;
+  created: number;
+  object: 'model';
+
   // * OpenRouter will send back additional fields on models:
   name?: string; // friendly name
   description?: string;
@@ -74,6 +79,7 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "gpt-4": "GPT-4",
   "gpt-4-32k": "GPT-4 32k",
   "gpt-4o": "GPT-4o",
+  "gpt-4o-mini": "GPT-4o mini",
   "gpt-3.5-turbo": "GPT-3.5 Turbo",
   "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k"
 }));
@@ -83,30 +89,36 @@ interface ModelCost {
   prompt: number;
   complete: number;
 }
+
+// Token cost per 1 million tokens
 export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
   'gpt-4-turbo': {
-    prompt: 0.01,
-    complete: 0.03,
+    prompt: 10,
+    complete: 30,
   },
   'gpt-4': {
-    prompt: 0.03,
-    complete: 0.06,
+    prompt: 30,
+    complete: 60,
   },
   'gpt-4-32k': {
-    prompt: 0.06,
-    complete: 0.12,
+    prompt: 60,
+    complete: 120,
   },
   'gpt-4o': {
-    prompt: 0.005,
-    complete: 0.015,
+    prompt: 5,
+    complete: 15,
+  },
+  'gpt-4o-mini': {
+    prompt: 0.15,
+    complete: 0.6,
   },
   'gpt-3.5-turbo': {
-    prompt: 0.0015,
-    complete: 0.002,
+    prompt: 0.5,
+    complete: 1.5,
   },
   'gpt-3.5-turbo-16k': {
-    prompt: 0.003,
-    complete: 0.004,
+    prompt: 3,
+    complete: 4,
   },
 }));
 
@@ -131,6 +143,10 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 128000,
     max: 4096,
   },
+  'gpt-4o-mini': {
+    context: 128000,
+    max: 16384,
+  },
   // TODO: Dec 11, 2023 gpt-35-turbo prompt will become 16385 (but complete will remain 4096)
   'gpt-3.5-turbo': {
     context: 4096,
@@ -145,20 +161,20 @@ interface OpenAIMessage {
   role: Role;
   content: string;
 }
-interface OpenAIChatRequest {
-  model: string;
-  messages: OpenAIMessage[];
-  temperature?: number;
-  top_p?: number;
-  n?: number;
-  stream?: boolean;
-  stop?: string | string[];
-  max_tokens?: number;
-  presence_penalty?: number;
-  frequency_penalty?: number;
-  logit_bias?: { [token: number]: number; };
-  user?: string;
-}
+// interface OpenAIChatRequest {
+//   model: string;
+//   messages: OpenAIMessage[];
+//   temperature?: number;
+//   top_p?: number;
+//   n?: number;
+//   stream?: boolean;
+//   stop?: string | string[];
+//   max_tokens?: number;
+//   presence_penalty?: number;
+//   frequency_penalty?: number;
+//   logit_bias?: { [token: number]: number; };
+//   user?: string;
+// }
 
 // * Interfaces for this extension - built on top of OpenAI's API
 export interface ChatMessage extends OpenAIMessage {
@@ -198,6 +214,12 @@ export enum Verbosity {
   full = "full"
 }
 
+export interface CoreTool {
+  description: string;
+  parameters: any;
+  execute?: Function;
+}
+
 export interface Conversation {
   id: string;
   createdAt: string | number;
@@ -217,6 +239,8 @@ export interface Conversation {
     userInput: number; // User input
     minTotal: number; // Minimum tokens to be used (messages + userInput)
   },
+  tools: Record<string, CoreTool>;
+  toolChoice?: 'auto' | 'none' | 'required' | { type: 'tool', toolName: any; };
 }
 
 export interface SendMessageOptions {
@@ -258,7 +282,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k",
+    model: "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k",
     maxTokens: number,
     temperature: number,
     top_p: number;
@@ -302,7 +326,7 @@ export interface ExtensionSettings {
   renameTabTitles: boolean;
   showAllModels: boolean;
   manualModelInput: boolean;
-  apiVersion: string;
+  azureApiVersion: string;
 }
 
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
@@ -354,5 +378,5 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   renameTabTitles: true,
   showAllModels: false,
   manualModelInput: false,
-  apiVersion: "2024-02-01"
+  azureApiVersion: "2024-02-01"
 };

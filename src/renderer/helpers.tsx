@@ -1,4 +1,11 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import { WebviewApi } from "vscode-webview";
 import { useAppDispatch } from "./hooks";
@@ -16,14 +23,14 @@ import {
   Role,
 } from "./types";
 
-export const unEscapeHTML = (unsafe: any) => {
+export const unEscapeHTML = (unsafe: string): string => {
   return unsafe
-    .replaceAll("&amp;", "&")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
-    .replaceAll("&#039;", "'");
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#039;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
 };
 
 export const updateChatMessage = (
@@ -210,6 +217,11 @@ export function getModelFriendlyName(
     if (friendlyName.includes(":")) {
       friendlyName = friendlyName.split(":")[1];
     }
+
+    // If the name ends with " (some text here)", remove it
+    if (friendlyName.includes(" (")) {
+      friendlyName = friendlyName.split(" (")[0];
+    }
   }
 
   // trim
@@ -277,9 +289,9 @@ export function getModelRates(model: Model | undefined): ModelCosts {
 
   // For OpenRouter models, check if the model has cost data with it
   if (model.pricing) {
-    // Mutiply by 1,000 to convert from $ / 1 token to $ / 1,000 tokens
-    costs.prompt = parseFloat(model.pricing.prompt) * 1000;
-    costs.complete = parseFloat(model.pricing.completion) * 1000;
+    // Mutiply by 1,000,000 to convert from $ / 1 token to $ / 1 million tokens
+    costs.prompt = parseFloat(model.pricing.prompt) * 1000000;
+    costs.complete = parseFloat(model.pricing.completion) * 1000000;
     // If cost is < 0, set to undefined
     // -1 means "Pricing varied" (variable model)
     if (costs.prompt < 0) {
@@ -353,7 +365,13 @@ export function useConvertMarkdownToComponent(
       return (
         <ReactMarkdown
           components={{
-            a: ({ href, children }) => renderLink(href ?? "", children),
+            a: ({
+              href,
+              children,
+            }: {
+              href?: string;
+              children?: React.ReactNode;
+            }) => renderLink(href ?? "", children),
           }}
         >
           {markdown}
@@ -364,4 +382,31 @@ export function useConvertMarkdownToComponent(
   );
 
   return markdownToComponent;
+}
+
+// Hook - Get the max cost of a conversation
+export function useMaxCost(conversation: Conversation) {
+  const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const minPromptTokens =
+      (conversation.tokenCount?.messages ?? 0) +
+      (conversation.tokenCount?.userInput ?? 0);
+    const modelContextLimit = getModelContextLimit(conversation.model);
+    const modelMax = getModelCompletionLimit(conversation.model);
+    const maxCompleteTokens = Math.min(
+      modelContextLimit - minPromptTokens,
+      modelMax ?? Infinity
+    );
+    const rates = getModelRates(conversation.model);
+
+    if (rates.prompt !== undefined && rates.complete !== undefined) {
+      const minCost = (minPromptTokens / 1000000) * rates.prompt;
+      setMaxCost(minCost + (maxCompleteTokens / 1000000) * rates.complete);
+    } else {
+      setMaxCost(undefined);
+    }
+  }, [conversation]);
+
+  return maxCost;
 }

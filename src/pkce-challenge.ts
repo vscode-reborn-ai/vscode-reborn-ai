@@ -1,12 +1,9 @@
 /*
 
-Pulled from: https://github.com/crouchcd/pkce-challenge
-
-* The source package is not used due to CJS top-level async/await issues.
-
 MIT License
 
-Copyright (c) 2019 
+Copyright (c) 2019 @crouchcd
+Copyright (c) 2024 Christopher-Hayes/vscode-reborn-ai
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +22,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+Pulled from: https://github.com/crouchcd/pkce-challenge
+
+* The source package is not used due to CJS top-level async/await issues.
+* This package has been modified to support different code challenge methods.
 
 */
 
@@ -64,38 +68,42 @@ function generateVerifier(length: number): string {
 
 /** Generate a PKCE code challenge from a code verifier
  * @param code_verifier
+ * @param method "plain" or "S256". Defaults to "S256".
  * @returns The base64 url encoded code challenge
  */
-export async function generateChallenge(code_verifier: string) {
-  const buffer = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(code_verifier)
-  );
-  // Generate base64url string
-  // btoa is deprecated in Node.js but is used here for web browser compatibility
-  // (which has no good replacement yet, see also https://github.com/whatwg/html/issues/6811)
-  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
-    .replace(/\//g, '_')
-    .replace(/\+/g, '-')
-    .replace(/=/g, '');
+export async function generateChallenge(code_verifier: string, method: "plain" | "S256" = "S256") {
+  if (method === "plain") {
+    return code_verifier;
+  } else if (method === "S256") {
+    const buffer = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(code_verifier)
+    );
+    // Generate base64url string
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\//g, '_')
+      .replace(/\+/g, '-')
+      .replace(/=/g, '');
+  } else {
+    throw new Error(`Unsupported challenge method: ${method}`);
+  }
 }
 
 /** Generate a PKCE challenge pair
- * @param length Length of the verifer (between 43-128). Defaults to 43.
+ * @param length Length of the verifier (between 43-128). Defaults to 43.
+ * @param method "plain" or "S256". Defaults to "S256".
  * @returns PKCE challenge pair
  */
-export default async function pkceChallenge(length?: number): Promise<{
+export default async function pkceChallenge(length: number = 43, method: "plain" | "S256" = "S256"): Promise<{
   code_verifier: string;
   code_challenge: string;
 }> {
-  if (!length) { length = 43; }
-
   if (length < 43 || length > 128) {
     throw new Error(`Expected a length between 43 and 128. Received ${length}.`);
   }
 
   const verifier = generateVerifier(length);
-  const challenge = await generateChallenge(verifier);
+  const challenge = await generateChallenge(verifier, method);
 
   return {
     code_verifier: verifier,
@@ -106,12 +114,14 @@ export default async function pkceChallenge(length?: number): Promise<{
 /** Verify that a code_verifier produces the expected code challenge
  * @param code_verifier
  * @param expectedChallenge The code challenge to verify
+ * @param method "plain" or "S256". Defaults to "S256".
  * @returns True if challenges are equal. False otherwise.
  */
 export async function verifyChallenge(
   code_verifier: string,
-  expectedChallenge: string
+  expectedChallenge: string,
+  method: "plain" | "S256" = "S256"
 ) {
-  const actualChallenge = await generateChallenge(code_verifier);
+  const actualChallenge = await generateChallenge(code_verifier, method);
   return actualChallenge === expectedChallenge;
 }

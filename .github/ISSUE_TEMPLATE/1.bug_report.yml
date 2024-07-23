@@ -15,18 +15,20 @@ body:
         - Windows
         - MacOS
         - Linux
-        - Browser
+        - Browser (Not yet supported)
     validations:
       required: false
   - type: dropdown
     attributes:
-      label: Which OpenAI model are you using? (Optional)
-      description: In the model dropdown, do you have "gpt-3.5-turbo","gpt-4-turbo", "gpt-4", or "gpt-4-32k" selected?
+      label: What kind of LLM are you using? (Optional)
+      description: Are you using an OpenAI model, a local LLM, or some other AI?
       options:
-        - gpt-3.5-turbo
-        - gpt-4-turbo
-        - gpt-4
-        - gpt-4-32k
+        - OpenAI
+        - OpenAI w/ Azure
+        - OpenAI w/ proxy
+        - OpenRouter.ai
+        - A local LLM (such as ollama)
+        - A different cloud LLM
     validations:
       required: false
   - type: textarea

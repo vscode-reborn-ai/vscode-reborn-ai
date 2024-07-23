@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useAppDispatch } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { updateConversationModel } from "../store/conversation";
-import { Conversation, Model } from "../types";
+import { Conversation, Model, Role } from "../types";
 
 export default function ModelInput({
   currentConversation,
@@ -35,7 +35,7 @@ export default function ModelInput({
       name: modelId,
       created: Date.now(),
       object: "model",
-      owned_by: "user",
+      owned_by: Role.user,
     };
 
     backendMessenger.sendModelUpdate(model);
