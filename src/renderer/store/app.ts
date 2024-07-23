@@ -43,6 +43,7 @@ export const appSlice = createSlice({
       newSettings: any;
     }>) => {
       state.extensionSettings = action.payload.newSettings;
+      console.log("DONE: setExtensionSettings", state.extensionSettings);
     },
     setModels: (state, action: PayloadAction<{
       models: Model[];

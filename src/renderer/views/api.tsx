@@ -18,6 +18,7 @@ interface LlmTemplate {
   apiUrl?: URL;
   azureApiVersion?: string;
   docsUrl?: URL;
+  discordUrl?: URL;
   showApiKeyInput?: boolean;
   showAllModelSuggestion?: boolean;
   manualModelInput?: boolean;
@@ -105,6 +106,16 @@ const LLM_TEMPLATES: LlmTemplate[] = [
     ),
     showAllModelSuggestion: true,
     tested: true,
+  },
+  {
+    name: "Featherless AI",
+    instructions:
+      "To use Featherless AI, you must have an account at https://featherless.ai and provide your API key.",
+    apiUrl: new URL("https://api.featherless.ai/v1"),
+    discordUrl: new URL("https://discord.gg/7gybCMPjVA"),
+    showApiKeyInput: true,
+    showAllModelSuggestion: true,
+    tested: false,
   },
   {
     name: "Modelz LLM",
@@ -332,6 +343,18 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                   className="text-blue-500"
                 >
                   {selectedTool.docsUrl.href}
+                </a>
+              </p>
+            )}
+            {selectedTool.discordUrl && (
+              <p>
+                <strong className="inline-block mt-2 mb-1">Discord:</strong>{" "}
+                <a
+                  href={selectedTool.discordUrl.href}
+                  target="_blank"
+                  className="text-blue-500"
+                >
+                  {selectedTool.discordUrl.href}
                 </a>
               </p>
             )}
@@ -596,6 +619,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                   )}
                 </div>
               </div>
+              {/* TODO: find a better way to validate keys, or if this message is no longer true, remove it. */}
               <p className="text-xs mt-2">
                 {t?.apiKeySetup?.apiKeyNote ??
                   "This extension will remember which API key is used for each API URL. Note that some API's, like OpenRouter, will return models even with the wrong API key, so the 'Valid' status may not be accurate. "}

@@ -188,37 +188,36 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           (conversation) => conversation.id === currentConversationId
         );
 
-        if (!currentConversation?.model || !currentConversation?.verbosity) {
-          if (!!models?.length) {
-            dispatch(
-              setModel({
-                conversationId: currentConversationId,
-                model: models.find((model) => model.id === (settingsUpdateData.config.gpt3?.model ?? settings?.gpt3?.model)
-                ) ?? models[0],
-              })
-            );
-          } else {
-            dispatch(
-              setModel({
-                conversationId: currentConversationId,
-                model: {
-                  id: settingsUpdateData.config.gpt3?.model,
-                  // dummy values
-                  created: 0,
-                  object: "model",
-                  owned_by: Role.system,
-                }
-              })
-            );
-          }
-
+        if (!!models?.length) {
           dispatch(
-            setVerbosity({
+            setModel({
               conversationId: currentConversationId,
-              verbosity: settingsUpdateData.config.verbosity,
+              model: models.find((model) => model.id === (settingsUpdateData.config.gpt3?.model ?? settings?.gpt3?.model)
+              ) ?? models[0],
+            })
+          );
+        } else {
+          dispatch(
+            setModel({
+              conversationId: currentConversationId,
+              model: {
+                id: settingsUpdateData.config.gpt3?.model,
+                // dummy values
+                created: 0,
+                object: "model",
+                owned_by: Role.system,
+              }
             })
           );
         }
+
+        dispatch(
+          setVerbosity({
+            conversationId: currentConversationId,
+            verbosity: settingsUpdateData.config.verbosity,
+          })
+        );
+        // }
         break;
       case FrontendMessageType.modelsUpdate:
         const modelsUpdateData = message as ModelsUpdateMessage;

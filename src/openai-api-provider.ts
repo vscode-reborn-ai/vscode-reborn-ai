@@ -493,9 +493,58 @@ export class ApiProvider {
         data: Model[];
       };
 
-      // Did not 404, so we can fetch models from the OpenAI API
-      this._modelList = data.data as Model[];
+      if (url.includes('api.featherless.ai')) {
+        // Get extra data about models from the featherless API
+        const featherModels = await ky.get('https://api.featherless.ai/feather/models').json() as {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          name: string;
+          owned_by: string;
+          model_class: string;
+          favorites: number;
+          downloads: number;
+          status: string;
+          health: string;
+        }[];
+
+        // Combine the two model lists
+        // so that properties for a model are combined from both sources
+        // and the list is deduplicated
+        const combinedModels = new Map<string, Model>();
+
+        for (const model of featherModels) {
+          combinedModels.set(model.id, {
+            id: model.id,
+            name: model.name,
+            created: Date.parse(model.created_at),
+            object: "model",
+            owned_by: model.owned_by as Role,
+            // Featherless-specific fields
+            favorites: model.favorites,
+            downloads: model.downloads,
+            status: model.status,
+            health: model.health,
+          });
+        }
+
+        for (const model of data.data) {
+          combinedModels.set(model.id, {
+            ...combinedModels.get(model.id) ?? {},
+            ...model
+          });
+        }
+
+        this._modelList = Array.from(combinedModels.values());
+
+        console.info('[Reborn AI] Successfully fetched models from featherless API');
+      } else {
+        // Did not 404, so we can fetch models from the OpenAI API
+        this._modelList = data.data as Model[];
+      }
     } catch (error: any | Error) {
+      console.error('[Reborn AI] Failed to fetch models from OpenAI API', error);
+
       if (error === modelEndpointNotFound) {
         // If 404 error, this might be the ollama API
         // Attempt to fetch models from the ollama API

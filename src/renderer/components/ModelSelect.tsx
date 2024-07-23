@@ -3,9 +3,11 @@ import {
   ArrowTrendingDownIcon,
   ArrowTrendingUpIcon,
   ArrowUpIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { VariableSizeList as List } from "react-window";
 import {
   getModelCompletionLimit,
   getModelContextLimit,
@@ -53,9 +55,12 @@ export default function ModelSelect({
     (state: RootState) => state.app.models
   );
   const [filteredModels, setFilteredModels] = useState<Model[]>(models);
+  const [listElementHeights, setListElementHeights] = useState<number[]>(
+    models.map(() => 56)
+  );
   const backendMessenger = useMessenger(vscode);
   const [sortBy, setSortBy] = useState<
-    "name" | "cost" | "context" | "completion"
+    "name" | "cost" | "context" | "completion" | "downloads" | "favorites"
   >("name");
   const [ascending, setAscending] = useState(true);
   const searchInputRef = React.createRef<HTMLInputElement>();
@@ -63,6 +68,7 @@ export default function ModelSelect({
     null
   );
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
+  const listRef = React.createRef<List>();
 
   const hasOpenAIModels = useMemo(() => {
     // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
@@ -141,7 +147,13 @@ export default function ModelSelect({
   // returns sorted list of models
   const sortList = useCallback(
     (
-      sortBy: "name" | "cost" | "context" | "completion",
+      sortBy:
+        | "name"
+        | "cost"
+        | "context"
+        | "completion"
+        | "downloads"
+        | "favorites",
       list: Model[],
       reverse: boolean
     ) => {
@@ -187,6 +199,13 @@ export default function ModelSelect({
               (aModelData?.completeLimit ?? 4096)
             );
           });
+          break;
+        case "downloads":
+          sortedModels.sort((a, b) => (b.downloads ?? 0) - (a.downloads ?? 0));
+          break;
+        case "favorites":
+          sortedModels.sort((a, b) => (b.favorites ?? 0) - (a.favorites ?? 0));
+          break;
       }
 
       if (reverse) {
@@ -238,6 +257,23 @@ export default function ModelSelect({
     setFilteredModels(sortList(sortBy, filteredModels, !ascending));
   }, [sortBy, ascending]);
 
+  // Whenever models change, recalculate the list element heights
+  useEffect(() => {
+    setListElementHeights(
+      models.map((model) => {
+        return showDescriptionOn === model.id ? 120 : 56;
+      })
+    );
+
+    if (listRef.current) {
+      listRef.current?.resetAfterIndex(
+        showDescriptionOn
+          ? models.findIndex((model) => model.id === showDescriptionOn)
+          : 0
+      );
+    }
+  }, [models, showDescriptionOn]);
+
   // Render 1500000 as 1,500,000
   const formatInteger = useCallback((num: number | undefined) => {
     if (num === undefined) {
@@ -280,6 +316,270 @@ export default function ModelSelect({
     },
     [showDescriptionOn]
   );
+
+  const ModelRow = ({
+    index,
+    style,
+    isScrolling,
+  }: {
+    index: number;
+    style: React.CSSProperties;
+    isScrolling?: boolean;
+  }) => {
+    const model = filteredModels[index];
+    const [hasRendered, setHasRendered] = useState(false);
+
+    useEffect(() => {
+      if (!isScrolling) {
+        setHasRendered(true);
+      }
+    }, [isScrolling]);
+
+    return (
+      <>
+        {!hasRendered && isScrolling ? (
+          <div
+            style={{
+              ...style,
+              backgroundColor: "var(--color-menu)",
+              color: "var(--color-menu-selection)",
+            }}
+            className={classNames(
+              "group flex flex-col gap-1 items-start justify-start p-2 w-full",
+              "hover:bg-menu-selection hover:text-menu-selection",
+              "focus:bg-menu-selection focus:text-menu-selection",
+              {
+                "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
+                  model.id === currentConversation.model?.id,
+              }
+            )}
+          >
+            <span className="mt-0.5 text-start font-bold">
+              {model?.name ? (
+                <span>{model.name}</span>
+              ) : (
+                <code>{model.id}</code>
+              )}
+              ...
+            </span>
+          </div>
+        ) : (
+          <button
+            key={model.id}
+            style={style}
+            className={classNames(
+              "group flex flex-col gap-1 items-start justify-start p-2 w-full",
+              "hover:bg-menu-selection hover:text-menu-selection",
+              "focus:bg-menu-selection focus:text-menu-selection",
+              {
+                "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
+                  model.id === currentConversation.model?.id,
+              }
+            )}
+            onClick={() => {
+              setModel(model);
+              if (showParentMenu) {
+                showParentMenu(false);
+              }
+            }}
+          >
+            {/* Line 1 - Model name, badges, description icon */}
+            <div className="w-full flex gap-2 items-center justify-between">
+              <div className="flex gap-2 items-center">
+                {/* Model name and badges */}
+                <span className="mt-0.5 text-start font-bold">
+                  {model?.name ? (
+                    <span>{model.name}</span>
+                  ) : (
+                    <code>{model.id}</code>
+                  )}
+                </span>
+                {isMultimodalModel(model) && (
+                  <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                    multimodal
+                  </span>
+                )}
+                {isOnlineModel(model) && (
+                  <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                    online
+                  </span>
+                )}
+                {model.top_provider?.is_moderated && (
+                  <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
+                    moderated
+                  </span>
+                )}
+                {model.status && model.status !== "active" && (
+                  <span
+                    className={classNames(
+                      "px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection",
+                      {
+                        "text-green-500 border-text-green-500":
+                          model.status === "active",
+                        "text-red-500 border-text-red-500":
+                          model.status !== "active",
+                      }
+                    )}
+                  >
+                    {model.status}
+                  </span>
+                )}
+                {model.health && model.health !== "HEALTHY" && (
+                  <span
+                    className={classNames(
+                      "px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection",
+                      {
+                        "text-green-500 border-text-green-500":
+                          model.health === "HEALTHY",
+                        "text-red-500 border-text-red-500":
+                          model.health !== "HEALTHY",
+                      }
+                    )}
+                  >
+                    {model.health}
+                  </span>
+                )}
+              </div>
+              {/* Icon to show full model description */}
+              {!!model.description?.length && (
+                <button
+                  className={classNames(
+                    "p-1 rounded text-menu opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-hover:text-menu-selection group-focus:text-menu-selection",
+                    "hover:bg-menu focus:bg-menu-selection"
+                  )}
+                  onClick={(event) => descriptionIconClickHandler(event, model)}
+                >
+                  <Icon icon="help" className="w-3 h-3" />
+                  <span className="sr-only">Show model description</span>
+                </button>
+              )}
+            </div>
+            {/* Line 2 - Model description */}
+            {showDescriptionOn === model.id && !!model.description?.length && (
+              <div
+                className="text-xs text-start text-menu group-hover:text-menu-selection group-focus:text-menu-selection prose prose-a:text-menu prose-a:underline cursor-auto"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {computedModelDataMap.get(model.id)?.descriptionComponent}
+              </div>
+            )}
+            {/* Line 2/3 - Model stats */}
+            <div className="w-full flex gap-2 divide-dropdown text-2xs">
+              {computedModelDataMap.get(model.id)?.prompt === undefined &&
+              (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
+                settings.gpt3.apiBaseUrl.includes("localhost")) ? (
+                <>
+                  {model.details?.family && <span>{model.details.family}</span>}
+                  {model.details?.parameter_size && (
+                    <span>{model.details.parameter_size}</span>
+                  )}
+                  {model.details?.quantization_level && (
+                    <span>{model.details.quantization_level}</span>
+                  )}
+                  {model.details?.format && <span>{model.details.format}</span>}
+                  {model.size && <span>{formatSize(model.size)}</span>}
+                </>
+              ) : (
+                <>
+                  {/* Do not show pricing if api url is "api.featherless.ai" */}
+                  {!settings.gpt3.apiBaseUrl.includes("api.featherless.ai") && (
+                    <>
+                      <div
+                        className={classNames(
+                          "flex items-center gap-0.5",
+                          {
+                            "text-green-500": computedModelDataMap.get(model.id)
+                              ?.isFree,
+                            "text-red-500": computedModelDataMap.get(model.id)
+                              ?.isExpensive,
+                            "opacity-75":
+                              sortBy === "context" || sortBy === "completion",
+                          },
+                          "group-hover:text-menu-selection group-focus:text-menu-selection"
+                        )}
+                      >
+                        {computedModelDataMap.get(model.id)?.promptText}
+                        <ArrowUpIcon className="w-3 h-3" />
+                      </div>
+                      <div
+                        className={classNames(
+                          "flex items-center gap-0.5",
+                          {
+                            "text-green-500": computedModelDataMap.get(model.id)
+                              ?.isFree,
+                            "text-red-500": computedModelDataMap.get(model.id)
+                              ?.isExpensive,
+                            "opacity-75":
+                              sortBy === "context" || sortBy === "completion",
+                          },
+                          "group-hover:text-menu-selection group-focus:text-menu-selection"
+                        )}
+                      >
+                        {computedModelDataMap.get(model.id)?.completeText}
+                        <ArrowDownIcon className="w-3 h-3" />
+                      </div>
+                    </>
+                  )}
+                  <div
+                    className={classNames("flex items-center gap-0.5", {
+                      "opacity-75":
+                        sortBy === "cost" || sortBy === "completion",
+                    })}
+                  >
+                    <span>
+                      {formatInteger(
+                        computedModelDataMap.get(model.id)?.promptLimit
+                      )}{" "}
+                      max
+                    </span>
+                    <ArrowUpIcon className="w-3 h-3" />
+                  </div>
+                  <div
+                    className={classNames("flex items-center gap-0.5", {
+                      "opacity-75": sortBy === "cost" || sortBy === "context",
+                    })}
+                  >
+                    <span>
+                      {formatInteger(
+                        computedModelDataMap.get(model.id)?.completeLimit
+                      )}{" "}
+                      max
+                    </span>
+                    <ArrowDownIcon className="w-3 h-3" />
+                  </div>
+                  {model.favorites && model.favorites > 0 && (
+                    <div
+                      className={classNames("flex items-center gap-0.5", {
+                        "opacity-75": sortBy === "cost" || sortBy === "context",
+                      })}
+                    >
+                      <span>
+                        {formatInteger(model.favorites ?? 0)} favorites
+                      </span>
+                      <StarIcon className="w-3 h-3 stroke-current fill-transparent" />
+                    </div>
+                  )}
+                  {model.downloads && model.downloads > 0 && (
+                    <div
+                      className={classNames("flex items-center gap-0.5", {
+                        "opacity-75":
+                          sortBy === "cost" || sortBy === "completion",
+                      })}
+                    >
+                      <span>
+                        {formatInteger(model.downloads ?? 0)} downloads
+                      </span>
+                      <ArrowDownIcon className="w-3 h-3" />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </button>
+        )}
+      </>
+    );
+  };
 
   return (
     <>
@@ -342,195 +642,19 @@ export default function ModelSelect({
                 </>
               ) : (
                 <>
-                  {(models.length > 6 ? filteredModels : models).map(
-                    (model: Model) => (
-                      <button
-                        key={model.id}
-                        className={classNames(
-                          "group flex flex-col gap-1 items-start justify-start p-2 w-full",
-                          "hover:bg-menu-selection hover:text-menu-selection",
-                          "focus:bg-menu-selection focus:text-menu-selection",
-                          {
-                            "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                              model.id === currentConversation.model?.id,
-                          }
-                        )}
-                        onClick={() => {
-                          setModel(model);
-                          if (showParentMenu) {
-                            showParentMenu(false);
-                          }
-                        }}
-                      >
-                        {/* Line 1 - Model name, badges, description icon */}
-                        <div className="w-full flex gap-2 items-center justify-between">
-                          <div className="flex gap-2 items-center">
-                            {/* Model name and badges */}
-                            <span className="mt-0.5 text-start font-bold">
-                              {model?.name ? (
-                                <span>{model.name}</span>
-                              ) : (
-                                <code>{model.id}</code>
-                              )}
-                            </span>
-                            {isMultimodalModel(model) && (
-                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
-                                multimodal
-                              </span>
-                            )}
-                            {isOnlineModel(model) && (
-                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
-                                online
-                              </span>
-                            )}
-                            {model.top_provider?.is_moderated && (
-                              <span className="px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection">
-                                moderated
-                              </span>
-                            )}
-                          </div>
-                          {/* Icon to show full model description */}
-                          {!!model.description?.length && (
-                            <button
-                              className={classNames(
-                                "p-1 rounded text-menu opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-hover:text-menu-selection group-focus:text-menu-selection",
-                                "hover:bg-menu focus:bg-menu-selection"
-                              )}
-                              onClick={(event) =>
-                                descriptionIconClickHandler(event, model)
-                              }
-                            >
-                              <Icon icon="help" className="w-3 h-3" />
-                              <span className="sr-only">
-                                Show model description
-                              </span>
-                            </button>
-                          )}
-                        </div>
-                        {/* Line 2 - Model description */}
-                        {showDescriptionOn === model.id &&
-                          !!model.description?.length && (
-                            <div
-                              className="text-xs text-start text-menu group-hover:text-menu-selection group-focus:text-menu-selection prose prose-a:text-menu prose-a:underline cursor-auto"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              {
-                                computedModelDataMap.get(model.id)
-                                  ?.descriptionComponent
-                              }
-                            </div>
-                          )}
-                        {/* Line 2/3 - Model stats */}
-                        <div className="w-full flex justify-around gap-2 divide-dropdown text-2xs">
-                          {computedModelDataMap.get(model.id)?.prompt ===
-                            undefined &&
-                          (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
-                            settings.gpt3.apiBaseUrl.includes("localhost")) ? (
-                            <>
-                              {model.details?.family && (
-                                <span>{model.details.family}</span>
-                              )}
-                              {model.details?.parameter_size && (
-                                <span>{model.details.parameter_size}</span>
-                              )}
-                              {model.details?.quantization_level && (
-                                <span>{model.details.quantization_level}</span>
-                              )}
-                              {model.details?.format && (
-                                <span>{model.details.format}</span>
-                              )}
-                              {model.size && (
-                                <span>{formatSize(model.size)}</span>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <div
-                                className={classNames(
-                                  "flex items-center gap-0.5",
-                                  {
-                                    "text-green-500": computedModelDataMap.get(
-                                      model.id
-                                    )?.isFree,
-                                    "text-red-500": computedModelDataMap.get(
-                                      model.id
-                                    )?.isExpensive,
-                                    "opacity-75":
-                                      sortBy === "context" ||
-                                      sortBy === "completion",
-                                  },
-                                  "group-hover:text-menu-selection group-focus:text-menu-selection"
-                                )}
-                              >
-                                {computedModelDataMap.get(model.id)?.promptText}
-                                <ArrowUpIcon className="w-3 h-3" />
-                              </div>
-                              <div
-                                className={classNames(
-                                  "flex items-center gap-0.5",
-                                  {
-                                    "text-green-500": computedModelDataMap.get(
-                                      model.id
-                                    )?.isFree,
-                                    "text-red-500": computedModelDataMap.get(
-                                      model.id
-                                    )?.isExpensive,
-                                    "opacity-75":
-                                      sortBy === "context" ||
-                                      sortBy === "completion",
-                                  },
-                                  "group-hover:text-menu-selection group-focus:text-menu-selection"
-                                )}
-                              >
-                                {
-                                  computedModelDataMap.get(model.id)
-                                    ?.completeText
-                                }
-                                <ArrowDownIcon className="w-3 h-3" />
-                              </div>
-                              <div
-                                className={classNames(
-                                  "flex items-center gap-0.5",
-                                  {
-                                    "opacity-75":
-                                      sortBy === "cost" ||
-                                      sortBy === "completion",
-                                  }
-                                )}
-                              >
-                                <span>
-                                  {formatInteger(
-                                    computedModelDataMap.get(model.id)
-                                      ?.promptLimit
-                                  )}{" "}
-                                  max
-                                </span>
-                                <ArrowUpIcon className="w-3 h-3" />
-                              </div>
-                              <div
-                                className={classNames(
-                                  "flex items-center gap-0.5",
-                                  {
-                                    "opacity-75":
-                                      sortBy === "cost" || sortBy === "context",
-                                  }
-                                )}
-                              >
-                                <span>
-                                  {formatInteger(
-                                    computedModelDataMap.get(model.id)
-                                      ?.completeLimit
-                                  )}{" "}
-                                  max
-                                </span>
-                                <ArrowDownIcon className="w-3 h-3" />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </button>
-                    )
-                  )}
+                  <List
+                    ref={listRef}
+                    height={window.innerHeight - 240}
+                    itemCount={
+                      (models.length > 6 ? filteredModels : models).length
+                    }
+                    itemSize={(index) => listElementHeights[index]}
+                    width="100%"
+                    useIsScrolling
+                    overscanCount={5}
+                  >
+                    {ModelRow}
+                  </List>
                   {models.length > 6 && (
                     <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
                       <div className="flex flex-wrap gap-2 items-center justify-between">
@@ -566,32 +690,92 @@ export default function ModelSelect({
                                 <ArrowTrendingDownIcon className="w-3 h-3" />
                               ))}
                           </button>
-                          <button
-                            className={classNames(
-                              "flex items-center gap-1 p-1 rounded",
-                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
-                              {
-                                "bg-menu-selection": sortBy === "cost",
-                              }
-                            )}
-                            onClick={() => {
-                              if (sortBy === "cost") {
-                                setAscending(!ascending);
-                              } else {
-                                setAscending(true);
-                              }
+                          {settings.gpt3.apiBaseUrl.includes(
+                            "api.featherless.ai"
+                          ) ? (
+                            // Filter by "downloads" and "favorites" is with "api.featherless.ai"
+                            <>
+                              <button
+                                className={classNames(
+                                  "flex items-center gap-1 p-1 rounded",
+                                  "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
+                                  {
+                                    "bg-menu-selection": sortBy === "downloads",
+                                  }
+                                )}
+                                onClick={() => {
+                                  if (sortBy === "downloads") {
+                                    setAscending(!ascending);
+                                  } else {
+                                    setAscending(true);
+                                  }
 
-                              setSortBy("cost");
-                            }}
-                          >
-                            <span>Cost</span>
-                            {sortBy === "cost" &&
-                              (ascending ? (
-                                <ArrowTrendingUpIcon className="w-3 h-3" />
-                              ) : (
-                                <ArrowTrendingDownIcon className="w-3 h-3" />
-                              ))}
-                          </button>
+                                  setSortBy("downloads");
+                                }}
+                              >
+                                <span>Downloads</span>
+                                {sortBy === "downloads" &&
+                                  (ascending ? (
+                                    <ArrowTrendingUpIcon className="w-3 h-3" />
+                                  ) : (
+                                    <ArrowTrendingDownIcon className="w-3 h-3" />
+                                  ))}
+                              </button>
+                              <button
+                                className={classNames(
+                                  "flex items-center gap-1 p-1 rounded",
+                                  "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
+                                  {
+                                    "bg-menu-selection": sortBy === "favorites",
+                                  }
+                                )}
+                                onClick={() => {
+                                  if (sortBy === "favorites") {
+                                    setAscending(!ascending);
+                                  } else {
+                                    setAscending(true);
+                                  }
+
+                                  setSortBy("favorites");
+                                }}
+                              >
+                                <span>Favorites</span>
+                                {sortBy === "favorites" &&
+                                  (ascending ? (
+                                    <ArrowTrendingUpIcon className="w-3 h-3" />
+                                  ) : (
+                                    <ArrowTrendingDownIcon className="w-3 h-3" />
+                                  ))}
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              className={classNames(
+                                "flex items-center gap-1 p-1 rounded",
+                                "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
+                                {
+                                  "bg-menu-selection": sortBy === "cost",
+                                }
+                              )}
+                              onClick={() => {
+                                if (sortBy === "cost") {
+                                  setAscending(!ascending);
+                                } else {
+                                  setAscending(true);
+                                }
+
+                                setSortBy("cost");
+                              }}
+                            >
+                              <span>Cost</span>
+                              {sortBy === "cost" &&
+                                (ascending ? (
+                                  <ArrowTrendingUpIcon className="w-3 h-3" />
+                                ) : (
+                                  <ArrowTrendingDownIcon className="w-3 h-3" />
+                                ))}
+                            </button>
+                          )}
                           <button
                             className={classNames(
                               "flex items-center gap-1 p-1 rounded",

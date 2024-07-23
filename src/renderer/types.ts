@@ -70,6 +70,12 @@ export interface Model {
     parameter_size: string; // ie. "7B"
     quantization_level: string; // ie. "Q4_0"
   };
+
+  // * Featherless additional fields (from /feather/models)
+  favorites?: number;
+  downloads?: number;
+  status?: string;
+  health?: string;
 }
 
 // Maps ID to a friendly name

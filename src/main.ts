@@ -878,13 +878,20 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       }
     } catch (error: any) {
       let message;
-      let apiMessage = error?.response?.data?.error?.message || error?.tostring?.() || error?.message || error?.name;
+      let apiMessage = error?.response?.data?.error?.message ?? error?.response?.data?.message ?? error?.response?.message ?? error?.message ?? error?.name ?? (error ?? '').toString();
+
+      if (error.responseBody) {
+        apiMessage = JSON.stringify(error.responseBody, null, 2) ?? apiMessage;
+      }
 
       console.error("[Reborn AI] api-request-failed info:", JSON.stringify(error, null, 2));
       console.error("[Reborn AI] api-request-failed error obj:", error);
 
       // For whatever reason error.status is undefined, but the below works
-      const status = JSON.parse(JSON.stringify(error)).status ?? error?.status ?? error?.response?.status ?? error?.response?.data?.error?.status;
+      const status = JSON.parse(JSON.stringify(error)).status ?? error?.status ?? error?.response?.status ?? error.statusCode ?? error?.response?.statusCode ?? error?.response?.data?.error?.status;
+
+      console.error("[Reborn AI] api-request-failed status:", status);
+      console.error("[Reborn AI] api-request-failed message:", apiMessage);
 
       switch (status) {
         case 400:
@@ -896,7 +903,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Invalid);
           break;
         case 403:
-          message = '403 Forbidden\n\nYour token has expired. Please try authenticating again. \n\nServer message: ' + apiMessage;
+          if (error?.responseBody) {
+            const errorObject = JSON.parse(error.responseBody);
+            message = `${errorObject.statusCode} | ${errorObject.code}\n\n${errorObject.message}`;
+          } else {
+            message = '403 Forbidden\n\nYour token has expired. Please try authenticating again. \n\nServer message: ' + apiMessage;
+          }
           break;
         case 404:
           message = `404 Not Found\n\n`;
@@ -906,7 +918,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           if (apiUrl.includes("openai.1rmb.tk") && apiUrl !== "https://openai.1rmb.tk/v1") {
             message += "It looks like you are using the openai.1rmb.tk proxy server, but the path might be wrong.\nThe recommended path is https://openai.1rmb.tk/v1";
           } else {
-            message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model?.id}' may be incompatible or you may have exhausted your ChatGPT subscription allowance. \n\nServer message: ${apiMessage}`;
+            message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model?.id}' may be incompatible or you may have exhausted your ChatGPT subscription allowance. \n\nServer message: ${JSON.stringify(JSON.parse(error.responseBody ?? apiMessage), null, 2)}`;
           }
           break;
         case 429:
