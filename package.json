@@ -3,8 +3,8 @@
   "publisher": "chris-hayes",
   "displayName": "VSCode Reborn AI",
   "icon": "images/ai-logo.jpg",
-  "description": "Refactor, improve, and debug your code with GPT-4. Bring your own OpenAI API key.",
-  "version": "3.24.0",
+  "description": "Code with AI in VSCode, but you get to choose the AI.",
+  "version": "3.25.0",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/vscode-reborn-ai/vscode-reborn-ai"
