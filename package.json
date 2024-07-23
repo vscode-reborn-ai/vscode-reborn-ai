@@ -2,7 +2,7 @@
   "name": "chatgpt-reborn",
   "publisher": "chris-hayes",
   "displayName": "VSCode Reborn AI",
-  "icon": "images/ai-logo.jpg",
+  "icon": "images/reborn-ai-logo.png",
   "description": "Code with AI in VSCode, but you get to choose the AI.",
   "version": "3.25.0",
   "license": "ISC",
