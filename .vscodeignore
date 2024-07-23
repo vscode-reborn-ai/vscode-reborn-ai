@@ -13,5 +13,5 @@ images/**
 temp/**
 !images/reborn-ai-logo.png
 !images/reborn-ai-logo.jpg
-!images/openai-logo.svg
+!images/reborn-ai-logo.svg
 chatgpt-4.7.2
