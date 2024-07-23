@@ -100,7 +100,7 @@ export default function Chat({
   }, [conversationListRef.current]);
 
   return (
-    <div className="overflow-y-auto flex-1">
+    <div className="w-full overflow-y-auto flex-grow">
       {debug && (
         <div className="text-gray-500 text-[10px] font-mono">
           Conversation ID: {conversation?.id}

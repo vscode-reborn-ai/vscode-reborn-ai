@@ -8,12 +8,15 @@ export default function ({ className }: { vscode: any; className?: string }) {
 
   return (
     <div
-      className={`flex flex-col justify-start gap-3.5 h-full items-center px-6 pt-2 pb-24 w-full relative login-screen overflow-auto ${className}`}
+      className={`flex flex-col justify-center gap-3.5 h-[calc(100vh-12em)] items-center px-6 pt-2 pb-20 w-full relative login-screen overflow-auto ${className}`}
     >
-      <div className="flex flex-row items-center gap-2">
-        <Icon icon="zap" className="w-8 h-8" />
+      <div className="w-full flex justify-center flex-row items-center gap-2">
+        <Icon icon="logo" className="w-16 h-16 fill-current" />
         <h2 className="text-lg font-bold">
-          {t?.introductionSplash?.features?.title ?? "Features"}
+          {/* TODO: remove from translation files */}
+          {/* {t?.introductionSplash?.features?.title ?? "Features"} */}
+          VSCode <br />
+          Reborn AI
         </h2>
       </div>
       <ul className="w-full max-w-lg grid grid-cols-1 xs:grid-cols-2 gap-3.5 text-xs">

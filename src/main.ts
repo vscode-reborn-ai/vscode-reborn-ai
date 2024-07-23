@@ -956,7 +956,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
       </head>
       <body class="overflow-hidden">
-        <div id="root" class="flex flex-col h-screen"></div>
+        <div id="root" class="flex flex-col min-h-[calc(100vh-8em)] max-h-screen"></div>
         <script nonce="${nonce}" src="${webpackScript}"></script>
         <script src="${vendorHighlightJs}" defer async></script>
         <script src="${vendorMarkedJs}" defer async></script>
