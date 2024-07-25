@@ -6,7 +6,9 @@ export interface ConversationState {
     [id: string]: Conversation;
   };
   currentConversationId: string | undefined;
-  currentConversation: Conversation | undefined;
+
+  // Enforce with get: currentConversation is always by reference
+  readonly currentConversation?: Conversation | undefined;
 }
 
 const initialConversationID = `Chat-${Date.now()}`;
@@ -47,7 +49,7 @@ export const conversationSlice = createSlice({
         state.conversations[id] = action.payload;
 
         if (id === state.currentConversationId) {
-          state.currentConversation = action.payload;
+          state.currentConversation = state.conversations[id];
         }
       }
     },

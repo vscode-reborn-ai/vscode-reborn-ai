@@ -161,8 +161,13 @@ export default ({
     };
 
     const handleKeyDown = (event: ExtendedKeyboardEvent) => {
+      // If the user presses enter, submit the question
+      // Does not apply to Shift+Enter
       if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
-        event.preventDefault();
+        // remove the last instance of a newline character from the end of the input
+        const input = event.target as HTMLTextAreaElement;
+        input.value = input.value.replace(/\n+$/, "");
+
         askQuestion();
       } else if (
         event.key === "Enter" &&

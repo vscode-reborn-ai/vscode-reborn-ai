@@ -4,10 +4,10 @@ import { useRenameTabTitleWithAI } from "./helpers";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { RootState } from "./store";
 import { ActionRunState, setActionError, setActionState } from "./store/action";
-import { setApiKeyStatus, setExtensionSettings, setModels, setTranslations } from "./store/app";
+import { setApiKeyStatus, setExtensionSettings, setModelListStatus, setModels, setTranslations } from "./store/app";
 import { addMessage, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
 import { ActionNames, ChatMessage, Conversation, Role } from "./types";
-import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage } from "./types-messages";
+import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateModelListStatusMessage, UpdateTokenCountMessage } from "./types-messages";
 
 export const useBackendMessageHandler = (backendMessenger: any) => {
   const dispatch = useAppDispatch();
@@ -23,6 +23,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
   );
   const models = useAppSelector((state: RootState) => state.app.models);
   const debug = useAppSelector((state: RootState) => state.app.debug);
+  const currentConversation = useAppSelector((state: RootState) => state.conversation.currentConversation);
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
   );
@@ -55,7 +56,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
       console.info("[Reborn AI] Renderer - Received message from main process: ", event.data);
     }
 
-    let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
+    let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | UpdateModelListStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
 
     switch (message.type) {
       case FrontendMessageType.showInProgress:
@@ -184,9 +185,9 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
 
         dispatch(setExtensionSettings({ newSettings: settingsUpdateData.config }));
 
-        const currentConversation = conversationList.find(
-          (conversation) => conversation.id === currentConversationId
-        );
+        if (currentConversation && !currentConversation?.model && settingsUpdateData.config.gpt3?.model) {
+          currentConversation.model = models.find((model) => model.id === settingsUpdateData.config.gpt3?.model);
+        }
 
         if (!!models?.length) {
           dispatch(
@@ -233,6 +234,11 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         const apiKeyStatusData = message as UpdateApiKeyStatusMessage;
 
         dispatch(setApiKeyStatus(apiKeyStatusData.status));
+        break;
+      case FrontendMessageType.updateModelListStatus:
+        const modelListStatusData = message as UpdateModelListStatusMessage;
+
+        dispatch(setModelListStatus(modelListStatusData.status));
         break;
       case FrontendMessageType.tokenCount:
         const tokenCountData = message as UpdateTokenCountMessage;

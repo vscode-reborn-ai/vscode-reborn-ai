@@ -4,11 +4,8 @@ import { useDebounce } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
-import {
-  ApiKeyStatus,
-  setApiKeyStatus,
-  setExtensionSettings,
-} from "../store/app";
+import { setApiKeyStatus, setExtensionSettings } from "../store/app";
+import { ApiKeyStatus } from "../store/types";
 import { DEFAULT_EXTENSION_SETTINGS } from "../types";
 
 const API_KEY_PLACEHOLDER = "sk-...";
@@ -183,6 +180,7 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
   const debouncedSetApiKey = useDebounce(handleApiKeyUpdate, 2000);
 
   const handleApiUrlUpdate = useCallback((apiUrl: string) => {
+    dispatch(setApiKeyStatus(ApiKeyStatus.Pending));
     backendMessenger.sendChangeApiUrl(apiUrl);
 
     setShowUrlSaved(true);

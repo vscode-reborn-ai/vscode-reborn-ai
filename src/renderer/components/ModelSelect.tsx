@@ -20,8 +20,8 @@ import {
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
-import { ApiKeyStatus } from "../store/app";
 import { updateConversationModel } from "../store/conversation";
+import { ApiKeyStatus, ModelListStatus } from "../store/types";
 import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
 import Icon from "./Icon";
 
@@ -50,6 +50,9 @@ export default function ModelSelect({
   );
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
+  );
+  const modelListStatus = useAppSelector(
+    (state: RootState) => state.app.modelListStatus
   );
   const models: Model[] = useAppSelector(
     (state: RootState) => state.app.models
@@ -82,14 +85,18 @@ export default function ModelSelect({
     );
   }, [models]);
 
+  // TODO: Track when a /models fetch is in-progress to improve UX
   // Check if the current model is in the model list
   // When APIs are changed, the current model might not be available
   const isCurrentModelAvailable = useMemo(() => {
-    return (
-      models.length === 0 ||
-      models.some((model) => model.id === currentConversation.model?.id)
-    );
-  }, [models, currentConversation.model]);
+    const isAvailable =
+      modelListStatus === ModelListStatus.Unknown ||
+      modelListStatus === ModelListStatus.Fetching ||
+      settings.manualModelInput ||
+      models.some((model) => model.id === currentConversation.model?.id);
+
+    return isAvailable;
+  }, [models, currentConversation.model?.id, modelListStatus]);
 
   // computed model costs for all models
   interface ComputedModelData {
@@ -622,13 +629,16 @@ export default function ModelSelect({
             <>
               {models.length === 0 ? (
                 <>
-                  {apiKeyStatus === ApiKeyStatus.Pending ? (
+                  {apiKeyStatus === ApiKeyStatus.Pending ||
+                  modelListStatus === ModelListStatus.Fetching ||
+                  modelListStatus === ModelListStatus.Unknown ? (
                     <div className="p-2 text-center">
                       <span className="text-yellow-500">
                         Fetching models...
                       </span>
                     </div>
-                  ) : apiKeyStatus === ApiKeyStatus.Invalid ? (
+                  ) : apiKeyStatus === ApiKeyStatus.Invalid ||
+                    modelListStatus === ModelListStatus.Error ? (
                     <div className="p-2 text-center">
                       <span className="text-red-500">
                         Invalid API key. Please check your API key.

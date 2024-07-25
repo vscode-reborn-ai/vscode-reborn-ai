@@ -1,26 +1,6 @@
 // * Interfaces for OpenAI's API
 // For network requests - based on OpenAI API docs - https://platform.openai.com/docs/api-reference/
 
-
-// TODO: just import directly from openai types
-interface OpenAIPromptRequest {
-  model: string;
-  prompt?: string | string[] | number[] | number[][];
-  suffix?: string;
-  max_tokens?: number;
-  temperature?: number;
-  top_p?: number;
-  n?: number;
-  stream?: boolean;
-  logprobs?: number;
-  echo?: boolean;
-  stop?: string | string[];
-  presence_penalty?: number;
-  frequency_penalty?: number;
-  best_of?: number;
-  logit_bias?: { [token: number]: number; };
-  user?: string;
-}
 export enum Role {
   user = 'user',
   assistant = 'assistant',
@@ -167,20 +147,6 @@ interface OpenAIMessage {
   role: Role;
   content: string;
 }
-// interface OpenAIChatRequest {
-//   model: string;
-//   messages: OpenAIMessage[];
-//   temperature?: number;
-//   top_p?: number;
-//   n?: number;
-//   stream?: boolean;
-//   stop?: string | string[];
-//   max_tokens?: number;
-//   presence_penalty?: number;
-//   frequency_penalty?: number;
-//   logit_bias?: { [token: number]: number; };
-//   user?: string;
-// }
 
 // * Interfaces for this extension - built on top of OpenAI's API
 export interface ChatMessage extends OpenAIMessage {
