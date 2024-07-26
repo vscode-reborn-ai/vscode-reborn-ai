@@ -147,9 +147,9 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 128000,
     max: 16384,
   },
-  // TODO: Dec 11, 2023 gpt-35-turbo prompt will become 16385 (but complete will remain 4096)
   'gpt-3.5-turbo': {
-    context: 4096,
+    context: 16385,
+    max: 4096,
   },
   'gpt-3.5-turbo-16k': {
     context: 16385,
