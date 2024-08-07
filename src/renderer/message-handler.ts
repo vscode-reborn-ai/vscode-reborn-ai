@@ -186,7 +186,21 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         dispatch(setExtensionSettings({ newSettings: settingsUpdateData.config }));
 
         if (currentConversation && !currentConversation?.model && settingsUpdateData.config.gpt3?.model) {
-          currentConversation.model = models.find((model) => model.id === settingsUpdateData.config.gpt3?.model);
+          // Find the conversation in the list and update the model
+          const conversation = conversationList.find(
+            (conversation) => conversation.id === currentConversationId
+          );
+
+          const model = models.find((model) => model.id === settingsUpdateData.config.gpt3?.model);
+
+          if (conversation && model) {
+            dispatch(
+              setModel({
+                conversationId: currentConversationId,
+                model,
+              })
+            );
+          }
         }
 
         if (!!models?.length) {
