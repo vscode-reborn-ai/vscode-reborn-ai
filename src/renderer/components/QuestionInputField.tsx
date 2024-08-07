@@ -1,5 +1,11 @@
 import classNames from "classnames";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Tooltip } from "react-tooltip";
 import { isInstructModel, useMaxCost } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -148,44 +154,40 @@ export default ({
     }
   };
 
-  useEffect(() => {
-    const inputElement = questionInputRef.current;
+  const handleKeyDown = useCallback((event: ExtendedKeyboardEvent) => {
+    // If the user presses enter, submit the question
+    // Does not apply to Shift+Enter
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      // remove the last instance of a newline character from the end of the input
+      const input = event.target as HTMLTextAreaElement;
+      input.value = input.value.replace(/\n+$/, "");
 
-    const handleInput = (e: Event) => {
-      const target = e.target as HTMLTextAreaElement;
+      askQuestion();
+    } else if (event.key === "Enter" && event.shiftKey && !event.isComposing) {
+      // update the textarea height
+      const target = event.target as any;
 
       if (target) {
-        (target.parentNode as HTMLElement)!.dataset.replicatedValue =
-          target.value;
+        target.parentNode.dataset.replicatedValue = target?.value;
       }
-    };
+    }
+  }, []);
 
-    const handleKeyDown = (event: ExtendedKeyboardEvent) => {
-      // If the user presses enter, submit the question
-      // Does not apply to Shift+Enter
-      if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
-        // remove the last instance of a newline character from the end of the input
-        const input = event.target as HTMLTextAreaElement;
-        input.value = input.value.replace(/\n+$/, "");
+  const handleInput = useCallback((e: Event) => {
+    const target = e.target as HTMLTextAreaElement;
 
-        askQuestion();
-      } else if (
-        event.key === "Enter" &&
-        event.shiftKey &&
-        !event.isComposing
-      ) {
-        // update the textarea height
-        const target = event.target as any;
+    if (target) {
+      (target.parentNode as HTMLElement)!.dataset.replicatedValue =
+        target.value;
+    }
+  }, []);
 
-        if (target) {
-          target.parentNode.dataset.replicatedValue = target?.value;
-        }
-      }
-    };
-
-    if (inputElement) {
-      inputElement.addEventListener("input", handleInput, { passive: true });
-      inputElement.addEventListener(
+  useEffect(() => {
+    if (questionInputRef.current) {
+      questionInputRef.current.addEventListener("input", handleInput, {
+        passive: true,
+      });
+      questionInputRef.current.addEventListener(
         "keydown",
         handleKeyDown as any as EventListenerOrEventListenerObject,
         { passive: true }
@@ -193,12 +195,15 @@ export default ({
     }
 
     return () => {
-      if (inputElement) {
-        inputElement.removeEventListener("input", handleInput);
-        inputElement.removeEventListener("keydown", handleKeyDown as any);
+      if (questionInputRef.current) {
+        questionInputRef.current.removeEventListener("input", handleInput);
+        questionInputRef.current.removeEventListener(
+          "keydown",
+          handleKeyDown as any
+        );
       }
     };
-  }, []);
+  }, [questionInputRef.current]);
 
   return (
     <footer
@@ -224,16 +229,17 @@ export default ({
               )}
             </div>
           )}
-          {!currentConversation.inProgress && (
-            <textarea
-              rows={1}
-              className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
-              id="question-input"
-              placeholder="Ask a question..."
-              ref={questionInputRef}
-              disabled={currentConversation.inProgress}
-            ></textarea>
-          )}
+          <textarea
+            rows={1}
+            className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
+            style={{
+              display: currentConversation.inProgress ? "none" : "block",
+            }}
+            id="question-input"
+            placeholder="Ask a question..."
+            ref={questionInputRef}
+            disabled={currentConversation.inProgress}
+          ></textarea>
         </div>
 
         <div className="bg" id="question-input-buttons">
