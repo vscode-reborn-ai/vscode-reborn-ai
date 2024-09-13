@@ -145,6 +145,18 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
+    // Log everything
+    console.log('--- Stream Chat Completion ---');
+    console.log('model:', this._openai.languageModel(model));
+    console.log('conversation:', conversation);
+    console.log('messages to send:', conversation.messages.map((message) => ({
+      role: message.role,
+      content: message.content,
+    })));
+    console.log('max tokens:', completeTokensLeft);
+    console.log('temperature:', temperature);
+    console.log('topP:', topP);
+
     const { textStream } = await
       streamText({
         // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
@@ -159,10 +171,16 @@ export class ApiProvider {
         abortSignal,
       });
 
+    let sent = '';
+
     for await (const textPart of textStream) {
       if (abortSignal.aborted) {
         return;
       }
+
+      sent += textPart;
+
+      console.log('stream:', sent);
 
       yield textPart;
     }
