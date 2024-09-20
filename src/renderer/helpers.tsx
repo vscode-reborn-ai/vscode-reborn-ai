@@ -222,6 +222,11 @@ export function getModelFriendlyName(
     if (friendlyName.includes(" (")) {
       friendlyName = friendlyName.split(" (")[0];
     }
+
+    // If it has a format like "google/gemma-7b-it", ignore everything before the slash
+    if (friendlyName.includes("/")) {
+      friendlyName = friendlyName.split("/")[1];
+    }
   }
 
   // trim
@@ -325,6 +330,10 @@ export function isOnlineModel(model: Model | undefined) {
   return model?.id.includes("online");
 }
 
+// TODO: fix
+// ATM, the following function is only used with the OpenRouter models
+// But, specifying "openrouter.ai" seems like a bug in the making
+// This should be refactored to be more generic
 export function useConvertMarkdownToComponent(
   vscode: WebviewApi<unknown> | undefined
 ) {

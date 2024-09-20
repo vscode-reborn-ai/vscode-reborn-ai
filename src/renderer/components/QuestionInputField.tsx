@@ -1,5 +1,11 @@
 import classNames from "classnames";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Tooltip } from "react-tooltip";
 import { isInstructModel, useMaxCost } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -19,6 +25,11 @@ import ModelSelect from "./ModelSelect";
 import MoreActionsMenu from "./MoreActionsMenu";
 import TokenCountPopup from "./TokenCountPopup";
 import VerbositySelect from "./VerbositySelect";
+
+interface ExtendedKeyboardEvent
+  extends React.KeyboardEvent<HTMLTextAreaElement> {
+  isComposing?: boolean;
+}
 
 export default ({
   conversation: currentConversation,
@@ -143,6 +154,57 @@ export default ({
     }
   };
 
+  const handleKeyDown = useCallback((event: ExtendedKeyboardEvent) => {
+    // If the user presses enter, submit the question
+    // Does not apply to Shift+Enter
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      // remove the last instance of a newline character from the end of the input
+      const input = event.target as HTMLTextAreaElement;
+      input.value = input.value.replace(/\n+$/, "");
+
+      askQuestion();
+    } else if (event.key === "Enter" && event.shiftKey && !event.isComposing) {
+      // update the textarea height
+      const target = event.target as any;
+
+      if (target) {
+        target.parentNode.dataset.replicatedValue = target?.value;
+      }
+    }
+  }, []);
+
+  const handleInput = useCallback((e: Event) => {
+    const target = e.target as HTMLTextAreaElement;
+
+    if (target) {
+      (target.parentNode as HTMLElement)!.dataset.replicatedValue =
+        target.value;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (questionInputRef.current) {
+      questionInputRef.current.addEventListener("input", handleInput, {
+        passive: true,
+      });
+      questionInputRef.current.addEventListener(
+        "keydown",
+        handleKeyDown as any as EventListenerOrEventListenerObject,
+        { passive: true }
+      );
+    }
+
+    return () => {
+      if (questionInputRef.current) {
+        questionInputRef.current.removeEventListener("input", handleInput);
+        questionInputRef.current.removeEventListener(
+          "keydown",
+          handleKeyDown as any
+        );
+      }
+    };
+  }, [questionInputRef.current]);
+
   return (
     <footer
       className={`fixed z-20 bottom-0 w-full flex flex-col gap-y-1 pt-2 bg-gradient-to-t from-bg from-50% to-transparent
@@ -167,61 +229,17 @@ export default ({
               )}
             </div>
           )}
-          {!currentConversation.inProgress && (
-            <textarea
-              rows={1}
-              className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
-              id="question-input"
-              placeholder="Ask a question..."
-              ref={questionInputRef}
-              disabled={currentConversation.inProgress}
-              onInput={(e) => {
-                const target = e.target as any;
-                if (target) {
-                  target.parentNode.dataset.replicatedValue = target?.value;
-                }
-              }}
-              onKeyDown={(event: any) => {
-                // avoid awkward newline before submitting question
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  event.preventDefault();
-                }
-              }}
-              onKeyUp={(event: any) => {
-                const question = questionInputRef?.current?.value;
-
-                // update the state
-                dispatch(
-                  updateUserInput({
-                    conversationId: currentConversation.id,
-                    userInput: question ?? "",
-                  })
-                );
-
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  askQuestion();
-                } else if (
-                  event.key === "Enter" &&
-                  event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  // update the textarea height
-                  const target = event.target as any;
-                  if (target) {
-                    target.parentNode.dataset.replicatedValue = target?.value;
-                  }
-                }
-              }}
-            ></textarea>
-          )}
+          <textarea
+            rows={1}
+            className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
+            style={{
+              display: currentConversation.inProgress ? "none" : "block",
+            }}
+            id="question-input"
+            placeholder="Ask a question..."
+            ref={questionInputRef}
+            disabled={currentConversation.inProgress}
+          ></textarea>
         </div>
 
         <div className="bg" id="question-input-buttons">
@@ -344,12 +362,13 @@ export default ({
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
           <div className="flex flex-row items-start gap-2">
-            <div
-              className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
-                tokenCountAnimation
-                  ? "duration-200 bg-blue-300 bg-opacity-20"
-                  : "duration-500"
-              }
+            {!settings.gpt3.apiBaseUrl.includes("api.featherless.ai") && (
+              <div
+                className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
+                  tokenCountAnimation
+                    ? "duration-200 bg-blue-300 bg-opacity-20"
+                    : "duration-500"
+                }
                 ${
                   parseInt(tokenCountLabel) >
                   (MODEL_TOKEN_LIMITS.has(
@@ -363,39 +382,40 @@ export default ({
                     : ""
                 }
               `}
-              ref={tokenCountRef}
-              tabIndex={0}
-              // on hover showTokenBreakdown
-              onMouseEnter={() => {
-                setShowTokenBreakdown(true);
-              }}
-              onMouseLeave={() => {
-                setShowTokenBreakdown(false);
-              }}
-              onFocus={() => {
-                setShowTokenBreakdown(true);
-              }}
-              onBlur={() => {
-                setShowTokenBreakdown(false);
-              }}
-              onKeyUp={(e) => {
-                if (e.key === "Escape") {
+                ref={tokenCountRef}
+                tabIndex={0}
+                // on hover showTokenBreakdown
+                onMouseEnter={() => {
+                  setShowTokenBreakdown(true);
+                }}
+                onMouseLeave={() => {
                   setShowTokenBreakdown(false);
-                } else if (e.key === "Space") {
-                  setShowTokenBreakdown(!showTokenBreakdown);
-                }
-              }}
-            >
-              {"≤ $"}
-              {maxCost?.toFixed(2) ?? "???"}
-              <TokenCountPopup
-                showTokenBreakdown={showTokenBreakdown}
-                currentConversation={currentConversation}
-                conversationList={conversationList}
-                setTokenCountLabel={setTokenCountLabel}
-                vscode={vscode}
-              />
-            </div>
+                }}
+                onFocus={() => {
+                  setShowTokenBreakdown(true);
+                }}
+                onBlur={() => {
+                  setShowTokenBreakdown(false);
+                }}
+                onKeyUp={(e) => {
+                  if (e.key === "Escape") {
+                    setShowTokenBreakdown(false);
+                  } else if (e.key === "Space") {
+                    setShowTokenBreakdown(!showTokenBreakdown);
+                  }
+                }}
+              >
+                {"≤ $"}
+                {maxCost?.toFixed(2) ?? "???"}
+                <TokenCountPopup
+                  showTokenBreakdown={showTokenBreakdown}
+                  currentConversation={currentConversation}
+                  conversationList={conversationList}
+                  setTokenCountLabel={setTokenCountLabel}
+                  vscode={vscode}
+                />
+              </div>
+            )}
             <button
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               onClick={() => {

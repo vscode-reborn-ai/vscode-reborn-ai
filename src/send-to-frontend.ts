@@ -1,8 +1,8 @@
 import vscode from 'vscode';
 import { ApiProvider } from "./openai-api-provider";
-import { ApiKeyStatus } from "./renderer/store/app";
+import { ApiKeyStatus, ModelListStatus } from "./renderer/store/types";
 import { ChatMessage, Conversation, ExtensionSettings, Model } from "./renderer/types";
-import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage } from "./renderer/types-messages";
+import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateModelListStatusMessage, UpdateTokenCountMessage } from "./renderer/types-messages";
 
 export default class Messenger {
   private webView?: vscode.WebviewView | null;
@@ -86,6 +86,13 @@ export default class Messenger {
       type: FrontendMessageType.updateApiKeyStatus,
       status,
     } as UpdateApiKeyStatusMessage);
+  }
+
+  sendModelListStatus(status: ModelListStatus) {
+    this.sendMessage({
+      type: FrontendMessageType.updateModelListStatus,
+      status,
+    } as UpdateModelListStatusMessage);
   }
 
   sendSettingsUpdate(config: vscode.WorkspaceConfiguration) {

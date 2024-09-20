@@ -8,7 +8,7 @@ import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
-import { ApiKeyStatus } from "./renderer/store/app";
+import { ApiKeyStatus } from "./renderer/store/types";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
 import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Auth from "./secrets-store";
@@ -53,7 +53,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     controller: AbortController;
   }[] = [];
 
-  public api: ApiProvider = new ApiProvider('');
+  public api: ApiProvider;
   public frontendMessenger: Messenger;
   public subscribeToResponse: boolean;
   public model: Model;
@@ -68,6 +68,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   */
   constructor(private context: vscode.ExtensionContext) {
     this.frontendMessenger = new Messenger();
+    this.api = new ApiProvider('', undefined, this.frontendMessenger);
     this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
     this.model = {
       id: getSelectedModelId(),
@@ -150,7 +151,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
           temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
           topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
-        });
+        },
+        this.frontendMessenger
+      );
       this.frontendMessenger.setApiProvider(this.api);
     });
 
@@ -180,6 +183,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
               created: 0,
               owned_by: Role.system
             };
+          }
+
+          this.frontendMessenger.sendModels(modelList);
+          if (this.currentConversation) {
+            this.currentConversation.model = this.model;
           }
         }
       }
@@ -255,7 +263,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         apiBaseUrl: finalApiUrl,
         temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
         topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
-      });
+      }, this.frontendMessenger);
 
     // Test the API key
     const { status, models } = await this.testApiKey(this.api);
@@ -310,6 +318,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         this.frontendMessenger.setConversationModel(model, this.currentConversation);
       }
     }
+
+    // Request a new copy of the settings to be sent to the frontend
+    // For whatever reason, the actual settings and the rendered settings can get out of sync
+    this.frontendMessenger.sendUpdatedSettings(vscode.workspace.getConfiguration("chatgpt"));
   }
 
   public async setApiKey(apiKey: string) {
@@ -327,7 +339,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     models?: Model[],
   }> {
     if (!apiProvider) {
-      apiProvider = this.api ?? new ApiProvider('');
+      apiProvider = this.api ?? new ApiProvider('', undefined, this.frontendMessenger);
     }
 
     const apiKey = apiProvider.config.apiKey ?? '';
@@ -464,7 +476,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           break;
         case BackendMessageType.setAzureApiVersion: {
           const setAzureApiVersionData = data as SetAzureApiVersionMessage;
-          console.log('Not implemented: setAzureApiVersion');
           vscode.workspace.getConfiguration("chatgpt").update("azureApiVersion", setAzureApiVersionData.azureApiVersion, vscode.ConfigurationTarget.Global);
           break;
         }
@@ -878,13 +889,20 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       }
     } catch (error: any) {
       let message;
-      let apiMessage = error?.response?.data?.error?.message || error?.tostring?.() || error?.message || error?.name;
+      let apiMessage = error?.response?.data?.error?.message ?? error?.response?.data?.message ?? error?.response?.message ?? error?.message ?? error?.name ?? (error ?? '').toString();
+
+      if (error.responseBody) {
+        apiMessage = JSON.stringify(error.responseBody, null, 2) ?? apiMessage;
+      }
 
       console.error("[Reborn AI] api-request-failed info:", JSON.stringify(error, null, 2));
       console.error("[Reborn AI] api-request-failed error obj:", error);
 
       // For whatever reason error.status is undefined, but the below works
-      const status = JSON.parse(JSON.stringify(error)).status ?? error?.status ?? error?.response?.status ?? error?.response?.data?.error?.status;
+      const status = JSON.parse(JSON.stringify(error)).status ?? error?.status ?? error?.response?.status ?? error.statusCode ?? error?.response?.statusCode ?? error?.response?.data?.error?.status;
+
+      console.error("[Reborn AI] api-request-failed status:", status);
+      console.error("[Reborn AI] api-request-failed message:", apiMessage);
 
       switch (status) {
         case 400:
@@ -896,7 +914,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Invalid);
           break;
         case 403:
-          message = '403 Forbidden\n\nYour token has expired. Please try authenticating again. \n\nServer message: ' + apiMessage;
+          if (error?.responseBody) {
+            const errorObject = JSON.parse(error.responseBody);
+            message = `${errorObject.statusCode} | ${errorObject.code}\n\n${errorObject.message}`;
+          } else {
+            message = '403 Forbidden\n\nYour token has expired. Please try authenticating again. \n\nServer message: ' + apiMessage;
+          }
           break;
         case 404:
           message = `404 Not Found\n\n`;
@@ -906,7 +929,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           if (apiUrl.includes("openai.1rmb.tk") && apiUrl !== "https://openai.1rmb.tk/v1") {
             message += "It looks like you are using the openai.1rmb.tk proxy server, but the path might be wrong.\nThe recommended path is https://openai.1rmb.tk/v1";
           } else {
-            message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model?.id}' may be incompatible or you may have exhausted your ChatGPT subscription allowance. \n\nServer message: ${apiMessage}`;
+            message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model?.id}' may be incompatible or you may have exhausted your ChatGPT subscription allowance. \n\nServer message: ${JSON.stringify(JSON.parse(error.responseBody ?? apiMessage), null, 2)}`;
           }
           break;
         case 429:

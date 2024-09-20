@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
-import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
+import { setApiKeyStatus } from "../store/app";
+import { ApiKeyStatus } from "../store/types";
 import Icon from "./Icon";
 
 export default function ({
