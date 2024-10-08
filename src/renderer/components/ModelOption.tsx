@@ -48,7 +48,7 @@ export default function ModelOption({
     setShowModels(false);
   };
 
-  // Calculate curerntly selected OpenAI model
+  // Calculate currently selected OpenAI model
   // (converts from RichModel to Model)
   React.useEffect(() => {
     setSelectedModel(models.find((m) => m.id === model.id));

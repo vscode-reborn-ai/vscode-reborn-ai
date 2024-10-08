@@ -184,10 +184,10 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
   },
 }));
 
-// Models to be used in thinking mode
-// These models do not support the same features as the other models
-// ie - system context messages are not allowed. max_tokens is changed.
-export const THINKING_MODELS = ['o1', 'o1-preview', 'o1-mini'];
+// Reasoning models have specific constraints:
+// 1. System context messages are not allowed.
+// 2. Different max_tokens behavior - max_completion_tokens used instead.
+export const REASONING_MODELS = ['o1', 'o1-preview', 'o1-mini'];
 
 interface OpenAIMessage {
   role: Role;

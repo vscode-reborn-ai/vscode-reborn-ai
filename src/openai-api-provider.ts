@@ -4,8 +4,9 @@ import { generateText, streamText } from 'ai';
 import { Tiktoken, TiktokenModel, encodingForModel } from "js-tiktoken";
 import ky from "ky";
 import { z } from 'zod';
+import { isReasoningModel } from "./helpers";
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
-import { ChatMessage, Conversation, Model, Role, THINKING_MODELS } from "./renderer/types";
+import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
 
 /** openai-api-provider.ts
 
@@ -136,7 +137,6 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const isThinkingModel = THINKING_MODELS.includes(model);
     const { textStream } = await
       streamText({
         // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
@@ -145,7 +145,7 @@ export class ApiProvider {
           role: message.role,
           content: message.content,
         })),
-        maxTokens: isThinkingModel ? undefined : completeTokensLeft,
+        maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
         temperature,
         topP,
         abortSignal,
@@ -183,7 +183,6 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const isThinkingModel = THINKING_MODELS.includes(model);
     const { text } = await generateText({
       // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
       model: this._openai.languageModel(model),
@@ -191,7 +190,7 @@ export class ApiProvider {
         role: message.role,
         content: message.content,
       })),
-      maxTokens: isThinkingModel ? undefined : completeTokensLeft,
+      maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       temperature,
       topP,
     });
