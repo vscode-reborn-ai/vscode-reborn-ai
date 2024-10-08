@@ -19,35 +19,10 @@ or **build** this extension yourself [(scroll further down)](#development).
 
 ## Screenshots
 
-<svg xmlns="http://www.w3.org/2000/svg" width="576" height="779" viewBox="0 0 576 779">
-
-  <style>
-    /* Light theme styles */
-    @media (prefers-color-scheme: light) {
-      .dark {
-        display: none;
-      }
-    }
-
-    /* Dark theme styles */
-    @media (prefers-color-scheme: dark) {
-      .light {
-        display: none;
-      }
-    }
-  </style>
-
-  <!-- <rect width="100" height="100" class="background" />
-  <circle cx="50" cy="50" r="40" class="foreground" /> -->
-
-  <image class="dark"
-    href="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-1-dark.png" x="0" y="0"
-    width="576" height="779" />
-  <image class="light"
-    href="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-1-light.png" x="0"
-    y="0" width="576" height="779" />
-
-</svg>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-1-dark.png">
+  <img alt="VSCode Reborn AI extension in use within VS Code, displaying a chat interface. The conversation panel shows a user asking, 'What is the difference between throttle and debounce?' at the top. Below it, the AI response is presented in a well-formatted message using Markdown, including an explanation of 'Throttle' with bullet points and a JavaScript code block example. Above the chat is a tab bar with conversation and chat history options. At the bottom of the screen, there is an input field for the user to ask questions, along with options for interacting with the chat. The interface uses a light theme with a focus on the chat conversation." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-1-light.png">
+</picture>
 
 ## Local LLMs and Proxies
 
