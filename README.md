@@ -17,6 +17,10 @@ or **install** directly:
 
 or **build** this extension yourself [(scroll further down)](#development).
 
+## Screenshots
+
+![The Reborn AI extension chat conversation with conversation tabs up top, user input on the bottom, and chat messages with rich markdown taking up most of the screenshot.](screenshot-1.svg)
+
 ## Local LLMs and Proxies
 
 Any tool that is "compatible" with the OpenAI API should work with this extension. The tools listed below are the ones we have personally tested.
