@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
 import { listItems } from "./helpers";
 import ChatGptViewProvider from "./main";
-import { ActionNames, ChatMessage, Conversation, Role } from "./renderer/types";
+import { ActionNames, ChatMessage, Conversation, Role, THINKING_MODELS } from "./renderer/types";
 
 /*
 
@@ -59,6 +59,7 @@ class Action {
   // async iterator
   protected async* streamChatCompletion(systemContext: string, prompt: string, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
     const model = this.runner.mainProvider.model;
+    const isThinkingModel = THINKING_MODELS.includes(model.id);
 
     const systemMessage: ChatMessage = {
       id: uuidv4(),
@@ -76,9 +77,10 @@ class Action {
       createdAt: Date.now(),
     };
 
+    const messages = isThinkingModel ? [message] : [systemMessage, message];
     const conversation: Conversation = {
       id: uuidv4(),
-      messages: [systemMessage, message],
+      messages,
       createdAt: Date.now(),
       inProgress: true,
       model,

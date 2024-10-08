@@ -9,7 +9,7 @@ import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
-import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
+import { ActionNames, ChatMessage, Conversation, Model, Role, THINKING_MODELS, Verbosity } from "./renderer/types";
 import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Auth from "./secrets-store";
 import Messenger from "./send-to-frontend";
@@ -738,7 +738,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     const responseInMarkdown = !this.isCodexModel;
 
     // 1. First check if the conversation has any messages, if not add the system message
-    if (options.conversation?.messages.length === 0) {
+    // If the model is a thinking model, DO NOT add the system context (it's not supported)
+    const isThinkingModel = THINKING_MODELS.includes(this.model.id);
+    if (options.conversation?.messages.length === 0 && !isThinkingModel) {
       options.conversation?.messages.push({
         id: uuidv4(),
         content: this.systemContext,
