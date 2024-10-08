@@ -52,7 +52,7 @@ export default function ModelOption({
   // (converts from RichModel to Model)
   React.useEffect(() => {
     setSelectedModel(models.find((m) => m.id === model.id));
-  }, [models, currentlySelectedId]);
+  }, [models, currentlySelectedId, model]);
 
   return (
     <button
