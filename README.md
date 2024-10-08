@@ -19,7 +19,35 @@ or **build** this extension yourself [(scroll further down)](#development).
 
 ## Screenshots
 
-![The Reborn AI extension chat conversation with conversation tabs up top, user input on the bottom, and chat messages with rich markdown taking up most of the screenshot.](screenshot-1.svg)
+<svg xmlns="http://www.w3.org/2000/svg" width="576" height="779" viewBox="0 0 576 779">
+
+  <style>
+    /* Light theme styles */
+    @media (prefers-color-scheme: light) {
+      .dark {
+        display: none;
+      }
+    }
+
+    /* Dark theme styles */
+    @media (prefers-color-scheme: dark) {
+      .light {
+        display: none;
+      }
+    }
+  </style>
+
+  <!-- <rect width="100" height="100" class="background" />
+  <circle cx="50" cy="50" r="40" class="foreground" /> -->
+
+  <image class="dark"
+    href="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-1-dark.png" x="0" y="0"
+    width="576" height="779" />
+  <image class="light"
+    href="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-1-light.png" x="0"
+    y="0" width="576" height="779" />
+
+</svg>
 
 ## Local LLMs and Proxies
 
@@ -74,7 +102,7 @@ To test the vscode-chatgpt-reborn extension in VS Code, follow these steps:
 
 2. To start a new Extension Development Host instance with the extension loaded, press:
    1. <kbd>F5</kbd>
-   2. or <kbd>Run</kbd> > <kbd>Start Debugging</kbd> in the top menu. 
+   2. or <kbd>Run</kbd> > <kbd>Start Debugging</kbd> in the top menu.
 
 4. In the new VS Code window, test the extension.
 
