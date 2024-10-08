@@ -9,6 +9,7 @@
 - ✨ **Feature** - Added support for `o1-preview` and `o1-mini` when using OpenAI.
 - 🔧 **Fix** - Corrected the context window for `gpt-3.5-turbo`. *Thanks @PeterDaveHello*
 - 🌐 **i18n** - Added more languages (Arabic, Bengali, Hindi, Indonesian, Malay, Russian, Thai, Tagalog, Urdu, and Vietnamese). *Thanks @PeterDaveHello*
+- 🎨 **Branding** - Custom app logo added to avoid using OpenAI's logo.
 
 ## July 22, 2024 [v3.25.0]
 
