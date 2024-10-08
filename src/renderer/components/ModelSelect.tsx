@@ -20,8 +20,79 @@ import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
 import { ApiKeyStatus } from "../store/app";
 import { updateConversationModel } from "../store/conversation";
-import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
+import { Conversation, Model } from "../types";
 import Icon from "./Icon";
+import ModelOption from "./ModelOption";
+
+// * OpenAI Models
+// On top of the base model attributes from OpenAI
+// We add a few properties to display the model in the UI
+export interface RichModel extends Partial<Model> {
+  quality: string;
+  speed: string;
+  cost: string;
+  recommended?: boolean;
+}
+const modelsArray: RichModel[] = [
+  {
+    id: "gpt-3.5-turbo",
+    name: "gpt-3.5-turbo",
+    quality: "⭐⬜⬜",
+    speed: "⚡⚡⚡",
+    cost: "💸⬜⬜",
+  },
+  {
+    id: "gpt-4-turbo",
+    name: "gpt-4-turbo",
+    quality: "⭐⭐⬜",
+    speed: "⚡⚡⬜",
+    cost: "💸💸⬜",
+  },
+  {
+    id: "gpt-4",
+    name: "gpt-4",
+    quality: "⭐⭐⬜",
+    speed: "⚡⬜⬜",
+    cost: "💸💸⬜",
+  },
+  {
+    id: "gpt-4o",
+    name: "gpt-4o",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⚡",
+    cost: "💸⬜⬜",
+    recommended: true,
+  },
+  {
+    id: "gpt-4o-mini",
+    name: "gpt-4o-mini",
+    quality: "⭐⭐⬜",
+    speed: "⚡⚡⚡",
+    cost: "💸⬜⬜",
+  },
+  // o1 will be available once the model is released
+  // {
+  //   id: "o1",
+  //   name: "o1",
+  //   quality: "⭐⭐⭐",
+  //   speed: "⚡⬜⬜",
+  //   cost: "💸💸💸",
+  // },
+  {
+    id: "o1-preview",
+    name: "o1-preview",
+    quality: "⭐⭐⭐",
+    speed: "⚡⬜⬜",
+    cost: "💸💸💸",
+  },
+  {
+    id: "o1-mini",
+    name: "o1-mini",
+    quality: "⭐⭐⭐",
+    speed: "⚡⬜⬜",
+    cost: "💸💸⬜",
+  },
+];
 
 export default function ModelSelect({
   currentConversation,
@@ -342,6 +413,7 @@ export default function ModelSelect({
                 </>
               ) : (
                 <>
+                  {/* Custom LLM (not OpenAI) - LONG LLM list */}
                   {(models.length > 6 ? filteredModels : models).map(
                     (model: Model) => (
                       <button
@@ -531,6 +603,7 @@ export default function ModelSelect({
                       </button>
                     )
                   )}
+                  {/* Custom LLM (not OpenAI) - LONG LLM list */}
                   {models.length > 6 && (
                     <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
                       <div className="flex flex-wrap gap-2 items-center justify-between">
@@ -665,247 +738,18 @@ export default function ModelSelect({
             </>
           ) : (
             <>
-              {models &&
-                (() => {
-                  const gpt35Turbo = models.find(
-                    (model) => model.id === "gpt-3.5-turbo"
-                  );
-
-                  if (!gpt35Turbo) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt35Turbo.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt35Turbo);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                        gpt-3.5-turbo
-                      </code>
-                      <p>
-                        Quality: ⭐⬜⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
-              {models &&
-                (() => {
-                  const gpt4Turbo = models.find(
-                    (model) => model.id === "gpt-4-turbo"
-                  );
-
-                  if (!gpt4Turbo) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt4Turbo.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt4Turbo);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                        gpt-4-turbo
-                      </code>
-                      <p>
-                        Quality: ⭐⭐⬜, Speed: ⚡⚡⬜, Cost: 💸💸💸, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
-              {models &&
-                (() => {
-                  const gpt4 = models.find((model) => model.id === "gpt-4");
-
-                  if (!gpt4) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt4.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt4);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                        gpt-4
-                      </code>
-                      <p>
-                        Quality: ⭐⭐⬜, Speed: ⚡⬜⬜, Cost: 💸💸💸, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt4.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt4.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt4.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
-              {models &&
-                (() => {
-                  const gpt4o = models.find((model) => model.id === "gpt-4o");
-
-                  if (!gpt4o) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt4o.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt4o);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <span>
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          gpt-4o
-                        </code>{" "}
-                        <strong>(recommended)</strong>
-                      </span>
-                      <p>
-                        Quality: ⭐⭐⭐, Speed: ⚡⚡⚡, Cost: 💸💸⬜, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
-              {models &&
-                (() => {
-                  const gpt4omini = models.find(
-                    (model) => model.id === "gpt-4o-mini"
-                  );
-
-                  if (!gpt4omini) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt4omini.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt4omini);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <span>
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          gpt-4o-mini
-                        </code>
-                      </span>
-                      <p>
-                        Quality: ⭐⭐⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
+              {/* OpenAI - base models */}
+              {modelsArray.map((model) => (
+                <ModelOption
+                  key={model.id}
+                  model={model}
+                  currentlySelectedId={currentConversation.model?.id}
+                  vscode={vscode}
+                  showParentMenu={showParentMenu}
+                  currentConversation={currentConversation}
+                  setShowModels={setShowModels}
+                />
+              ))}
             </>
           )}
         </div>

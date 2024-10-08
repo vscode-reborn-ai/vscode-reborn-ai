@@ -3,7 +3,7 @@ import { createServer } from 'http';
 import { marked } from "marked";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
-import { getSelectedModelId, getUpdatedModel } from "./helpers";
+import { getSelectedModelId, getUpdatedModel, isReasoningModel } from "./helpers";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
@@ -738,7 +738,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     const responseInMarkdown = !this.isCodexModel;
 
     // 1. First check if the conversation has any messages, if not add the system message
-    if (options.conversation?.messages.length === 0) {
+    // However - If the model is a reasoning model, DO NOT add the system context (it's not supported)
+    if (options.conversation?.messages.length === 0 && !isReasoningModel(this.model.id)) {
       options.conversation?.messages.push({
         id: uuidv4(),
         content: this.systemContext,

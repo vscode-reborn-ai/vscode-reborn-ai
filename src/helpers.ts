@@ -1,5 +1,6 @@
 import path from 'path';
 import * as vscode from 'vscode';
+import { REASONING_MODELS } from "./renderer/types";
 const fs = vscode.workspace.fs;
 
 export async function readDirRecursively(dir: string, maxDepth: number, currentDepth: number = 0): Promise<string[]> {
@@ -132,3 +133,6 @@ export class WriteStream {
     this.writeFile();
   }
 }
+
+// Check if model is a reasoning model.
+export const isReasoningModel = (modelId: string) => REASONING_MODELS.includes(modelId);
