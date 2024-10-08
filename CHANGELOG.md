@@ -7,9 +7,10 @@
 ## [Not yet released]
 
 - ✨ **Feature** - Added support for `o1-preview` and `o1-mini` when using OpenAI.
-- 🔧 **Fix** - Corrected the context window for `gpt-3.5-turbo`. *Thanks @PeterDaveHello*
 - 🌐 **i18n** - Added more languages (Arabic, Bengali, Hindi, Indonesian, Malay, Russian, Thai, Tagalog, Urdu, and Vietnamese). *Thanks @PeterDaveHello*
 - 🎨 **Branding** - Custom app logo added to avoid using OpenAI's logo.
+- 🔧 **Fix** - Corrected the context window for `gpt-3.5-turbo`. *Thanks @PeterDaveHello*
+- 🔩 **Behind the scenes** - Removed `gpt-3.5-turbo`. Users will be moved to `gpt-4o-mini` since it's better while being about the same cost.
 
 ## July 22, 2024 [v3.25.0]
 
@@ -138,7 +139,6 @@
 - 🎮 **QoL** - Updated scroll behavior. You can now scroll up as code is being generated, or scroll back to the bottom to "re-lock" the auto-scroll.
 - 🎮 **QoL** - When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
 - 🎮 **QoL** - Configuring "System message" is now an extension setting.
-
 
 [Not yet released]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.25.0...HEAD
 [v3.25.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.24.0...3.25.0

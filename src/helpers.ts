@@ -48,6 +48,8 @@ const deprecatedModelMap = new Map<string, string>([
   ['gpt-4-1106-preview', 'gpt-4-turbo'],
   // Legacy - All gpt-3.5-turbo models are now 16k
   ['gpt-3.5-turbo-16k', 'gpt-3.5-turbo'],
+  // Legacy - gpt-4o-mini should be used in place of gpt-3.5-turbo
+  ['gpt-3.5-turbo', 'gpt-4o-mini'],
   // With gpt-4o and gpt-4-turbo, this model is of limited use
   ['gpt-4-32k', 'gpt-4'],
 ]);
