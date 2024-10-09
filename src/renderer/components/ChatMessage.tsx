@@ -105,7 +105,7 @@ const MessageBodyComponent = ({
         >
           {/* {(message.role === Role.user ? message.rawContent : message.content) */}
           {(showMarkdown
-            ? message.rawContent.replace("\n", "<br/>")
+            ? message.rawContent.replace(/\n/g, "<br/>")
             : message.content
           )
             .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
