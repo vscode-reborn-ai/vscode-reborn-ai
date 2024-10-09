@@ -75,8 +75,8 @@ export default function MoreActionsMenu({
               data-tooltip-id="local-api-tooltip"
               data-tooltip-content="Open the local API tab"
             >
-              <Icon icon="ai" className="w-3 h-3" />
-              {t?.questionInputField?.localAPI ?? "Use Local LLM"}
+              <Icon icon="box" className="w-3 h-3" />
+              {t?.questionInputField?.localAPI ?? "Change LLM"}
             </Link>
           </li>
           <li>

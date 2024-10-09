@@ -271,7 +271,9 @@ export default function Tabs({
                 to="/api"
                 aria-current={location.pathname === "/api" ? "page" : undefined}
               >
-                <span className="pt-0.5">⚙️ Local LLM Settings</span>
+                <span className="pt-0.5">
+                  ⚙️ {t?.tabs?.llmSettingsTitle ?? "LLM Settings"}
+                </span>
                 <TabCloseButton
                   path="/api"
                   onClick={() => {
