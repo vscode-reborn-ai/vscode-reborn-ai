@@ -395,13 +395,15 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
           this.sendApiRequest(freeTextData.question, apiRequestOptions);
           break;
-        case BackendMessageType.editCode:
+        case BackendMessageType.editCode: {
           const editCodeData = data as EditCodeMessage;
-          const escapedString = editCodeData.code as string;
+          const escapedString = (editCodeData.code as string).replace(/([\\$])/g, '\\$1');
+          console.log('inserting code snippet', escapedString, editCodeData);
           vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(escapedString));
 
           this.logEvent("code-inserted");
           break;
+        }
         case BackendMessageType.setModel:
           const setModelData = data as SetModelMessage;
           // Note that due to some models being deprecated, this function may change the model
