@@ -1,5 +1,6 @@
+import { AdjustmentsHorizontalIcon } from "@heroicons/react/16/solid";
 import classNames from "classnames";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -10,6 +11,7 @@ import { Conversation } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
 import VerbositySelect from "./VerbositySelect";
+import ViewOptions from "./ViewOptions";
 
 export default function MoreActionsMenu({
   currentConversation,
@@ -31,6 +33,15 @@ export default function MoreActionsMenu({
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const navigate = useNavigate();
   const backendMessenger = useMessenger(vscode);
+  const [showViewOptions, setShowViewOptions] = useState(false);
+
+  // When the show more actions menu is shown, hide the view options menu
+  // So, if the user leaves the view options menu open on close, it won't be shown on open
+  useEffect(() => {
+    if (showMoreActions) {
+      setShowViewOptions(false);
+    }
+  }, [showMoreActions]);
 
   return (
     <>
@@ -148,6 +159,9 @@ export default function MoreActionsMenu({
               {t?.questionInputField?.markdown ?? "Markdown"}
             </button>
           </li>
+          {/*
+          The more actions menu is starting to get cluttered.
+          "Reset API key" is redundant when the "LLM Settings" page exists.
           <li>
             <button
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
@@ -165,6 +179,21 @@ export default function MoreActionsMenu({
             >
               <Icon icon="cancel" className="w-3 h-3" />
               {t?.questionInputField?.resetAPIKey ?? "Reset API Key"}
+            </button>
+          </li> */}
+          {/* View */}
+          <li>
+            <button
+              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
+              onClick={() => {
+                setShowViewOptions(!showViewOptions);
+              }}
+            >
+              <AdjustmentsHorizontalIcon className="w-3 h-3" />
+              View
+              {showViewOptions && (
+                <ViewOptions className="fixed right-32 bottom-7" />
+              )}
             </button>
           </li>
           <li className="block xs:hidden">
