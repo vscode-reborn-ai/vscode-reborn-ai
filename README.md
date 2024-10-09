@@ -31,12 +31,12 @@ or **build** this extension yourself [(scroll further down)](#development).
     <td>
       <h3>Easy presets for popular LLMs</h3>
       <br/>
-      <br/>
-      <br/>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-2-dark.png">
   <img alt="VSCode Reborn AI extension's 'LLM Settings' interface for connecting to an official OpenAI API. A dropdown menu near the top allows the user to select the LLM (currently showing 'Official OpenAI API'). Below, instructions are provided with a suggested API URL (https://api.openai.com/v1) and a 'Use this API URL' button. The current API URL and API key fields are shown below with an API key validation indicator ('Valid' status in green). At the top, a tab bar allows switching between 'Chat' and other options, and there is a 'LLM Settings' tab visible." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-2-light.png">
 </picture>
+      <br/>
+      <br/>
     </td>
   </tr>
   <tr>
