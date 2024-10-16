@@ -56,7 +56,7 @@ export default function ViewOptionsToggle({
           {currentViewOptions.map((option) => (
             <li key={option.key}>
               <button
-                className="w-full flex gap-1 items-center py-0.5 px-1 whitespace-nowrap rounded hover:bg-button-secondary focus:bg-button-secondary focus:underline"
+                className="w-full flex gap-1 items-center py-0.5 px-1 whitespace-nowrap rounded hover:bg-button-secondary focus:bg-button-secondary focus:underline hover:text-button-secondary focus:text-button-secondary"
                 onClick={() => dispatch(toggleViewOption(option.key))}
               >
                 <Icon
@@ -72,7 +72,7 @@ export default function ViewOptionsToggle({
           {userUIOptions.map((option) => (
             <li key={option.key}>
               <button
-                className="w-full flex gap-1 items-center py-0.5 px-1 whitespace-nowrap rounded hover:bg-button-secondary focus:bg-button-secondary focus:underline"
+                className="w-full flex gap-1 items-center py-0.5 px-1 whitespace-nowrap rounded hover:bg-button-secondary focus:bg-button-secondary focus:underline hover:text-button-secondary focus:text-button-secondary"
                 onClick={() => dispatch(toggleViewOption(option.key))}
               >
                 <Icon

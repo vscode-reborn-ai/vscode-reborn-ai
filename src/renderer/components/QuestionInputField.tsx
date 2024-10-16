@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
-import { isInstructModel, useMaxCost } from "../helpers";
+import { isInstructModel, isReasoningModel, useMaxCost } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
@@ -177,6 +177,12 @@ export default ({
                 <span className="text-xs opacity-50 ml-2">
                   {t?.questionInputField?.streamingOnInstructModels ??
                     "(streaming is disabled on instruct models)"}
+                </span>
+              )}
+              {isReasoningModel(currentConversation.model) && (
+                <span className="text-xs opacity-50 ml-2">
+                  {t?.questionInputField?.streamingOnInstructModels ??
+                    "(streaming not yet supported on reasoning models)"}
                 </span>
               )}
             </div>

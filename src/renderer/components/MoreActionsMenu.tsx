@@ -184,13 +184,15 @@ export default function MoreActionsMenu({
           {/* View */}
           <li>
             <button
-              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
+              className="group w-full"
               onClick={() => {
                 setShowViewOptions(!showViewOptions);
               }}
             >
-              <AdjustmentsHorizontalIcon className="w-3 h-3" />
-              View
+              <span className="w-full py-0.5 px-1 rounded flex gap-1 items-center justify-start group-hover:bg-button-secondary group-focus:bg-button-secondary group-hover:text-button-secondary group-focus:text-button-secondary">
+                <AdjustmentsHorizontalIcon className="w-3 h-3" />
+                View
+              </span>
               {showViewOptions && (
                 <ViewOptions className="fixed right-32 bottom-7" />
               )}

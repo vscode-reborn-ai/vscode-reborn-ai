@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import React, { useRef } from "react";
+import { useModelFriendlyName } from "../helpers";
 import { useAppSelector } from "../hooks";
 import { useMessenger } from "../sent-to-backend";
 import { RootState } from "../store";
@@ -7,6 +8,7 @@ import { ChatMessage, Conversation, Role } from "../types";
 import CodeBlock from "./CodeBlock";
 import Icon from "./Icon";
 
+// Error message component.
 const ErrorMessageComponent = ({ message }: { message: ChatMessage }) => {
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
@@ -36,6 +38,7 @@ const ErrorMessageComponent = ({ message }: { message: ChatMessage }) => {
   );
 };
 
+// Debug message component.
 const DebugMessageComponent = ({ message }: { message: ChatMessage }) => {
   return (
     <div className="text-xs text-gray-500">
@@ -57,6 +60,201 @@ const DebugMessageComponent = ({ message }: { message: ChatMessage }) => {
   );
 };
 
+// Edit message textarea component.
+const EditMessageComponent = ({
+  message,
+  editingMessageRef,
+}: {
+  message: ChatMessage;
+  editingMessageRef: React.RefObject<HTMLTextAreaElement>;
+}) => {
+  return (
+    <div className="flex flex-col gap-y-2">
+      <textarea
+        className="w-full h-24 resize-none bg-input rounded p-2"
+        defaultValue={
+          message.role === Role.user ? message.rawContent : message.content
+        }
+        ref={editingMessageRef}
+      />
+    </div>
+  );
+};
+
+// Message body content for user messages.
+const UserMessageComponent = ({
+  vscode,
+  conversation,
+  message,
+  editingMessageID,
+  editingMessageRef,
+  showMarkdown,
+  codeOnly,
+  alignRight,
+}: {
+  vscode: any;
+  conversation: Conversation;
+  message: ChatMessage;
+  editingMessageID: string | null;
+  editingMessageRef: React.RefObject<HTMLTextAreaElement>;
+  showMarkdown: boolean;
+  codeOnly: boolean;
+  alignRight: boolean;
+}) => {
+  return (
+    <>
+      {message.id === editingMessageID ? (
+        <EditMessageComponent
+          message={message}
+          editingMessageRef={editingMessageRef}
+        />
+      ) : (
+        <div
+          className={classNames(
+            "message-wrapper",
+            message?.done ?? true ? "" : "result-streaming",
+            {
+              "max-w-[80%]": alignRight,
+              "float-right": alignRight,
+            }
+          )}
+        >
+          {message.rawContent
+            .replace(/\n/g, "<br/>")
+            .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
+            .reduce((acc: any[], item: any) => {
+              if (item) {
+                acc.push(item);
+              }
+              return acc;
+            }, [])
+            .map((item: string, index: React.Key | null | undefined) => {
+              if (item.startsWith("<pre><code") && !showMarkdown) {
+                return (
+                  <CodeBlock
+                    code={item}
+                    key={index}
+                    conversationId={conversation.id}
+                    vscode={vscode}
+                  />
+                );
+              } else {
+                return (
+                  <div key={index}>
+                    {item
+                      .replace(/<br\s*\/?>\n/gi, "<br>") // replace newlines next to <br> tags with just <br> tags (to avoid double newlines)
+                      .split(/(?:\n|<br\s*\/?>)/gi) // split on newlines and <br> tags
+                      .map((line: string, index: number) =>
+                        showMarkdown ? (
+                          <pre key={index} className="py-1 text-pretty">
+                            {/* show markdown enabled -> render a preformatted block */}
+                            {line}
+                          </pre>
+                        ) : (
+                          <p key={index} className="my-0 text-pretty">
+                            {/* if markdown view disabled -> render a paragraph */}
+                            {line}
+                          </p>
+                        )
+                      )}
+                  </div>
+                );
+              }
+            })}
+          {message.questionCode && (
+            <>
+              {/* {showMarkdown ? (
+                <div
+                  className="bg-input rounded p-4"
+                  dangerouslySetInnerHTML={{ __html: message.questionCode }}
+                />
+              ) : ( */}
+              <CodeBlock
+                code={message.questionCode}
+                conversationId={conversation.id}
+                vscode={vscode}
+                startCollapsed={message.questionCode.split("\n").length > 3}
+                role={Role.user}
+              />
+              {/* )} */}
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
+};
+
+// Message body content for bot messages.
+const BotMessageComponent = ({
+  vscode,
+  conversation,
+  message,
+  showMarkdown,
+  codeOnly,
+  alignRight,
+}: {
+  vscode: any;
+  conversation: Conversation;
+  message: ChatMessage;
+  showMarkdown: boolean;
+  codeOnly: boolean;
+  alignRight: boolean;
+}) => {
+  return (
+    <div
+      className={classNames(
+        "message-wrapper",
+        message?.done ?? true ? "" : "result-streaming",
+        {
+          "max-w-[80%]": alignRight,
+        }
+      )}
+    >
+      {(showMarkdown
+        ? message.rawContent.replace(/\n/g, "<br/>")
+        : message.content
+      )
+        .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
+        .reduce((acc: any[], item: any) => {
+          if (item) {
+            acc.push(item);
+          }
+          return acc;
+        }, [])
+        .map((item: string, index: React.Key | null | undefined) => {
+          if (item.startsWith("<pre><code") && !showMarkdown) {
+            return (
+              <CodeBlock
+                code={item}
+                key={index}
+                conversationId={conversation.id}
+                vscode={vscode}
+              />
+            );
+          } else if (!codeOnly) {
+            return showMarkdown ? (
+              <div key={index}>
+                {item
+                  .replace(/<br\s*\/?>\n/gi, "<br>") // replace newlines next to <br> tags with just <br> tags (to avoid double newlines)
+                  .split(/(?:\n|<br\s*\/?>)/gi) // split on newlines and <br> tags
+                  .map((line: string, index: number) => (
+                    <pre key={index} className="py-1 text-pretty">
+                      {/* show markdown enabled -> render a preformatted block */}
+                      {line}
+                    </pre>
+                  ))}
+              </div>
+            ) : (
+              <div key={index} dangerouslySetInnerHTML={{ __html: item }} />
+            );
+          }
+        })}
+    </div>
+  );
+};
+
+// Message body content component
 const MessageBodyComponent = ({
   message,
   vscode,
@@ -82,89 +280,32 @@ const MessageBodyComponent = ({
 
   return (
     <>
-      {message.id === editingMessageID ? (
-        <div className="flex flex-col gap-y-2">
-          <textarea
-            className="w-full h-24 resize-none bg-input rounded p-2"
-            defaultValue={
-              message.role === Role.user ? message.rawContent : message.content
-            }
-            ref={editingMessageRef}
-          />
-        </div>
+      {message.role === Role.user ? (
+        <UserMessageComponent
+          vscode={vscode}
+          conversation={conversation}
+          message={message}
+          editingMessageID={editingMessageID}
+          editingMessageRef={editingMessageRef}
+          showMarkdown={showMarkdown}
+          codeOnly={codeOnly}
+          alignRight={alignRight}
+        />
       ) : (
-        <div
-          className={classNames(
-            "message-wrapper",
-            message?.done ?? true ? "" : "result-streaming",
-            {
-              "max-w-[75%]": alignRight,
-              "float-right": alignRight && message.role === Role.user,
-            }
-          )}
-        >
-          {/* {(message.role === Role.user ? message.rawContent : message.content) */}
-          {(showMarkdown
-            ? message.rawContent.replace(/\n/g, "<br/>")
-            : message.content
-          )
-            .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
-            .reduce((acc: any[], item: any) => {
-              if (item) {
-                acc.push(item);
-              }
-              return acc;
-            }, [])
-            .map((item: string, index: React.Key | null | undefined) => {
-              if (item.startsWith("<pre><code") && !showMarkdown) {
-                return (
-                  <CodeBlock
-                    code={item}
-                    key={index}
-                    conversationId={conversation.id}
-                    vscode={vscode}
-                  />
-                );
-              } else if (!codeOnly || message.role === Role.user) {
-                return message.role !== Role.user && !showMarkdown ? (
-                  <div key={index} dangerouslySetInnerHTML={{ __html: item }} />
-                ) : (
-                  <div key={index}>
-                    {item.split("\n").map((line: string, index: number) => (
-                      <p key={index} className="my-0">
-                        {line}
-                      </p>
-                    ))}
-                  </div>
-                );
-              }
-            })}
-          {message.questionCode && (
-            <>
-              {showMarkdown ? (
-                <div
-                  className="bg-input rounded p-4"
-                  // dangerouslySetInnerHTML={{ __html: message.questionCode }}
-                >
-                  {message.questionCode}
-                </div>
-              ) : (
-                <CodeBlock
-                  code={message.questionCode}
-                  conversationId={conversation.id}
-                  vscode={vscode}
-                  startCollapsed={message.questionCode.split("\n").length > 3}
-                  role={Role.user}
-                />
-              )}
-            </>
-          )}
-        </div>
+        <BotMessageComponent
+          vscode={vscode}
+          conversation={conversation}
+          message={message}
+          showMarkdown={showMarkdown}
+          codeOnly={codeOnly}
+          alignRight={alignRight}
+        />
       )}
     </>
   );
 };
 
+// Options / buttons at the top-right of each chat message.
 const ChatMessageOptions = ({
   className,
   message,
@@ -246,18 +387,25 @@ const Name = ({
   modelFriendlyName?: string;
 }) => {
   const t = useAppSelector((state: RootState) => state.app.translations);
+  const alignRight = useAppSelector(
+    (state: RootState) => state.app.viewOptions.alignRight
+  );
 
   return (
-    <h2 className="flex-grow flex items-center">
+    <h2
+      className={classNames("flex-grow flex items-center gap-2", {
+        "flex-row-reverse": message.role === Role.user && alignRight,
+      })}
+    >
       {message.role === Role.user ? (
         <>
-          <Icon icon="user" className="w-6 h-6 mr-2" />
-          {t?.chat?.you ?? "You"}
+          <Icon icon="user" className="w-6 h-6" />
+          <span>{t?.chat?.you ?? "You"}</span>
         </>
       ) : (
         <>
-          <Icon icon="box" className="w-6 h-6 mr-2" />
-          {modelFriendlyName ?? "ChatGPT"}
+          <Icon icon="box" className="w-6 h-6" />
+          <span>{modelFriendlyName ?? "ChatGPT"}</span>
         </>
       )}
     </h2>
@@ -268,15 +416,14 @@ interface MessageComponentProps {
   message: ChatMessage;
   conversation: Conversation;
   index: number;
-  modelFriendlyName?: string;
   vscode: any;
 }
 
+// Message wrapper component
 const ChatMessageComponent: React.FC<MessageComponentProps> = ({
   message,
   conversation,
   index,
-  modelFriendlyName,
   vscode,
 }) => {
   const debug = useAppSelector((state: RootState) => state.app.debug);
@@ -288,10 +435,23 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
   const networkLogs = useAppSelector(
     (state) => state.app.viewOptions.showNetworkLogs
   );
+  const alignRight = useAppSelector(
+    (state: RootState) => state.app.viewOptions.alignRight
+  );
+  const models = useAppSelector((state: RootState) => state.app.models);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
+
+  const modelFriendlyName = useModelFriendlyName(
+    conversation,
+    models,
+    settings
+  );
 
   return (
     <div
-      className={`w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative ${
+      className={`group w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative ${
         message.role === Role.user ? "bg-input" : "bg-sidebar"
       }`}
       key={message.id}
@@ -312,10 +472,15 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
           )}
         </>
       ) : (
-        <header className="flex items-center">
+        <header
+          className={classNames("flex items-center gap-2", {
+            "flex-row-reverse": message.role === Role.user && alignRight,
+          })}
+        >
           <Name message={message} modelFriendlyName={modelFriendlyName} />
           {message.role === Role.user && (
             <ChatMessageOptions
+              className="invisible group-hover:visible group-focus-within:visible"
               message={message}
               conversation={conversation}
               index={index}
