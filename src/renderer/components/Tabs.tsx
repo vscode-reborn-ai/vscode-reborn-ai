@@ -340,7 +340,7 @@ export default function Tabs({
             {/* create new chat button */}
             <li className="flex items-center sticky right-0">
               <button
-                className="flex gap-x-1 bg-button-secondary text-button-secondary whitespace-nowrap py-2 pl-2 pr-3 text-2xs hover:bg-button-secondary-hover hover:text-button-secondary-hover focus:outline-none"
+                className="flex gap-x-1 bg-button-secondary text-button-secondary whitespace-nowrap py-2 pl-2 pr-3 text-2xs hover:bg-button-secondary-hover hover:text-button-secondary-hover focus:outline-none focus:bg-button-secondary-hover focus:text-button-secondary-hover"
                 onClick={createNewConversation}
               >
                 <Icon icon="plus" className="w-4 h-4" />

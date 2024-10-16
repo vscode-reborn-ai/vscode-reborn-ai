@@ -12,6 +12,22 @@ export enum ApiKeyStatus {
   Error = "error", // When an error occurs while checking the API key
 }
 
+export interface ViewOptionsState {
+  // Chat messages
+  hideName: boolean; // Hide names from the chat for compactness.
+  showCodeOnly: boolean; // Only show code in ai responses.
+  showMarkdown: boolean; // Show markdown instead of rendering HTML.
+  alignRight: boolean; // Align user responses to the right.
+  showCompact: boolean; // TODO: A more compact UI overall - think irc or slack's compact mode.
+  showNetworkLogs: boolean; // TODO: Show network logs in the chat.
+  // User input UI
+  showEditorSelection: boolean; // Show the "Editor selection" button.
+  showClear: boolean; // Show the "Clear" button.
+  showVerbosity: boolean; // Show the verbosity button.
+  showModelSelect: boolean; // Show the model select button.
+  showTokenCount: boolean; // Show the token count.
+}
+
 export interface AppState {
   debug: boolean;
   extensionSettings: ExtensionSettings;
@@ -20,6 +36,7 @@ export interface AppState {
   translations: any;
   useEditorSelection: boolean;
   vscode?: WebviewApi<unknown>;
+  viewOptions: ViewOptionsState;
 }
 
 const initialState: AppState = {
@@ -30,23 +47,33 @@ const initialState: AppState = {
   translations: {},
   useEditorSelection: false,
   vscode: undefined,
+  viewOptions: {
+    hideName: false,
+    showCodeOnly: false,
+    showMarkdown: false,
+    alignRight: false,
+    showCompact: false,
+    showNetworkLogs: false,
+
+    showEditorSelection: true,
+    showClear: true,
+    showVerbosity: true,
+    showModelSelect: true,
+    showTokenCount: true,
+  },
 };
 
 export const appSlice = createSlice({
-  name: 'conversations',
+  name: 'app',
   initialState,
   reducers: {
     setDebug: (state, action: PayloadAction<boolean>) => {
       state.debug = action.payload;
     },
-    setExtensionSettings: (state, action: PayloadAction<{
-      newSettings: any;
-    }>) => {
+    setExtensionSettings: (state, action: PayloadAction<{ newSettings: any; }>) => {
       state.extensionSettings = action.payload.newSettings;
     },
-    setModels: (state, action: PayloadAction<{
-      models: Model[];
-    }>) => {
+    setModels: (state, action: PayloadAction<{ models: Model[]; }>) => {
       state.models = action.payload.models ?? [];
     },
     setApiKeyStatus: (state, action: PayloadAction<ApiKeyStatus>) => {
@@ -60,7 +87,10 @@ export const appSlice = createSlice({
     },
     setVSCode: (state, action: PayloadAction<any>) => {
       state.vscode = action.payload;
-    }
+    },
+    toggleViewOption: (state, action: PayloadAction<keyof ViewOptionsState>) => {
+      state.viewOptions[action.payload] = !state.viewOptions[action.payload];
+    },
   },
 });
 
@@ -72,6 +102,7 @@ export const {
   setTranslations,
   setUseEditorSelection,
   setVSCode,
+  toggleViewOption,
 } = appSlice.actions;
 
 export default appSlice.reducer;

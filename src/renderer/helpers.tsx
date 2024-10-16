@@ -20,6 +20,7 @@ import {
   MODEL_FRIENDLY_NAME,
   MODEL_TOKEN_LIMITS,
   Model,
+  REASONING_MODELS,
   Role,
 } from "./types";
 
@@ -229,6 +230,14 @@ export function getModelFriendlyName(
 
   return friendlyName;
 }
+// Hook version of getModelFriendlyName
+export function useModelFriendlyName(
+  currentConversation: Conversation,
+  models: Model[],
+  settings: ExtensionSettings
+) {
+  return getModelFriendlyName(currentConversation, models, settings);
+}
 
 // Model token limit for context (input)
 export function getModelContextLimit(model: Model | undefined) {
@@ -323,6 +332,10 @@ export function isMultimodalModel(model: Model | undefined) {
 
 export function isOnlineModel(model: Model | undefined) {
   return model?.id.includes("online");
+}
+
+export function isReasoningModel(model: Model | undefined) {
+  return REASONING_MODELS.includes(model?.id ?? "");
 }
 
 export function useConvertMarkdownToComponent(
