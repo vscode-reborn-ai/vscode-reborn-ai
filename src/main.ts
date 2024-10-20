@@ -447,14 +447,16 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         case BackendMessageType.getSettings:
           this.frontendMessenger.sendSettingsUpdate(vscode.workspace.getConfiguration("chatgpt"));
           break;
-        case BackendMessageType.getViewOptions:
+        case BackendMessageType.getViewOptions: {
           const viewOptions = await this.offlineStore?.getViewOptions();
           this.frontendMessenger.sendViewOptionsUpdate(viewOptions ?? {});
           break;
-        case BackendMessageType.setViewOptions:
+        }
+        case BackendMessageType.setViewOptions: {
           const viewOptionsData = data as SetViewOptionsMessage;
           await this.offlineStore?.setViewOptions(viewOptionsData.viewOptions);
           break;
+        }
         case BackendMessageType.exportToMarkdown:
           const exportToMarkdownData = data as ExportToMarkdownMessage;
           this.exportToMarkdown(exportToMarkdownData.conversation);
