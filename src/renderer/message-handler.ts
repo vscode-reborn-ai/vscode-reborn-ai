@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { useRenameTabTitleWithAI } from "./helpers";
+import { isSameObject, useRenameTabTitleWithAI } from "./helpers";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { RootState } from "./store";
 import { ActionRunState, setActionError, setActionState } from "./store/action";
-import { setApiKeyStatus, setExtensionSettings, setModels, setTranslations } from "./store/app";
+import { setApiKeyStatus, setExtensionSettings, setModels, setReceivedExtensionSettings, setReceivedModels, setReceivedTranslations, setReceivedViewOptions, setTranslations, setViewOptions } from "./store/app";
 import { addMessage, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
 import { ActionNames, ChatMessage, Conversation, Role } from "./types";
-import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage } from "./types-messages";
+import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage, ViewOptionsUpdateMessage } from "./types-messages";
 
 export const useBackendMessageHandler = (backendMessenger: any) => {
   const dispatch = useAppDispatch();
@@ -20,6 +20,9 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
 
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
+  );
+  const viewOptions = useAppSelector(
+    (state: RootState) => state.app.viewOptions
   );
   const models = useAppSelector((state: RootState) => state.app.models);
   const debug = useAppSelector((state: RootState) => state.app.debug);
@@ -50,15 +53,20 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
     });
   }, [models]);
 
+  // When view options are updated, send the new view options to the backend
+  useEffect(() => {
+    backendMessenger.sendSetViewOptions(viewOptions);
+  }, [viewOptions]);
+
   return (event: any) => {
     if (debug) {
       console.info("[Reborn AI] Renderer - Received message from main process: ", event.data);
     }
 
-    let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
+    let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | ViewOptionsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
 
     switch (message.type) {
-      case FrontendMessageType.showInProgress:
+      case FrontendMessageType.showInProgress: {
         const showInProgressData = message as ShowInProgressMessage;
 
         dispatch(
@@ -68,7 +76,8 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           })
         );
         break;
-      case FrontendMessageType.addMessage:
+      }
+      case FrontendMessageType.addMessage: {
         const addMessageData = message as AddMessageMessage;
 
         const question: ChatMessage = {
@@ -93,7 +102,8 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         );
 
         break;
-      case FrontendMessageType.updateMessage:
+      }
+      case FrontendMessageType.updateMessage: {
         const updateMessageData = message as UpdateMessageMessage;
 
         if (updateMessageData?.chatMessage) {
@@ -122,7 +132,8 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         }
 
         break;
-      case FrontendMessageType.messagesUpdated:
+      }
+      case FrontendMessageType.messagesUpdated: {
         const messagesUpdatedData = message as MessagesUpdatedMessage;
 
         dispatch(
@@ -133,7 +144,8 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         );
 
         break;
-      case FrontendMessageType.streamMessage:
+      }
+      case FrontendMessageType.streamMessage: {
         const streamMessageData = message as StreamMessageMessage;
 
         dispatch(
@@ -141,6 +153,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             conversationId: streamMessageData?.conversationId ?? currentConversationId,
             messageId: streamMessageData?.chatMessageId ?? "",
             content: streamMessageData?.content ?? "",
+            rawContent: streamMessageData?.rawContent ?? "",
             done: false,
           })
         );
@@ -155,7 +168,8 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           }
         }
         break;
-      case FrontendMessageType.addError:
+      }
+      case FrontendMessageType.addError: {
         const addErrorData = message as AddErrorMessage;
         const errorMessageText = "An error occurred. If this issue persists please clear your session token with `Reborn AI: Reset session` command and/or restart your Visual Studio Code. If you still experience issues, it may be due to an OpenAI outage. Take a look at https://status.openai.com to see if there's an OpenAI outage.";
         const errorMessage: ChatMessage = {
@@ -174,7 +188,8 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           })
         );
         break;
-      case FrontendMessageType.settingsUpdate:
+      }
+      case FrontendMessageType.settingsUpdate: {
         const settingsUpdateData = message as SettingsUpdateMessage;
 
         if (!settingsUpdateData?.config) {
@@ -183,6 +198,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         }
 
         dispatch(setExtensionSettings({ newSettings: settingsUpdateData.config }));
+        dispatch(setReceivedExtensionSettings(true));
 
         const currentConversation = conversationList.find(
           (conversation) => conversation.id === currentConversationId
@@ -220,7 +236,25 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           );
         }
         break;
-      case FrontendMessageType.modelsUpdate:
+      }
+      case FrontendMessageType.viewOptionsUpdate: {
+        const viewOptionsUpdateData = message as ViewOptionsUpdateMessage;
+
+        if (!viewOptionsUpdateData?.viewOptions) {
+          console.warn("[Reborn AI] Renderer - No view options provided in viewOptionsUpdate message");
+          return;
+        }
+
+        // Check if the view options values of the viewOptionsUpdateData have changed
+        if (isSameObject(viewOptions, viewOptionsUpdateData.viewOptions)) {
+          return;
+        }
+
+        dispatch(setViewOptions(viewOptionsUpdateData.viewOptions));
+        dispatch(setReceivedViewOptions(true));
+        break;
+      }
+      case FrontendMessageType.modelsUpdate: {
         const modelsUpdateData = message as ModelsUpdateMessage;
 
         dispatch(
@@ -229,13 +263,16 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           })
         );
 
+        dispatch(setReceivedModels(true));
         break;
-      case FrontendMessageType.updateApiKeyStatus:
+      }
+      case FrontendMessageType.updateApiKeyStatus: {
         const apiKeyStatusData = message as UpdateApiKeyStatusMessage;
 
         dispatch(setApiKeyStatus(apiKeyStatusData.status));
         break;
-      case FrontendMessageType.tokenCount:
+      }
+      case FrontendMessageType.tokenCount: {
         const tokenCountData = message as UpdateTokenCountMessage;
 
         dispatch(
@@ -249,14 +286,18 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           })
         );
         break;
-      case FrontendMessageType.setTranslations:
+      }
+      case FrontendMessageType.setTranslations: {
         const translationsData = message as SetTranslationsMessage;
 
         if (translationsData?.translations) {
           dispatch(setTranslations(JSON.parse(translationsData.translations)));
         }
+
+        dispatch(setReceivedTranslations(true));
         break;
-      case FrontendMessageType.actionComplete:
+      }
+      case FrontendMessageType.actionComplete: {
         const actionCompleteData = message as ActionCompleteMessage;
 
         dispatch(
@@ -283,12 +324,14 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             console.warn(`[Reborn AI] Renderer - Unhandled result from action: ${actionCompleteData?.actionId}`);
         }
         break;
-      case FrontendMessageType.actionError:
+      }
+      case FrontendMessageType.actionError: {
         const actionErrorData = message as ActionErrorMessage;
 
         dispatch(setActionError({ error: actionErrorData?.error, actionId: actionErrorData?.actionId }));
         break;
-      case FrontendMessageType.setConversationModel:
+      }
+      case FrontendMessageType.setConversationModel: {
         const setConversationModelData = message as SetConversationModelMessage;
 
         dispatch(setModel({
@@ -296,6 +339,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           model: setConversationModelData.model
         }));
         break;
+      }
       default:
         console.error('[Reborn AI] Renderer - Uncaught message type: ', (message as BaseFrontendMessage)?.type);
     }

@@ -9,7 +9,7 @@ import React, {
 import ReactMarkdown from "react-markdown";
 import { WebviewApi } from "vscode-webview";
 import { useAppDispatch } from "./hooks";
-import { useMessenger } from "./sent-to-backend";
+import { useMessenger } from "./send-to-backend";
 import { aiRenamedTitle } from "./store/conversation";
 import {
   ActionNames,
@@ -20,6 +20,7 @@ import {
   MODEL_FRIENDLY_NAME,
   MODEL_TOKEN_LIMITS,
   Model,
+  REASONING_MODELS,
   Role,
 } from "./types";
 
@@ -32,6 +33,21 @@ export const unEscapeHTML = (unsafe: string): string => {
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&");
 };
+
+// Shallow compare two objects
+export function isSameObject(obj1: any, obj2: any) {
+  for (let key in obj1) {
+    if (obj1[key] !== obj2[key]) {
+      return false; // Difference found
+    }
+  }
+  for (let key in obj2) {
+    if (obj1[key] !== obj2[key]) {
+      return false; // Difference found
+    }
+  }
+  return true; // No differences found
+}
 
 export const updateChatMessage = (
   updatedMessage: ChatMessage,
@@ -229,6 +245,14 @@ export function getModelFriendlyName(
 
   return friendlyName;
 }
+// Hook version of getModelFriendlyName
+export function useModelFriendlyName(
+  currentConversation: Conversation,
+  models: Model[],
+  settings: ExtensionSettings
+) {
+  return getModelFriendlyName(currentConversation, models, settings);
+}
 
 // Model token limit for context (input)
 export function getModelContextLimit(model: Model | undefined) {
@@ -325,6 +349,31 @@ export function isOnlineModel(model: Model | undefined) {
   return model?.id.includes("online");
 }
 
+export function isReasoningModel(model: Model | undefined) {
+  return REASONING_MODELS.includes(model?.id ?? "");
+}
+
+// Custom hook useIsCurrentModelAvailable
+export function useIsModelAvailable(
+  models: Array<{ id: string }>,
+  model: Model | undefined
+): boolean {
+  return useMemo(() => {
+    const modelsAreEmpty = models.length === 0;
+    const currentConversationModel = model?.id;
+
+    if (modelsAreEmpty) {
+      return false;
+    }
+
+    if (!currentConversationModel) {
+      return true;
+    }
+
+    return models.some((model) => model.id === currentConversationModel);
+  }, [models, model]);
+}
+
 export function useConvertMarkdownToComponent(
   vscode: WebviewApi<unknown> | undefined
 ) {
@@ -406,7 +455,7 @@ export function useMaxCost(conversation: Conversation) {
     } else {
       setMaxCost(undefined);
     }
-  }, [conversation]);
+  }, [conversation.tokenCount, conversation.model]);
 
   return maxCost;
 }

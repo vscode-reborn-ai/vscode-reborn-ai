@@ -14,9 +14,10 @@ import {
   isMultimodalModel,
   isOnlineModel,
   useConvertMarkdownToComponent,
+  useIsModelAvailable,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
+import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
 import { ApiKeyStatus } from "../store/app";
 import { updateConversationModel } from "../store/conversation";
@@ -140,14 +141,10 @@ export default function ModelSelect({
     );
   }, [models]);
 
-  // Check if the current model is in the model list
-  // When APIs are changed, the current model might not be available
-  const isCurrentModelAvailable = useMemo(() => {
-    return (
-      models.length === 0 ||
-      models.some((model) => model.id === currentConversation.model?.id)
-    );
-  }, [models, currentConversation.model]);
+  const isCurrentModelAvailable = useIsModelAvailable(
+    models,
+    currentConversation?.model
+  );
 
   // computed model costs for all models
   interface ComputedModelData {

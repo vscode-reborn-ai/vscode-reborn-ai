@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
+import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
 import { ApiKeyStatus, setApiKeyStatus } from "../store/app";
 import Icon from "./Icon";

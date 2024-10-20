@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import React from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
+import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
 import { updateConversationModel } from "../store/conversation";
 import { Conversation, Model, MODEL_TOKEN_LIMITS } from "../types";

@@ -1,5 +1,6 @@
+import { ViewOptionsState } from "./store/app";
 import { Conversation, Model, Verbosity } from "./types";
-import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage } from "./types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage, SetViewOptionsMessage } from "./types-messages";
 
 export function useMessenger(vscode: any) {
   const sendMessageToBackend = (type: string, data: any = {}) => {
@@ -27,6 +28,7 @@ export function useMessenger(vscode: any) {
 
   // * GET
   const sendGetSettings = () => sendMessageToBackend(BackendMessageType.getSettings);
+  const sendGetViewOptions = () => sendMessageToBackend(BackendMessageType.getViewOptions);
   const sendGetModels = () => sendMessageToBackend(BackendMessageType.getModels);
   const sendGetApiKeyStatus = () => sendMessageToBackend(BackendMessageType.getApiKeyStatus);
   const sendGetTokenCount = (conversation: Conversation, useEditorSelection: boolean) => {
@@ -47,6 +49,11 @@ export function useMessenger(vscode: any) {
       conversations,
       currentConversation
     } as SetConversationListMessage);
+  };
+  const sendSetViewOptions = (viewOptions: ViewOptionsState) => {
+    sendMessageToBackend(BackendMessageType.setViewOptions, {
+      viewOptions
+    } as SetViewOptionsMessage);
   };
   const sendRunAction = (actionId: string, actionOptions: any = {}) => {
     sendMessageToBackend(BackendMessageType.runAction, {
@@ -135,6 +142,7 @@ export function useMessenger(vscode: any) {
 
   return {
     sendGetSettings,
+    sendGetViewOptions,
     sendGetModels,
     sendGetApiKeyStatus,
     sendGenerateOpenRouterApiKey,
@@ -143,6 +151,7 @@ export function useMessenger(vscode: any) {
     sendModelUpdate,
     sendSetCurrentConversation,
     sendConversationList,
+    sendSetViewOptions,
     sendRunAction,
     sendStopAction,
     sendChangeApiUrl,

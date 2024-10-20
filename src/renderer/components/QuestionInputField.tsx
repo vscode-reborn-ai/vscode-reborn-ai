@@ -1,9 +1,14 @@
 import classNames from "classnames";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
-import { isInstructModel, useMaxCost } from "../helpers";
+import {
+  isInstructModel,
+  isReasoningModel,
+  useIsModelAvailable,
+  useMaxCost,
+} from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
+import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
 import { setUseEditorSelection } from "../store/app";
 import {
@@ -46,16 +51,24 @@ export default ({
   const tokenCountAnimationTimer = useRef(null);
   const backendMessenger = useMessenger(vscode);
   const models = useAppSelector((state: RootState) => state.app.models);
-
-  // Check if the current model is in the model list
-  // When APIs are changed, the current model might not be available
-  const isCurrentModelAvailable = useMemo(() => {
-    return (
-      settings.manualModelInput ||
-      models.length === 0 ||
-      models.some((model) => model.id === currentConversation.model?.id)
-    );
-  }, [models, currentConversation.model]);
+  // View options
+  const showEditorSelection = useAppSelector(
+    (state) => state.app.viewOptions.showEditorSelection
+  );
+  const showModelSelect = useAppSelector(
+    (state) => state.app.viewOptions.showModelSelect
+  );
+  const showVerbosity = useAppSelector(
+    (state) => state.app.viewOptions.showVerbosity
+  );
+  const showClear = useAppSelector((state) => state.app.viewOptions.showClear);
+  const showTokenCount = useAppSelector(
+    (state) => state.app.viewOptions.showTokenCount
+  );
+  const isCurrentModelAvailable = useIsModelAvailable(
+    models,
+    currentConversation?.model
+  );
 
   // when includeEditorSelection changes, update the store (needed for token calculations elsewhere), one-way binding for now
   useEffect(() => {
@@ -163,6 +176,12 @@ export default ({
                 <span className="text-xs opacity-50 ml-2">
                   {t?.questionInputField?.streamingOnInstructModels ??
                     "(streaming is disabled on instruct models)"}
+                </span>
+              )}
+              {isReasoningModel(currentConversation.model) && (
+                <span className="text-xs opacity-50 ml-2">
+                  {t?.questionInputField?.streamingOnReasoningModels ??
+                    "(streaming not yet supported on reasoning models)"}
                 </span>
               )}
             </div>
@@ -273,83 +292,94 @@ export default ({
       {!settings?.minimalUI && (
         <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-1 px-4 overflow-x-auto">
           <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-1">
-            {settings.manualModelInput ? (
-              <ModelInput
+            {showModelSelect && (
+              <>
+                {settings.manualModelInput ? (
+                  <ModelInput
+                    currentConversation={currentConversation}
+                    vscode={vscode}
+                    className="hidden xs:flex items-end"
+                    tooltipId="footer-tooltip"
+                  />
+                ) : (
+                  <ModelSelect
+                    currentConversation={currentConversation}
+                    vscode={vscode}
+                    conversationList={conversationList}
+                    className="hidden xs:flex items-end"
+                    tooltipId="footer-tooltip"
+                  />
+                )}
+              </>
+            )}
+            {showVerbosity && (
+              <VerbositySelect
                 currentConversation={currentConversation}
                 vscode={vscode}
-                className="hidden xs:flex items-end"
-                tooltipId="footer-tooltip"
-              />
-            ) : (
-              <ModelSelect
-                currentConversation={currentConversation}
-                vscode={vscode}
-                conversationList={conversationList}
                 className="hidden xs:flex items-end"
                 tooltipId="footer-tooltip"
               />
             )}
-            <VerbositySelect
-              currentConversation={currentConversation}
-              vscode={vscode}
-              className="hidden xs:flex items-end"
-              tooltipId="footer-tooltip"
-            />
-            <button
-              className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 whitespace-nowrap
+            {showEditorSelection && (
+              <button
+                className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 whitespace-nowrap
                 ${
                   useEditorSelection
                     ? "bg-button text-button hover:bg-button-hover focus:bg-button-hover"
                     : "hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary"
                 }
               `}
-              data-tooltip-id="footer-tooltip"
-              data-tooltip-content="Include the code selected in your editor in the prompt?"
-              onMouseDown={(e) => {
-                // Prevent flashing from textarea briefly losing focus
-                e.preventDefault();
-              }}
-              onClick={() => {
-                // focus the textarea
-                questionInputRef?.current?.focus();
+                data-tooltip-id="footer-tooltip"
+                data-tooltip-content="Include the code selected in your editor in the prompt?"
+                onMouseDown={(e) => {
+                  // Prevent flashing from textarea briefly losing focus
+                  e.preventDefault();
+                }}
+                onClick={() => {
+                  // focus the textarea
+                  questionInputRef?.current?.focus();
 
-                setIncludeEditorSelection(!useEditorSelection);
-              }}
-            >
-              <Icon icon="plus" className="w-3 h-3 hidden 2xs:block" />
-              <span className="hidden 2xs:block">
-                {t?.questionInputField?.useEditorSelection ??
-                  "Editor selection"}
-              </span>
-              <span className="block 2xs:hidden">
-                {t?.questionInputField?.useEditorSelectionShort ?? "Editor"}
-              </span>
-            </button>
-            <button
-              className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary`}
-              data-tooltip-id="footer-tooltip"
-              data-tooltip-content="Clear all messages from conversation"
-              onClick={() => {
-                // clear all messages from the current conversation
-                dispatch(
-                  clearMessages({
-                    conversationId: currentConversation.id,
-                  })
-                );
-              }}
-            >
-              <Icon icon="cancel" className="w-3 h-3 hidden 2xs:block" />
-              {t?.questionInputField?.clear ?? "Clear"}
-            </button>
+                  setIncludeEditorSelection(!useEditorSelection);
+                }}
+              >
+                <Icon icon="plus" className="w-3 h-3 hidden 2xs:block" />
+                <span className="hidden 2xs:block">
+                  {t?.questionInputField?.useEditorSelection ??
+                    "Editor selection"}
+                </span>
+                <span className="block 2xs:hidden">
+                  {t?.questionInputField?.useEditorSelectionShort ?? "Editor"}
+                </span>
+              </button>
+            )}
+            {showClear && (
+              <button
+                className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary`}
+                data-tooltip-id="footer-tooltip"
+                data-tooltip-content="Clear all messages from conversation"
+                onClick={() => {
+                  // clear all messages from the current conversation
+                  dispatch(
+                    clearMessages({
+                      conversationId: currentConversation.id,
+                    })
+                  );
+                }}
+              >
+                <Icon icon="cancel" className="w-3 h-3 hidden 2xs:block" />
+                {t?.questionInputField?.clear ?? "Clear"}
+              </button>
+            )}
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
           <div className="flex flex-row items-start gap-2">
-            <div
-              className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
-                tokenCountAnimation
-                  ? "duration-200 bg-blue-300 bg-opacity-20"
-                  : "duration-500"
-              }
+            {showTokenCount && (
+              <div
+                className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
+                  tokenCountAnimation
+                    ? "duration-200 bg-blue-300 bg-opacity-20"
+                    : "duration-500"
+                }
                 ${
                   parseInt(tokenCountLabel) >
                   (MODEL_TOKEN_LIMITS.has(
@@ -363,39 +393,40 @@ export default ({
                     : ""
                 }
               `}
-              ref={tokenCountRef}
-              tabIndex={0}
-              // on hover showTokenBreakdown
-              onMouseEnter={() => {
-                setShowTokenBreakdown(true);
-              }}
-              onMouseLeave={() => {
-                setShowTokenBreakdown(false);
-              }}
-              onFocus={() => {
-                setShowTokenBreakdown(true);
-              }}
-              onBlur={() => {
-                setShowTokenBreakdown(false);
-              }}
-              onKeyUp={(e) => {
-                if (e.key === "Escape") {
+                ref={tokenCountRef}
+                tabIndex={0}
+                // on hover showTokenBreakdown
+                onMouseEnter={() => {
+                  setShowTokenBreakdown(true);
+                }}
+                onMouseLeave={() => {
                   setShowTokenBreakdown(false);
-                } else if (e.key === "Space") {
-                  setShowTokenBreakdown(!showTokenBreakdown);
-                }
-              }}
-            >
-              {"≤ $"}
-              {maxCost?.toFixed(2) ?? "???"}
-              <TokenCountPopup
-                showTokenBreakdown={showTokenBreakdown}
-                currentConversation={currentConversation}
-                conversationList={conversationList}
-                setTokenCountLabel={setTokenCountLabel}
-                vscode={vscode}
-              />
-            </div>
+                }}
+                onFocus={() => {
+                  setShowTokenBreakdown(true);
+                }}
+                onBlur={() => {
+                  setShowTokenBreakdown(false);
+                }}
+                onKeyUp={(e) => {
+                  if (e.key === "Escape") {
+                    setShowTokenBreakdown(false);
+                  } else if (e.key === "Space") {
+                    setShowTokenBreakdown(!showTokenBreakdown);
+                  }
+                }}
+              >
+                {"≤ $"}
+                {maxCost?.toFixed(2) ?? "???"}
+                <TokenCountPopup
+                  showTokenBreakdown={showTokenBreakdown}
+                  currentConversation={currentConversation}
+                  conversationList={conversationList}
+                  setTokenCountLabel={setTokenCountLabel}
+                  vscode={vscode}
+                />
+              </div>
+            )}
             <button
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               onClick={() => {
