@@ -883,9 +883,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       }
 
       if (this.subscribeToResponse) {
-        vscode.window.showInformationMessage("ChatGPT responded to your question.", "Open conversation").then(async () => {
-          await vscode.commands.executeCommand('vscode-chatgpt.view.focus');
-        });
+        // Check if the window is focused
+        if (!vscode.window.state.focused) {
+          vscode.window.showInformationMessage("ChatGPT responded to your question.", "Open conversation").then(async () => {
+            await vscode.commands.executeCommand('vscode-chatgpt.view.focus');
+          });
+        }
       }
     } catch (error: any) {
       let message;
