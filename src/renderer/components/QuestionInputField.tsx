@@ -180,7 +180,7 @@ export default ({
               )}
               {isReasoningModel(currentConversation.model) && (
                 <span className="text-xs opacity-50 ml-2">
-                  {t?.questionInputField?.streamingOnInstructModels ??
+                  {t?.questionInputField?.streamingOnReasoningModels ??
                     "(streaming not yet supported on reasoning models)"}
                 </span>
               )}
