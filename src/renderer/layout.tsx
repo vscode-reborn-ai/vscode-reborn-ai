@@ -11,7 +11,7 @@ import "../../styles/main.css";
 import Tabs from "./components/Tabs";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { useBackendMessageHandler } from "./message-handler";
-import { useMessenger } from "./sent-to-backend";
+import { useMessenger } from "./send-to-backend";
 import { RootState } from "./store";
 import { ApiKeyStatus, setVSCode } from "./store/app";
 import { setCurrentConversationId } from "./store/conversation";
@@ -36,6 +36,9 @@ export default function Layout({ vscode }: { vscode: any }) {
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
+  const viewOptions = useAppSelector(
+    (state: RootState) => state.app.viewOptions
+  );
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
@@ -50,6 +53,7 @@ export default function Layout({ vscode }: { vscode: any }) {
   const memoizedBackendMessageHandler = useCallback(backendMessageHandler, [
     backendMessageHandler,
   ]);
+  const sync = useAppSelector((state: RootState) => state.app.sync);
   const navigate = useNavigate();
 
   useLayoutEffect(() => {
@@ -57,6 +61,8 @@ export default function Layout({ vscode }: { vscode: any }) {
     if (Object.keys(settings).length === 0) {
       backendMessenger.sendGetSettings();
     }
+    // Ask for the view options
+    backendMessenger.sendGetViewOptions();
     // Ask for ChatGPT models
     if (chatGPTModels.length === 0) {
       backendMessenger.sendGetModels();
@@ -78,6 +84,14 @@ export default function Layout({ vscode }: { vscode: any }) {
       }
     }
   }, [vscode]);
+
+  // Send updates on view options to the backend
+  useEffect(() => {
+    // Only run after the initial sync
+    if (sync.receivedViewOptions) {
+      backendMessenger.sendSetViewOptions(viewOptions);
+    }
+  }, [viewOptions]);
 
   useEffect(() => {
     // When the current conversation changes, send a message to the extension to let it know

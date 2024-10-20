@@ -14,18 +14,18 @@ export enum ApiKeyStatus {
 
 export interface ViewOptionsState {
   // Chat messages
-  hideName: boolean; // Hide names from the chat for compactness.
-  showCodeOnly: boolean; // Only show code in ai responses.
-  showMarkdown: boolean; // Show markdown instead of rendering HTML.
-  alignRight: boolean; // Align user responses to the right.
-  showCompact: boolean; // TODO: A more compact UI overall - think irc or slack's compact mode.
-  showNetworkLogs: boolean; // TODO: Show network logs in the chat.
+  hideName?: boolean; // Hide names from the chat for compactness.
+  showCodeOnly?: boolean; // Only show code in ai responses.
+  showMarkdown?: boolean; // Show markdown instead of rendering HTML.
+  alignRight?: boolean; // Align user responses to the right.
+  showCompact?: boolean; // TODO: A more compact UI overall - think irc or slack's compact mode.
+  showNetworkLogs?: boolean; // TODO: Show network logs in the chat.
   // User input UI
-  showEditorSelection: boolean; // Show the "Editor selection" button.
-  showClear: boolean; // Show the "Clear" button.
-  showVerbosity: boolean; // Show the verbosity button.
-  showModelSelect: boolean; // Show the model select button.
-  showTokenCount: boolean; // Show the token count.
+  showEditorSelection?: boolean; // Show the "Editor selection" button.
+  showClear?: boolean; // Show the "Clear" button.
+  showVerbosity?: boolean; // Show the verbosity button.
+  showModelSelect?: boolean; // Show the model select button.
+  showTokenCount?: boolean; // Show the token count.
 }
 
 export interface AppState {
@@ -37,6 +37,13 @@ export interface AppState {
   useEditorSelection: boolean;
   vscode?: WebviewApi<unknown>;
   viewOptions: ViewOptionsState;
+  // On startup - syncing with backend
+  sync: {
+    receivedViewOptions: boolean;
+    receivedModels: boolean;
+    receivedExtensionSettings: boolean;
+    receivedTranslations: boolean;
+  };
 }
 
 const initialState: AppState = {
@@ -61,6 +68,12 @@ const initialState: AppState = {
     showModelSelect: true,
     showTokenCount: true,
   },
+  sync: {
+    receivedViewOptions: false,
+    receivedModels: false,
+    receivedExtensionSettings: false,
+    receivedTranslations: false,
+  }
 };
 
 export const appSlice = createSlice({
@@ -91,6 +104,27 @@ export const appSlice = createSlice({
     toggleViewOption: (state, action: PayloadAction<keyof ViewOptionsState>) => {
       state.viewOptions[action.payload] = !state.viewOptions[action.payload];
     },
+    setViewOptions: (state, action: PayloadAction<ViewOptionsState>) => {
+      state.viewOptions = action.payload;
+
+      // Ensure all view options are defined
+      state.viewOptions = {
+        ...initialState.viewOptions,
+        ...state.viewOptions,
+      };
+    },
+    setReceivedViewOptions: (state, action: PayloadAction<boolean>) => {
+      state.sync.receivedViewOptions = action.payload;
+    },
+    setReceivedModels: (state, action: PayloadAction<boolean>) => {
+      state.sync.receivedModels = action.payload;
+    },
+    setReceivedExtensionSettings: (state, action: PayloadAction<boolean>) => {
+      state.sync.receivedExtensionSettings = action.payload;
+    },
+    setReceivedTranslations: (state, action: PayloadAction<boolean>) => {
+      state.sync.receivedTranslations = action.payload;
+    },
   },
 });
 
@@ -103,6 +137,11 @@ export const {
   setUseEditorSelection,
   setVSCode,
   toggleViewOption,
+  setViewOptions,
+  setReceivedViewOptions,
+  setReceivedModels,
+  setReceivedExtensionSettings,
+  setReceivedTranslations,
 } = appSlice.actions;
 
 export default appSlice.reducer;

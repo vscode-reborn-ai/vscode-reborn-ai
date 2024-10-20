@@ -9,7 +9,7 @@ import React, {
 import ReactMarkdown from "react-markdown";
 import { WebviewApi } from "vscode-webview";
 import { useAppDispatch } from "./hooks";
-import { useMessenger } from "./sent-to-backend";
+import { useMessenger } from "./send-to-backend";
 import { aiRenamedTitle } from "./store/conversation";
 import {
   ActionNames,
@@ -33,6 +33,21 @@ export const unEscapeHTML = (unsafe: string): string => {
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&");
 };
+
+// Shallow compare two objects
+export function isSameObject(obj1: any, obj2: any) {
+  for (let key in obj1) {
+    if (obj1[key] !== obj2[key]) {
+      return false; // Difference found
+    }
+  }
+  for (let key in obj2) {
+    if (obj1[key] !== obj2[key]) {
+      return false; // Difference found
+    }
+  }
+  return true; // No differences found
+}
 
 export const updateChatMessage = (
   updatedMessage: ChatMessage,

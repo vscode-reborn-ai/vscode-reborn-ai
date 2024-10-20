@@ -2,7 +2,7 @@ import classNames from "classnames";
 import React, { useRef } from "react";
 import { useModelFriendlyName } from "../helpers";
 import { useAppSelector } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
+import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
 import { ChatMessage, Conversation, Role } from "../types";
 import CodeBlock from "./CodeBlock";
@@ -268,15 +268,15 @@ const MessageBodyComponent = ({
   conversation: Conversation;
   editingMessageRef: React.RefObject<HTMLTextAreaElement>;
 }) => {
-  const showMarkdown = useAppSelector(
-    (state: RootState) => state.app.viewOptions.showMarkdown
-  );
-  const codeOnly = useAppSelector(
-    (state: RootState) => state.app.viewOptions.showCodeOnly
-  );
-  const alignRight = useAppSelector(
-    (state: RootState) => state.app.viewOptions.alignRight
-  );
+  const showMarkdown =
+    useAppSelector((state: RootState) => state.app.viewOptions.showMarkdown) ??
+    false;
+  const codeOnly =
+    useAppSelector((state: RootState) => state.app.viewOptions.showCodeOnly) ??
+    false;
+  const alignRight =
+    useAppSelector((state: RootState) => state.app.viewOptions.alignRight) ??
+    false;
 
   return (
     <>

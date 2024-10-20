@@ -4,14 +4,14 @@ import { marked } from "marked";
 import { v4 as uuidv4 } from "uuid";
 import * as vscode from 'vscode';
 import { getSelectedModelId, getUpdatedModel, isReasoningModel } from "./helpers";
+import { AuthStore, OfflineStore } from "./local-store";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetSettingsMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, OpenSettingsMessage, OpenSettingsPromptMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
-import Auth from "./secrets-store";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
 
@@ -38,7 +38,8 @@ export interface ApiRequestOptions {
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   private webView?: vscode.WebviewView;
-  private authStore?: Auth;
+  private authStore?: AuthStore;
+  private offlineStore?: OfflineStore;
   private runner: ActionRunner;
 
   private _temperature: number = 0.9;
@@ -102,9 +103,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       vscode.workspace.getConfiguration("chatgpt").update("apiVersion", undefined, true);
     }
 
-    // Secret storage
-    Auth.init(context);
-    this.authStore = Auth.instance;
+    // Auth and Offline storage
+    this.authStore = AuthStore.init(context);
+    this.offlineStore = OfflineStore.init(context);
+
     vscode.commands.registerCommand("chatgptReborn.setOpenAIApiKey", async (apiKey: string) => {
       if (this.authStore) {
         const apiBaseUrl = this.api?.getApiUrl() ?? baseUrl ?? vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
@@ -426,13 +428,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           this.logEvent("[Reborn] NOT IMPLEMENTED - gpt3-cleared");
           break;
         case BackendMessageType.openSettings:
-          const openSettingsData = data as OpenSettingsMessage;
           vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn chatgpt.");
 
           this.logEvent("settings-opened");
           break;
         case BackendMessageType.openSettingsPrompt:
-          const openSettingsPromptData = data as OpenSettingsPromptMessage;
           vscode.commands.executeCommand('workbench.action.openSettings', "@ext:chris-hayes.chatgpt-reborn promptPrefix");
 
           this.logEvent("settings-prompt-opened");
@@ -446,8 +446,15 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           }
           break;
         case BackendMessageType.getSettings:
-          const getSettingsData = data as GetSettingsMessage;
           this.frontendMessenger.sendSettingsUpdate(vscode.workspace.getConfiguration("chatgpt"));
+          break;
+        case BackendMessageType.getViewOptions:
+          const viewOptions = await this.offlineStore?.getViewOptions();
+          this.frontendMessenger.sendViewOptionsUpdate(viewOptions ?? {});
+          break;
+        case BackendMessageType.setViewOptions:
+          const viewOptionsData = data as SetViewOptionsMessage;
+          await this.offlineStore?.setViewOptions(viewOptionsData.viewOptions);
           break;
         case BackendMessageType.exportToMarkdown:
           const exportToMarkdownData = data as ExportToMarkdownMessage;

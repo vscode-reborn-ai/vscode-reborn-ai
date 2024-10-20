@@ -1,32 +1,35 @@
 import { ExtensionContext, SecretStorage } from "vscode";
+import { ViewOptionsState } from "./renderer/store/app";
 import { Model } from "./renderer/types";
 
 /*
-
 * secrets-store.ts
-
-Responsible for storing and retrieving the OpenAI API key from the secret storage.
-
-There is the "default" key, which is always the last key used.
-There is also the "key by API" object, which stores keys by API base URL.
-Storing by API is useful for switching between APIs without having to re-enter the key.
-
+*
+* Responsible for managing both authentication secrets and local configuration settings related to
+* view options within the main process of a VSCode extension.
+*
+* - The Auth class manages storing and retrieving the OpenAI API keys securely.
+*   - It supports a "default" key, storing the last used key.
+*   - It manages keys by API base URL to facilitate switching between different APIs.
+*   - It stores and retrieves user models associated with specific APIs.
+*
+* - The OfflineSettings class is designed for handling local view options.
+*   - It retrieves and updates view-specific settings stored securely.
+*   - Utilizes VSCode's SecretStorage for safe storage of configuration data.
 */
 
 const DEFAULT_KEY_NAME = "chatgpt_reborn_openai_api_key";
 const KEY_BY_API_NAME = "chatgpt_reborn_openai_api_key_by_api";
 
-export default class Auth {
-  private static _instance: Auth;
+export class AuthStore {
+  private static _instance: AuthStore;
 
   constructor(private secretStorage: SecretStorage) { }
 
-  static init(context: ExtensionContext): void {
-    Auth._instance = new Auth(context.secrets);
-  }
+  static init(context: ExtensionContext): AuthStore {
+    AuthStore._instance = new AuthStore(context.secrets);
 
-  static get instance(): Auth {
-    return Auth._instance;
+    return AuthStore._instance;
   }
 
   private async getKeyByApiObject(): Promise<{ [apiBaseUrl: string]: string; }> {
@@ -105,4 +108,34 @@ export default class Auth {
     await this.secretStorage.store("chatgpt_reborn_models_by_api", JSON.stringify(modelsByApi));
   }
 
+}
+
+const VIEW_OPTIONS_STORAGE_KEY = "offline_view_options";
+
+export class OfflineStore {
+  private static _instance: OfflineStore;
+
+  constructor(private secretStorage: SecretStorage) { }
+
+  static init(context: ExtensionContext): OfflineStore {
+    OfflineStore._instance = new OfflineStore(context.secrets);
+
+    return OfflineStore._instance;
+  }
+
+  async getViewOptions(): Promise<ViewOptionsState | {}> {
+    const viewOptions = await this.secretStorage.get(VIEW_OPTIONS_STORAGE_KEY);
+
+    if (!viewOptions) {
+      return {};
+    }
+
+    return JSON.parse(viewOptions);
+  }
+
+  async setViewOptions(newOptions: Partial<ViewOptionsState>): Promise<void> {
+    const currentOptions = await this.getViewOptions() || {};
+    const updatedOptions = { ...currentOptions, ...newOptions };
+    await this.secretStorage.store(VIEW_OPTIONS_STORAGE_KEY, JSON.stringify(updatedOptions));
+  }
 }

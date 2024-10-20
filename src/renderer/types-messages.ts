@@ -1,4 +1,4 @@
-import { ApiKeyStatus } from "./store/app";
+import { ApiKeyStatus, ViewOptionsState } from "./store/app";
 import { ChatMessage, Conversation, ExtensionSettings, Model, Verbosity } from "./types";
 
 // A message that gets sent TO the backend
@@ -21,6 +21,9 @@ export enum BackendMessageType {
   setVerbosity = "setVerbosity",
   setShowAllModels = "setShowAllModels",
   setManualModelInput = "setManualModelInput",
+  // View options
+  getViewOptions = "getViewOptions",
+  setViewOptions = "setViewOptions",
   // Models
   getModels = "getModels",
   setModel = "setModel",
@@ -89,6 +92,15 @@ export interface StopGeneratingMessage extends BaseBackendMessage {
 
 export interface GetSettingsMessage extends BaseBackendMessage {
   type: BackendMessageType.getSettings;
+}
+
+export interface GetViewOptionsMessage extends BaseBackendMessage {
+  type: BackendMessageType.getViewOptions;
+}
+
+export interface SetViewOptionsMessage extends BaseBackendMessage {
+  type: BackendMessageType.setViewOptions;
+  viewOptions: ViewOptionsState;
 }
 
 export interface ExportToMarkdownMessage extends BaseBackendMessage {
@@ -189,6 +201,7 @@ export enum FrontendMessageType {
   setConversationModel = "setConversationModel",
   // Settings
   settingsUpdate = "settingsUpdate",
+  viewOptionsUpdate = "viewOptionsUpdate",
   // API Key
   updateApiKeyStatus = "updateApiKeyStatus",
   // Content
@@ -216,6 +229,11 @@ export interface SetConversationModelMessage extends BaseFrontendMessage {
 export interface SettingsUpdateMessage extends BaseFrontendMessage {
   type: FrontendMessageType.settingsUpdate;
   config: ExtensionSettings;
+}
+
+export interface ViewOptionsUpdateMessage extends BaseFrontendMessage {
+  type: FrontendMessageType.viewOptionsUpdate;
+  viewOptions: ViewOptionsState;
 }
 
 export interface SetTranslationsMessage extends BaseFrontendMessage {
