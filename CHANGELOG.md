@@ -4,7 +4,7 @@
 
 [@Christopher-Hayes](github.com/Christopher-Hayes) - [@danyalaytekin](github.com/danyalaytekin) - [@flutterrausch](github.com/flutterrausch) - [@hakula139](github.com/hakula139) - [@lvii](github.com/lvii) - [@moritz-t-w](github.com/moritz-t-w) - [@nickv2002](github.com/nickv2002) - [@nossebro](github.com/nossebro) - [@PeterDaveHello](github.com/PeterDaveHello) - [@raphael2692](github.com/raphael2692) - [@rambalachandran](github.com/rambalachandran) - [@xmjiao](github.com/xmjiao) - [@wojtekcz](github.com/wojtekcz) - [@ZsgsDesign](github.com/ZsgsDesign) - [@zzy-life](github.com/zzy-life)
 
-## [Not yet released]
+## October 20, 2024 [v3.26.0]
 
 - ✨ **Feature** - Added support for `o1-preview` and `o1-mini` when using OpenAI.
 - 🌐 **i18n** - Added more languages (Arabic, Bengali, Hindi, Indonesian, Malay, Russian, Thai, Tagalog, Urdu, and Vietnamese). *Thanks @PeterDaveHello*
@@ -142,7 +142,8 @@
 - 🎮 **QoL** - When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
 - 🎮 **QoL** - Configuring "System message" is now an extension setting.
 
-[Not yet released]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.25.0...HEAD
+[Not yet released]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.26.0...HEAD
+[v3.26.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.25.0...3.26.0
 [v3.25.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.24.0...3.25.0
 [v3.24.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.23.2...3.24.0
 [v3.23.0 - v3.23.2]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.22.0...3.23.2
