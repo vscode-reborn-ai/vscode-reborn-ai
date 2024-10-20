@@ -153,5 +153,5 @@
   "verbosity.normalDescription": "คำอธิบายปกติ",
   "verbosity.fullDescription": "คำอธิบายละเอียดและเต็มรูปแบบ",
   "verbosity.parentTooltip": "เปลี่ยนความละเอียดของการตอบกลับของ AI",
-  "chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name": "Chat"
+  "chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name": "แชท"
 }
