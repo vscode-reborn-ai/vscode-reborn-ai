@@ -55,7 +55,7 @@ export default ({
   return (
     <pre
       className={classNames(
-        "c-codeblock group bg-input relative rounded border bg-opacity-20",
+        "c-codeblock group/codeblock bg-input relative rounded border bg-opacity-20",
         className,
         {
           "cursor-pointer": !expanded,
@@ -71,7 +71,7 @@ export default ({
       {/* Added hover styles for the collapsed UI */}
       {expanded && (
         <div className="sticky h-0 z-10 top-0 -mt-[1px] pr-2 border-t">
-          <div className="pt-1 flex flex-wrap items-center justify-end gap-2 transition-opacity duration-75 opacity-0 pointer-events-none group-hover:opacity-100 group-focus-within:opacity-100">
+          <div className="pt-1 flex flex-wrap items-center justify-end gap-2 transition-opacity duration-75 opacity-0 pointer-events-none group-hover/codeblock:opacity-100 group-focus-within/codeblock:opacity-100">
             <CodeBlockActionsButton
               vscode={vscode}
               codeTextContent={codeTextContent}
@@ -134,7 +134,7 @@ export default ({
       )}
       {/* Render a collapsed UI if the prop is set to true */}
       {!expanded && (
-        <div className="opacity-0 group-hover:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
+        <div className="opacity-0 group-hover/codeblock:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
           <div className="bg-input rounded">
             <button
               className="flex gap-x-1 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
@@ -146,7 +146,7 @@ export default ({
         </div>
       )}
       {startCollapsed && expanded && (
-        <div className="opacity-0 group-hover:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
+        <div className="opacity-0 group-hover/codeblock:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
           <div className="bg-input rounded">
             <button
               className="flex gap-x-1 top-0 right-0 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
