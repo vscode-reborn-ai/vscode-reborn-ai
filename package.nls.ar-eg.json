@@ -152,6 +152,6 @@
   "verbosity.conciseDescription": "تفسيرات موجزة",
   "verbosity.normalDescription": "تفسيرات عادية",
   "verbosity.fullDescription": "تفسيرات مفصلة وكاملة",
-  "verbosity.parentTooltip": "تغيير تفصيلية ردود الذكاء الاصطناعqي",
+  "verbosity.parentTooltip": "تغيير تفصيلية ردود الذكاء الاصطناعي",
   "chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name": "نافذة المحادثة"
 }
