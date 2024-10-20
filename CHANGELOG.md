@@ -10,8 +10,8 @@
 - 🌐 **i18n** - Added more languages (Arabic, Bengali, Hindi, Indonesian, Malay, Russian, Thai, Tagalog, Urdu, and Vietnamese). *Thanks @PeterDaveHello*
 - 🖥️ **UI** - More UI customization is possible with the new "View" button under "More Actions".
 - 🎨 **Branding** - Custom app logo added to avoid using OpenAI's logo.
-- 🔧 **Fix** - Code with string interpolation no longer omits code when inserted into the editor.
-- 🔧 **Fix** - Corrected the context window for `gpt-3.5-turbo`. *Thanks @PeterDaveHello*
+- 🔧 **Fix** - Inserting code with string interpolation into the editor no longer omits code.
+- 🔧 **Fix** - When you ask a question with newlines (using <kbd>Shift</kbd> + <kbd>Enter</kbd>), the chat now correctly shows the newlines.
 - 🔩 **Behind the scenes** - Removed `gpt-3.5-turbo`. Users will be moved to `gpt-4o-mini` since it's better while being about the same cost.
 
 ## July 22, 2024 [v3.25.0]
