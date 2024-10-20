@@ -153,5 +153,5 @@
   "verbosity.normalDescription": "一般解釋",
   "verbosity.fullDescription": "詳細和完整的解釋",
   "verbosity.parentTooltip": "更改 AI 的回答詳細程度",
-  "chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name": "Chat"
+  "chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name": "聊天"
 }
