@@ -1,7 +1,12 @@
 import classNames from "classnames";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Tooltip } from "react-tooltip";
-import { isInstructModel, isReasoningModel, useMaxCost } from "../helpers";
+import {
+  isInstructModel,
+  isReasoningModel,
+  useIsModelAvailable,
+  useMaxCost,
+} from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
@@ -60,16 +65,10 @@ export default ({
   const showTokenCount = useAppSelector(
     (state) => state.app.viewOptions.showTokenCount
   );
-
-  // Check if the current model is in the model list
-  // When APIs are changed, the current model might not be available
-  const isCurrentModelAvailable = useMemo(() => {
-    return (
-      settings.manualModelInput ||
-      models.length === 0 ||
-      models.some((model) => model.id === currentConversation.model?.id)
-    );
-  }, [models, currentConversation.model]);
+  const isCurrentModelAvailable = useIsModelAvailable(
+    models,
+    currentConversation?.model
+  );
 
   // when includeEditorSelection changes, update the store (needed for token calculations elsewhere), one-way binding for now
   useEffect(() => {

@@ -14,6 +14,7 @@ import {
   isMultimodalModel,
   isOnlineModel,
   useConvertMarkdownToComponent,
+  useIsModelAvailable,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
@@ -140,26 +141,10 @@ export default function ModelSelect({
     );
   }, [models]);
 
-  // TODO: Move this function to a helper file
-  // Check if the current model is in the model list
-  // When APIs are changed, the current model might not be available
-  const isCurrentModelAvailable = useMemo(() => {
-    const modelsAreEmpty = models.length === 0;
-    const currentConversationModel = currentConversation.model?.id;
-
-    // If no models are available, current model is not available
-    if (modelsAreEmpty) {
-      return false;
-    }
-
-    // If current conversation has no model set, show available for now
-    if (!currentConversationModel) {
-      return true;
-    }
-
-    // Check if the current model is in the list of available models
-    return models.some((model) => model.id === currentConversation.model?.id);
-  }, [models, currentConversation.model]);
+  const isCurrentModelAvailable = useIsModelAvailable(
+    models,
+    currentConversation?.model
+  );
 
   // computed model costs for all models
   interface ComputedModelData {

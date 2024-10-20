@@ -353,6 +353,27 @@ export function isReasoningModel(model: Model | undefined) {
   return REASONING_MODELS.includes(model?.id ?? "");
 }
 
+// Custom hook useIsCurrentModelAvailable
+export function useIsModelAvailable(
+  models: Array<{ id: string }>,
+  model: Model | undefined
+): boolean {
+  return useMemo(() => {
+    const modelsAreEmpty = models.length === 0;
+    const currentConversationModel = model?.id;
+
+    if (modelsAreEmpty) {
+      return false;
+    }
+
+    if (!currentConversationModel) {
+      return true;
+    }
+
+    return models.some((model) => model.id === currentConversationModel);
+  }, [models, model]);
+}
+
 export function useConvertMarkdownToComponent(
   vscode: WebviewApi<unknown> | undefined
 ) {
@@ -434,7 +455,7 @@ export function useMaxCost(conversation: Conversation) {
     } else {
       setMaxCost(undefined);
     }
-  }, [conversation]);
+  }, [conversation.tokenCount, conversation.model]);
 
   return maxCost;
 }
