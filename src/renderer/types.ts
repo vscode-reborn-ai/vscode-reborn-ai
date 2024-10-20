@@ -81,7 +81,10 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "gpt-4o": "GPT-4o",
   "gpt-4o-mini": "GPT-4o mini",
   "gpt-3.5-turbo": "GPT-3.5 Turbo",
-  "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k"
+  "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k",
+  "o1": "o1",
+  "o1-preview": "o1 Preview",
+  "o1-mini": "o1 Mini",
 }));
 
 // source: https://openai.com/pricing
@@ -120,6 +123,18 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     prompt: 3,
     complete: 4,
   },
+  'o1': {
+    prompt: 15,
+    complete: 60,
+  },
+  'o1-preview': {
+    prompt: 15,
+    complete: 60,
+  },
+  'o1-mini': {
+    prompt: 3,
+    complete: 12,
+  },
 }));
 
 // source: https://platform.openai.com/docs/models
@@ -147,15 +162,32 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 128000,
     max: 16384,
   },
-  // TODO: Dec 11, 2023 gpt-35-turbo prompt will become 16385 (but complete will remain 4096)
   'gpt-3.5-turbo': {
-    context: 4096,
+    context: 16385,
+    max: 4096,
   },
   'gpt-3.5-turbo-16k': {
     context: 16385,
     max: 4096,
   },
+  'o1': {
+    context: 128000,
+    max: 32768,
+  },
+  'o1-preview': {
+    context: 128000,
+    max: 32768,
+  },
+  'o1-mini': {
+    context: 128000,
+    max: 65536,
+  },
 }));
+
+// Reasoning models have specific constraints:
+// 1. System context messages are not allowed.
+// 2. Different max_tokens behavior - max_completion_tokens used instead.
+export const REASONING_MODELS = ['o1', 'o1-preview', 'o1-mini'];
 
 interface OpenAIMessage {
   role: Role;
@@ -282,7 +314,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k",
+    model: "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o1-preview" | "o1-mini",
     maxTokens: number,
     temperature: number,
     top_p: number;

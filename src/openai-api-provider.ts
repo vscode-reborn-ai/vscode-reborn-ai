@@ -4,6 +4,7 @@ import { generateText, streamText } from 'ai';
 import { Tiktoken, TiktokenModel, encodingForModel } from "js-tiktoken";
 import ky from "ky";
 import { z } from 'zod';
+import { isReasoningModel } from "./helpers";
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
 import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
 
@@ -144,7 +145,7 @@ export class ApiProvider {
           role: message.role,
           content: message.content,
         })),
-        maxTokens: completeTokensLeft,
+        maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
         temperature,
         topP,
         abortSignal,
@@ -189,7 +190,7 @@ export class ApiProvider {
         role: message.role,
         content: message.content,
       })),
-      maxTokens: completeTokensLeft,
+      maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       temperature,
       topP,
     });
