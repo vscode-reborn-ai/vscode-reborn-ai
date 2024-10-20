@@ -1,4 +1,5 @@
 import classNames from "classnames";
+import DOMPurify from "dompurify";
 import React, { useRef } from "react";
 import { useModelFriendlyName } from "../helpers";
 import { useAppSelector } from "../hooks";
@@ -172,12 +173,6 @@ const UserMessageComponent = ({
             })}
           {message.questionCode && (
             <>
-              {/* {showMarkdown ? (
-                <div
-                  className="bg-input rounded p-4"
-                  dangerouslySetInnerHTML={{ __html: message.questionCode }}
-                />
-              ) : ( */}
               <CodeBlock
                 code={message.questionCode}
                 conversationId={conversation.id}
@@ -185,7 +180,6 @@ const UserMessageComponent = ({
                 startCollapsed={message.questionCode.split("\n").length > 3}
                 role={Role.user}
               />
-              {/* )} */}
             </>
           )}
         </div>
@@ -259,7 +253,10 @@ const BotMessageComponent = ({
                   ))}
               </div>
             ) : (
-              <div key={index} dangerouslySetInnerHTML={{ __html: item }} />
+              <div
+                key={index}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }}
+              />
             );
           }
         })}

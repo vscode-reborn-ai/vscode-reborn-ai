@@ -134,12 +134,13 @@ export default class Messenger {
     } as AddMessageMessage);
   }
 
-  sendStreamMessage(conversationId: string, messageId: string, content: string) {
+  sendStreamMessage(conversationId: string, messageId: string, content: string, rawContent: string) {
     this.sendMessage({
       type: FrontendMessageType.streamMessage,
       conversationId,
       chatMessageId: messageId,
       content,
+      rawContent,
     } as StreamMessageMessage);
   }
 

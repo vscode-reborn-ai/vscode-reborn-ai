@@ -149,6 +149,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             conversationId: streamMessageData?.conversationId ?? currentConversationId,
             messageId: streamMessageData?.chatMessageId ?? "",
             content: streamMessageData?.content ?? "",
+            rawContent: streamMessageData?.rawContent ?? "",
             done: false,
           })
         );

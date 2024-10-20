@@ -186,7 +186,7 @@ export const conversationSlice = createSlice({
           conversation.messages[index].done = done ?? false;
 
           if (done !== undefined) {
-            conversation.inProgress = !done ?? false;
+            conversation.inProgress = !done;
           }
 
           if (conversationId === state.currentConversationId && state.currentConversation) {

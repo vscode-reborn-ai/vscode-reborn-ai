@@ -834,7 +834,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
             message.content = this.formatMessageContent((message.rawContent ?? ''), responseInMarkdown);
 
             // Send webview updated message content
-            this.frontendMessenger.sendStreamMessage(options.conversation?.id ?? '', message.id, message.content);
+            this.frontendMessenger.sendStreamMessage(options.conversation?.id ?? '', message.id, message.content, message.rawContent);
 
             lastMessageTime = now;
           }

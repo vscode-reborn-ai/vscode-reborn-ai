@@ -275,6 +275,7 @@ export interface StreamMessageMessage extends BaseFrontendMessage {
   conversationId: string;
   chatMessageId: string;
   content: string;
+  rawContent: string;
 }
 
 export interface AddErrorMessage extends BaseFrontendMessage {
