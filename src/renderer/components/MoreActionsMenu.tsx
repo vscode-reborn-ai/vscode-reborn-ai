@@ -87,7 +87,7 @@ export default function MoreActionsMenu({
               data-tooltip-content="Open the local API tab"
             >
               <Icon icon="box" className="w-3 h-3" />
-              {t?.questionInputField?.localAPI ?? "Change LLM"}
+              {t?.questionInputField?.changeLLM ?? "Change LLM"}
             </Link>
           </li>
           <li>
@@ -103,7 +103,7 @@ export default function MoreActionsMenu({
               }}
             >
               <Icon icon="zap" className="w-3 h-3" />
-              Actions
+              {t?.questionInputField?.actions ?? "Actions"}
             </Link>
           </li>
           {process.env.NODE_ENV === "development" && (
@@ -191,7 +191,7 @@ export default function MoreActionsMenu({
             >
               <span className="w-full py-0.5 px-1 rounded flex gap-1 items-center justify-start group-hover:bg-button-secondary group-focus:bg-button-secondary group-hover:text-button-secondary group-focus:text-button-secondary">
                 <AdjustmentsHorizontalIcon className="w-3 h-3" />
-                View
+                {t?.questionInputField?.view ?? "View"}
               </span>
               {showViewOptions && (
                 <ViewOptions className="fixed right-32 bottom-7" />

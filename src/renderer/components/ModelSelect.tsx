@@ -370,8 +370,8 @@ export default function ModelSelect({
           {isCurrentModelAvailable
             ? currentModelFriendlyName
             : sync.receivedModels
-            ? "No model selected"
-            : "Fetching models.."}
+            ? t?.modelSelect?.noModelSelected ?? "No model selected"
+            : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
         </button>
         <div
           className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
