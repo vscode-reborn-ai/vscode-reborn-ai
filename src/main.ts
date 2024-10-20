@@ -400,7 +400,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         case BackendMessageType.editCode: {
           const editCodeData = data as EditCodeMessage;
           const escapedString = (editCodeData.code as string).replace(/([\\$])/g, '\\$1');
-          console.log('inserting code snippet', escapedString, editCodeData);
           vscode.window.activeTextEditor?.insertSnippet(new vscode.SnippetString(escapedString));
 
           this.logEvent("code-inserted");

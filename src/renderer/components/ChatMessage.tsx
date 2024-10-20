@@ -68,8 +68,16 @@ const EditMessageComponent = ({
   message: ChatMessage;
   editingMessageRef: React.RefObject<HTMLTextAreaElement>;
 }) => {
+  const hideName = useAppSelector(
+    (state: RootState) => state.app.viewOptions.hideName
+  );
+
   return (
-    <div className="flex flex-col gap-y-2">
+    <div
+      className={classNames("flex flex-col gap-y-2", {
+        "max-w-[80%]": hideName,
+      })}
+    >
       <textarea
         className="w-full h-24 resize-none bg-input rounded p-2"
         defaultValue={
@@ -88,19 +96,20 @@ const UserMessageComponent = ({
   message,
   editingMessageID,
   editingMessageRef,
-  showMarkdown,
-  codeOnly,
-  alignRight,
 }: {
   vscode: any;
   conversation: Conversation;
   message: ChatMessage;
   editingMessageID: string | null;
   editingMessageRef: React.RefObject<HTMLTextAreaElement>;
-  showMarkdown: boolean;
-  codeOnly: boolean;
-  alignRight: boolean;
 }) => {
+  const showMarkdown = useAppSelector(
+    (state: RootState) => state.app.viewOptions.showMarkdown
+  );
+  const alignRight = useAppSelector(
+    (state: RootState) => state.app.viewOptions.alignRight
+  );
+
   return (
     <>
       {message.id === editingMessageID ? (
@@ -190,17 +199,21 @@ const BotMessageComponent = ({
   vscode,
   conversation,
   message,
-  showMarkdown,
-  codeOnly,
-  alignRight,
 }: {
   vscode: any;
   conversation: Conversation;
   message: ChatMessage;
-  showMarkdown: boolean;
-  codeOnly: boolean;
-  alignRight: boolean;
 }) => {
+  const showMarkdown = useAppSelector(
+    (state: RootState) => state.app.viewOptions.showMarkdown
+  );
+  const codeOnly = useAppSelector(
+    (state: RootState) => state.app.viewOptions.showCodeOnly
+  );
+  const alignRight = useAppSelector(
+    (state: RootState) => state.app.viewOptions.alignRight
+  );
+
   return (
     <div
       className={classNames(
@@ -268,16 +281,6 @@ const MessageBodyComponent = ({
   conversation: Conversation;
   editingMessageRef: React.RefObject<HTMLTextAreaElement>;
 }) => {
-  const showMarkdown =
-    useAppSelector((state: RootState) => state.app.viewOptions.showMarkdown) ??
-    false;
-  const codeOnly =
-    useAppSelector((state: RootState) => state.app.viewOptions.showCodeOnly) ??
-    false;
-  const alignRight =
-    useAppSelector((state: RootState) => state.app.viewOptions.alignRight) ??
-    false;
-
   return (
     <>
       {message.role === Role.user ? (
@@ -287,18 +290,12 @@ const MessageBodyComponent = ({
           message={message}
           editingMessageID={editingMessageID}
           editingMessageRef={editingMessageRef}
-          showMarkdown={showMarkdown}
-          codeOnly={codeOnly}
-          alignRight={alignRight}
         />
       ) : (
         <BotMessageComponent
           vscode={vscode}
           conversation={conversation}
           message={message}
-          showMarkdown={showMarkdown}
-          codeOnly={codeOnly}
-          alignRight={alignRight}
         />
       )}
     </>
@@ -350,8 +347,6 @@ const ChatMessageOptions = ({
       >
         <button
           className="send-element-ext p-1 pr-2 flex items-center"
-          data-tooltip-id="message-tooltip"
-          data-tooltip-content="Send this prompt"
           onClick={handleSendClick}
         >
           <Icon icon="send" className="w-3 h-3 mr-1" />
@@ -359,8 +354,6 @@ const ChatMessageOptions = ({
         </button>
         <button
           className="cancel-element-ext p-1 pr-2 flex items-center"
-          data-tooltip-id="message-tooltip"
-          data-tooltip-content="Cancel"
           onClick={() => setEditingMessageID("")}
         >
           <Icon icon="cancel" className="w-3 h-3 mr-1" />
@@ -368,7 +361,10 @@ const ChatMessageOptions = ({
         </button>
       </div>
       <button
-        className="p-1.5 flex items-center rounded"
+        className={classNames("p-1.5 flex items-center rounded", {
+          // Hide the pencil if current message is being edited
+          hidden: editingMessageID === message.id,
+        })}
         data-tooltip-id="message-tooltip"
         data-tooltip-content="Edit and resend this prompt"
         onClick={() => setEditingMessageID(message.id)}
@@ -451,7 +447,7 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
 
   return (
     <div
-      className={`group w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative ${
+      className={`group/chat-message w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative ${
         message.role === Role.user ? "bg-input" : "bg-sidebar"
       }`}
       key={message.id}
@@ -460,7 +456,7 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
         <>
           {message.role === Role.user && (
             <ChatMessageOptions
-              className="absolute top-0 right-2"
+              className="absolute top-0 right-2 invisible group-hover/chat-message:visible group-focus-within/chat-message:visible"
               message={message}
               conversation={conversation}
               index={index}
@@ -480,7 +476,7 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
           <Name message={message} modelFriendlyName={modelFriendlyName} />
           {message.role === Role.user && (
             <ChatMessageOptions
-              className="invisible group-hover:visible group-focus-within:visible"
+              className="invisible group-hover/chat-message:visible group-focus-within/chat-message:visible"
               message={message}
               conversation={conversation}
               index={index}
