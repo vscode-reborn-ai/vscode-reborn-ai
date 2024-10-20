@@ -106,7 +106,7 @@
     "questionInputField.tokens": "token",
     "questionInputField.thinking": "Pensando...",
     "questionInputField.ask": "Chiedi",
-    "questionInputField?.selectAModelFirst": "Seleziona prima un modello",
+    "questionInputField.selectAModelFirst": "Seleziona prima un modello",
     "questionInputField.useEditorSelection": "Usa la selezione dell'editor",
     "questionInputField.clear": "Cancella",
     "questionInputField.feedback": "Feedback",

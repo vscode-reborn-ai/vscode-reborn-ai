@@ -106,7 +106,7 @@
   "questionInputField.tokens": "标记",
   "questionInputField.thinking": "思考中...",
   "questionInputField.ask": "提问",
-  "questionInputField?.selectAModelFirst": "请先选择一个模型",
+  "questionInputField.selectAModelFirst": "请先选择一个模型",
   "questionInputField.useEditorSelection": "使用编辑器选择",
   "questionInputField.clear": "清除",
   "questionInputField.feedback": "反馈",

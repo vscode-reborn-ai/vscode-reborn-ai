@@ -106,7 +106,7 @@
   "questionInputField.tokens": "โทเค็น",
   "questionInputField.thinking": "กำลังคิด...",
   "questionInputField.ask": "ถาม",
-  "questionInputField?.selectAModelFirst": "เลือกโมเดลก่อน",
+  "questionInputField.selectAModelFirst": "เลือกโมเดลก่อน",
   "questionInputField.useEditorSelection": "ใช้การเลือกของตัวแก้ไข",
   "questionInputField.clear": "ล้าง",
   "questionInputField.feedback": "ข้อเสนอแนะ",

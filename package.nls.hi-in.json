@@ -106,7 +106,7 @@
   "questionInputField.tokens": "टोकन",
   "questionInputField.thinking": "सोच रहा है...",
   "questionInputField.ask": "पूछें",
-  "questionInputField?.selectAModelFirst": "पहले एक मॉडल चुनें",
+  "questionInputField.selectAModelFirst": "पहले एक मॉडल चुनें",
   "questionInputField.useEditorSelection": "संपादक चयन का उपयोग करें",
   "questionInputField.clear": "साफ़ करें",
   "questionInputField.feedback": "प्रतिक्रिया",

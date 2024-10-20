@@ -106,7 +106,7 @@
   "questionInputField.tokens": "jetons",
   "questionInputField.thinking": "Réflexion en cours...",
   "questionInputField.ask": "Demander",
-  "questionInputField?.selectAModelFirst": "Sélectionnez d'abord un modèle",
+  "questionInputField.selectAModelFirst": "Sélectionnez d'abord un modèle",
   "questionInputField.useEditorSelection": "Sélection de l'éditeur",
   "questionInputField.clear": "Effacer",
   "questionInputField.feedback": "Retour d'information",

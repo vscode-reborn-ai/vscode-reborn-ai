@@ -106,7 +106,7 @@
   "questionInputField.tokens": "الرموز",
   "questionInputField.thinking": "يفكر...",
   "questionInputField.ask": "اسأل",
-  "questionInputField?.selectAModelFirst": "حدد نموذجًا أولاً",
+  "questionInputField.selectAModelFirst": "حدد نموذجًا أولاً",
   "questionInputField.useEditorSelection": "استخدام التحديد من المحرر",
   "questionInputField.clear": "مسح",
   "questionInputField.feedback": "ملاحظات",

@@ -106,7 +106,7 @@
   "questionInputField.tokens": "tokenlar",
   "questionInputField.thinking": "Düşünüyor...",
   "questionInputField.ask": "Sor",
-  "questionInputField?.selectAModelFirst": "Önce bir model seçin",
+  "questionInputField.selectAModelFirst": "Önce bir model seçin",
   "questionInputField.useEditorSelection": "Editör seçimini kullan",
   "questionInputField.clear": "Temizle",
   "questionInputField.feedback": "Geri bildirim",

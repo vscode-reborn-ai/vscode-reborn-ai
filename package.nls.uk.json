@@ -106,7 +106,7 @@
   "questionInputField.tokens": "токени",
   "questionInputField.thinking": "Думаю...",
   "questionInputField.ask": "Запитати",
-  "questionInputField?.selectAModelFirst": "Спочатку виберіть модель",
+  "questionInputField.selectAModelFirst": "Спочатку виберіть модель",
   "questionInputField.useEditorSelection": "Вибір редактора",
   "questionInputField.clear": "Очистити",
   "questionInputField.feedback": "Зворотній зв'язок",

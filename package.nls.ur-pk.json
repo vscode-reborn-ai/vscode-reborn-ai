@@ -106,7 +106,7 @@
   "questionInputField.tokens": "ٹوکنز",
   "questionInputField.thinking": "سوچ رہا ہے...",
   "questionInputField.ask": "پوچھیں",
-  "questionInputField?.selectAModelFirst": "پہلے ایک ماڈل منتخب کریں",
+  "questionInputField.selectAModelFirst": "پہلے ایک ماڈل منتخب کریں",
   "questionInputField.useEditorSelection": "ایڈیٹر سلیکشن استعمال کریں",
   "questionInputField.clear": "صاف کریں",
   "questionInputField.feedback": "فیڈبیک",

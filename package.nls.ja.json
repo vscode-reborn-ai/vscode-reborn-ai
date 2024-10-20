@@ -106,7 +106,7 @@
   "questionInputField.tokens": "トークン",
   "questionInputField.thinking": "考え中...",
   "questionInputField.ask": "質問",
-  "questionInputField?.selectAModelFirst": "モデルがまだ選択されていません",
+  "questionInputField.selectAModelFirst": "モデルがまだ選択されていません",
   "questionInputField.useEditorSelection": "エディタ選択を使用",
   "questionInputField.clear": "クリア",
   "questionInputField.feedback": "フィードバック",

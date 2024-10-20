@@ -106,7 +106,7 @@
   "questionInputField.tokens": "token",
   "questionInputField.thinking": "Đang suy nghĩ...",
   "questionInputField.ask": "Hỏi",
-  "questionInputField?.selectAModelFirst": "Hãy chọn một mô hình trước",
+  "questionInputField.selectAModelFirst": "Hãy chọn một mô hình trước",
   "questionInputField.useEditorSelection": "Sử dụng lựa chọn của trình soạn thảo",
   "questionInputField.clear": "Xóa",
   "questionInputField.feedback": "Phản hồi",

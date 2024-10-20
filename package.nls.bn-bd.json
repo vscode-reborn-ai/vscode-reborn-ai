@@ -106,7 +106,7 @@
   "questionInputField.tokens": "টোকেন",
   "questionInputField.thinking": "ভাবছে...",
   "questionInputField.ask": "জিজ্ঞাসা করুন",
-  "questionInputField?.selectAModelFirst": "প্রথমে একটি মডেল নির্বাচন করুন",
+  "questionInputField.selectAModelFirst": "প্রথমে একটি মডেল নির্বাচন করুন",
   "questionInputField.useEditorSelection": "সম্পাদক নির্বাচন ব্যবহার করুন",
   "questionInputField.clear": "পরিষ্কার করুন",
   "questionInputField.feedback": "প্রতিক্রিয়া",

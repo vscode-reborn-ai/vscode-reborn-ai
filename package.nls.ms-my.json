@@ -106,7 +106,7 @@
   "questionInputField.tokens": "token",
   "questionInputField.thinking": "Berfikir...",
   "questionInputField.ask": "Tanya",
-  "questionInputField?.selectAModelFirst": "Pilih model terlebih dahulu",
+  "questionInputField.selectAModelFirst": "Pilih model terlebih dahulu",
   "questionInputField.useEditorSelection": "Pilihan editor",
   "questionInputField.clear": "Kosongkan",
   "questionInputField.feedback": "Maklum balas",

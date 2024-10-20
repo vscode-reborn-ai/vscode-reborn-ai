@@ -106,7 +106,7 @@
   "questionInputField.tokens": "mga token",
   "questionInputField.thinking": "Nagiisip...",
   "questionInputField.ask": "Magtanong",
-  "questionInputField?.selectAModelFirst": "Pumili ng modelo muna",
+  "questionInputField.selectAModelFirst": "Pumili ng modelo muna",
   "questionInputField.useEditorSelection": "Gamitin ang pagpili ng editor",
   "questionInputField.clear": "I-clear",
   "questionInputField.feedback": "Feedback",
