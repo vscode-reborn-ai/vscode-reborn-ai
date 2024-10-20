@@ -82,6 +82,10 @@ Translated to: 🇬🇧 🇨🇳 🇮🇳 🇪🇸 🇦🇪 🇧🇩 🇸🇦 �
 
 Most of this extension has been translated to a number of languages. The translations are not perfect and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/vscode-reborn-ai/vscode-reborn-ai/discussions/20).
 
+## Changelog
+
+See the [CHANGELOG](CHANGELOG.md) for a list of past updates, and upcoming unreleased features.
+
 ## Development
 
 ### Clone this repo
@@ -126,10 +130,6 @@ To test the vscode-chatgpt-reborn extension in VS Code, follow these steps:
 ```bash
 yarn run package # Runs `vsce package`
 ```
-
-## Changelog
-
-See the [CHANGELOG](CHANGELOG.md) for a list of past updates, and upcoming unreleased features.
 
 ## Tech
 

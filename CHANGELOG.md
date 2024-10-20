@@ -8,6 +8,7 @@
 
 - ✨ **Feature** - Added support for `o1-preview` and `o1-mini` when using OpenAI.
 - 🌐 **i18n** - Added more languages (Arabic, Bengali, Hindi, Indonesian, Malay, Russian, Thai, Tagalog, Urdu, and Vietnamese). *Thanks @PeterDaveHello*
+- 🖥️ **UI** - More UI customization is possible with the new "View" button under "More Actions".
 - 🎨 **Branding** - Custom app logo added to avoid using OpenAI's logo.
 - 🔧 **Fix** - Code with string interpolation no longer omits code when inserted into the editor.
 - 🔧 **Fix** - Corrected the context window for `gpt-3.5-turbo`. *Thanks @PeterDaveHello*
