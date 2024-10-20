@@ -123,11 +123,11 @@ export class OfflineStore {
     return OfflineStore._instance;
   }
 
-  async getViewOptions(): Promise<ViewOptionsState | {}> {
+  async getViewOptions(): Promise<ViewOptionsState | undefined> {
     const viewOptions = await this.secretStorage.get(VIEW_OPTIONS_STORAGE_KEY);
 
     if (!viewOptions) {
-      return {};
+      return undefined;
     }
 
     return JSON.parse(viewOptions);

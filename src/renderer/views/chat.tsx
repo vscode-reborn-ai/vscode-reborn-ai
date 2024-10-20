@@ -151,7 +151,7 @@ export default function Chat({
 
   return (
     <div className="w-full overflow-y-auto flex-grow">
-      {debug && DebugComponent({ conversation })}
+      {debug && <DebugComponent conversation={conversation} />}
       <IntroductionSplash
         className={conversation.messages?.length > 0 ? "hidden" : ""}
         vscode={vscode}

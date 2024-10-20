@@ -229,7 +229,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           );
         }
         break;
-      case FrontendMessageType.viewOptionsUpdate:
+      case FrontendMessageType.viewOptionsUpdate: {
         const viewOptionsUpdateData = message as ViewOptionsUpdateMessage;
 
         if (!viewOptionsUpdateData?.viewOptions) {
@@ -245,6 +245,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         dispatch(setViewOptions(viewOptionsUpdateData.viewOptions));
         dispatch(setReceivedViewOptions(true));
         break;
+      }
       case FrontendMessageType.modelsUpdate:
         const modelsUpdateData = message as ModelsUpdateMessage;
 

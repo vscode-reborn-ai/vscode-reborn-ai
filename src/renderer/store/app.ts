@@ -83,7 +83,7 @@ export const appSlice = createSlice({
     setDebug: (state, action: PayloadAction<boolean>) => {
       state.debug = action.payload;
     },
-    setExtensionSettings: (state, action: PayloadAction<{ newSettings: any; }>) => {
+    setExtensionSettings: (state, action: PayloadAction<{ newSettings: ExtensionSettings; }>) => {
       state.extensionSettings = action.payload.newSettings;
     },
     setModels: (state, action: PayloadAction<{ models: Model[]; }>) => {

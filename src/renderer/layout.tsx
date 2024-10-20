@@ -91,7 +91,7 @@ export default function Layout({ vscode }: { vscode: any }) {
     if (sync.receivedViewOptions) {
       backendMessenger.sendSetViewOptions(viewOptions);
     }
-  }, [viewOptions]);
+  }, [viewOptions, sync.receivedViewOptions]);
 
   useEffect(() => {
     // When the current conversation changes, send a message to the extension to let it know
