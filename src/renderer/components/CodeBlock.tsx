@@ -58,7 +58,6 @@ export default ({
         "c-codeblock group/codeblock bg-input relative rounded border bg-opacity-20",
         className,
         {
-          "cursor-pointer": !expanded,
           "my-4": margins,
         }
       )}
@@ -134,8 +133,10 @@ export default ({
       )}
       {/* Render a collapsed UI if the prop is set to true */}
       {!expanded && (
-        <div className="opacity-0 group-hover/codeblock:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
-          <div className="bg-input rounded">
+        // The overlay with the "Expand" button covers the codeblock.
+        // However, we do not want to block pointer events.
+        <div className="pointer-events-none opacity-0 group-hover/codeblock:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
+          <div className="pointer-events-auto bg-input rounded">
             <button
               className="flex gap-x-1 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
               onClick={() => setExpanded(!expanded)}
@@ -146,8 +147,8 @@ export default ({
         </div>
       )}
       {startCollapsed && expanded && (
-        <div className="opacity-0 group-hover/codeblock:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
-          <div className="bg-input rounded">
+        <div className="pointer-events-none opacity-0 group-hover/codeblock:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
+          <div className="pointer-events-auto bg-input rounded">
             <button
               className="flex gap-x-1 top-0 right-0 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
               onClick={() => setExpanded(!expanded)}
@@ -158,10 +159,11 @@ export default ({
         </div>
       )}
       <code
-        className={`block px-4 py-2 overflow-x-auto font-code text-code
-          ${expanded ? "" : "h-14 collapsed-code-block"}
-          ${role === Role.user ? "bg-sidebar" : ""}
-        `}
+        className={classNames("block px-4 py-2 font-code text-code", {
+          "h-14 collapsed-code-block overflow-hidden": !expanded,
+          "overflow-x-auto": expanded,
+          "bg-sidebar": role === Role.user,
+        })}
         ref={codeRef}
         dangerouslySetInnerHTML={{
           __html: code
