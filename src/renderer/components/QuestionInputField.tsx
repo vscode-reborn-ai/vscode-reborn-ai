@@ -191,7 +191,10 @@ export default ({
               rows={1}
               className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
               id="question-input"
-              placeholder="Ask a question..."
+              // placeholder="Ask a question..."
+              placeholder={
+                t?.questionInputField?.askAQuestion ?? "Ask a question..."
+              }
               ref={questionInputRef}
               disabled={currentConversation.inProgress}
               onInput={(e) => {
@@ -283,7 +286,8 @@ export default ({
             >
               {isCurrentModelAvailable
                 ? t?.questionInputField?.ask ?? "Ask"
-                : "Select a model first"}
+                : t?.questionInputField?.selectAModelFirst ??
+                  "Select a model first"}
               <Icon icon="send" className="w-5 h-5 ml-1 hidden 2xs:block" />
             </button>
           )}

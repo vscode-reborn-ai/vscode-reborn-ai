@@ -13,8 +13,6 @@ export default function ({ className }: { vscode: any; className?: string }) {
       <div className="w-full flex justify-center flex-row items-center gap-2">
         <Icon icon="logo" className="w-16 h-16 fill-current" />
         <h2 className="text-lg font-bold">
-          {/* TODO: remove from translation files */}
-          {/* {t?.introductionSplash?.features?.title ?? "Features"} */}
           VSCode <br />
           Reborn AI
         </h2>

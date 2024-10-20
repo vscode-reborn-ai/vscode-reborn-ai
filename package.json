@@ -278,7 +278,7 @@
         {
           "type": "webview",
           "id": "vscode-chatgpt.view",
-          "name": "Chat"
+          "name": "%chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name%"
         }
       ]
     },

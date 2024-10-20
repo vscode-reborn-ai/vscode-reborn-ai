@@ -39,7 +39,6 @@ export default function Layout({ vscode }: { vscode: any }) {
   const viewOptions = useAppSelector(
     (state: RootState) => state.app.viewOptions
   );
-  const debug = useAppSelector((state: RootState) => state.app.debug);
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
   );
