@@ -153,5 +153,5 @@
   "verbosity.normalDescription": "Обычные объяснения",
   "verbosity.fullDescription": "Подробные, полные объяснения",
   "verbosity.parentTooltip": "Изменить степень подробности ответов ИИ",
-  "chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name": "Chat"
+  "chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name": "Чат"
 }
