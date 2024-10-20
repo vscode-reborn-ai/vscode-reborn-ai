@@ -8,7 +8,7 @@
 
 - ✨ **Feature** - Added support for `o1-preview` and `o1-mini` when using OpenAI.
 - 🌐 **i18n** - Added more languages (Arabic, Bengali, Hindi, Indonesian, Malay, Russian, Thai, Tagalog, Urdu, and Vietnamese). *Thanks @PeterDaveHello*
-- 🖥️ **UI** - More UI customization is possible with the new "View" button under "More Actions".
+- 🖥️ **UI** - More UI customization is possible with the new "View" button under "More Actions". *Thank you for the suggestion about a Markdown toggle @moritztim*
 - 🎨 **Branding** - Custom app logo added to avoid using OpenAI's logo.
 - 🔧 **Fix** - Inserting code with string interpolation into the editor no longer omits code.
 - 🔧 **Fix** - When you ask a question with newlines (using <kbd>Shift</kbd> + <kbd>Enter</kbd>), the chat now correctly shows the newlines.
