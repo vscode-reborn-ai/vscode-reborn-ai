@@ -117,6 +117,7 @@ export default function ModelSelect({
   const models: Model[] = useAppSelector(
     (state: RootState) => state.app.models
   );
+  const sync = useAppSelector((state: RootState) => state.app.sync);
   const [filteredModels, setFilteredModels] = useState<Model[]>(models);
   const backendMessenger = useMessenger(vscode);
   const [sortBy, setSortBy] = useState<
@@ -349,7 +350,9 @@ export default function ModelSelect({
           className={classNames(
             `rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary`,
             {
-              "text-red-500": !isCurrentModelAvailable,
+              "text-red-500": !isCurrentModelAvailable && sync.receivedModels,
+              "text-orange-500":
+                !isCurrentModelAvailable && !sync.receivedModels,
             }
           )}
           onClick={() => {
@@ -366,7 +369,9 @@ export default function ModelSelect({
           <Icon icon="box" className="w-3 h-3 mr-1" />
           {isCurrentModelAvailable
             ? currentModelFriendlyName
-            : "No model selected"}
+            : sync.receivedModels
+            ? "No model selected"
+            : "Fetching models.."}
         </button>
         <div
           className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
