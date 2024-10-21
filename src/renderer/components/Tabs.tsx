@@ -111,7 +111,7 @@ export default function Tabs({
   currentConversationId,
 }: {
   conversationList: Conversation[];
-  currentConversationId: string;
+  currentConversationId: string | undefined;
 }) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();

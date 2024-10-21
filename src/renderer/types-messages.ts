@@ -1,4 +1,4 @@
-import { ApiKeyStatus, ViewOptionsState } from "./store/app";
+import { ApiKeyStatus, ModelListStatus, ViewOptionsState } from "./store/types";
 import { ChatMessage, Conversation, ExtensionSettings, Model, Verbosity } from "./types";
 
 // A message that gets sent TO the backend
@@ -199,6 +199,7 @@ export enum FrontendMessageType {
   // Models
   modelsUpdate = "modelsUpdate",
   setConversationModel = "setConversationModel",
+  updateModelListStatus = "updateModelListStatus",
   // Settings
   settingsUpdate = "settingsUpdate",
   viewOptionsUpdate = "viewOptionsUpdate",
@@ -244,6 +245,11 @@ export interface SetTranslationsMessage extends BaseFrontendMessage {
 export interface UpdateApiKeyStatusMessage extends BaseFrontendMessage {
   type: FrontendMessageType.updateApiKeyStatus;
   status: ApiKeyStatus;
+}
+
+export interface UpdateModelListStatusMessage extends BaseFrontendMessage {
+  type: FrontendMessageType.updateModelListStatus;
+  status: ModelListStatus;
 }
 
 export interface MessagesUpdatedMessage extends BaseFrontendMessage {

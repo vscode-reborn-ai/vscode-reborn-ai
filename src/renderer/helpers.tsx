@@ -11,6 +11,7 @@ import { WebviewApi } from "vscode-webview";
 import { useAppDispatch } from "./hooks";
 import { useMessenger } from "./send-to-backend";
 import { aiRenamedTitle } from "./store/conversation";
+import { ModelListStatus } from "./store/types";
 import {
   ActionNames,
   ChatMessage,
@@ -238,6 +239,11 @@ export function getModelFriendlyName(
     if (friendlyName.includes(" (")) {
       friendlyName = friendlyName.split(" (")[0];
     }
+
+    // If it has a format like "google/gemma-7b-it", ignore everything before the slash
+    if (friendlyName.includes("/")) {
+      friendlyName = friendlyName.split("/")[1];
+    }
   }
 
   // trim
@@ -353,27 +359,49 @@ export function isReasoningModel(model: Model | undefined) {
   return REASONING_MODELS.includes(model?.id ?? "");
 }
 
-// Custom hook useIsCurrentModelAvailable
 export function useIsModelAvailable(
   models: Array<{ id: string }>,
-  model: Model | undefined
+  model: Model | undefined,
+  modelListStatus: ModelListStatus,
+  manualModelInput?: boolean
 ): boolean {
   return useMemo(() => {
-    const modelsAreEmpty = models.length === 0;
-    const currentConversationModel = model?.id;
+    const currentModelId = model?.id;
 
-    if (modelsAreEmpty) {
-      return false;
-    }
-
-    if (!currentConversationModel) {
+    // If the model list status is unknown or fetching, we assume the model might become available
+    if (
+      modelListStatus === ModelListStatus.Unknown ||
+      modelListStatus === ModelListStatus.Fetching
+    ) {
       return true;
     }
 
-    return models.some((model) => model.id === currentConversationModel);
-  }, [models, model]);
+    // If manual model input is enabled, any model is considered available
+    if (manualModelInput) {
+      return true;
+    }
+
+    // If there are no models fetched and manual input is disabled, the model is not available
+    if (models.length === 0) {
+      return false;
+    }
+
+    // If there's no current model selected, we consider the model available
+    if (!currentModelId) {
+      return true;
+    }
+
+    // Finally, check if the current model ID exists in the list of fetched models
+    const isModelInList = models.some((model) => model.id === currentModelId);
+
+    return isModelInList;
+  }, [models, model?.id, modelListStatus, manualModelInput]);
 }
 
+// TODO: fix
+// ATM, the following function is only used with the OpenRouter models
+// But, specifying "openrouter.ai" seems like a bug in the making
+// This should be refactored to be more generic
 export function useConvertMarkdownToComponent(
   vscode: WebviewApi<unknown> | undefined
 ) {
@@ -434,10 +462,15 @@ export function useConvertMarkdownToComponent(
 }
 
 // Hook - Get the max cost of a conversation
-export function useMaxCost(conversation: Conversation) {
+export function useMaxCost(conversation: Conversation | undefined) {
   const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
 
   useEffect(() => {
+    if (!conversation) {
+      setMaxCost(undefined);
+      return;
+    }
+
     const minPromptTokens =
       (conversation.tokenCount?.messages ?? 0) +
       (conversation.tokenCount?.userInput ?? 0);
@@ -455,7 +488,7 @@ export function useMaxCost(conversation: Conversation) {
     } else {
       setMaxCost(undefined);
     }
-  }, [conversation.tokenCount, conversation.model]);
+  }, [conversation?.tokenCount, conversation?.model]);
 
   return maxCost;
 }

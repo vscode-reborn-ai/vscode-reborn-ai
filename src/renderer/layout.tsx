@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import {
   Navigate,
   Route,
@@ -13,8 +14,12 @@ import { useAppDispatch, useAppSelector } from "./hooks";
 import { useBackendMessageHandler } from "./message-handler";
 import { useMessenger } from "./send-to-backend";
 import { RootState } from "./store";
-import { ApiKeyStatus, setVSCode } from "./store/app";
-import { setCurrentConversationId } from "./store/conversation";
+import { setVSCode } from "./store/app";
+import {
+  selectCurrentConversation,
+  setCurrentConversationId,
+} from "./store/conversation";
+import { ApiKeyStatus } from "./store/types";
 import { Conversation } from "./types";
 import ActionsView from "./views/actions";
 import APIView from "./views/api";
@@ -24,11 +29,9 @@ import OpenAISetup from "./views/openai-setup";
 export default function Layout({ vscode }: { vscode: any }) {
   const dispatch = useAppDispatch();
   const currentConversationId = useAppSelector(
-    (state: any) => state.conversation.currentConversationId
+    (state: RootState) => state.conversation.currentConversationId
   );
-  const currentConversation = useAppSelector(
-    (state: any) => state.conversation.currentConversation
-  );
+  const currentConversation = useSelector(selectCurrentConversation);
   const conversationList = Object.values(
     useAppSelector((state: RootState) => state.conversation.conversations)
   ) as Conversation[];
@@ -44,7 +47,7 @@ export default function Layout({ vscode }: { vscode: any }) {
   );
   const chatGPTModels = useAppSelector((state: RootState) => state.app.models);
   const useEditorSelection = useAppSelector(
-    (state: any) => state.app.useEditorSelection
+    (state: RootState) => state.app.useEditorSelection
   );
   const backendMessenger = useMessenger(vscode);
   const backendMessageHandler = useBackendMessageHandler(backendMessenger);
@@ -93,6 +96,10 @@ export default function Layout({ vscode }: { vscode: any }) {
   }, [viewOptions, sync.receivedViewOptions]);
 
   useEffect(() => {
+    if (!currentConversation) {
+      return;
+    }
+
     // When the current conversation changes, send a message to the extension to let it know
     backendMessenger.sendSetCurrentConversation(currentConversation);
   }, [currentConversationId]);
@@ -105,6 +112,10 @@ export default function Layout({ vscode }: { vscode: any }) {
     }
 
     debounceTimeout.current = setTimeout(() => {
+      if (!currentConversation) {
+        return;
+      }
+
       // Get new token count
       backendMessenger.sendGetTokenCount(
         currentConversation,
@@ -118,9 +129,9 @@ export default function Layout({ vscode }: { vscode: any }) {
       }
     };
   }, [
-    currentConversation.userInput,
-    currentConversation.messages,
-    currentConversation.model,
+    currentConversation?.userInput,
+    currentConversation?.messages,
+    currentConversation?.model,
     useEditorSelection,
   ]);
 
@@ -165,6 +176,10 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   // Keep the backend's conversation list in sync with the frontend's
   useEffect(() => {
+    if (!currentConversation) {
+      return;
+    }
+
     backendMessenger.sendConversationList(
       conversationList,
       currentConversation

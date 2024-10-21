@@ -1,11 +1,15 @@
 import React, { useEffect } from "react";
+import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
 import ChatMessageComponent from "../components/ChatMessage";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { RootState } from "../store";
-import { setAutoscroll } from "../store/conversation";
+import {
+  selectCurrentConversation,
+  setAutoscroll,
+} from "../store/conversation";
 import { ChatMessage, Conversation, Role } from "../types";
 
 const DebugComponent = ({ conversation }: { conversation: Conversation }) => {
@@ -85,6 +89,7 @@ export default function Chat({
   vscode: any;
 }) {
   const dispatch = useAppDispatch();
+  const currentConversation = useSelector(selectCurrentConversation);
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const conversationListRef = React.useRef<HTMLDivElement>(null);
 
@@ -156,16 +161,14 @@ export default function Chat({
         className={conversation.messages?.length > 0 ? "hidden" : ""}
         vscode={vscode}
       />
-      <MessageList
-        conversation={conversation}
-        conversationListRef={conversationListRef}
-        vscode={vscode}
-      />
-      <QuestionInputField
-        conversation={conversation}
-        vscode={vscode}
-        conversationList={conversationList}
-      />
+      {currentConversation && (
+        <MessageList
+          conversation={currentConversation}
+          conversationListRef={conversationListRef}
+          vscode={vscode}
+        />
+      )}
+      <QuestionInputField vscode={vscode} conversationList={conversationList} />
     </div>
   );
 }

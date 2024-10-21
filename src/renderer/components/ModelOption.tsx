@@ -1,10 +1,14 @@
 import classNames from "classnames";
 import React from "react";
+import { useSelector } from "react-redux";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
-import { updateConversationModel } from "../store/conversation";
-import { Conversation, Model, MODEL_TOKEN_LIMITS } from "../types";
+import {
+  selectCurrentConversation,
+  updateConversationModel,
+} from "../store/conversation";
+import { Model, MODEL_TOKEN_LIMITS } from "../types";
 import { RichModel } from "./ModelSelect";
 
 export default function ModelOption({
@@ -12,10 +16,8 @@ export default function ModelOption({
   currentlySelectedId,
   vscode,
   showParentMenu,
-  currentConversation,
   setShowModels,
 }: {
-  currentConversation: Conversation;
   model: RichModel;
   currentlySelectedId?: string;
   vscode: any;
@@ -24,6 +26,7 @@ export default function ModelOption({
 }) {
   const isSelected = model.id === currentlySelectedId;
   const dispatch = useAppDispatch();
+  const currentConversation = useSelector(selectCurrentConversation);
   const t = useAppSelector((state: RootState) => state.app.translations);
   const backendMessenger = useMessenger(vscode);
   const models: Model[] = useAppSelector(
@@ -37,9 +40,14 @@ export default function ModelOption({
     // Update settings
     backendMessenger.sendModelUpdate(model);
 
+    if (!currentConversation) {
+      console.error("No current conversation found");
+      return;
+    }
+
     dispatch(
       updateConversationModel({
-        conversationId: currentConversation.id,
+        conversationId: currentConversation?.id,
         model,
       })
     );

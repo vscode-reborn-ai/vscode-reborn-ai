@@ -1,5 +1,5 @@
 import { ExtensionContext, SecretStorage } from "vscode";
-import { ViewOptionsState } from "./renderer/store/app";
+import { ViewOptionsState } from "./renderer/store/types";
 import { Model } from "./renderer/types";
 
 /*
