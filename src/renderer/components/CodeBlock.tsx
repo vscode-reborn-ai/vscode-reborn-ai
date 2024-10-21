@@ -2,7 +2,7 @@ import classNames from "classnames";
 import React, { useEffect } from "react";
 import { Tooltip } from "react-tooltip";
 import { useAppSelector } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
+import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
 import { Role } from "../types";
 import CodeBlockActionsButton from "./CodeBlockActionsButton";
@@ -55,10 +55,9 @@ export default ({
   return (
     <pre
       className={classNames(
-        "c-codeblock group bg-input relative rounded border bg-opacity-20",
+        "c-codeblock group/codeblock bg-input relative rounded border bg-opacity-20",
         className,
         {
-          "cursor-pointer": !expanded,
           "my-4": margins,
         }
       )}
@@ -71,7 +70,7 @@ export default ({
       {/* Added hover styles for the collapsed UI */}
       {expanded && (
         <div className="sticky h-0 z-10 top-0 -mt-[1px] pr-2 border-t">
-          <div className="pt-1 flex flex-wrap items-center justify-end gap-2 transition-opacity duration-75 opacity-0 pointer-events-none group-hover:opacity-100 group-focus-within:opacity-100">
+          <div className="pt-1 flex flex-wrap items-center justify-end gap-2 transition-opacity duration-75 opacity-0 pointer-events-none group-hover/codeblock:opacity-100 group-focus-within/codeblock:opacity-100">
             <CodeBlockActionsButton
               vscode={vscode}
               codeTextContent={codeTextContent}
@@ -134,8 +133,10 @@ export default ({
       )}
       {/* Render a collapsed UI if the prop is set to true */}
       {!expanded && (
-        <div className="opacity-0 group-hover:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
-          <div className="bg-input rounded">
+        // The overlay with the "Expand" button covers the codeblock.
+        // However, we do not want to block pointer events.
+        <div className="pointer-events-none opacity-0 group-hover/codeblock:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
+          <div className="pointer-events-auto bg-input rounded">
             <button
               className="flex gap-x-1 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
               onClick={() => setExpanded(!expanded)}
@@ -146,8 +147,8 @@ export default ({
         </div>
       )}
       {startCollapsed && expanded && (
-        <div className="opacity-0 group-hover:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
-          <div className="bg-input rounded">
+        <div className="pointer-events-none opacity-0 group-hover/codeblock:opacity-100 absolute inset-0 p-2 flex items-end justify-center">
+          <div className="pointer-events-auto bg-input rounded">
             <button
               className="flex gap-x-1 top-0 right-0 pt-1.5 pb-1 px-2 text-xs rounded bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap"
               onClick={() => setExpanded(!expanded)}
@@ -158,10 +159,11 @@ export default ({
         </div>
       )}
       <code
-        className={`block px-4 py-2 overflow-x-auto font-code text-code
-          ${expanded ? "" : "h-14 collapsed-code-block"}
-          ${role === Role.user ? "bg-sidebar" : ""}
-        `}
+        className={classNames("block px-4 py-2 font-code text-code", {
+          "h-14 collapsed-code-block overflow-hidden": !expanded,
+          "overflow-x-auto": expanded,
+          "bg-sidebar": role === Role.user,
+        })}
         ref={codeRef}
         dangerouslySetInnerHTML={{
           __html: code

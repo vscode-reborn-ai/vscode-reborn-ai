@@ -1,4 +1,4 @@
-import { ApiKeyStatus, ModelListStatus } from "./store/types";
+import { ApiKeyStatus, ModelListStatus, ViewOptionsState } from "./store/types";
 import { ChatMessage, Conversation, ExtensionSettings, Model, Verbosity } from "./types";
 
 // A message that gets sent TO the backend
@@ -21,6 +21,9 @@ export enum BackendMessageType {
   setVerbosity = "setVerbosity",
   setShowAllModels = "setShowAllModels",
   setManualModelInput = "setManualModelInput",
+  // View options
+  getViewOptions = "getViewOptions",
+  setViewOptions = "setViewOptions",
   // Models
   getModels = "getModels",
   setModel = "setModel",
@@ -89,6 +92,15 @@ export interface StopGeneratingMessage extends BaseBackendMessage {
 
 export interface GetSettingsMessage extends BaseBackendMessage {
   type: BackendMessageType.getSettings;
+}
+
+export interface GetViewOptionsMessage extends BaseBackendMessage {
+  type: BackendMessageType.getViewOptions;
+}
+
+export interface SetViewOptionsMessage extends BaseBackendMessage {
+  type: BackendMessageType.setViewOptions;
+  viewOptions: ViewOptionsState;
 }
 
 export interface ExportToMarkdownMessage extends BaseBackendMessage {
@@ -190,6 +202,7 @@ export enum FrontendMessageType {
   updateModelListStatus = "updateModelListStatus",
   // Settings
   settingsUpdate = "settingsUpdate",
+  viewOptionsUpdate = "viewOptionsUpdate",
   // API Key
   updateApiKeyStatus = "updateApiKeyStatus",
   // Content
@@ -217,6 +230,11 @@ export interface SetConversationModelMessage extends BaseFrontendMessage {
 export interface SettingsUpdateMessage extends BaseFrontendMessage {
   type: FrontendMessageType.settingsUpdate;
   config: ExtensionSettings;
+}
+
+export interface ViewOptionsUpdateMessage extends BaseFrontendMessage {
+  type: FrontendMessageType.viewOptionsUpdate;
+  viewOptions: ViewOptionsState;
 }
 
 export interface SetTranslationsMessage extends BaseFrontendMessage {
@@ -263,6 +281,7 @@ export interface StreamMessageMessage extends BaseFrontendMessage {
   conversationId: string;
   chatMessageId: string;
   content: string;
+  rawContent: string;
 }
 
 export interface AddErrorMessage extends BaseFrontendMessage {

@@ -3,7 +3,7 @@ import sanitizeHtml from 'sanitize-html';
 import upath from 'upath';
 import { v4 as uuidv4 } from "uuid";
 import vscode from 'vscode';
-import { listItems } from "./helpers";
+import { isReasoningModel, listItems } from "./helpers";
 import ChatGptViewProvider from "./main";
 import { ActionNames, ChatMessage, Conversation, Role } from "./renderer/types";
 
@@ -76,9 +76,10 @@ class Action {
       createdAt: Date.now(),
     };
 
+    const messages = isReasoningModel(model.id) ? [message] : [systemMessage, message];
     const conversation: Conversation = {
       id: uuidv4(),
-      messages: [systemMessage, message],
+      messages,
       createdAt: Date.now(),
       inProgress: true,
       model,

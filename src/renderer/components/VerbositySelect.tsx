@@ -1,27 +1,27 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
+import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
-import { setVerbosity } from "../store/conversation";
-import { Conversation, Verbosity } from "../types";
+import { selectCurrentConversation, setVerbosity } from "../store/conversation";
+import { Verbosity } from "../types";
 import Icon from "./Icon";
 
 export default function VerbositySelect({
   vscode,
-  currentConversation,
   className,
   dropdownClassName,
   tooltipId,
   showParentMenu,
 }: {
   vscode: any;
-  currentConversation: Conversation;
   className?: string;
   dropdownClassName?: string;
   tooltipId?: string;
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
+  const currentConversation = useSelector(selectCurrentConversation);
   const t = useAppSelector((state: RootState) => state.app.translations);
   const [showOptions, setShowOptions] = useState(false);
   const backendMessenger = useMessenger(vscode);
@@ -84,9 +84,14 @@ export default function VerbositySelect({
               className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"
               key={option}
               onClick={() => {
+                if (!currentConversation) {
+                  console.error("No current conversation found");
+                  return;
+                }
+
                 dispatch(
                   setVerbosity({
-                    conversationId: currentConversation.id,
+                    conversationId: currentConversation?.id,
                     verbosity: option,
                   })
                 );

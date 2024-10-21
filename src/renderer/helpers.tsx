@@ -9,8 +9,9 @@ import React, {
 import ReactMarkdown from "react-markdown";
 import { WebviewApi } from "vscode-webview";
 import { useAppDispatch } from "./hooks";
-import { useMessenger } from "./sent-to-backend";
+import { useMessenger } from "./send-to-backend";
 import { aiRenamedTitle } from "./store/conversation";
+import { ModelListStatus } from "./store/types";
 import {
   ActionNames,
   ChatMessage,
@@ -20,6 +21,7 @@ import {
   MODEL_FRIENDLY_NAME,
   MODEL_TOKEN_LIMITS,
   Model,
+  REASONING_MODELS,
   Role,
 } from "./types";
 
@@ -32,6 +34,21 @@ export const unEscapeHTML = (unsafe: string): string => {
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&");
 };
+
+// Shallow compare two objects
+export function isSameObject(obj1: any, obj2: any) {
+  for (let key in obj1) {
+    if (obj1[key] !== obj2[key]) {
+      return false; // Difference found
+    }
+  }
+  for (let key in obj2) {
+    if (obj1[key] !== obj2[key]) {
+      return false; // Difference found
+    }
+  }
+  return true; // No differences found
+}
 
 export const updateChatMessage = (
   updatedMessage: ChatMessage,
@@ -234,6 +251,14 @@ export function getModelFriendlyName(
 
   return friendlyName;
 }
+// Hook version of getModelFriendlyName
+export function useModelFriendlyName(
+  currentConversation: Conversation,
+  models: Model[],
+  settings: ExtensionSettings
+) {
+  return getModelFriendlyName(currentConversation, models, settings);
+}
 
 // Model token limit for context (input)
 export function getModelContextLimit(model: Model | undefined) {
@@ -330,6 +355,49 @@ export function isOnlineModel(model: Model | undefined) {
   return model?.id.includes("online");
 }
 
+export function isReasoningModel(model: Model | undefined) {
+  return REASONING_MODELS.includes(model?.id ?? "");
+}
+
+export function useIsModelAvailable(
+  models: Array<{ id: string }>,
+  model: Model | undefined,
+  modelListStatus: ModelListStatus,
+  manualModelInput?: boolean
+): boolean {
+  return useMemo(() => {
+    const currentModelId = model?.id;
+
+    // If the model list status is unknown or fetching, we assume the model might become available
+    if (
+      modelListStatus === ModelListStatus.Unknown ||
+      modelListStatus === ModelListStatus.Fetching
+    ) {
+      return true;
+    }
+
+    // If manual model input is enabled, any model is considered available
+    if (manualModelInput) {
+      return true;
+    }
+
+    // If there are no models fetched and manual input is disabled, the model is not available
+    if (models.length === 0) {
+      return false;
+    }
+
+    // If there's no current model selected, we consider the model available
+    if (!currentModelId) {
+      return true;
+    }
+
+    // Finally, check if the current model ID exists in the list of fetched models
+    const isModelInList = models.some((model) => model.id === currentModelId);
+
+    return isModelInList;
+  }, [models, model?.id, modelListStatus, manualModelInput]);
+}
+
 // TODO: fix
 // ATM, the following function is only used with the OpenRouter models
 // But, specifying "openrouter.ai" seems like a bug in the making
@@ -394,10 +462,15 @@ export function useConvertMarkdownToComponent(
 }
 
 // Hook - Get the max cost of a conversation
-export function useMaxCost(conversation: Conversation) {
+export function useMaxCost(conversation: Conversation | undefined) {
   const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
 
   useEffect(() => {
+    if (!conversation) {
+      setMaxCost(undefined);
+      return;
+    }
+
     const minPromptTokens =
       (conversation.tokenCount?.messages ?? 0) +
       (conversation.tokenCount?.userInput ?? 0);
@@ -415,7 +488,7 @@ export function useMaxCost(conversation: Conversation) {
     } else {
       setMaxCost(undefined);
     }
-  }, [conversation]);
+  }, [conversation?.tokenCount, conversation?.model]);
 
   return maxCost;
 }

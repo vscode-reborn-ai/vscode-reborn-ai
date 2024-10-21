@@ -1,4 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { RootState } from "../store";
 import { ChatMessage, Conversation, Model, Verbosity } from "../types";
 
 export interface ConversationState {
@@ -6,9 +7,6 @@ export interface ConversationState {
     [id: string]: Conversation;
   };
   currentConversationId: string | undefined;
-
-  // Enforce with get: currentConversation is always by reference
-  readonly currentConversation?: Conversation | undefined;
 }
 
 const initialConversationID = `Chat-${Date.now()}`;
@@ -30,8 +28,15 @@ const initialState: ConversationState = {
     [initialConversationID]: initialConversation
   },
   currentConversationId: `Chat-${Date.now()}`,
-  currentConversation: initialConversation,
 };
+
+export const selectCurrentConversation = createSelector(
+  [
+    (state: RootState) => state.conversation.conversations,
+    (state: RootState) => state.conversation.currentConversationId,
+  ],
+  (conversations, currentConversationId) => currentConversationId ? conversations[currentConversationId] : undefined
+);
 
 export const conversationSlice = createSlice({
   name: 'conversations',
@@ -45,12 +50,11 @@ export const conversationSlice = createSlice({
     },
     updateConversation: (state, action: PayloadAction<Conversation>) => {
       const { id } = action.payload;
+
       if (state.conversations[id]) {
         state.conversations[id] = action.payload;
-
-        if (id === state.currentConversationId) {
-          state.currentConversation = state.conversations[id];
-        }
+      } else {
+        console.error('[Reborn AI] updateConversation - Conversation not found', id);
       }
     },
     updateConversationMessages: (
@@ -61,10 +65,8 @@ export const conversationSlice = createSlice({
 
       if (state.conversations[conversationId]) {
         state.conversations[conversationId].messages = messages;
-
-        if (conversationId === state.currentConversationId && state.currentConversation) {
-          state.currentConversation.messages = messages;
-        }
+      } else {
+        console.error('[Reborn AI] updateConversationMessages - Conversation not found', conversationId);
       }
     },
     updateConversationModel: (
@@ -132,10 +134,6 @@ export const conversationSlice = createSlice({
           // Update message
           state.conversations[conversationId].messages[index] = message;
         }
-
-        if (conversationId === state.currentConversationId && state.currentConversation) {
-          state.currentConversation.messages = state.conversations[conversationId].messages;
-        }
       } else {
         console.error('[Reborn AI] addMessage - Conversation not found', conversationId);
       }
@@ -153,10 +151,6 @@ export const conversationSlice = createSlice({
         );
         if (index !== -1) {
           conversation.messages.splice(index, 1, message);
-        }
-
-        if (conversationId === state.currentConversationId && state.currentConversation) {
-          state.currentConversation.messages = conversation.messages;
         }
       }
     },
@@ -188,11 +182,7 @@ export const conversationSlice = createSlice({
           conversation.messages[index].done = done ?? false;
 
           if (done !== undefined) {
-            conversation.inProgress = !done ?? false;
-          }
-
-          if (conversationId === state.currentConversationId && state.currentConversation) {
-            state.currentConversation.messages = conversation.messages;
+            conversation.inProgress = !done;
           }
         }
       }
@@ -204,10 +194,6 @@ export const conversationSlice = createSlice({
 
       if (state.conversations[conversationId]) {
         state.conversations[conversationId].messages = [];
-
-        if (conversationId === state.currentConversationId && state.currentConversation) {
-          state.currentConversation.messages = [];
-        }
       }
     },
     removeMessage: (
@@ -225,10 +211,6 @@ export const conversationSlice = createSlice({
         );
         if (index !== -1) {
           conversation.messages.splice(index, 1);
-
-          if (conversationId === state.currentConversationId && state.currentConversation) {
-            state.currentConversation.messages = conversation.messages;
-          }
         }
       }
     },
@@ -239,7 +221,6 @@ export const conversationSlice = createSlice({
       }>
     ) => {
       state.currentConversationId = action.payload.conversationId;
-      state.currentConversation = state.conversations[action.payload.conversationId];
     },
     setInProgress: (
       state,
@@ -303,10 +284,6 @@ export const conversationSlice = createSlice({
       const { conversationId, userInput } = action.payload;
 
       state.conversations[conversationId].userInput = userInput;
-
-      if (conversationId === state.currentConversationId && state.currentConversation) {
-        state.currentConversation.userInput = userInput;
-      }
     },
   },
 });

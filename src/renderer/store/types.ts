@@ -16,3 +16,19 @@ export enum ModelListStatus {
   Fetched = "fetched", // Models have been fetched
   Error = "error", // An error occurred while fetching models
 }
+
+export interface ViewOptionsState {
+  // Chat messages
+  hideName?: boolean; // Hide names from the chat for compactness.
+  showCodeOnly?: boolean; // Only show code in ai responses.
+  showMarkdown?: boolean; // Show markdown instead of rendering HTML.
+  alignRight?: boolean; // Align user responses to the right.
+  showCompact?: boolean; // TODO: A more compact UI overall - think irc or slack's compact mode.
+  showNetworkLogs?: boolean; // TODO: Show network logs in the chat.
+  // User input UI
+  showEditorSelection?: boolean; // Show the "Editor selection" button.
+  showClear?: boolean; // Show the "Clear" button.
+  showVerbosity?: boolean; // Show the verbosity button.
+  showModelSelect?: boolean; // Show the model select button.
+  showTokenCount?: boolean; // Show the token count.
+}

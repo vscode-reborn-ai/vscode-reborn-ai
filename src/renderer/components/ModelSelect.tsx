@@ -7,6 +7,7 @@ import {
 } from "@heroicons/react/24/solid";
 import classNames from "classnames";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 import { VariableSizeList as List } from "react-window";
 import {
   getModelCompletionLimit,
@@ -16,17 +17,84 @@ import {
   isMultimodalModel,
   isOnlineModel,
   useConvertMarkdownToComponent,
+  useIsModelAvailable,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
+import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
-import { updateConversationModel } from "../store/conversation";
+import {
+  selectCurrentConversation,
+  updateConversationModel,
+} from "../store/conversation";
 import { ApiKeyStatus, ModelListStatus } from "../store/types";
-import { Conversation, MODEL_TOKEN_LIMITS, Model } from "../types";
+import { Conversation, Model } from "../types";
 import Icon from "./Icon";
+import ModelOption from "./ModelOption";
+
+// * OpenAI Models
+// On top of the base model attributes from OpenAI
+// We add a few properties to display the model in the UI
+export interface RichModel extends Partial<Model> {
+  quality: string;
+  speed: string;
+  cost: string;
+  recommended?: boolean;
+}
+const modelsArray: RichModel[] = [
+  {
+    id: "gpt-4-turbo",
+    name: "gpt-4-turbo",
+    quality: "⭐⭐⬜",
+    speed: "⚡⚡⬜",
+    cost: "💸💸⬜",
+  },
+  {
+    id: "gpt-4",
+    name: "gpt-4",
+    quality: "⭐⭐⬜",
+    speed: "⚡⬜⬜",
+    cost: "💸💸⬜",
+  },
+  {
+    id: "gpt-4o",
+    name: "gpt-4o",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⚡",
+    cost: "💸⬜⬜",
+    recommended: true,
+  },
+  {
+    id: "gpt-4o-mini",
+    name: "gpt-4o-mini",
+    quality: "⭐⭐⬜",
+    speed: "⚡⚡⚡",
+    cost: "💸⬜⬜",
+  },
+  // o1 will be available once the model is released
+  // {
+  //   id: "o1",
+  //   name: "o1",
+  //   quality: "⭐⭐⭐",
+  //   speed: "⚡⬜⬜",
+  //   cost: "💸💸💸",
+  // },
+  {
+    id: "o1-preview",
+    name: "o1-preview",
+    quality: "⭐⭐⭐",
+    speed: "⚡⬜⬜",
+    cost: "💸💸💸",
+  },
+  {
+    id: "o1-mini",
+    name: "o1-mini",
+    quality: "⭐⭐⭐",
+    speed: "⚡⬜⬜",
+    cost: "💸💸⬜",
+  },
+];
 
 export default function ModelSelect({
-  currentConversation,
   conversationList,
   vscode,
   className,
@@ -34,7 +102,6 @@ export default function ModelSelect({
   tooltipId,
   showParentMenu,
 }: {
-  currentConversation: Conversation;
   conversationList: Conversation[];
   vscode: any;
   className?: string;
@@ -43,6 +110,7 @@ export default function ModelSelect({
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
+  const currentConversation = useSelector(selectCurrentConversation);
   const t = useAppSelector((state: RootState) => state.app.translations);
   const [showModels, setShowModels] = useState(false);
   const settings = useAppSelector(
@@ -57,6 +125,7 @@ export default function ModelSelect({
   const models: Model[] = useAppSelector(
     (state: RootState) => state.app.models
   );
+  const sync = useAppSelector((state: RootState) => state.app.sync);
   const [filteredModels, setFilteredModels] = useState<Model[]>(models);
   const [listElementHeights, setListElementHeights] = useState<number[]>(
     models.map(() => 56)
@@ -85,18 +154,14 @@ export default function ModelSelect({
     );
   }, [models]);
 
-  // TODO: Track when a /models fetch is in-progress to improve UX
   // Check if the current model is in the model list
   // When APIs are changed, the current model might not be available
-  const isCurrentModelAvailable = useMemo(() => {
-    const isAvailable =
-      modelListStatus === ModelListStatus.Unknown ||
-      modelListStatus === ModelListStatus.Fetching ||
-      settings.manualModelInput ||
-      models.some((model) => model.id === currentConversation.model?.id);
-
-    return isAvailable;
-  }, [models, currentConversation.model?.id, modelListStatus]);
+  const isCurrentModelAvailable = useIsModelAvailable(
+    models,
+    currentConversation?.model,
+    modelListStatus,
+    settings.manualModelInput
+  );
 
   // computed model costs for all models
   interface ComputedModelData {
@@ -148,6 +213,10 @@ export default function ModelSelect({
   }, [models]);
 
   const currentModelFriendlyName = useMemo(() => {
+    if (!currentConversation?.model) {
+      return t?.modelSelect?.noModelSelected ?? "No model selected";
+    }
+
     return getModelFriendlyName(currentConversation, models, settings, true);
   }, [currentConversation, models, settings]);
 
@@ -228,9 +297,13 @@ export default function ModelSelect({
     // Update settings
     backendMessenger.sendModelUpdate(model);
 
+    if (!currentConversation) {
+      return;
+    }
+
     dispatch(
       updateConversationModel({
-        conversationId: currentConversation.id,
+        conversationId: currentConversation?.id,
         model,
       })
     );
@@ -258,7 +331,7 @@ export default function ModelSelect({
 
   useEffect(() => {
     setFilteredModels(sortList(sortBy, models, !ascending));
-  }, [models, currentConversation.model, isCurrentModelAvailable]);
+  }, [models, currentConversation?.model, isCurrentModelAvailable]);
 
   useEffect(() => {
     setFilteredModels(sortList(sortBy, filteredModels, !ascending));
@@ -357,7 +430,7 @@ export default function ModelSelect({
               "focus:bg-menu-selection focus:text-menu-selection",
               {
                 "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                  model.id === currentConversation.model?.id,
+                  model.id === currentConversation?.model?.id,
               }
             )}
           >
@@ -380,7 +453,7 @@ export default function ModelSelect({
               "focus:bg-menu-selection focus:text-menu-selection",
               {
                 "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                  model.id === currentConversation.model?.id,
+                  model.id === currentConversation?.model?.id,
               }
             )}
             onClick={() => {
@@ -595,7 +668,9 @@ export default function ModelSelect({
           className={classNames(
             `rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary`,
             {
-              "text-red-500": !isCurrentModelAvailable,
+              "text-red-500": !isCurrentModelAvailable && sync.receivedModels,
+              "text-orange-500":
+                !isCurrentModelAvailable && !sync.receivedModels,
             }
           )}
           onClick={() => {
@@ -612,7 +687,9 @@ export default function ModelSelect({
           <Icon icon="box" className="w-3 h-3 mr-1" />
           {isCurrentModelAvailable
             ? currentModelFriendlyName
-            : "No model selected"}
+            : sync.receivedModels
+            ? t?.modelSelect?.noModelSelected ?? "No model selected"
+            : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
         </button>
         <div
           className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
@@ -859,247 +936,17 @@ export default function ModelSelect({
             </>
           ) : (
             <>
-              {models &&
-                (() => {
-                  const gpt35Turbo = models.find(
-                    (model) => model.id === "gpt-3.5-turbo"
-                  );
-
-                  if (!gpt35Turbo) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt35Turbo.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt35Turbo);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                        gpt-3.5-turbo
-                      </code>
-                      <p>
-                        Quality: ⭐⬜⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt35Turbo.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
-              {models &&
-                (() => {
-                  const gpt4Turbo = models.find(
-                    (model) => model.id === "gpt-4-turbo"
-                  );
-
-                  if (!gpt4Turbo) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt4Turbo.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt4Turbo);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                        gpt-4-turbo
-                      </code>
-                      <p>
-                        Quality: ⭐⭐⬜, Speed: ⚡⚡⬜, Cost: 💸💸💸, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt4Turbo.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
-              {models &&
-                (() => {
-                  const gpt4 = models.find((model) => model.id === "gpt-4");
-
-                  if (!gpt4) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt4.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt4);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                        gpt-4
-                      </code>
-                      <p>
-                        Quality: ⭐⭐⬜, Speed: ⚡⬜⬜, Cost: 💸💸💸, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt4.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt4.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt4.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
-              {models &&
-                (() => {
-                  const gpt4o = models.find((model) => model.id === "gpt-4o");
-
-                  if (!gpt4o) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt4o.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt4o);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <span>
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          gpt-4o
-                        </code>{" "}
-                        <strong>(recommended)</strong>
-                      </span>
-                      <p>
-                        Quality: ⭐⭐⭐, Speed: ⚡⚡⚡, Cost: 💸💸⬜, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt4o.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
-              {models &&
-                (() => {
-                  const gpt4omini = models.find(
-                    (model) => model.id === "gpt-4o-mini"
-                  );
-
-                  if (!gpt4omini) {
-                    return null;
-                  }
-
-                  return (
-                    <button
-                      className={classNames(
-                        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
-                        "hover:bg-menu-selection hover:text-menu-selection",
-                        "focus:bg-menu-selection focus:text-menu-selection",
-                        {
-                          "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                            gpt4omini.id === currentConversation.model?.id,
-                        }
-                      )}
-                      onClick={() => {
-                        setModel(gpt4omini);
-                        if (showParentMenu) {
-                          showParentMenu(false);
-                        }
-                      }}
-                    >
-                      <span>
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          gpt-4o-mini
-                        </code>
-                      </span>
-                      <p>
-                        Quality: ⭐⭐⬜, Speed: ⚡⚡⚡, Cost: 💸⬜⬜, Context:{" "}
-                        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                          {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.context}
-                        </code>
-                        {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max && (
-                          <>
-                            , Completion:{" "}
-                            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-                              {MODEL_TOKEN_LIMITS.get(gpt4omini.id)?.max}
-                            </code>
-                          </>
-                        )}
-                      </p>
-                    </button>
-                  );
-                })()}
+              {/* OpenAI - base models */}
+              {modelsArray.map((model) => (
+                <ModelOption
+                  key={model.id}
+                  model={model}
+                  currentlySelectedId={currentConversation?.model?.id}
+                  vscode={vscode}
+                  showParentMenu={showParentMenu}
+                  setShowModels={setShowModels}
+                />
+              ))}
             </>
           )}
         </div>

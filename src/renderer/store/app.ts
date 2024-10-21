@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WebviewApi } from "vscode-webview";
 import { DEFAULT_EXTENSION_SETTINGS, ExtensionSettings, Model } from "../types";
-import { ApiKeyStatus, ModelListStatus } from "./types";
+import { ApiKeyStatus, ModelListStatus, ViewOptionsState } from "./types";
 
 export interface AppState {
   debug: boolean;
@@ -12,6 +12,14 @@ export interface AppState {
   translations: any;
   useEditorSelection: boolean;
   vscode?: WebviewApi<unknown>;
+  viewOptions: ViewOptionsState;
+  // On startup - syncing with backend
+  sync: {
+    receivedViewOptions: boolean;
+    receivedModels: boolean;
+    receivedExtensionSettings: boolean;
+    receivedTranslations: boolean;
+  };
 }
 
 const initialState: AppState = {
@@ -23,23 +31,39 @@ const initialState: AppState = {
   translations: {},
   useEditorSelection: false,
   vscode: undefined,
+  viewOptions: {
+    hideName: false,
+    showCodeOnly: false,
+    showMarkdown: false,
+    alignRight: false,
+    showCompact: false,
+    showNetworkLogs: false,
+
+    showEditorSelection: true,
+    showClear: true,
+    showVerbosity: true,
+    showModelSelect: true,
+    showTokenCount: true,
+  },
+  sync: {
+    receivedViewOptions: false,
+    receivedModels: false,
+    receivedExtensionSettings: false,
+    receivedTranslations: false,
+  }
 };
 
 export const appSlice = createSlice({
-  name: 'conversations',
+  name: 'app',
   initialState,
   reducers: {
     setDebug: (state, action: PayloadAction<boolean>) => {
       state.debug = action.payload;
     },
-    setExtensionSettings: (state, action: PayloadAction<{
-      newSettings: any;
-    }>) => {
+    setExtensionSettings: (state, action: PayloadAction<{ newSettings: ExtensionSettings; }>) => {
       state.extensionSettings = action.payload.newSettings;
     },
-    setModels: (state, action: PayloadAction<{
-      models: Model[];
-    }>) => {
+    setModels: (state, action: PayloadAction<{ models: Model[]; }>) => {
       state.models = action.payload.models ?? [];
     },
     setApiKeyStatus: (state, action: PayloadAction<ApiKeyStatus>) => {
@@ -56,7 +80,31 @@ export const appSlice = createSlice({
     },
     setVSCode: (state, action: PayloadAction<any>) => {
       state.vscode = action.payload;
-    }
+    },
+    toggleViewOption: (state, action: PayloadAction<keyof ViewOptionsState>) => {
+      state.viewOptions[action.payload] = !state.viewOptions[action.payload];
+    },
+    setViewOptions: (state, action: PayloadAction<ViewOptionsState>) => {
+      state.viewOptions = action.payload;
+
+      // Ensure all view options are defined
+      state.viewOptions = {
+        ...initialState.viewOptions,
+        ...state.viewOptions,
+      };
+    },
+    setReceivedViewOptions: (state, action: PayloadAction<boolean>) => {
+      state.sync.receivedViewOptions = action.payload;
+    },
+    setReceivedModels: (state, action: PayloadAction<boolean>) => {
+      state.sync.receivedModels = action.payload;
+    },
+    setReceivedExtensionSettings: (state, action: PayloadAction<boolean>) => {
+      state.sync.receivedExtensionSettings = action.payload;
+    },
+    setReceivedTranslations: (state, action: PayloadAction<boolean>) => {
+      state.sync.receivedTranslations = action.payload;
+    },
   },
 });
 
@@ -69,6 +117,12 @@ export const {
   setTranslations,
   setUseEditorSelection,
   setVSCode,
+  toggleViewOption,
+  setViewOptions,
+  setReceivedViewOptions,
+  setReceivedModels,
+  setReceivedExtensionSettings,
+  setReceivedTranslations,
 } = appSlice.actions;
 
 export default appSlice.reducer;

@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   getModelCompletionLimit,
   getModelContextLimit,
@@ -7,18 +8,17 @@ import {
 } from "../helpers";
 import { useAppSelector } from "../hooks";
 import { RootState } from "../store";
+import { selectCurrentConversation } from "../store/conversation";
 import { Conversation } from "../types";
 import Icon from "./Icon";
 
 const FALLBACK_MODEL_ID = "gpt-4-turbo";
 
 export default function TokenCountPopup({
-  currentConversation,
   showTokenBreakdown,
   setTokenCountLabel,
   className,
 }: {
-  currentConversation: Conversation;
   conversationList: Conversation[];
   vscode: any;
   showTokenBreakdown: boolean;
@@ -28,11 +28,12 @@ export default function TokenCountPopup({
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
+  const currentConversation = useSelector(selectCurrentConversation);
   const t = useAppSelector((state: RootState) => state.app.translations);
   const [minCost, setMinCost] = useState<number | undefined>(undefined);
   const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
   const [minPromptTokens, setMinPromptTokens] = useState(
-    currentConversation.tokenCount?.minTotal ?? 0
+    currentConversation?.tokenCount?.minTotal ?? 0
   );
   const [maxCompleteTokens, setMaxCompleteTokens] = useState(0);
   const [promptRate, setPromptRate] = useState<number | undefined>(undefined);
@@ -43,13 +44,13 @@ export default function TokenCountPopup({
   // On model change and token count change, update the token count label
   useEffect(() => {
     const minPromptTokens =
-      (currentConversation.tokenCount?.messages ?? 0) +
-      (currentConversation.tokenCount?.userInput ?? 0);
-    const modelId = currentConversation.model?.id ?? FALLBACK_MODEL_ID;
+      (currentConversation?.tokenCount?.messages ?? 0) +
+      (currentConversation?.tokenCount?.userInput ?? 0);
+    const modelId = currentConversation?.model?.id ?? FALLBACK_MODEL_ID;
 
     // Limits
-    const modelContextLimit = getModelContextLimit(currentConversation.model);
-    const modelMax = getModelCompletionLimit(currentConversation.model);
+    const modelContextLimit = getModelContextLimit(currentConversation?.model);
+    const modelMax = getModelCompletionLimit(currentConversation?.model);
     let maxCompleteTokens = modelContextLimit - minPromptTokens;
 
     if (modelMax) {
@@ -57,7 +58,7 @@ export default function TokenCountPopup({
     }
 
     // Rates
-    const rates = getModelRates(currentConversation.model);
+    const rates = getModelRates(currentConversation?.model);
     let minCost =
       rates.prompt !== undefined
         ? (minPromptTokens / 1000000) * rates.prompt
@@ -75,7 +76,7 @@ export default function TokenCountPopup({
     setMinCost(minCost);
     setMaxCost(maxCost);
     setTokenCountLabel(minPromptTokens.toString());
-  }, [currentConversation.tokenCount, currentConversation.model]);
+  }, [currentConversation?.tokenCount, currentConversation?.model]);
 
   return (
     <div
@@ -103,8 +104,8 @@ export default function TokenCountPopup({
               {t?.questionInputField?.tokenBreakdownAtLeastNote ??
                 "(message history + no answer)"}
               <br />(
-              <code>{currentConversation.tokenCount?.messages ?? 0}</code> +{" "}
-              <code>{currentConversation.tokenCount?.userInput ?? 0}</code>)
+              <code>{currentConversation?.tokenCount?.messages ?? 0}</code> +{" "}
+              <code>{currentConversation?.tokenCount?.userInput ?? 0}</code>)
             </span>
           </span>
           <code>{minPromptTokens}</code>{" "}
@@ -125,8 +126,8 @@ export default function TokenCountPopup({
                 "(message history + prompt + longest answer)"}
               {/* TODO: update translations from 'all messages' to 'message history' */}
               <br />(
-              <code>{currentConversation.tokenCount?.messages ?? 0}</code> +{" "}
-              <code>{currentConversation.tokenCount?.userInput ?? 0}</code> +{" "}
+              <code>{currentConversation?.tokenCount?.messages ?? 0}</code> +{" "}
+              <code>{currentConversation?.tokenCount?.userInput ?? 0}</code> +{" "}
               <code>{maxCompleteTokens}</code>)
             </span>
           </span>
@@ -144,8 +145,8 @@ export default function TokenCountPopup({
         </p>
 
         {/* if gpt-4 or gpt-4-32k is the model, add an additional warning about cost */}
-        {(currentConversation.model?.id === "gpt-4" ||
-          currentConversation.model?.id === "gpt-4-32k") && (
+        {(currentConversation?.model?.id === "gpt-4" ||
+          currentConversation?.model?.id === "gpt-4-32k") && (
           <p className="font-bold">
             {t?.questionInputField?.tokenBreakdownGpt4Warning ??
               `Warning: You are currently using ${
@@ -161,7 +162,7 @@ export default function TokenCountPopup({
         )}
 
         {/* gpt_4_turbo cost warning */}
-        {currentConversation.model?.id === "gpt-4-turbo" && (
+        {currentConversation?.model?.id === "gpt-4-turbo" && (
           <p className="font-bold">
             {t?.questionInputField?.tokenBreakdownGpt4TurboWarning ??
               `Note: You are currently using gpt-4-turbo. Keep in mind that gpt-3.5-turbo is still 10x cheaper.`}

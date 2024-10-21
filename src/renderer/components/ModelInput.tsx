@@ -1,19 +1,21 @@
 import classNames from "classnames";
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { useAppDispatch } from "../hooks";
-import { useMessenger } from "../sent-to-backend";
-import { updateConversationModel } from "../store/conversation";
-import { Conversation, Model, Role } from "../types";
+import { useMessenger } from "../send-to-backend";
+import {
+  selectCurrentConversation,
+  updateConversationModel,
+} from "../store/conversation";
+import { Model, Role } from "../types";
 
 export default function ModelInput({
-  currentConversation,
   vscode,
   className,
   dropdownClassName,
   tooltipId,
   showParentMenu,
 }: {
-  currentConversation: Conversation;
   vscode: any;
   className?: string;
   dropdownClassName?: string;
@@ -21,6 +23,7 @@ export default function ModelInput({
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
+  const currentConversation = useSelector(selectCurrentConversation);
   const backendMessenger = useMessenger(vscode);
   const [modelId, setModelId] = useState("");
   const [showPopup, setShowPopup] = useState(false);
@@ -39,9 +42,15 @@ export default function ModelInput({
     };
 
     backendMessenger.sendModelUpdate(model);
+
+    if (!currentConversation) {
+      console.error("No current conversation found");
+      return;
+    }
+
     dispatch(
       updateConversationModel({
-        conversationId: currentConversation.id,
+        conversationId: currentConversation?.id,
         model,
       })
     );

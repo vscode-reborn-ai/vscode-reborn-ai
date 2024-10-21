@@ -4,6 +4,7 @@ import { generateText, streamText } from 'ai';
 import { Tiktoken, TiktokenModel, encodingForModel } from "js-tiktoken";
 import ky from "ky";
 import { z } from 'zod';
+import { isReasoningModel } from "./helpers";
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
 import { ApiKeyStatus, ModelListStatus } from "./renderer/store/types";
 import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
@@ -145,18 +146,6 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    // Log everything
-    console.log('--- Stream Chat Completion ---');
-    console.log('model:', this._openai.languageModel(model));
-    console.log('conversation:', conversation);
-    console.log('messages to send:', conversation.messages.map((message) => ({
-      role: message.role,
-      content: message.content,
-    })));
-    console.log('max tokens:', completeTokensLeft);
-    console.log('temperature:', temperature);
-    console.log('topP:', topP);
-
     const { textStream } = await
       streamText({
         // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
@@ -165,7 +154,7 @@ export class ApiProvider {
           role: message.role,
           content: message.content,
         })),
-        maxTokens: completeTokensLeft,
+        maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
         temperature,
         topP,
         abortSignal,
@@ -179,9 +168,6 @@ export class ApiProvider {
       }
 
       sent += textPart;
-
-      console.log('stream:', sent);
-
       yield textPart;
     }
   }
@@ -216,7 +202,7 @@ export class ApiProvider {
         role: message.role,
         content: message.content,
       })),
-      maxTokens: completeTokensLeft,
+      maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       temperature,
       topP,
     });
