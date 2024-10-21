@@ -160,14 +160,11 @@ export class ApiProvider {
         abortSignal,
       });
 
-    let sent = '';
-
     for await (const textPart of textStream) {
       if (abortSignal.aborted) {
         return;
       }
 
-      sent += textPart;
       yield textPart;
     }
   }
