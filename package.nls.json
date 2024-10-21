@@ -152,5 +152,6 @@
   "verbosity.conciseDescription": "Concise explanations",
   "verbosity.normalDescription": "Normal explanations",
   "verbosity.fullDescription": "Detailed, full explanations",
-  "verbosity.parentTooltip": "Change the verbosity of the AI's responses"
+  "verbosity.parentTooltip": "Change the verbosity of the AI's responses",
+  "chatgpt-reborn.contributes.views.vscode-chatgpt-view-container.name": "Chat"
 }
