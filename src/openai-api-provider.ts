@@ -518,24 +518,36 @@ export class ApiProvider {
       if (url.includes('api.featherless.ai')) {
         // Get extra data about models from the featherless API
         const featherModels = await ky.get('https://api.featherless.ai/feather/models').json() as {
-          id: string;
-          created_at: string;
-          updated_at: string;
-          name: string;
-          owned_by: string;
-          model_class: string;
-          favorites: number;
-          downloads: number;
-          status: string;
-          health: string;
-        }[];
+          items: {
+            id: string;
+            // TODO: Consider supporting these fields in the future
+            // acc_tags: string[];
+            // avg_rating: number;
+            // total_reviews: number;
+            created_at: string;
+            updated_at: string;
+            name: string;
+            owned_by: string;
+            model_class: string;
+            favorites: number;
+            downloads: number;
+            status: string;
+            health: string;
+          }[],
+          pagination: {
+            current_page: number;
+            per_page: number;
+            total_items: number;
+            total_pages: number;
+          };
+        };
 
         // Combine the two model lists
         // so that properties for a model are combined from both sources
         // and the list is deduplicated
         const combinedModels = new Map<string, Model>();
 
-        for (const model of featherModels) {
+        for (const model of featherModels.items) {
           combinedModels.set(model.id, {
             id: model.id,
             name: model.name,
