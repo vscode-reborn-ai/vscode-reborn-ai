@@ -317,6 +317,11 @@ export function getModelRates(model: Model | undefined): ModelCosts {
     return costs;
   }
 
+  // Feathers models - do not have pricing, it's a subscription service
+  if (model.featherless) {
+    return costs;
+  }
+
   // For OpenRouter models, check if the model has cost data with it
   if (model.pricing) {
     // Mutiply by 1,000,000 to convert from $ / 1 token to $ / 1 million tokens

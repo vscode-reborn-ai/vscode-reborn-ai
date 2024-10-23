@@ -184,7 +184,12 @@ export class ModelCache {
     const url = `${FEATHERLESS_DETAILED_MODEL_ENDPOINT}/${encodedModelId}`;
 
     try {
-      const item = await ky.get(url).json() as {
+      const item = await ky.get(url, {
+        headers: {
+          "HTTP-Referer": "https://github.com/vscode-reborn-ai/vscode-reborn-ai",
+          "X-Title": "VSCode Reborn AI",
+        }
+      }).json() as {
         id: string;
         created_at: string;
         updated_at: string;
@@ -270,6 +275,8 @@ export class ModelCache {
         modelListResult = await ky.get(apiUrl, {
           headers: {
             "Authorization": `Bearer ${apiKey}`,
+            "HTTP-Referer": "https://github.com/vscode-reborn-ai/vscode-reborn-ai",
+            "X-Title": "VSCode Reborn AI",
           },
           hooks: {
             afterResponse: [

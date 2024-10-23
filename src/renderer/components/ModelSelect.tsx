@@ -17,6 +17,7 @@ import {
   isMultimodalModel,
   isOnlineModel,
   useConvertMarkdownToComponent,
+  useDebounce,
   useIsModelAvailable,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -121,6 +122,10 @@ export default function ModelSelect({
   );
   const modelListStatus = useAppSelector(
     (state: RootState) => state.app.modelListStatus
+  );
+  const isFeatherless = useMemo(
+    () => settings.gpt3.apiBaseUrl.includes("api.featherless.ai"),
+    [settings]
   );
   const models: Model[] = useAppSelector(
     (state: RootState) => state.app.models
@@ -319,7 +324,7 @@ export default function ModelSelect({
     setShowModels(false);
   };
 
-  const runSearch = useCallback(() => {
+  const search = () => {
     const query = searchInputRef.current?.value.toLowerCase() ?? "";
 
     // Search for models that match the query
@@ -334,7 +339,8 @@ export default function ModelSelect({
         : modelList;
 
     setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
-  }, [models, sortBy, ascending, searchInputRef]);
+  }; // , [models, sortBy, ascending, sortList, searchInputRef.current]);
+  const runSearch = useDebounce(search, 150);
 
   useEffect(() => {
     setFilteredModels(sortList(sortBy, models, !ascending));
@@ -570,8 +576,7 @@ export default function ModelSelect({
                 </>
               ) : (
                 <>
-                  {/* Do not show pricing if api url is "api.featherless.ai" */}
-                  {!settings.gpt3.apiBaseUrl.includes("api.featherless.ai") && (
+                  {!isFeatherless && (
                     <>
                       <div
                         className={classNames(
@@ -587,8 +592,8 @@ export default function ModelSelect({
                           "group-hover:text-menu-selection group-focus:text-menu-selection"
                         )}
                       >
-                        {computedModelDataMap.get(model.id)?.promptText}
                         <ArrowUpIcon className="w-3 h-3" />
+                        {computedModelDataMap.get(model.id)?.promptText}
                       </div>
                       <div
                         className={classNames(
@@ -604,68 +609,80 @@ export default function ModelSelect({
                           "group-hover:text-menu-selection group-focus:text-menu-selection"
                         )}
                       >
-                        {computedModelDataMap.get(model.id)?.completeText}
                         <ArrowDownIcon className="w-3 h-3" />
+                        {computedModelDataMap.get(model.id)?.completeText}
                       </div>
                     </>
                   )}
                   <div
                     className={classNames("flex items-center gap-0.5", {
                       "opacity-75":
-                        sortBy === "cost" || sortBy === "completion",
+                        sortBy === "cost" ||
+                        sortBy === "completion" ||
+                        sortBy === "context" ||
+                        sortBy === "downloads" ||
+                        sortBy === "favorites",
                     })}
                   >
+                    <ArrowUpIcon className="w-3 h-3" />
                     <span>
                       {formatInteger(
                         computedModelDataMap.get(model.id)?.promptLimit
                       )}{" "}
                       max
                     </span>
-                    <ArrowUpIcon className="w-3 h-3" />
                   </div>
                   <div
                     className={classNames("flex items-center gap-0.5", {
-                      "opacity-75": sortBy === "cost" || sortBy === "context",
+                      "opacity-75":
+                        sortBy === "cost" ||
+                        sortBy === "context" ||
+                        sortBy === "completion" ||
+                        sortBy === "downloads",
                     })}
                   >
+                    <ArrowDownIcon className="w-3 h-3" />
                     <span>
                       {formatInteger(
                         computedModelDataMap.get(model.id)?.completeLimit
                       )}{" "}
                       max
                     </span>
-                    <ArrowDownIcon className="w-3 h-3" />
                   </div>
-                  {model.featherless?.favorites &&
-                    model.featherless?.favorites > 0 && (
-                      <div
-                        className={classNames("flex items-center gap-0.5", {
-                          "opacity-75":
-                            sortBy === "cost" || sortBy === "context",
-                        })}
-                      >
-                        <span>
-                          {formatInteger(model.featherless?.favorites ?? 0)}{" "}
-                          favorites
-                        </span>
-                        <StarIcon className="w-3 h-3 stroke-current fill-transparent" />
-                      </div>
-                    )}
-                  {model.featherless?.downloads &&
-                    model.featherless?.downloads > 0 && (
-                      <div
-                        className={classNames("flex items-center gap-0.5", {
-                          "opacity-75":
-                            sortBy === "cost" || sortBy === "completion",
-                        })}
-                      >
-                        <span>
-                          {formatInteger(model.featherless?.downloads ?? 0)}{" "}
-                          downloads
-                        </span>
-                        <ArrowDownIcon className="w-3 h-3" />
-                      </div>
-                    )}
+                  {(model.featherless?.favorites ?? 0) > 0 && (
+                    <div
+                      className={classNames("flex items-center gap-0.5", {
+                        "opacity-75":
+                          sortBy === "cost" ||
+                          sortBy === "context" ||
+                          sortBy === "completion" ||
+                          sortBy === "downloads",
+                      })}
+                    >
+                      <StarIcon className="w-3 h-3 stroke-current fill-transparent" />
+                      <span>
+                        {formatInteger(model.featherless?.favorites ?? 0)}{" "}
+                        favorites
+                      </span>
+                    </div>
+                  )}
+                  {(model.featherless?.downloads ?? 0) > 0 && (
+                    <div
+                      className={classNames("flex items-center gap-0.5", {
+                        "opacity-75":
+                          sortBy === "cost" ||
+                          sortBy === "completion" ||
+                          sortBy === "context" ||
+                          sortBy === "favorites",
+                      })}
+                    >
+                      <ArrowDownIcon className="w-3 h-3" />
+                      <span>
+                        {formatInteger(model.featherless?.downloads ?? 0)}{" "}
+                        downloads
+                      </span>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -794,9 +811,7 @@ export default function ModelSelect({
                                   <ArrowTrendingDownIcon className="w-3 h-3" />
                                 ))}
                             </button>
-                            {settings.gpt3.apiBaseUrl.includes(
-                              "api.featherless.ai"
-                            ) ? (
+                            {isFeatherless ? (
                               // Filter by "downloads" and "favorites" is with "api.featherless.ai"
                               <>
                                 <button
