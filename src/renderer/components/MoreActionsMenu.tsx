@@ -1,12 +1,14 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/16/solid";
 import classNames from "classnames";
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
 import { setDebug } from "../store/app";
+import { selectCurrentConversation } from "../store/conversation";
 import { Conversation } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
@@ -14,14 +16,12 @@ import VerbositySelect from "./VerbositySelect";
 import ViewOptions from "./ViewOptions";
 
 export default function MoreActionsMenu({
-  currentConversation,
   conversationList,
   vscode,
   showMoreActions,
   setShowMoreActions,
   className,
 }: {
-  currentConversation: Conversation;
   conversationList: Conversation[];
   vscode: any;
   showMoreActions: boolean;
@@ -29,6 +29,7 @@ export default function MoreActionsMenu({
   className?: string;
 }) {
   const dispatch = useAppDispatch();
+  const currentConversation = useSelector(selectCurrentConversation);
   const t = useAppSelector((state: RootState) => state.app.translations);
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ export default function MoreActionsMenu({
                 // if the local API tab is already open, close it
                 if (location.pathname === "/api") {
                   e.preventDefault();
-                  navigate(`/chat/${encodeURI(currentConversation.id)}`);
+                  navigate(`/chat/${encodeURI(currentConversation?.id ?? "")}`);
                 }
 
                 // close menu
@@ -98,7 +99,7 @@ export default function MoreActionsMenu({
                 // if the actions tab is already open, close it
                 if (location.pathname === "/actions") {
                   e.preventDefault();
-                  navigate(`/chat/${encodeURI(currentConversation.id)}`);
+                  navigate(`/chat/${encodeURI(currentConversation?.id ?? "")}`);
                 }
               }}
             >
@@ -149,6 +150,11 @@ export default function MoreActionsMenu({
               data-tooltip-id="more-actions-tooltip"
               data-tooltip-content="Export the conversation to a markdown file"
               onClick={() => {
+                if (!currentConversation) {
+                  console.error("No current conversation to export.");
+                  return;
+                }
+
                 backendMessenger.sendExportToMarkdown(currentConversation);
 
                 // close menu
@@ -200,17 +206,15 @@ export default function MoreActionsMenu({
           </li>
           <li className="block xs:hidden">
             <ModelSelect
-              currentConversation={currentConversation}
               vscode={vscode}
-              conversationList={conversationList}
               dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
               tooltipId="more-actions-tooltip"
-              showParentMenu={setShowMoreActions}
+              setShowParentMenu={setShowMoreActions}
+              renderModelList={showMoreActions}
             />
           </li>
           <li className="block xs:hidden">
             <VerbositySelect
-              currentConversation={currentConversation}
               vscode={vscode}
               dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
               tooltipId="more-actions-tooltip"

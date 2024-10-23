@@ -1,4 +1,4 @@
-import { ViewOptionsState } from "./store/app";
+import { ViewOptionsState } from "./store/types";
 import { Conversation, Model, Verbosity } from "./types";
 import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage, SetViewOptionsMessage } from "./types-messages";
 

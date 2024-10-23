@@ -1,7 +1,8 @@
 import classNames from "classnames";
 import React from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { toggleViewOption, ViewOptionsState } from "../store/app";
+import { toggleViewOption } from "../store/app";
+import { ViewOptionsState } from "../store/types";
 import Icon from "./Icon";
 
 interface ViewOptionsToggleProps {

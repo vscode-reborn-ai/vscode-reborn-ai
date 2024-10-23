@@ -1,9 +1,9 @@
 import { ExtensionContext, SecretStorage } from "vscode";
-import { ViewOptionsState } from "./renderer/store/app";
+import { ViewOptionsState } from "./renderer/store/types";
 import { Model } from "./renderer/types";
 
 /*
-* secrets-store.ts
+* local-store.ts
 *
 * Responsible for managing both authentication secrets and local configuration settings related to
 * view options within the main process of a VSCode extension.
@@ -16,6 +16,9 @@ import { Model } from "./renderer/types";
 * - The OfflineSettings class is designed for handling local view options.
 *   - It retrieves and updates view-specific settings stored securely.
 *   - Utilizes VSCode's SecretStorage for safe storage of configuration data.
+*
+* TODO: Validate the structure of the retrieved data for both keys and view options.
+*   - Current implementatoin may break as the application evolves and data structures change.
 */
 
 const DEFAULT_KEY_NAME = "chatgpt_reborn_openai_api_key";
@@ -81,7 +84,7 @@ export class AuthStore {
   }
 
   // Remember what the last model was used for each API
-  // use secret storage
+  // TODO: Validate the structure of the retrieved model
   async getModelByApi(apiBaseUrl: string): Promise<Model | undefined> {
     const getModels = await this.secretStorage.get("chatgpt_reborn_models_by_api");
 
@@ -123,6 +126,7 @@ export class OfflineStore {
     return OfflineStore._instance;
   }
 
+  // TODO: Validate the structure of the retrieved view options
   async getViewOptions(): Promise<ViewOptionsState | undefined> {
     const viewOptions = await this.secretStorage.get(VIEW_OPTIONS_STORAGE_KEY);
 
