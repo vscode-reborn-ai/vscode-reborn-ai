@@ -27,7 +27,7 @@ import {
   updateConversationModel,
 } from "../store/conversation";
 import { ApiKeyStatus, ModelListStatus } from "../store/types";
-import { Conversation, Model } from "../types";
+import { Model } from "../types";
 import Icon from "./Icon";
 import ModelOption from "./ModelOption";
 
@@ -95,19 +95,19 @@ const modelsArray: RichModel[] = [
 ];
 
 export default function ModelSelect({
-  conversationList,
   vscode,
   className,
   dropdownClassName,
   tooltipId,
-  showParentMenu,
+  renderModelList = true,
+  setShowParentMenu: showParentMenu,
 }: {
-  conversationList: Conversation[];
   vscode: any;
   className?: string;
   dropdownClassName?: string;
   tooltipId?: string;
-  showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
+  renderModelList?: boolean;
+  setShowParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const dispatch = useAppDispatch();
   const currentConversation = useSelector(selectCurrentConversation);
@@ -142,6 +142,7 @@ export default function ModelSelect({
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
   const listRef = React.createRef<List>();
 
+  // TODO: Move this to a more central location for better maintainability
   const hasOpenAIModels = useMemo(() => {
     // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
     return models.some(
@@ -277,10 +278,16 @@ export default function ModelSelect({
           });
           break;
         case "downloads":
-          sortedModels.sort((a, b) => (b.downloads ?? 0) - (a.downloads ?? 0));
+          sortedModels.sort(
+            (a, b) =>
+              (b.featherless?.downloads ?? 0) - (a.featherless?.downloads ?? 0)
+          );
           break;
         case "favorites":
-          sortedModels.sort((a, b) => (b.favorites ?? 0) - (a.favorites ?? 0));
+          sortedModels.sort(
+            (a, b) =>
+              (b.featherless?.favorites ?? 0) - (a.featherless?.favorites ?? 0)
+          );
           break;
       }
 
@@ -489,36 +496,38 @@ export default function ModelSelect({
                     moderated
                   </span>
                 )}
-                {model.status && model.status !== "active" && (
-                  <span
-                    className={classNames(
-                      "px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection",
-                      {
-                        "text-green-500 border-text-green-500":
-                          model.status === "active",
-                        "text-red-500 border-text-red-500":
-                          model.status !== "active",
-                      }
-                    )}
-                  >
-                    {model.status}
-                  </span>
-                )}
-                {model.health && model.health !== "HEALTHY" && (
-                  <span
-                    className={classNames(
-                      "px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection",
-                      {
-                        "text-green-500 border-text-green-500":
-                          model.health === "HEALTHY",
-                        "text-red-500 border-text-red-500":
-                          model.health !== "HEALTHY",
-                      }
-                    )}
-                  >
-                    {model.health}
-                  </span>
-                )}
+                {model.featherless?.status &&
+                  model.featherless?.status !== "active" && (
+                    <span
+                      className={classNames(
+                        "px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection",
+                        {
+                          "text-green-500 border-text-green-500":
+                            model.featherless?.status === "active",
+                          "text-red-500 border-text-red-500":
+                            model.featherless?.status !== "active",
+                        }
+                      )}
+                    >
+                      {model.featherless?.status}
+                    </span>
+                  )}
+                {model.featherless?.health &&
+                  model.featherless?.health !== "HEALTHY" && (
+                    <span
+                      className={classNames(
+                        "px-0.5 border-2 border-opacity-50 rounded text-2xs leading-snug opacity-75 group-hover:border-menu-selection group-focus:border-menu-selection",
+                        {
+                          "text-green-500 border-text-green-500":
+                            model.featherless?.health === "HEALTHY",
+                          "text-red-500 border-text-red-500":
+                            model.featherless?.health !== "HEALTHY",
+                        }
+                      )}
+                    >
+                      {model.featherless?.health}
+                    </span>
+                  )}
               </div>
               {/* Icon to show full model description */}
               {!!model.description?.length && (
@@ -627,31 +636,36 @@ export default function ModelSelect({
                     </span>
                     <ArrowDownIcon className="w-3 h-3" />
                   </div>
-                  {model.favorites && model.favorites > 0 && (
-                    <div
-                      className={classNames("flex items-center gap-0.5", {
-                        "opacity-75": sortBy === "cost" || sortBy === "context",
-                      })}
-                    >
-                      <span>
-                        {formatInteger(model.favorites ?? 0)} favorites
-                      </span>
-                      <StarIcon className="w-3 h-3 stroke-current fill-transparent" />
-                    </div>
-                  )}
-                  {model.downloads && model.downloads > 0 && (
-                    <div
-                      className={classNames("flex items-center gap-0.5", {
-                        "opacity-75":
-                          sortBy === "cost" || sortBy === "completion",
-                      })}
-                    >
-                      <span>
-                        {formatInteger(model.downloads ?? 0)} downloads
-                      </span>
-                      <ArrowDownIcon className="w-3 h-3" />
-                    </div>
-                  )}
+                  {model.featherless?.favorites &&
+                    model.featherless?.favorites > 0 && (
+                      <div
+                        className={classNames("flex items-center gap-0.5", {
+                          "opacity-75":
+                            sortBy === "cost" || sortBy === "context",
+                        })}
+                      >
+                        <span>
+                          {formatInteger(model.featherless?.favorites ?? 0)}{" "}
+                          favorites
+                        </span>
+                        <StarIcon className="w-3 h-3 stroke-current fill-transparent" />
+                      </div>
+                    )}
+                  {model.featherless?.downloads &&
+                    model.featherless?.downloads > 0 && (
+                      <div
+                        className={classNames("flex items-center gap-0.5", {
+                          "opacity-75":
+                            sortBy === "cost" || sortBy === "completion",
+                        })}
+                      >
+                        <span>
+                          {formatInteger(model.featherless?.downloads ?? 0)}{" "}
+                          downloads
+                        </span>
+                        <ArrowDownIcon className="w-3 h-3" />
+                      </div>
+                    )}
                 </>
               )}
             </div>
@@ -691,265 +705,271 @@ export default function ModelSelect({
             ? t?.modelSelect?.noModelSelected ?? "No model selected"
             : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
         </button>
-        <div
-          className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+        {renderModelList && (
+          <div
+            className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}
-        >
-          {/*
+          >
+            {/*
             Show all models if "Show all models" is enabled in settings.
             OR show all models if there's no overlap with OpenAI models,
             otherwise the model select will be empty.
           */}
-          {settings?.showAllModels || !hasOpenAIModels ? (
-            <>
-              {models.length === 0 ? (
-                <>
-                  {apiKeyStatus === ApiKeyStatus.Pending ||
-                  modelListStatus === ModelListStatus.Fetching ||
-                  modelListStatus === ModelListStatus.Unknown ? (
-                    <div className="p-2 text-center">
-                      <span className="text-yellow-500">
-                        Fetching models...
-                      </span>
-                    </div>
-                  ) : apiKeyStatus === ApiKeyStatus.Invalid ||
-                    modelListStatus === ModelListStatus.Error ? (
-                    <div className="p-2 text-center">
-                      <span className="text-red-500">
-                        Invalid API key. Please check your API key.
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="p-2 text-center">
-                      <span className="text-button">No models available.</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <List
-                    ref={listRef}
-                    height={window.innerHeight - 240}
-                    itemCount={
-                      (models.length > 6 ? filteredModels : models).length
-                    }
-                    itemSize={(index) => listElementHeights[index]}
-                    width="100%"
-                    useIsScrolling
-                    overscanCount={5}
-                  >
-                    {ModelRow}
-                  </List>
-                  {models.length > 6 && (
-                    <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
-                      <div className="flex flex-wrap gap-2 items-center justify-between">
-                        <span className="flex-grow opacity-50 text-2xs">
-                          Showing {filteredModels.length} of {models.length}
+            {settings?.showAllModels || !hasOpenAIModels ? (
+              <>
+                {models.length === 0 ? (
+                  <>
+                    {apiKeyStatus === ApiKeyStatus.Pending ||
+                    modelListStatus === ModelListStatus.Fetching ||
+                    modelListStatus === ModelListStatus.Unknown ? (
+                      <div className="p-2 text-center">
+                        <span className="text-yellow-500">
+                          Fetching models...
                         </span>
-                        {/* button list of sort by buttons, the current sort by button is highlighted */}
-                        <div className="flex flex-wrap justify-end gap-1">
-                          <button
-                            className={classNames(
-                              "flex items-center gap-1 p-1 rounded",
-                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
-                              {
-                                "text-menu-selection bg-menu-selection":
-                                  sortBy === "name",
-                              }
-                            )}
-                            onClick={() => {
-                              if (sortBy === "name") {
-                                setAscending(!ascending);
-                              } else {
-                                setAscending(true);
-                              }
-
-                              setSortBy("name");
-                            }}
-                          >
-                            <span>Name</span>
-                            {sortBy === "name" &&
-                              (ascending ? (
-                                <ArrowTrendingUpIcon className="w-3 h-3" />
-                              ) : (
-                                <ArrowTrendingDownIcon className="w-3 h-3" />
-                              ))}
-                          </button>
-                          {settings.gpt3.apiBaseUrl.includes(
-                            "api.featherless.ai"
-                          ) ? (
-                            // Filter by "downloads" and "favorites" is with "api.featherless.ai"
-                            <>
-                              <button
-                                className={classNames(
-                                  "flex items-center gap-1 p-1 rounded",
-                                  "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
-                                  {
-                                    "bg-menu-selection": sortBy === "downloads",
-                                  }
-                                )}
-                                onClick={() => {
-                                  if (sortBy === "downloads") {
-                                    setAscending(!ascending);
-                                  } else {
-                                    setAscending(true);
-                                  }
-
-                                  setSortBy("downloads");
-                                }}
-                              >
-                                <span>Downloads</span>
-                                {sortBy === "downloads" &&
-                                  (ascending ? (
-                                    <ArrowTrendingUpIcon className="w-3 h-3" />
-                                  ) : (
-                                    <ArrowTrendingDownIcon className="w-3 h-3" />
-                                  ))}
-                              </button>
-                              <button
-                                className={classNames(
-                                  "flex items-center gap-1 p-1 rounded",
-                                  "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
-                                  {
-                                    "bg-menu-selection": sortBy === "favorites",
-                                  }
-                                )}
-                                onClick={() => {
-                                  if (sortBy === "favorites") {
-                                    setAscending(!ascending);
-                                  } else {
-                                    setAscending(true);
-                                  }
-
-                                  setSortBy("favorites");
-                                }}
-                              >
-                                <span>Favorites</span>
-                                {sortBy === "favorites" &&
-                                  (ascending ? (
-                                    <ArrowTrendingUpIcon className="w-3 h-3" />
-                                  ) : (
-                                    <ArrowTrendingDownIcon className="w-3 h-3" />
-                                  ))}
-                              </button>
-                            </>
-                          ) : (
+                      </div>
+                    ) : apiKeyStatus === ApiKeyStatus.Invalid ||
+                      modelListStatus === ModelListStatus.Error ? (
+                      <div className="p-2 text-center">
+                        <span className="text-red-500">
+                          Invalid API key. Please check your API key.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="p-2 text-center">
+                        <span className="text-button">
+                          No models available.
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <List
+                      ref={listRef}
+                      height={window.innerHeight - 240}
+                      itemCount={
+                        (models.length > 6 ? filteredModels : models).length
+                      }
+                      itemSize={(index) => listElementHeights[index]}
+                      width="100%"
+                      useIsScrolling
+                      overscanCount={5}
+                    >
+                      {ModelRow}
+                    </List>
+                    {models.length > 6 && (
+                      <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
+                        <div className="flex flex-wrap gap-2 items-center justify-between">
+                          <span className="flex-grow opacity-50 text-2xs">
+                            Showing {filteredModels.length} of {models.length}
+                          </span>
+                          {/* button list of sort by buttons, the current sort by button is highlighted */}
+                          <div className="flex flex-wrap justify-end gap-1">
                             <button
                               className={classNames(
                                 "flex items-center gap-1 p-1 rounded",
                                 "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
                                 {
-                                  "bg-menu-selection": sortBy === "cost",
+                                  "text-menu-selection bg-menu-selection":
+                                    sortBy === "name",
                                 }
                               )}
                               onClick={() => {
-                                if (sortBy === "cost") {
+                                if (sortBy === "name") {
                                   setAscending(!ascending);
                                 } else {
                                   setAscending(true);
                                 }
 
-                                setSortBy("cost");
+                                setSortBy("name");
                               }}
                             >
-                              <span>Cost</span>
-                              {sortBy === "cost" &&
+                              <span>Name</span>
+                              {sortBy === "name" &&
                                 (ascending ? (
                                   <ArrowTrendingUpIcon className="w-3 h-3" />
                                 ) : (
                                   <ArrowTrendingDownIcon className="w-3 h-3" />
                                 ))}
                             </button>
-                          )}
-                          <button
-                            className={classNames(
-                              "flex items-center gap-1 p-1 rounded",
-                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
-                              {
-                                "bg-menu-selection": sortBy === "context",
-                              }
-                            )}
-                            onClick={() => {
-                              if (sortBy === "context") {
-                                setAscending(!ascending);
-                              } else {
-                                setAscending(true);
-                              }
+                            {settings.gpt3.apiBaseUrl.includes(
+                              "api.featherless.ai"
+                            ) ? (
+                              // Filter by "downloads" and "favorites" is with "api.featherless.ai"
+                              <>
+                                <button
+                                  className={classNames(
+                                    "flex items-center gap-1 p-1 rounded",
+                                    "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
+                                    {
+                                      "bg-menu-selection":
+                                        sortBy === "downloads",
+                                    }
+                                  )}
+                                  onClick={() => {
+                                    if (sortBy === "downloads") {
+                                      setAscending(!ascending);
+                                    } else {
+                                      setAscending(true);
+                                    }
 
-                              setSortBy("context");
-                            }}
-                          >
-                            <span>Context</span>
-                            {sortBy === "context" &&
-                              (!ascending ? (
-                                <ArrowTrendingUpIcon className="w-3 h-3" />
-                              ) : (
-                                <ArrowTrendingDownIcon className="w-3 h-3" />
-                              ))}
-                          </button>
-                          <button
-                            className={classNames(
-                              "flex items-center gap-1 p-1 rounded",
-                              "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
-                              {
-                                "bg-menu-selection": sortBy === "completion",
-                              }
-                            )}
-                            onClick={() => {
-                              if (sortBy === "completion") {
-                                setAscending(!ascending);
-                              } else {
-                                setAscending(true);
-                              }
+                                    setSortBy("downloads");
+                                  }}
+                                >
+                                  <span>Downloads</span>
+                                  {sortBy === "downloads" &&
+                                    (ascending ? (
+                                      <ArrowTrendingUpIcon className="w-3 h-3" />
+                                    ) : (
+                                      <ArrowTrendingDownIcon className="w-3 h-3" />
+                                    ))}
+                                </button>
+                                <button
+                                  className={classNames(
+                                    "flex items-center gap-1 p-1 rounded",
+                                    "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
+                                    {
+                                      "bg-menu-selection":
+                                        sortBy === "favorites",
+                                    }
+                                  )}
+                                  onClick={() => {
+                                    if (sortBy === "favorites") {
+                                      setAscending(!ascending);
+                                    } else {
+                                      setAscending(true);
+                                    }
 
-                              setSortBy("completion");
-                            }}
-                          >
-                            <span>Completion</span>
-                            {sortBy === "completion" &&
-                              (!ascending ? (
-                                <ArrowTrendingUpIcon className="w-3 h-3" />
-                              ) : (
-                                <ArrowTrendingDownIcon className="w-3 h-3" />
-                              ))}
-                          </button>
+                                    setSortBy("favorites");
+                                  }}
+                                >
+                                  <span>Favorites</span>
+                                  {sortBy === "favorites" &&
+                                    (ascending ? (
+                                      <ArrowTrendingUpIcon className="w-3 h-3" />
+                                    ) : (
+                                      <ArrowTrendingDownIcon className="w-3 h-3" />
+                                    ))}
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                className={classNames(
+                                  "flex items-center gap-1 p-1 rounded",
+                                  "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
+                                  {
+                                    "bg-menu-selection": sortBy === "cost",
+                                  }
+                                )}
+                                onClick={() => {
+                                  if (sortBy === "cost") {
+                                    setAscending(!ascending);
+                                  } else {
+                                    setAscending(true);
+                                  }
+
+                                  setSortBy("cost");
+                                }}
+                              >
+                                <span>Cost</span>
+                                {sortBy === "cost" &&
+                                  (ascending ? (
+                                    <ArrowTrendingUpIcon className="w-3 h-3" />
+                                  ) : (
+                                    <ArrowTrendingDownIcon className="w-3 h-3" />
+                                  ))}
+                              </button>
+                            )}
+                            <button
+                              className={classNames(
+                                "flex items-center gap-1 p-1 rounded",
+                                "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
+                                {
+                                  "bg-menu-selection": sortBy === "context",
+                                }
+                              )}
+                              onClick={() => {
+                                if (sortBy === "context") {
+                                  setAscending(!ascending);
+                                } else {
+                                  setAscending(true);
+                                }
+
+                                setSortBy("context");
+                              }}
+                            >
+                              <span>Context</span>
+                              {sortBy === "context" &&
+                                (!ascending ? (
+                                  <ArrowTrendingUpIcon className="w-3 h-3" />
+                                ) : (
+                                  <ArrowTrendingDownIcon className="w-3 h-3" />
+                                ))}
+                            </button>
+                            <button
+                              className={classNames(
+                                "flex items-center gap-1 p-1 rounded",
+                                "bg-menu text-menu hover:bg-menu-selection hover:text-menu-selection focus:bg-menu-selection focus:text-menu-selection",
+                                {
+                                  "bg-menu-selection": sortBy === "completion",
+                                }
+                              )}
+                              onClick={() => {
+                                if (sortBy === "completion") {
+                                  setAscending(!ascending);
+                                } else {
+                                  setAscending(true);
+                                }
+
+                                setSortBy("completion");
+                              }}
+                            >
+                              <span>Completion</span>
+                              {sortBy === "completion" &&
+                                (!ascending ? (
+                                  <ArrowTrendingUpIcon className="w-3 h-3" />
+                                ) : (
+                                  <ArrowTrendingDownIcon className="w-3 h-3" />
+                                ))}
+                            </button>
+                          </div>
                         </div>
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          placeholder="Search models..."
+                          className="px-3 py-2 rounded-sm border text-input text-sm border-input bg-input outline-0"
+                          onChange={runSearch}
+                          onKeyUp={(e) => {
+                            if (e.key === "Escape") {
+                              setShowModels(false);
+                            }
+                          }}
+                        />
                       </div>
-                      <input
-                        ref={searchInputRef}
-                        type="text"
-                        placeholder="Search models..."
-                        className="px-3 py-2 rounded-sm border text-input text-sm border-input bg-input outline-0"
-                        onChange={runSearch}
-                        onKeyUp={(e) => {
-                          if (e.key === "Escape") {
-                            setShowModels(false);
-                          }
-                        }}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              {/* OpenAI - base models */}
-              {modelsArray.map((model) => (
-                <ModelOption
-                  key={model.id}
-                  model={model}
-                  currentlySelectedId={currentConversation?.model?.id}
-                  vscode={vscode}
-                  showParentMenu={showParentMenu}
-                  setShowModels={setShowModels}
-                />
-              ))}
-            </>
-          )}
-        </div>
+                    )}
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                {/* OpenAI - base models */}
+                {modelsArray.map((model) => (
+                  <ModelOption
+                    key={model.id}
+                    model={model}
+                    currentlySelectedId={currentConversation?.model?.id}
+                    vscode={vscode}
+                    showParentMenu={showParentMenu}
+                    setShowModels={setShowModels}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

@@ -324,24 +324,26 @@ export default ({
       {!settings?.minimalUI && (
         <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-1 px-4 overflow-x-auto">
           <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-1">
-            {showModelSelect && (
-              <>
-                {settings.manualModelInput ? (
-                  <ModelInput
-                    vscode={vscode}
-                    className="hidden xs:flex items-end"
-                    tooltipId="footer-tooltip"
-                  />
-                ) : (
-                  <ModelSelect
-                    vscode={vscode}
-                    conversationList={conversationList}
-                    className="hidden xs:flex items-end"
-                    tooltipId="footer-tooltip"
-                  />
-                )}
-              </>
-            )}
+            <div
+              className={classNames({
+                hidden: !showModelSelect,
+              })}
+            >
+              {settings.manualModelInput ? (
+                <ModelInput
+                  vscode={vscode}
+                  className="hidden xs:flex items-end"
+                  tooltipId="footer-tooltip"
+                />
+              ) : (
+                <ModelSelect
+                  vscode={vscode}
+                  className="hidden xs:flex items-end"
+                  tooltipId="footer-tooltip"
+                  renderModelList={showModelSelect}
+                />
+              )}
+            </div>
             {showVerbosity && (
               <VerbositySelect
                 vscode={vscode}

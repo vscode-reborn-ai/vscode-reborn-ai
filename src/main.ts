@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { getSelectedModelId, getUpdatedModel, isReasoningModel } from "./helpers";
 import { AuthStore, OfflineStore } from "./local-store";
 import { loadTranslations } from './localization';
+import { ModelCache as ModelListCache } from "./model-list-cache";
 import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
@@ -38,8 +39,9 @@ export interface ApiRequestOptions {
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   private webView?: vscode.WebviewView;
-  private authStore?: AuthStore;
-  private offlineStore?: OfflineStore;
+  private authStore?: AuthStore; // Local secrets storage for API keys
+  private offlineStore?: OfflineStore; // Local storage for view options
+  private modelListCache: ModelListCache; // Model list caching
   private runner: ActionRunner;
 
   private _temperature: number = 0.9;
@@ -68,9 +70,19 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   * in time before resolveWebviewView is called.
   */
   constructor(private context: vscode.ExtensionContext) {
+    // Communication with the React frontend
     this.frontendMessenger = new Messenger();
-    this.api = new ApiProvider('', undefined, this.frontendMessenger);
-    this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
+
+    // Local VS Code storage
+    this.authStore = AuthStore.init(context); // API key storage
+    this.offlineStore = OfflineStore.init(context); // Non-config settings
+    this.modelListCache = ModelListCache.init(context); // Model list caching
+
+    // ApiProvider handles all API requests to LLMs
+    this.api = new ApiProvider('', undefined, this.frontendMessenger, this.modelListCache);
+    // ActionRunner runs "actions" with multiple ai steps
+    this.runner = new ActionRunner(this);
+
     this.model = {
       id: getSelectedModelId(),
       // dummy values
@@ -78,9 +90,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       created: 0,
       owned_by: Role.system
     };
+
+    // Load settings
+    this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
     this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
     this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
-    this.runner = new ActionRunner(this);
 
     // Check config settings for "chatgpt.gpt3.apiBaseUrl", if it is set to "https://api.openai.com", change it to "https://api.openai.com/v1"
     const baseUrl = vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
@@ -103,10 +117,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       // Remove chatgpt.apiVersion from the config
       vscode.workspace.getConfiguration("chatgpt").update("apiVersion", undefined, true);
     }
-
-    // Auth and Offline storage
-    this.authStore = AuthStore.init(context);
-    this.offlineStore = OfflineStore.init(context);
 
     vscode.commands.registerCommand("chatgptReborn.setOpenAIApiKey", async (apiKey: string) => {
       if (this.authStore) {
@@ -154,7 +164,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
           topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
         },
-        this.frontendMessenger
+        this.frontendMessenger,
+        this.modelListCache
       );
       this.frontendMessenger.setApiProvider(this.api);
     });
@@ -265,7 +276,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         apiBaseUrl: finalApiUrl,
         temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
         topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
-      }, this.frontendMessenger);
+      }, this.frontendMessenger,
+      this.modelListCache
+    );
 
     // Test the API key
     const { status, models } = await this.testApiKey(this.api);
@@ -341,7 +354,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     models?: Model[],
   }> {
     if (!apiProvider) {
-      apiProvider = this.api ?? new ApiProvider('', undefined, this.frontendMessenger);
+      apiProvider = this.api ?? new ApiProvider('', undefined, this.frontendMessenger, this.modelListCache);
     }
 
     const apiKey = apiProvider.config.apiKey ?? '';
@@ -389,6 +402,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
 
     // TODO: split this out into its own file
+    // A "message handler" class similar to the one in the renderer
     webviewView.webview.onDidReceiveMessage(async (data: BaseBackendMessage) => {
       switch (data.type) {
         case BackendMessageType.addFreeTextQuestion:

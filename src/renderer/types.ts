@@ -50,12 +50,15 @@ export interface Model {
     parameter_size: string; // ie. "7B"
     quantization_level: string; // ie. "Q4_0"
   };
-
   // * Featherless additional fields (from /feather/models)
-  favorites?: number;
-  downloads?: number;
-  status?: string;
-  health?: string;
+  featherless?: {
+    favorites?: number;
+    downloads?: number;
+    status?: string;
+    health?: string;
+    available_on_current_plan?: boolean; // true if the model is available on the user's plan
+    readme?: string; // readme for the model, only returned when model is individually fetched
+  };
 }
 
 // Maps ID to a friendly name

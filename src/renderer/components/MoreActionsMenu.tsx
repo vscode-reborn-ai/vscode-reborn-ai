@@ -207,10 +207,10 @@ export default function MoreActionsMenu({
           <li className="block xs:hidden">
             <ModelSelect
               vscode={vscode}
-              conversationList={conversationList}
               dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
               tooltipId="more-actions-tooltip"
-              showParentMenu={setShowMoreActions}
+              setShowParentMenu={setShowMoreActions}
+              renderModelList={showMoreActions}
             />
           </li>
           <li className="block xs:hidden">
