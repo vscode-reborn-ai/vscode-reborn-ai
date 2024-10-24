@@ -11,7 +11,6 @@ import { setDebug } from "../store/app";
 import { selectCurrentConversation } from "../store/conversation";
 import { Conversation } from "../types";
 import Icon from "./Icon";
-import ModelSelect from "./ModelSelect";
 import VerbositySelect from "./VerbositySelect";
 import ViewOptions from "./ViewOptions";
 
@@ -205,13 +204,13 @@ export default function MoreActionsMenu({
             </button>
           </li>
           <li className="block xs:hidden">
-            <ModelSelect
+            {/* <ModelSelect
               vscode={vscode}
               dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
               tooltipId="more-actions-tooltip"
               setShowParentMenu={setShowMoreActions}
               renderModelList={showMoreActions}
-            />
+            /> */}
           </li>
           <li className="block xs:hidden">
             <VerbositySelect
