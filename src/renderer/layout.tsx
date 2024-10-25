@@ -14,9 +14,10 @@ import { useAppDispatch, useAppSelector } from "./hooks";
 import { useBackendMessageHandler } from "./message-handler";
 import { useMessenger } from "./send-to-backend";
 import { RootState } from "./store";
-import { setVSCode } from "./store/app";
+import { selectMinimalUI, setVSCode } from "./store/app";
 import {
   selectCurrentConversation,
+  selectCurrentConversationId,
   setCurrentConversationId,
 } from "./store/conversation";
 import { ApiKeyStatus } from "./store/types";
@@ -28,10 +29,9 @@ import OpenAISetup from "./views/openai-setup";
 
 export default function Layout({ vscode }: { vscode: any }) {
   const dispatch = useAppDispatch();
-  const currentConversationId = useAppSelector(
-    (state: RootState) => state.conversation.currentConversationId
-  );
+  const currentConversationId = useSelector(selectCurrentConversationId);
   const currentConversation = useSelector(selectCurrentConversation);
+  const minimalUI = useSelector(selectMinimalUI);
   const conversationList = Object.values(
     useAppSelector((state: RootState) => state.conversation.conversations)
   ) as Conversation[];
@@ -188,31 +188,19 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   return (
     <>
-      {!settings?.minimalUI && !settings?.disableMultipleConversations && (
-        <Tabs
-          conversationList={conversationList}
-          currentConversationId={currentConversationId}
-        />
-      )}
+      {!minimalUI && !settings?.disableMultipleConversations && <Tabs />}
       <Routes>
         {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
         <Route path="/actions" element={<ActionsView vscode={vscode} />} />
         <Route path="/api" element={<APIView vscode={vscode} />} />
         <Route path="/openai-setup" element={<OpenAISetup vscode={vscode} />} />
-        {conversationList &&
-          conversationList.map &&
+        {conversationList?.map &&
           conversationList.map((conversation: Conversation) => (
             <Route
               key={conversation.id}
               path={`/chat/${conversation.id}`}
               index={conversation.id === currentConversationId}
-              element={
-                <ChatView
-                  conversation={conversation}
-                  vscode={vscode}
-                  conversationList={conversationList}
-                />
-              }
+              element={<ChatView vscode={vscode} />}
             />
           ))}
         <Route

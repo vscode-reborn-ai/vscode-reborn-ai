@@ -9,7 +9,6 @@ import {
 import { useAppSelector } from "../hooks";
 import { RootState } from "../store";
 import { selectCurrentConversation } from "../store/conversation";
-import { Conversation } from "../types";
 import Icon from "./Icon";
 
 const FALLBACK_MODEL_ID = "gpt-4-turbo";
@@ -19,8 +18,6 @@ export default function TokenCountPopup({
   setTokenCountLabel,
   className,
 }: {
-  conversationList: Conversation[];
-  vscode: any;
   showTokenBreakdown: boolean;
   setTokenCountLabel: React.Dispatch<React.SetStateAction<string>>;
   className?: string;

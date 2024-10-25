@@ -38,6 +38,52 @@ export const selectCurrentConversation = createSelector(
   (conversations, currentConversationId) => currentConversationId ? conversations[currentConversationId] : undefined
 );
 
+// * Selectors on the "current" conversation
+// "current" meaning the conversation that is open
+export const selectCurrentModel = createSelector(
+  [
+    (state: RootState) => state.conversation.conversations,
+    (state: RootState) => state.conversation.currentConversationId,
+  ],
+  (conversations, currentConversationId) => currentConversationId ? conversations[currentConversationId]?.model : undefined
+);
+export const selectCurrentMessages = createSelector(
+  [
+    (state: RootState) => state.conversation.conversations,
+    (state: RootState) => state.conversation.currentConversationId,
+  ],
+  (conversations, currentConversationId) => currentConversationId ? conversations[currentConversationId]?.messages : []
+);
+export const selectConversationInProgress = createSelector(
+  [
+    (state: RootState) => state.conversation.conversations,
+    (state: RootState) => state.conversation.currentConversationId,
+  ],
+  (conversations, currentConversationId) => currentConversationId ? conversations[currentConversationId]?.inProgress : false
+);
+export const selectTokenCount = createSelector(
+  [
+    (state: RootState) => state.conversation.conversations,
+    (state: RootState) => state.conversation.currentConversationId,
+  ],
+  (conversations, currentConversationId) => currentConversationId ? conversations[currentConversationId]?.tokenCount : undefined
+);
+export const selectCurrentConversationId = createSelector(
+  (state: RootState) => state.conversation.currentConversationId,
+  (currentConversationId) => currentConversationId ?? ''
+);
+export const selectAutoscroll = createSelector(
+  [
+    (state: RootState) => state.conversation.conversations,
+    (state: RootState) => state.conversation.currentConversationId,
+  ],
+  (conversations, currentConversationId) => currentConversationId ? conversations[currentConversationId]?.autoscroll : true
+);
+export const selectConversationList = createSelector(
+  (state: RootState) => state.conversation.conversations,
+  (conversations) => Object.values(conversations)
+);
+
 export const conversationSlice = createSlice({
   name: 'conversations',
   initialState,

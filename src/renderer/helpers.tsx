@@ -191,25 +191,26 @@ export function useRenameTabTitleWithAI(
 }
 
 export function getModelFriendlyName(
-  currentConversation: Conversation,
-  models: Model[],
+  model: Model | undefined,
+  modelList: Model[],
   settings: ExtensionSettings,
   shortVersion: boolean = false
 ) {
   let friendlyName: string;
   let usingModelId = false;
 
-  if (currentConversation.model?.name) {
-    friendlyName = currentConversation.model.name;
-  } else if (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")) {
-    friendlyName =
-      MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "") ?? "";
-  } else if (currentConversation.model?.id) {
-    friendlyName = currentConversation.model.id;
+  if (model?.name) {
+    friendlyName = model.name;
+  } else if (MODEL_FRIENDLY_NAME.has(model?.id ?? "")) {
+    friendlyName = MODEL_FRIENDLY_NAME.get(model?.id ?? "") ?? "";
+  } else if (model?.id) {
+    friendlyName = model.id;
     usingModelId = true;
-  } else if (models.find((model) => model.id === settings?.gpt3?.model)?.name) {
+  } else if (
+    modelList.find((model) => model.id === settings?.gpt3?.model)?.name
+  ) {
     friendlyName =
-      models.find((model) => model.id === settings?.gpt3?.model)?.name ?? "";
+      modelList.find((model) => model.id === settings?.gpt3?.model)?.name ?? "";
   } else if (settings?.gpt3?.model) {
     friendlyName = settings.gpt3.model;
     usingModelId = true;
@@ -253,11 +254,11 @@ export function getModelFriendlyName(
 }
 // Hook version of getModelFriendlyName
 export function useModelFriendlyName(
-  currentConversation: Conversation,
-  models: Model[],
+  model: Model | undefined,
+  modelList: Model[],
   settings: ExtensionSettings
 ) {
-  return getModelFriendlyName(currentConversation, models, settings);
+  return getModelFriendlyName(model, modelList, settings);
 }
 
 // Model token limit for context (input)
@@ -467,25 +468,32 @@ export function useConvertMarkdownToComponent(
 }
 
 // Hook - Get the max cost of a conversation
-export function useMaxCost(conversation: Conversation | undefined) {
+export function useMaxCost(
+  tokenCount:
+    | {
+        messages: number;
+        userInput: number;
+      }
+    | undefined,
+  model: Model | undefined
+) {
   const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
 
   useEffect(() => {
-    if (!conversation) {
+    if (!tokenCount || !model) {
       setMaxCost(undefined);
       return;
     }
 
     const minPromptTokens =
-      (conversation.tokenCount?.messages ?? 0) +
-      (conversation.tokenCount?.userInput ?? 0);
-    const modelContextLimit = getModelContextLimit(conversation.model);
-    const modelMax = getModelCompletionLimit(conversation.model);
+      (tokenCount.messages ?? 0) + (tokenCount.userInput ?? 0);
+    const modelContextLimit = getModelContextLimit(model);
+    const modelMax = getModelCompletionLimit(model);
     const maxCompleteTokens = Math.min(
       modelContextLimit - minPromptTokens,
       modelMax ?? Infinity
     );
-    const rates = getModelRates(conversation.model);
+    const rates = getModelRates(model);
 
     if (rates.prompt !== undefined && rates.complete !== undefined) {
       const minCost = (minPromptTokens / 1000000) * rates.prompt;
@@ -493,7 +501,19 @@ export function useMaxCost(conversation: Conversation | undefined) {
     } else {
       setMaxCost(undefined);
     }
-  }, [conversation?.tokenCount, conversation?.model]);
+  }, [tokenCount, model]);
 
   return maxCost;
+}
+
+export function checkPropChanges(prevProps: any, nextProps: any) {
+  let hasChanged = false;
+
+  Object.entries(nextProps).forEach(([key, val]) => {
+    if (prevProps[key] !== val) {
+      hasChanged = true;
+    }
+  });
+
+  return true;
 }

@@ -7,14 +7,26 @@
       "group": "build",
       "problemMatcher": "$esbuild-watch",
       "isBackground": true,
-      "label": "npm: watch",
+      "label": "npm: watch"
     },
     {
       "type": "npm",
       "script": "build",
       "group": "build",
       "problemMatcher": "$esbuild",
-      "label": "npm: build",
+      "label": "npm: build"
+    },
+    {
+      "label": "react-devtools",
+      "type": "shell",
+      "command": "yarn run react-devtools",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never",
+        "panel": "shared",
+        "showReuseMessage": false
+      },
+      "problemMatcher": []
     }
   ]
 }

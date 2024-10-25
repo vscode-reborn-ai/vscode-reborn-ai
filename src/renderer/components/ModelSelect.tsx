@@ -6,7 +6,13 @@ import {
   StarIcon,
 } from "@heroicons/react/24/solid";
 import classNames from "classnames";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useSelector } from "react-redux";
 import { VariableSizeList as List } from "react-window";
 import {
@@ -23,8 +29,10 @@ import {
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
+import { selectApiBaseUrl, selectModelList } from "../store/app";
 import {
   selectCurrentConversation,
+  selectCurrentModel,
   updateConversationModel,
 } from "../store/conversation";
 import { ApiKeyStatus, ModelListStatus } from "../store/types";
@@ -117,7 +125,7 @@ interface ComputedModelData {
   isExpensive: boolean;
 }
 
-function DetailedModel({
+const DetailedModel = React.memo(function ({
   model,
   computedModelDataMap,
   sortBy,
@@ -312,9 +320,9 @@ function DetailedModel({
                 "opacity-75":
                   sortBy === "cost" ||
                   sortBy === "completion" ||
-                  sortBy === "context" ||
                   sortBy === "downloads" ||
                   sortBy === "favorites",
+                underline: sortBy === "context",
               })}
             >
               <ArrowUpIcon className="w-3 h-3" />
@@ -328,8 +336,9 @@ function DetailedModel({
                 "opacity-75":
                   sortBy === "cost" ||
                   sortBy === "context" ||
-                  sortBy === "completion" ||
-                  sortBy === "downloads",
+                  sortBy === "downloads" ||
+                  sortBy === "favorites",
+                underline: sortBy === "completion",
               })}
             >
               <ArrowDownIcon className="w-3 h-3" />
@@ -348,6 +357,7 @@ function DetailedModel({
                     sortBy === "context" ||
                     sortBy === "completion" ||
                     sortBy === "downloads",
+                  underline: sortBy === "favorites",
                 })}
               >
                 <StarIcon className="w-3 h-3 stroke-current fill-transparent" />
@@ -364,6 +374,7 @@ function DetailedModel({
                     sortBy === "completion" ||
                     sortBy === "context" ||
                     sortBy === "favorites",
+                  underline: sortBy === "downloads",
                 })}
               >
                 <ArrowDownIcon className="w-3 h-3" />
@@ -377,9 +388,9 @@ function DetailedModel({
       </div>
     </>
   );
-}
+});
 
-function ModelRow({
+const ModelRow = React.memo(function ({
   style,
   isScrolling,
   model,
@@ -410,13 +421,14 @@ function ModelRow({
   const backendMessenger = useMessenger(vscode);
   const [hasRendered, setHasRendered] = useState(false);
   const currentConversation = useSelector(selectCurrentConversation);
+  const currentModelId = currentConversation?.model?.id;
 
   const setModel = useCallback(
     (model: Model) => {
       // Update settings
       backendMessenger.sendModelUpdate(model);
 
-      if (!currentConversation) {
+      if (!currentConversation?.id) {
         return;
       }
 
@@ -430,7 +442,7 @@ function ModelRow({
       // Close the menu
       setShowModels(false);
     },
-    [currentConversation]
+    [currentConversation?.id]
   );
 
   useEffect(() => {
@@ -439,8 +451,15 @@ function ModelRow({
     }
   }, [isScrolling]);
 
+  const onClickHandler = useCallback(() => {
+    setModel(model);
+    if (showParentMenu) {
+      showParentMenu(false);
+    }
+  }, [model, showParentMenu]);
+
   return (
-    <div style={style}>
+    <div style={style} className="overflow-y-hidden">
       {!hasRendered && isScrolling ? (
         <div
           style={{
@@ -453,7 +472,7 @@ function ModelRow({
             "focus:bg-menu-selection focus:text-menu-selection",
             {
               "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                model.id === currentConversation?.model?.id,
+                model.id === currentModelId,
             }
           )}
         >
@@ -464,6 +483,7 @@ function ModelRow({
         </div>
       ) : (
         <button
+          data-model-id={model.id}
           key={model.id}
           className={classNames(
             "group flex flex-col gap-1 items-start justify-start p-2 w-full",
@@ -471,15 +491,10 @@ function ModelRow({
             "focus:bg-menu-selection focus:text-menu-selection",
             {
               "bg-gray-500 bg-opacity-15 border-l-4 border-l-tab-editor-focus":
-                model.id === currentConversation?.model?.id,
+                model.id === currentModelId,
             }
           )}
-          onClick={() => {
-            setModel(model);
-            if (showParentMenu) {
-              showParentMenu(false);
-            }
-          }}
+          onClick={onClickHandler}
         >
           <DetailedModel
             model={model}
@@ -493,7 +508,7 @@ function ModelRow({
       )}
     </div>
   );
-}
+});
 
 function ModelListFilters({
   models,
@@ -696,7 +711,7 @@ function ModelListFilters({
   );
 }
 
-function DetailedModelList({
+const DetailedModelList = React.memo(function ({
   vscode,
   showModels,
   setShowModels,
@@ -711,35 +726,45 @@ function DetailedModelList({
   isCurrentModelAvailable: boolean;
   showParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
+
+  // State
   const currentConversation = useSelector(selectCurrentConversation);
-  const listRef = React.createRef<List>();
-  const models: Model[] = useAppSelector(
-    (state: RootState) => state.app.models
-  );
+  const apiBaseUrl = useSelector(selectApiBaseUrl);
+  const models: Model[] = useSelector(selectModelList);
   const [ascending, setAscending] = useState(true);
-
-  const [showDescriptionOn, setShowDescriptionOn] = useState<string | null>(
-    null
-  );
-
+  const [expandedModel, setExpandedModel] = useState<string | null>(null);
+  const previousModelRef = useRef<string | null>(null);
   const [filteredModels, setFilteredModels] = useState<Model[]>(models);
   const [sortBy, setSortBy] = useState<SortMethod>(SortMethod.Name);
-  const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
+  const [listElementHeights, setListElementHeights] = useState<number[]>([]);
+
+  // refs
+  const listRef = React.createRef<List>();
+  const listWrapperRef = React.createRef<HTMLDivElement>();
+  const searchInputRef = React.createRef<HTMLInputElement>();
+
+  // Calculated
   const renderedModels = useMemo(() => {
-    return (models.length > 6 ? filteredModels : models).map((model) => ({
-      ...model,
-    }));
+    return models.length > 6 ? filteredModels : models;
   }, [filteredModels, models]);
-
-  const settings = useAppSelector(
-    (state: RootState) => state.app.extensionSettings
-  );
-
   const isFeatherless = useMemo(
-    () => settings.gpt3.apiBaseUrl.includes("api.featherless.ai"),
-    [settings.gpt3.apiBaseUrl]
+    () => apiBaseUrl.includes("api.featherless.ai"),
+    [apiBaseUrl]
   );
+  const [expandedItemHeight, setExpandedItemHeight] = useState(0);
+  useEffect(() => {
+    if (!expandedModel) {
+      setExpandedItemHeight(0);
+      return;
+    }
 
+    const query = `[data-model-id="${expandedModel}"]`;
+    const itemElem = listWrapperRef.current?.querySelector(query);
+    const newHeight = itemElem?.clientHeight ?? 0;
+
+    setExpandedItemHeight(newHeight);
+  }, [expandedModel]);
   const computedModelDataMap = useMemo(() => {
     const modelData = new Map<string, ComputedModelData>();
 
@@ -775,10 +800,6 @@ function DetailedModelList({
 
     return modelData;
   }, [models]);
-
-  const [listElementHeights, setListElementHeights] = useState<number[]>(
-    models.map(() => 56)
-  );
 
   // returns sorted list of models
   const sortList = useCallback(
@@ -852,46 +873,44 @@ function DetailedModelList({
   // Whenever models change, recalculate the list element heights
   // Highly approximate, but should be good enough for now
   useEffect(() => {
-    setListElementHeights(
-      filteredModels.map((model) => {
-        let height = 56; // default height
+    const newHeights = renderedModels.map((model) => {
+      let height = 56;
 
-        // Multi-line title
-        if (model.name && model.name.length > 65) {
-          height += 16;
-        }
+      if (model.name && model.name.length > 65) {
+        height += 16;
+      }
 
-        // Description
-        if (showDescriptionOn === model.id) {
-          // Approximate height for description
-          const description =
-            model.description ?? model.featherless?.readme ?? "";
-          const paragraphs = description.split(/\n|<br\s*\/?>/);
-          height +=
-            paragraphs.length * 24 +
-            paragraphs.reduce(
-              (acc, line) => acc + Math.floor(line.length / 65) * 16,
-              0
-            );
-          height += 16; // extra padding
+      if (expandedModel === model.id) {
+        height = expandedItemHeight;
+      }
 
-          console.log("show description on with new height", height);
-        }
+      return height;
+    });
 
-        return height;
-      })
-    );
+    // Only update if there are changes
+    if (
+      listElementHeights.length !== newHeights.length ||
+      !listElementHeights.every((value, index) => value === newHeights[index])
+    ) {
+      if (listRef.current) {
+        const index = expandedModel
+          ? renderedModels.findIndex((model) => model.id === expandedModel)
+          : 0;
+        // previousModelRef.current
+        const prevIndex = previousModelRef.current
+          ? renderedModels.findIndex(
+              (model) => model.id === previousModelRef.current
+            )
+          : index;
+        const updateFromIndex = Math.min(index, prevIndex);
+        listRef.current?.resetAfterIndex(updateFromIndex);
 
-    if (listRef.current) {
-      const index = showDescriptionOn
-        ? filteredModels.findIndex((model) => model.id === showDescriptionOn)
-        : 0;
-      console.log("resetting list after index", index);
-      listRef.current?.resetAfterIndex(index);
+        // Store the current expandedModel before it's updated in a future render
+        previousModelRef.current = expandedModel;
+        setListElementHeights(newHeights);
+      }
     }
-  }, [filteredModels]); // , showDescriptionOn]);
-
-  const searchInputRef = React.createRef<HTMLInputElement>();
+  }, [renderedModels, expandedItemHeight, expandedModel]);
 
   const search = () => {
     const query = searchInputRef.current?.value.toLowerCase() ?? "";
@@ -908,7 +927,7 @@ function DetailedModelList({
         : modelList;
 
     setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
-  }; // , [models, sortBy, ascending, sortList, searchInputRef.current]);
+  };
   const runSearch = useDebounce(search, 150);
 
   useEffect(() => {
@@ -923,12 +942,12 @@ function DetailedModelList({
   }, [showModels]);
 
   return (
-    <>
+    <div ref={listWrapperRef}>
       <List
         ref={listRef}
         height={window.innerHeight - 240}
         itemCount={renderedModels.length}
-        itemSize={(index) => listElementHeights[index]}
+        itemSize={(index) => listElementHeights[index] ?? 56}
         width="100%"
         useIsScrolling
         overscanCount={15}
@@ -944,8 +963,8 @@ function DetailedModelList({
             sortBy={sortBy}
             isFeatherless={isFeatherless}
             computedModelDataMap={computedModelDataMap}
-            showDescriptionOn={showDescriptionOn}
-            setShowDescriptionOn={setShowDescriptionOn}
+            showDescriptionOn={expandedModel}
+            setShowDescriptionOn={setExpandedModel}
           />
         )}
       </List>
@@ -978,9 +997,9 @@ function DetailedModelList({
           />
         </>
       )}
-    </>
+    </div>
   );
-}
+});
 
 export default function ModelSelect({
   vscode,
@@ -998,7 +1017,7 @@ export default function ModelSelect({
   setShowParentMenu?: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const t = useAppSelector((state: RootState) => state.app.translations);
-  const currentConversation = useSelector(selectCurrentConversation);
+  const model = useSelector(selectCurrentModel);
   const [showModels, setShowModels] = useState(false);
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
@@ -1009,7 +1028,7 @@ export default function ModelSelect({
   const modelListStatus = useAppSelector(
     (state: RootState) => state.app.modelListStatus
   );
-  const models: Model[] = useAppSelector(
+  const modelList: Model[] = useAppSelector(
     (state: RootState) => state.app.models
   );
   const sync = useAppSelector((state: RootState) => state.app.sync);
@@ -1017,7 +1036,7 @@ export default function ModelSelect({
   // TODO: Move this to a more central location for better maintainability
   const hasOpenAIModels = useMemo(() => {
     // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
-    return models.some(
+    return modelList.some(
       (model) =>
         model.id === "gpt-4" ||
         model.id === "gpt-4-turbo" ||
@@ -1025,26 +1044,24 @@ export default function ModelSelect({
         model.id === "gpt-4o-mini" ||
         model.id === "gpt-3.5-turbo"
     );
-  }, [models]);
+  }, [modelList]);
 
   // Check if the current model is in the model list
   // When APIs are changed, the current model might not be available
   const isCurrentModelAvailable = useIsModelAvailable(
-    models,
-    currentConversation?.model,
+    modelList,
+    model,
     modelListStatus,
     settings.manualModelInput
   );
 
   const currentModelFriendlyName = useMemo(() => {
-    if (!currentConversation?.model) {
+    if (model) {
+      return getModelFriendlyName(model, modelList, settings, true);
+    } else {
       return t?.modelSelect?.noModelSelected ?? "No model selected";
     }
-
-    return getModelFriendlyName(currentConversation, models, settings, true);
-  }, [currentConversation, models, settings]);
-
-  console.log("rendering model select");
+  }, [model, modelList, settings]);
 
   return (
     <>
@@ -1090,7 +1107,7 @@ export default function ModelSelect({
           */}
             {settings?.showAllModels || !hasOpenAIModels ? (
               <>
-                {models.length === 0 ? (
+                {modelList.length === 0 ? (
                   <>
                     {apiKeyStatus === ApiKeyStatus.Pending ||
                     modelListStatus === ModelListStatus.Fetching ||
@@ -1133,7 +1150,7 @@ export default function ModelSelect({
                   <ModelOption
                     key={model.id}
                     model={model}
-                    currentlySelectedId={currentConversation?.model?.id}
+                    currentlySelectedId={model?.id}
                     vscode={vscode}
                     showParentMenu={showParentMenu}
                     setShowModels={setShowModels}

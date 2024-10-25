@@ -1,11 +1,13 @@
 import classNames from "classnames";
 import DOMPurify from "dompurify";
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
+import { useSelector } from "react-redux";
 import { useModelFriendlyName } from "../helpers";
 import { useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
-import { ChatMessage, Conversation, Role } from "../types";
+import { selectCurrentModel } from "../store/conversation";
+import { ChatMessage, Role } from "../types";
 import CodeBlock from "./CodeBlock";
 import Icon from "./Icon";
 
@@ -93,13 +95,13 @@ const EditMessageComponent = ({
 // Message body content for user messages.
 const UserMessageComponent = ({
   vscode,
-  conversation,
+  conversationId,
   message,
   editingMessageID,
   editingMessageRef,
 }: {
   vscode: any;
-  conversation: Conversation;
+  conversationId: string;
   message: ChatMessage;
   editingMessageID: string | null;
   editingMessageRef: React.RefObject<HTMLTextAreaElement>;
@@ -144,7 +146,7 @@ const UserMessageComponent = ({
                   <CodeBlock
                     code={item}
                     key={index}
-                    conversationId={conversation.id}
+                    conversationId={conversationId}
                     vscode={vscode}
                   />
                 );
@@ -175,7 +177,7 @@ const UserMessageComponent = ({
             <>
               <CodeBlock
                 code={message.questionCode}
-                conversationId={conversation.id}
+                conversationId={conversationId}
                 vscode={vscode}
                 startCollapsed={message.questionCode.split("\n").length > 3}
                 role={Role.user}
@@ -191,11 +193,11 @@ const UserMessageComponent = ({
 // Message body content for bot messages.
 const BotMessageComponent = ({
   vscode,
-  conversation,
+  conversationId,
   message,
 }: {
   vscode: any;
-  conversation: Conversation;
+  conversationId: string;
   message: ChatMessage;
 }) => {
   const showMarkdown = useAppSelector(
@@ -235,7 +237,7 @@ const BotMessageComponent = ({
               <CodeBlock
                 code={item}
                 key={index}
-                conversationId={conversation.id}
+                conversationId={conversationId}
                 vscode={vscode}
               />
             );
@@ -269,13 +271,13 @@ const MessageBodyComponent = ({
   message,
   vscode,
   editingMessageID,
-  conversation,
+  conversationId,
   editingMessageRef,
 }: {
   message: ChatMessage;
   vscode: any;
   editingMessageID: string | null;
-  conversation: Conversation;
+  conversationId: string;
   editingMessageRef: React.RefObject<HTMLTextAreaElement>;
 }) => {
   return (
@@ -283,7 +285,7 @@ const MessageBodyComponent = ({
       {message.role === Role.user ? (
         <UserMessageComponent
           vscode={vscode}
-          conversation={conversation}
+          conversationId={conversationId}
           message={message}
           editingMessageID={editingMessageID}
           editingMessageRef={editingMessageRef}
@@ -291,7 +293,7 @@ const MessageBodyComponent = ({
       ) : (
         <BotMessageComponent
           vscode={vscode}
-          conversation={conversation}
+          conversationId={conversationId}
           message={message}
         />
       )}
@@ -303,7 +305,7 @@ const MessageBodyComponent = ({
 const ChatMessageOptions = ({
   className,
   message,
-  conversation,
+  conversationId,
   index,
   editingMessageID,
   setEditingMessageID,
@@ -312,7 +314,7 @@ const ChatMessageOptions = ({
 }: {
   className?: string;
   message: ChatMessage;
-  conversation: Conversation;
+  conversationId: string;
   index: number;
   editingMessageID: string | null;
   setEditingMessageID: (id: string) => void;
@@ -321,8 +323,11 @@ const ChatMessageOptions = ({
 }) => {
   const t = useAppSelector((state: RootState) => state.app.translations);
   const backendMessenger = useMessenger(vscode);
+  const conversation = useSelector(
+    (state: RootState) => state.conversation.conversations[conversationId]
+  );
 
-  const handleSendClick = () => {
+  const handleSendClick = useCallback(() => {
     const newQuestion = editingMessageRef.current?.value ?? "";
     backendMessenger.sendAddFreeTextQuestion({
       conversation,
@@ -333,7 +338,7 @@ const ChatMessageOptions = ({
       code: message?.questionCode ?? "",
     });
     setEditingMessageID("");
-  };
+  }, [backendMessenger, conversation, editingMessageRef, message, index]);
 
   return (
     <div className={classNames("flex items-center", className)}>
@@ -405,19 +410,21 @@ const Name = ({
   );
 };
 
-interface MessageComponentProps {
-  message: ChatMessage;
-  conversation: Conversation;
-  index: number;
-  vscode: any;
-}
+interface MessageComponentProps {}
 
 // Message wrapper component
-const ChatMessageComponent: React.FC<MessageComponentProps> = ({
+const ChatMessageComponent = ({
   message,
-  conversation,
+  // conversation,
+  conversationId,
   index,
   vscode,
+}: {
+  message: ChatMessage;
+  conversationId: string;
+  // conversation: Conversation;
+  index: number;
+  vscode: any;
 }) => {
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
@@ -435,12 +442,9 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
+  const model = useSelector(selectCurrentModel);
 
-  const modelFriendlyName = useModelFriendlyName(
-    conversation,
-    models,
-    settings
-  );
+  const modelFriendlyName = useModelFriendlyName(model, models, settings);
 
   return (
     <div
@@ -455,7 +459,7 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
             <ChatMessageOptions
               className="absolute top-0 right-2 invisible group-hover/chat-message:visible group-focus-within/chat-message:visible"
               message={message}
-              conversation={conversation}
+              conversationId={conversationId}
               index={index}
               editingMessageID={editingMessageID}
               setEditingMessageID={setEditingMessageID}
@@ -475,7 +479,7 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
             <ChatMessageOptions
               className="invisible group-hover/chat-message:visible group-focus-within/chat-message:visible"
               message={message}
-              conversation={conversation}
+              conversationId={conversationId}
               index={index}
               editingMessageID={editingMessageID}
               setEditingMessageID={setEditingMessageID}
@@ -491,7 +495,7 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
         <div>
           <MessageBodyComponent
             message={message}
-            conversation={conversation}
+            conversationId={conversationId}
             vscode={vscode}
             editingMessageID={editingMessageID}
             editingMessageRef={editingMessageRef}

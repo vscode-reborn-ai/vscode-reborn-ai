@@ -1,7 +1,25 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WebviewApi } from "vscode-webview";
+import { RootState } from "../store";
 import { DEFAULT_EXTENSION_SETTINGS, ExtensionSettings, Model } from "../types";
 import { ApiKeyStatus, ModelListStatus, ViewOptionsState } from "./types";
+
+export const selectApiBaseUrl = createSelector(
+  (state: RootState) => state.app.extensionSettings.gpt3.apiBaseUrl,
+  (apiBaseUrl) => apiBaseUrl
+);
+export const selectVerbosity = createSelector(
+  (state: RootState) => state.app.extensionSettings.verbosity,
+  (verbosity) => verbosity
+);
+export const selectMinimalUI = createSelector(
+  (state: RootState) => state.app.extensionSettings.minimalUI,
+  (minimalUI) => minimalUI
+);
+export const selectModelList = createSelector(
+  (state: RootState) => state.app.models,
+  (models) => models
+);
 
 export interface AppState {
   debug: boolean;
@@ -64,7 +82,8 @@ export const appSlice = createSlice({
       state.extensionSettings = action.payload.newSettings;
     },
     setModels: (state, action: PayloadAction<{ models: Model[]; }>) => {
-      state.models = action.payload.models ?? [];
+      // Create a new object to avoid mutating the state directly
+      state.models = [...action.payload.models];
     },
     setApiKeyStatus: (state, action: PayloadAction<ApiKeyStatus>) => {
       state.apiKeyStatus = action.payload;

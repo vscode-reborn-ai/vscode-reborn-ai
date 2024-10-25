@@ -38,6 +38,7 @@ export interface ApiRequestOptions {
 }
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
+  private devMode: boolean;
   private webView?: vscode.WebviewView;
   private authStore?: AuthStore; // Local secrets storage for API keys
   private offlineStore?: OfflineStore; // Local storage for view options
@@ -70,6 +71,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   * in time before resolveWebviewView is called.
   */
   constructor(private context: vscode.ExtensionContext) {
+    this.devMode = context.extensionMode === vscode.ExtensionMode.Development;
     // Communication with the React frontend
     this.frontendMessenger = new Messenger();
 
@@ -1005,6 +1007,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        ${this.devMode ? `<script src="http://localhost:8097"></script>` : ''}
       </head>
       <body class="overflow-hidden">
         <div id="root" class="flex flex-col min-h-[calc(100vh-8em)] max-h-screen"></div>

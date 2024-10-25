@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
 import ChatMessageComponent from "../components/ChatMessage";
@@ -6,90 +6,71 @@ import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { RootState } from "../store";
+import { selectMinimalUI } from "../store/app";
 import {
-  selectCurrentConversation,
+  selectAutoscroll,
+  selectCurrentConversationId,
+  selectCurrentMessages,
   setAutoscroll,
 } from "../store/conversation";
-import { ChatMessage, Conversation, Role } from "../types";
+import { ChatMessage, Role } from "../types";
 
-const DebugComponent = ({ conversation }: { conversation: Conversation }) => {
-  return (
-    <div className="text-gray-500 text-[10px] font-mono">
-      Conversation ID: {conversation?.id}
-      <br />
-      Conversation Title: {conversation?.title}
-      <br />
-      Conversation Datetime:{" "}
-      {new Date(conversation?.createdAt ?? "").toLocaleString("en-US", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })}
-      <br />
-      Conversation Model: {conversation.model?.id}
-      <br />
-      Conversation inProgress: {conversation?.inProgress ? "true" : "false"}
-    </div>
-  );
-};
+const LazyDebugConversation = React.lazy(
+  () => import("../components/DebugConversation")
+);
 
 const MessageList = ({
-  conversation,
+  conversationId,
   conversationListRef,
   vscode,
 }: {
-  conversation: Conversation;
+  conversationId: string;
   conversationListRef: React.RefObject<HTMLDivElement>;
   vscode: any;
 }) => {
   const debug = useAppSelector((state: RootState) => state.app.debug);
-  const settings = useAppSelector(
-    (state: RootState) => state.app.extensionSettings
+  const minimalUI = useSelector(selectMinimalUI);
+  const messages = useAppSelector(
+    (state: RootState) =>
+      state.conversation.conversations[conversationId]?.messages ?? []
   );
+
+  const messageList = useMemo(() => {
+    return messages.filter(
+      (message: ChatMessage) =>
+        debug || (message.role !== Role.system && message.content)
+    );
+  }, [messages, debug]);
 
   return (
     <div ref={conversationListRef}>
       <div
         className={`flex flex-col
-          ${settings?.minimalUI ? "pb-20" : "pb-24"}
+          ${minimalUI ? "pb-20" : "pb-24"}
         `}
       >
-        {conversation.messages
-          .filter(
-            (message: ChatMessage) =>
-              debug || (message.role !== Role.system && message.content)
-          )
-          .map((message: ChatMessage, index: number) => {
-            return (
-              <ChatMessageComponent
-                key={message.id}
-                message={message}
-                conversation={conversation}
-                vscode={vscode}
-                index={index}
-              />
-            );
-          })}
+        {messageList.map((message: ChatMessage, index: number) => {
+          return (
+            <ChatMessageComponent
+              key={message.id}
+              message={message}
+              conversationId={conversationId}
+              vscode={vscode}
+              index={index}
+            />
+          );
+        })}
         <Tooltip id="message-tooltip" />
       </div>
     </div>
   );
 };
 
-export default function Chat({
-  conversation,
-  conversationList,
-  vscode,
-}: {
-  conversation: Conversation;
-  conversationList: Conversation[];
-  vscode: any;
-}) {
+export default function Chat({ vscode }: { vscode: any }) {
   const dispatch = useAppDispatch();
-  const currentConversation = useSelector(selectCurrentConversation);
+  const conversationId = useSelector(selectCurrentConversationId);
+  const autoscroll = useSelector(selectAutoscroll);
+  const messages = useSelector(selectCurrentMessages);
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const conversationListRef = React.useRef<HTMLDivElement>(null);
 
@@ -108,35 +89,32 @@ export default function Chat({
   });
 
   useEffect(() => {
-    if (conversation.autoscroll) {
+    if (autoscroll) {
       conversationListRef.current?.scrollTo({
         top: conversationListRef.current.scrollHeight,
         behavior: "auto",
       });
     }
-  }, [conversation.messages]);
+  }, [messages]);
 
   // if the user scrolls up while in progress, disable autoscroll
   const handleScroll = () => {
     if (conversationListRef.current) {
       const { scrollTop, scrollHeight, clientHeight } =
         conversationListRef.current;
-      if (scrollTop < scrollHeight - clientHeight && conversation.autoscroll) {
+      if (scrollTop < scrollHeight - clientHeight && autoscroll) {
         // disable autoscroll if the user scrolls up
         dispatch(
           setAutoscroll({
-            conversationId: conversation.id,
+            conversationId,
             autoscroll: false,
           })
         );
-      } else if (
-        !conversation.autoscroll &&
-        scrollTop >= scrollHeight - clientHeight
-      ) {
+      } else if (!autoscroll && scrollTop >= scrollHeight - clientHeight) {
         // re-enable autoscroll if the user scrolls to the bottom
         dispatch(
           setAutoscroll({
-            conversationId: conversation.id,
+            conversationId,
             autoscroll: true,
           })
         );
@@ -156,19 +134,21 @@ export default function Chat({
 
   return (
     <div className="w-full overflow-y-auto flex-grow">
-      {debug && <DebugComponent conversation={conversation} />}
+      <Suspense fallback={<div>...</div>}>
+        {debug && <LazyDebugConversation conversationId={conversationId} />}
+      </Suspense>
       <IntroductionSplash
-        className={conversation.messages?.length > 0 ? "hidden" : ""}
+        className={messages?.length > 0 ? "hidden" : ""}
         vscode={vscode}
       />
-      {currentConversation && (
+      {conversationId && (
         <MessageList
-          conversation={currentConversation}
+          conversationId={conversationId}
           conversationListRef={conversationListRef}
           vscode={vscode}
         />
       )}
-      <QuestionInputField vscode={vscode} conversationList={conversationList} />
+      <QuestionInputField vscode={vscode} />
     </div>
   );
 }
