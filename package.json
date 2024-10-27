@@ -600,6 +600,7 @@
     "fmt": "prettier --write \"src/**/*.ts\" && yarn test --fix",
     "test": "eslint src --ext ts && tsc --noEmit",
     "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish",
     "devtools": "react-devtools"
   },
   "devDependencies": {

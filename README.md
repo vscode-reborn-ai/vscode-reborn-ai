@@ -74,13 +74,13 @@ Any tool that is "compatible" with the OpenAI API should work with this extensio
 
 ### Proxies
 
-We've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers. This is mainly for anyone who wants to use OpenAI, but cannot due to api.openai.com being blocked in your region.
+We've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers. This is for anyone who cannot access the OpenAI API because api.openai.com is blocked in their region.
 
 ## Internationalization
 
-Translated to: 🇬🇧 🇨🇳 🇮🇳 🇪🇸 🇦🇪 🇧🇩 🇸🇦 🇫🇷 🇷🇺 🇵🇰 🇩🇪 🇯🇵 🇮🇩 🇧🇷 🇮🇹 🇹🇭 🇵🇱 🇻🇳 🇵🇭 🇳🇱 🇺🇦 🇵🇹 🇹🇷 🇪🇬 🇰🇷
+**Translated to:** 🇬🇧 🇨🇳 🇮🇳 🇪🇸 🇦🇪 🇧🇩 🇸🇦 🇫🇷 🇷🇺 🇵🇰 🇩🇪 🇯🇵 🇮🇩 🇧🇷 🇮🇹 🇹🇭 🇵🇱 🇻🇳 🇵🇭 🇳🇱 🇺🇦 🇵🇹 🇹🇷 🇪🇬 🇰🇷
 
-Most of this extension has been translated to a number of languages. The translations are not perfect and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/vscode-reborn-ai/vscode-reborn-ai/discussions/20).
+Most of this extension is localized. Some translations may not be correct. If you would like to help with translations, please see the [i18n discussion](https://github.com/vscode-reborn-ai/vscode-reborn-ai/discussions/20).
 
 ## Changelog
 
@@ -125,6 +125,12 @@ To test the vscode-chatgpt-reborn extension in VS Code, follow these steps:
    2. or <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F5</kbd>
    3. or <kbd>Run</kbd> > <kbd>Restart Debugging</kbd> in the top menu.
 
+**React DevTools** to profile and debug React components, run:
+
+```bash
+yarn run devtools
+```
+
 ### Package for VS Code
 
 ```bash
@@ -135,8 +141,8 @@ yarn run package # Runs `vsce package`
 
 [Yarn](https://yarnpkg.com/) - [TypeScript](https://www.typescriptlang.org/) - [VS Code Extension API](https://code.visualstudio.com/api) - [React](https://reactjs.org/) - [Redux](https://redux.js.org/) - [React Router](https://reactrouter.com/) - [Tailwind CSS](https://tailwindcss.com/)
 
-- This extension has a custom UI with React + TailwindCSS, but theme support and remaining consistent with VS Code's UI components is still a priority.
+- This extension has a custom UI with React + TailwindCSS. The UI should work inside any theme.
 
 ## License
 
-This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [ISC LICENSE](LICENSE).
