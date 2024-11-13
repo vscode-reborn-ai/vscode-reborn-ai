@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI henüz GPT-4 32k'yi yayınlamadı.",
   "modelSelect.noModelSelected": "Hiçbir model seçilmedi",
   "modelSelect.fetchingModels": "Modeller alınıyor...",
+  "modelSelect.model": "Model",
   "stats.title": "İstatistikler",
   "tabs.sr_label": "Bir sekme seçin",
   "tabs.sr_close_tab": "Sekmeyi kapat",

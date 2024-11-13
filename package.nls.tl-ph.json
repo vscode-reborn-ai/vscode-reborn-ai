@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "Hindi pa inilalabas ng OpenAI ang GPT-4 32k.",
   "modelSelect.noModelSelected": "Walang napiling modelo",
   "modelSelect.fetchingModels": "Naglo-load ng listahan ng mga modelo...",
+  "modelSelect.model": "Modelo",
   "stats.title": "Mga Istatistika",
   "tabs.sr_label": "Pumili ng isang tab",
   "tabs.sr_close_tab": "Isara ang tab",

@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI نے ابھی تک GPT-4 32k جاری نہیں کیا ہے۔",
   "modelSelect.noModelSelected": "کوئی ماڈل منتخب نہیں",
   "modelSelect.fetchingModels": "ماڈلز حاصل کر رہا ہے...",
+  "modelSelect.model": "ماڈل",
   "stats.title": "اعداد و شمار",
   "tabs.sr_label": "ایک ٹیب منتخب کریں",
   "tabs.sr_close_tab": "ٹیب بند کریں",

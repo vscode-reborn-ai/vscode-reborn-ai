@@ -62,6 +62,7 @@ const initialState: AppState = {
     showVerbosity: true,
     showModelSelect: true,
     showTokenCount: true,
+    showModelName: true,
   },
   sync: {
     receivedViewOptions: false,

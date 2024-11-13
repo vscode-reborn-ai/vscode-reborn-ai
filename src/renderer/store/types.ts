@@ -31,4 +31,5 @@ export interface ViewOptionsState {
   showVerbosity?: boolean; // Show the verbosity button.
   showModelSelect?: boolean; // Show the model select button.
   showTokenCount?: boolean; // Show the token count.
+  showModelName?: boolean; // Show the model name on the model select button.
 }

@@ -139,6 +139,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI heeft GPT-4 32k nog niet uitgebracht.",
   "modelSelect.noModelSelected": "Geen model geselecteerd",
   "modelSelect.fetchingModels": "Modellen ophalen...",
+  "modelSelect.model": "Model",
   "stats.title": "Statistieken",
   "tabs.sr_label": "Selecteer een tabblad",
   "tabs.sr_close_tab": "Tabblad sluiten",

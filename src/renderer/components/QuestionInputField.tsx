@@ -43,7 +43,7 @@ import MoreActionsMenu from "./MoreActionsMenu";
 import TokenCountPopup from "./TokenCountPopup";
 import VerbositySelect from "./VerbositySelect";
 
-const DebugModelSelect = React.memo(ModelSelect, checkPropChanges);
+const MemoModelSelect = React.memo(ModelSelect, checkPropChanges);
 
 interface ExtendedKeyboardEvent
   extends React.KeyboardEvent<HTMLTextAreaElement> {
@@ -456,7 +456,7 @@ export default ({
                   tooltipId="footer-tooltip"
                 />
               ) : (
-                <DebugModelSelect
+                <MemoModelSelect
                   vscode={vscode}
                   className="hidden xs:flex items-end"
                   tooltipId="footer-tooltip"

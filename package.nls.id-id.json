@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI belum merilis GPT-4 32k.",
   "modelSelect.noModelSelected": "Tidak ada model yang dipilih",
   "modelSelect.fetchingModels": "Mengambil model...",
+  "modelSelect.model": "Model",
   "stats.title": "Statistik",
   "tabs.sr_label": "Pilih tab",
   "tabs.sr_close_tab": "Tutup tab",

@@ -21,6 +21,7 @@ const currentViewOptions: {
   // { label: "Compact UI", key: "showCompact" },
   // Not yet implemented
   // { label: "Network Logs", key: "showNetworkLogs" },
+  { label: "Show Model Name", key: "showModelName" },
 ];
 
 const userUIOptions: {

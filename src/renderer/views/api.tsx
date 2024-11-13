@@ -329,7 +329,9 @@ export default function ApiSettings({ vscode }: { vscode: any }) {
                 } else {
                   return item
                     .split("\n")
-                    .map((paragraph) => <p>{paragraph}</p>);
+                    .map((paragraph, index) => (
+                      <p key={`p-${index}`}>{paragraph}</p>
+                    ));
                 }
               })}
             {selectedTool.docsUrl && (

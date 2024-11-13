@@ -942,8 +942,9 @@ const DetailedModelList = React.memo(function ({
   }, [showModels]);
 
   return (
-    <div ref={listWrapperRef}>
+    <div className="h-full flex flex-col" ref={listWrapperRef}>
       <List
+        className="grow"
         ref={listRef}
         height={window.innerHeight - 240}
         itemCount={renderedModels.length}
@@ -968,7 +969,6 @@ const DetailedModelList = React.memo(function ({
           />
         )}
       </List>
-
       {models.length > 6 && (
         <>
           <ModelListFilters
@@ -1021,6 +1021,9 @@ export default function ModelSelect({
   const [showModels, setShowModels] = useState(false);
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
+  );
+  const showModelName = useAppSelector(
+    (state) => state.app.viewOptions.showModelName
   );
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
@@ -1087,15 +1090,17 @@ export default function ModelSelect({
           data-tooltip-content="Change the AI model being used"
         >
           <Icon icon="box" className="w-3 h-3 mr-1" />
-          {isCurrentModelAvailable
-            ? currentModelFriendlyName
-            : sync.receivedModels
-            ? t?.modelSelect?.noModelSelected ?? "No model selected"
-            : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
+          {showModelName
+            ? isCurrentModelAvailable
+              ? currentModelFriendlyName
+              : sync.receivedModels
+              ? t?.modelSelect?.noModelSelected ?? "No model selected"
+              : t?.modelSelect?.fetchingModels ?? "Fetching models.."
+            : t?.modelSelect.model ?? "Model"}
         </button>
         {renderModelList && (
           <div
-            className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] w-[calc(100%-4em)] max-w-lg items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+            className={`fixed mb-8 overflow-y-auto h-full max-h-[calc(100%-5em)] w-[calc(100%-4em)] max-w-lg items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}

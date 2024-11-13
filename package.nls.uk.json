@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI ще не випустила GPT-4 32k.",
   "modelSelect.noModelSelected": "Модель не вибрана",
   "modelSelect.fetchingModels": "Отримання моделей...",
+  "modelSelect.model": "Модель",
   "stats.title": "Статистика",
   "tabs.sr_label": "Виберіть вкладку",
   "tabs.sr_close_tab": "Закрити вкладку",

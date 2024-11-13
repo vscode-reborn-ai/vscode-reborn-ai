@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI jeszcze nie wydało GPT-4 32k.",
   "modelSelect.noModelSelected": "Nie wybrano modelu",
   "modelSelect.fetchingModels": "Pobieranie modeli...",
+  "modelSelect.model": "Model",
   "stats.title": "Statystyki",
   "tabs.sr_label": "Wybierz kartę",
   "tabs.sr_close_tab": "Zamknij kartę",

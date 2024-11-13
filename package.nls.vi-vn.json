@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI chưa phát hành GPT-4 32k.",
   "modelSelect.noModelSelected": "Không có mô hình nào được chọn",
   "modelSelect.fetchingModels": "Đang tải mô hình...",
+  "modelSelect.model": "Mô hình",
   "stats.title": "Thống kê",
   "tabs.sr_label": "Chọn một tab",
   "tabs.sr_close_tab": "Đóng tab",

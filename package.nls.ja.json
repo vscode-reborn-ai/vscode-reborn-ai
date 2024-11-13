@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI はまだ GPT-4 32k をリリースしていません。",
   "modelSelect.noModelSelected": "モデルが選択されていません",
   "modelSelect.fetchingModels": "モデルを取得中...",
+  "modelSelect.model": "モデル",
   "stats.title": "統計",
   "tabs.sr_label": "タブを選択",
   "tabs.sr_close_tab": "タブを閉じる",
