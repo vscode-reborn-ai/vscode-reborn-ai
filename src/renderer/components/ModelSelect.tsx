@@ -126,39 +126,85 @@ interface ComputedModelData {
 }
 
 const DetailedModel = React.memo(function ({
+  vscode,
   model,
   computedModelDataMap,
   sortBy,
   isFeatherless,
   showDescriptionOn,
   setShowDescriptionOn,
+  recomputeExpandedItemHeight,
 }: {
+  vscode: any;
   model: Model;
   computedModelDataMap: Map<string, ComputedModelData>;
   sortBy: SortMethod;
   isFeatherless: boolean;
   showDescriptionOn: string | null;
   setShowDescriptionOn: React.Dispatch<React.SetStateAction<string | null>>;
+  recomputeExpandedItemHeight: () => void;
 }) {
+  const description = useMemo(() => {
+    return model.featherless?.readme ?? model.description ?? "";
+  }, [model.featherless?.readme, model.description]);
+  const showDescription = useMemo(() => {
+    return showDescriptionOn === model.id;
+  }, [showDescriptionOn, model.id]);
+  const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
+  const backendMessenger = useMessenger(vscode);
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
+  const fetchModelDescription = useCallback(
+    async (model: Model) => {
+      if (model.featherless?.status) {
+        backendMessenger.sendGetModelDetails(model.id);
+      }
+    },
+    [model]
+  );
+  const fetchModelDataDebounced = useDebounce(fetchModelDescription, 1000);
   const descriptionIconClickHandler = useCallback(
     (event: any, model: Model) => {
       event.stopPropagation();
 
-      const newShowDescriptionOn =
-        showDescriptionOn === model.id ? null : model.id;
+      const show = showDescription ? null : model.id;
 
-      setShowDescriptionOn(newShowDescriptionOn);
+      setShowDescriptionOn(show);
 
-      // Unfocus the button when the description is hidden
-      if (!newShowDescriptionOn) {
+      if (show) {
+        // Fetch readme on featherless models if it's not already fetched
+        if (model.featherless?.status && !model.featherless?.readme) {
+          // Use debounced function to avoid inadvertantly spamming the API
+          fetchModelDataDebounced(model);
+        }
+      } else {
+        // Unfocus the button when the description is hidden
         event.currentTarget.blur();
       }
     },
-    [showDescriptionOn]
+    [showDescription]
   );
+  // recomputeExpandedItemHeight when the model's description changes
+  useEffect(() => {
+    const description = model.featherless?.readme ?? model.description;
+
+    if (showDescription && description && description.length > 0) {
+      recomputeExpandedItemHeight();
+    }
+  }, [model.featherless?.readme, model.description, showDescription]);
+  const modelDescriptionComponent = useMemo(() => {
+    if (showDescription) {
+      let description = model.featherless?.readme ?? model.description ?? "";
+
+      // Remove any HTML comments
+      description = description.replace(/<!--.*?-->/gs, "");
+
+      return convertMarkdownToComponent(description);
+    }
+
+    return undefined;
+  }, [showDescription, model.id, model.description, model.featherless?.readme]);
 
   // Render 1500000 as 1,500,000
   const formatInteger = useCallback((num: number | undefined) => {
@@ -245,18 +291,27 @@ const DetailedModel = React.memo(function ({
             )}
             onClick={(event) => descriptionIconClickHandler(event, model)}
           >
-            <Icon icon="help" className="w-3 h-3" />
-            <span className="sr-only">Show model description</span>
+            {showDescription && description.length < 1 ? (
+              <span className="flex gap-1">
+                Loading..
+                <Icon icon="loading" className="w-3 h-3 animate-spin" />
+              </span>
+            ) : (
+              <>
+                <Icon icon="help" className="w-3 h-3" />
+                <span className="sr-only">Show model description</span>
+              </>
+            )}
           </button>
         )}
       </div>
       {/* Line 2 - Model description */}
-      {showDescriptionOn === model.id && (
+      {showDescription && (
         <div
           className="text-xs text-start text-menu group-hover:text-menu-selection group-focus:text-menu-selection prose prose-a:text-menu prose-a:underline cursor-auto"
           onClick={(event) => event.stopPropagation()}
         >
-          {computedModelDataMap.get(model.id)?.descriptionComponent}
+          {modelDescriptionComponent}
         </div>
       )}
       {/* Line 2/3 - Model stats */}
@@ -402,6 +457,7 @@ const ModelRow = React.memo(function ({
   computedModelDataMap,
   showDescriptionOn,
   setShowDescriptionOn,
+  recomputeExpandedItemHeight,
 }: {
   // props from <List />
   style: React.CSSProperties;
@@ -416,6 +472,7 @@ const ModelRow = React.memo(function ({
   computedModelDataMap: Map<string, ComputedModelData>;
   showDescriptionOn: string | null;
   setShowDescriptionOn: React.Dispatch<React.SetStateAction<string | null>>;
+  recomputeExpandedItemHeight: () => void;
 }) {
   const dispatch = useAppDispatch();
   const backendMessenger = useMessenger(vscode);
@@ -497,12 +554,14 @@ const ModelRow = React.memo(function ({
           onClick={onClickHandler}
         >
           <DetailedModel
+            vscode={vscode}
             model={model}
             computedModelDataMap={computedModelDataMap}
             sortBy={sortBy}
             isFeatherless={isFeatherless}
             showDescriptionOn={showDescriptionOn}
             setShowDescriptionOn={setShowDescriptionOn}
+            recomputeExpandedItemHeight={recomputeExpandedItemHeight}
           />
         </button>
       )}
@@ -765,6 +824,20 @@ const DetailedModelList = React.memo(function ({
 
     setExpandedItemHeight(newHeight);
   }, [expandedModel]);
+  const recomputeExpandedItemHeight = useCallback(() => {
+    if (!expandedModel) {
+      setExpandedItemHeight(0);
+      return;
+    }
+
+    const query = `[data-model-id="${expandedModel}"]`;
+    const itemElem = listWrapperRef.current?.querySelector(query);
+    const newHeight = itemElem?.clientHeight ?? 0;
+
+    if (newHeight !== expandedItemHeight) {
+      setExpandedItemHeight(newHeight);
+    }
+  }, [expandedModel, listWrapperRef, expandedItemHeight]);
   const computedModelDataMap = useMemo(() => {
     const modelData = new Map<string, ComputedModelData>();
 
@@ -966,6 +1039,7 @@ const DetailedModelList = React.memo(function ({
             computedModelDataMap={computedModelDataMap}
             showDescriptionOn={expandedModel}
             setShowDescriptionOn={setExpandedModel}
+            recomputeExpandedItemHeight={recomputeExpandedItemHeight}
           />
         )}
       </List>
@@ -1096,7 +1170,7 @@ export default function ModelSelect({
               : sync.receivedModels
               ? t?.modelSelect?.noModelSelected ?? "No model selected"
               : t?.modelSelect?.fetchingModels ?? "Fetching models.."
-            : t?.modelSelect.model ?? "Model"}
+            : t?.modelSelect?.model ?? "Model"}
         </button>
         {renderModelList && (
           <div

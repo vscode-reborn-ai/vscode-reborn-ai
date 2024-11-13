@@ -419,9 +419,16 @@ export function useConvertMarkdownToComponent(
       ? baseUrl.slice(0, -1)
       : baseUrl;
     const adjustedHref = href.startsWith("/") ? baseUrlNoSlash + href : href;
-    let domain = new URL(adjustedHref).hostname;
-    // only get the highest level domain
-    domain = domain.split(".").slice(-2).join(".");
+    let domain = "";
+
+    try {
+      domain = new URL(adjustedHref).hostname;
+      // only get the highest level domain
+      domain = domain.split(".").slice(-2).join(".");
+    } catch (error) {
+      // This failing is okay. Some READMEs have relative links to files in their repo. (ie LICENSE)
+      domain = "url"; // Placeholder for screen reader
+    }
 
     const handleClick = (
       event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
@@ -443,6 +450,7 @@ export function useConvertMarkdownToComponent(
     );
   };
 
+  // TODO: tables do not render correctly (both MD and HTML)
   const markdownToComponent = useCallback(
     (markdown: string) => {
       return (

@@ -26,6 +26,7 @@ export enum BackendMessageType {
   setViewOptions = "setViewOptions",
   // Models
   getModels = "getModels",
+  getModelDetails = "getModelDetails",
   setModel = "setModel",
   // Base API URL
   changeApiUrl = "changeApiUrl",
@@ -101,6 +102,11 @@ export interface GetViewOptionsMessage extends BaseBackendMessage {
 export interface SetViewOptionsMessage extends BaseBackendMessage {
   type: BackendMessageType.setViewOptions;
   viewOptions: ViewOptionsState;
+}
+
+export interface GetModelDetailsMessage extends BaseBackendMessage {
+  type: BackendMessageType.getModelDetails;
+  modelId: string;
 }
 
 export interface ExportToMarkdownMessage extends BaseBackendMessage {
@@ -198,6 +204,7 @@ export enum FrontendMessageType {
   exportToMarkdown = "exportToMarkdown",
   // Models
   modelsUpdate = "modelsUpdate",
+  modelDetailsUpdate = "modelDetailsUpdate",
   setConversationModel = "setConversationModel",
   updateModelListStatus = "updateModelListStatus",
   // Settings
@@ -219,6 +226,11 @@ export interface BaseFrontendMessage {
 export interface ModelsUpdateMessage extends BaseFrontendMessage {
   type: FrontendMessageType.modelsUpdate;
   models: Model[];
+}
+
+export interface ModelDetailsUpdateMessage extends BaseFrontendMessage {
+  type: FrontendMessageType.modelDetailsUpdate;
+  model: Model;
 }
 
 export interface SetConversationModelMessage extends BaseFrontendMessage {

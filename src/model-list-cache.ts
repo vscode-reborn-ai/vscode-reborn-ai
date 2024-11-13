@@ -42,8 +42,13 @@ interface CacheStorage {
   [key: string]: CacheEntry;
 }
 
+
 export class ModelCache {
   private static _instance: ModelCache;
+  private cache: CacheStorage = {};
+  private modelList: Model[] = [];
+  private apiUrl: string = '';
+  private apiKey: string = '';
 
   // Default cache duration is set to 1 day (86,400,000 ms)
   constructor(private secretStorage: SecretStorage, private defaultCacheDuration: number = 86400000) { }
@@ -56,6 +61,10 @@ export class ModelCache {
     return ModelCache._instance;
   }
 
+  private isFeatherless(apiUrl: string = this.apiUrl): boolean {
+    return apiUrl.includes('api.featherless.ai');
+  }
+
   // Generates a unique cache key using the API URL and a hash of the API key
   private generateCacheKey(apiUrl: string, apiKey: string): string {
     const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
@@ -64,24 +73,47 @@ export class ModelCache {
 
   // Retrieves models from the cache or fetches them if not available or expired
   async getModels(apiUrl: string, apiKey: string, cacheDuration?: number): Promise<Model[]> {
-    const cache = await this.getCacheData();
+    this.apiUrl = apiUrl;
+    this.apiKey = apiKey;
+    this.cache = await this.getCacheData();
     // The key to the data for this API URL and API key combination
     const cacheKey = this.generateCacheKey(apiUrl, apiKey);
     // Cached model list + caching metadata
-    cache[cacheKey] = cache[cacheKey] ?? {
+    this.cache[cacheKey] = this.cache[cacheKey] ?? {
       modelList: [],
       lastUpdated: 0
     };
 
     // Fetch model list and update cache if necessary
     // fetchModels() determines if the cache is expired
-    cache[cacheKey] = await this.fetchModels(apiUrl, apiKey, cache[cacheKey], cacheDuration ?? this.defaultCacheDuration);
+    this.cache[cacheKey] = await this.fetchModels(apiUrl, apiKey, this.cache[cacheKey], cacheDuration ?? this.defaultCacheDuration);
 
     // Store the updated cache
-    await this.secretStorage.store(CACHE_STORAGE_KEY, JSON.stringify(cache));
+    await this.secretStorage.store(CACHE_STORAGE_KEY, JSON.stringify(this.cache));
+
+    this.modelList = this.cache[cacheKey].modelList;
 
     // Return the model list
-    return cache[cacheKey].modelList;
+    return this.modelList;
+  }
+
+  // lastUpdated timestamp is optional - this is more for full model list pulls
+  // To avoid messing with full list caching, do not update the timestamp for individual model updates
+  async updateCache(lastUpdated?: number): Promise<void> {
+    const cacheKey = this.generateCacheKey(this.apiUrl, this.apiKey);
+
+    this.cache[cacheKey] = {
+      ...this.cache[cacheKey],
+      modelList: this.modelList,
+    };
+
+    // Update timestamp (optional)
+    if (lastUpdated) {
+      this.cache[cacheKey].lastUpdated = lastUpdated;
+    }
+
+    // Store the updated cache
+    await this.secretStorage.store(CACHE_STORAGE_KEY, JSON.stringify(this.cache));
   }
 
   // Get string data from the cache, parse it, and return as JS object
@@ -98,7 +130,7 @@ export class ModelCache {
       }
     }
 
-    return cacheObject;
+    return this.cache = cacheObject;
   }
 
   // New function to fetch detailed models with pagination support
@@ -151,8 +183,6 @@ export class ModelCache {
             },
           });
         }
-
-        console.log(`[Reborn AI] Fetched page ${currentPage} of Featherless detailed models.`);
 
         totalPages = result.pagination.total_pages;
       } catch (error) {
@@ -221,6 +251,38 @@ export class ModelCache {
       console.error(`[Reborn AI] Error fetching detailed model ${modelId}:`, error);
       throw error;
     }
+  }
+
+  // Get detailed data about a model
+  // This is needed with Featherless to fetch the model description ("readme")
+  public async getDetailedModelData(modelId: string): Promise<Model> {
+    // Check if a model list is available
+    if (!this.modelList || this.modelList.length === 0) {
+      throw new Error("[Reborn AI] Model Cache - getDetailedModelData() - Model list is empty.");
+    }
+
+    let model = this.modelList.find(m => m.id === modelId);
+
+    // Check if the model is found in the list
+    if (!model) {
+      throw new Error(`[Reborn AI] Model Cache - getDetailedModelData() - Model with ID ${modelId} not found.`);
+    }
+
+    // * Fetch extra data for certain APIs
+    // For now, this is only Featherless—no need to re-fetch from OpenAI-compatible APIs
+    // OpenRouter sends extra data within the OpenAI-compatible API response
+    if (this.isFeatherless() && !model.featherless?.readme) {
+      // Featherless has a separate API with their own special data
+      model = await this.fetchFeatherlessModel(modelId);
+
+      // Update the model list with the updated model
+      this.modelList = this.modelList.map(m => m.id === modelId ? model as Model : m);
+
+      // Update cache with the updated model list
+      this.updateCache();
+    }
+
+    return model;
   }
 
   private mergeModelLists(oldModelData: Model[], newModelData: Model[]): Model[] {
@@ -306,7 +368,7 @@ export class ModelCache {
 
     // * Completely separate - fetching Featherless AI's detailed models
     // This requires ~50 requests to get all models, so only running once a week
-    if (apiUrl.includes('api.featherless.ai')) {
+    if (this.isFeatherless(apiUrl)) {
       const oneWeekMs = 7 * 24 * 3600 * 1000;
 
       if (cacheEntry.featherless) {

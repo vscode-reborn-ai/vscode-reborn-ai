@@ -8,7 +8,7 @@ import { ActionRunState, setActionError, setActionState } from "./store/action";
 import { setApiKeyStatus, setExtensionSettings, setModelListStatus, setModels, setReceivedExtensionSettings, setReceivedModels, setReceivedTranslations, setReceivedViewOptions, setTranslations, setViewOptions } from "./store/app";
 import { addMessage, selectCurrentConversation, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
 import { ActionNames, ChatMessage, Conversation, Role } from "./types";
-import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateModelListStatusMessage, UpdateTokenCountMessage, ViewOptionsUpdateMessage } from "./types-messages";
+import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelDetailsUpdateMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateModelListStatusMessage, UpdateTokenCountMessage, ViewOptionsUpdateMessage } from "./types-messages";
 
 export const useBackendMessageHandler = (backendMessenger: any) => {
   const dispatch = useAppDispatch();
@@ -28,10 +28,6 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
   const models = useAppSelector((state: RootState) => state.app.models);
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const currentConversation = useSelector(selectCurrentConversation);
-  const apiKeyStatus = useAppSelector(
-    (state: RootState) => state.app?.apiKeyStatus
-  );
-  const vscode = useAppSelector((state: RootState) => state.app.vscode);
   const renameTabTitleWithAI = useRenameTabTitleWithAI(backendMessenger, settings);
 
   // Update the model for each conversation when the models list is updated
@@ -65,7 +61,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
       console.info("[Reborn AI] Renderer - Received message from main process: ", event.data);
     }
 
-    let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | ViewOptionsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | UpdateModelListStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
+    let message = event.data as ModelsUpdateMessage | ModelDetailsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | ViewOptionsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | UpdateModelListStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
 
     switch (message.type) {
       case FrontendMessageType.showInProgress: {
@@ -278,6 +274,18 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         );
 
         dispatch(setReceivedModels(true));
+        break;
+      }
+      case FrontendMessageType.modelDetailsUpdate: {
+        const modelDetailsUpdateData = message as ModelDetailsUpdateMessage;
+
+        dispatch(
+          setModels({
+            models: models.map((model) =>
+              model.id === modelDetailsUpdateData.model.id ? modelDetailsUpdateData.model : model
+            ),
+          })
+        );
         break;
       }
       case FrontendMessageType.updateApiKeyStatus: {

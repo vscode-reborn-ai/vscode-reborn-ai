@@ -2,7 +2,7 @@ import vscode from 'vscode';
 import { ApiProvider } from "./openai-api-provider";
 import { ApiKeyStatus, ModelListStatus, ViewOptionsState } from "./renderer/store/types";
 import { ChatMessage, Conversation, ExtensionSettings, Model } from "./renderer/types";
-import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateModelListStatusMessage, UpdateTokenCountMessage, ViewOptionsUpdateMessage } from "./renderer/types-messages";
+import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelDetailsUpdateMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateModelListStatusMessage, UpdateTokenCountMessage, ViewOptionsUpdateMessage } from "./renderer/types-messages";
 
 export default class Messenger {
   private webView?: vscode.WebviewView | null;
@@ -54,6 +54,13 @@ export default class Messenger {
       type: FrontendMessageType.modelsUpdate,
       models,
     } as ModelsUpdateMessage);
+  }
+
+  async sendDetailedModel(model: Model) {
+    this.sendMessage({
+      type: FrontendMessageType.modelDetailsUpdate,
+      model,
+    } as ModelDetailsUpdateMessage);
   }
 
   setConversationModel(model: Model, conversation: Conversation) {

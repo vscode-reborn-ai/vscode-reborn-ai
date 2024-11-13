@@ -12,7 +12,7 @@ import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/types";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetModelDetailsMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
 
@@ -447,12 +447,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           this.logEvent("code-inserted");
           break;
         }
-        case BackendMessageType.setModel:
+        case BackendMessageType.setModel: {
           const setModelData = data as SetModelMessage;
           // Note that due to some models being deprecated, this function may change the model
           this.model = await this.setModel(setModelData.model);
           break;
-        case BackendMessageType.openNew:
+        }
+        case BackendMessageType.openNew: {
           const openNewData = data as OpenNewMessage;
           const document = await vscode.workspace.openTextDocument({
             content: openNewData.code,
@@ -462,6 +463,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
           this.logEvent(openNewData.language === "markdown" ? "code-exported" : "code-opened");
           break;
+        }
         case BackendMessageType.cleargpt3:
           // TODO: remove this?
           // this.apiGpt3 = undefined;
@@ -499,21 +501,30 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           await this.offlineStore?.setViewOptions(viewOptionsData.viewOptions);
           break;
         }
-        case BackendMessageType.exportToMarkdown:
+        case BackendMessageType.exportToMarkdown: {
           const exportToMarkdownData = data as ExportToMarkdownMessage;
           this.exportToMarkdown(exportToMarkdownData.conversation);
           break;
+        }
         case BackendMessageType.getModels:
           this.frontendMessenger.sendModels();
           break;
-        case BackendMessageType.changeApiUrl:
+        case BackendMessageType.getModelDetails: {
+          const modelDetailsData = data as GetModelDetailsMessage;
+          const detailedModel = await this.modelListCache.getDetailedModelData(modelDetailsData.modelId);
+          this.frontendMessenger.sendDetailedModel(detailedModel);
+          break;
+        }
+        case BackendMessageType.changeApiUrl: {
           const changeApiUrlData = data as ChangeApiUrlMessage;
           this.setApiUrl(changeApiUrlData.apiUrl);
           break;
-        case BackendMessageType.changeApiKey:
+        }
+        case BackendMessageType.changeApiKey: {
           const changeApiKeyData = data as ChangeApiKeyMessage;
           this.setApiKey(changeApiKeyData.apiKey);
           break;
+        }
         case BackendMessageType.setAzureApiVersion: {
           const setAzureApiVersionData = data as SetAzureApiVersionMessage;
           vscode.workspace.getConfiguration("chatgpt").update("azureApiVersion", setAzureApiVersionData.azureApiVersion, vscode.ConfigurationTarget.Global);
