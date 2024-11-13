@@ -391,13 +391,27 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   ) {
     this.webView = webviewView;
     this.frontendMessenger.setWebView(webviewView);
+    /*
+
+        {
+          scheme: 'vscode-resource',
+          authority: 'vscode-resource',
+          fsPath: this.context.extensionUri.fsPath,
+          path: '/out',
+        },
+    */
+    // create a new resource root for webpack chunks.
 
     webviewView.webview.options = {
       // Allow scripts in the webview
       enableScripts: true,
 
       localResourceRoots: [
-        this.context.extensionUri
+        this.context.extensionUri,
+        // Build files (main process js + renderer process js)
+        vscode.Uri.joinPath(this.context.extensionUri, 'out'),
+        // Unbundled dependencies
+        vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor'),
       ],
     };
 
@@ -994,12 +1008,17 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   }
 
   private getWebviewHtml(webview: vscode.Webview): string {
+    // React / UI code
+    const webviewBundleUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview.bundle.js')
+    );
+
+    // Unbundled dependencies
     const vendorHighlightCss = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.css'));
     const vendorHighlightJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.js'));
     const vendorMarkedJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'marked.min.js'));
-    // React code bundled by webpack, this includes styling
-    const webpackScript = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview.bundle.js'));
 
+    // Defeat caching
     const nonce = this.getRandomId();
 
     return `<!DOCTYPE html>
@@ -1007,11 +1026,17 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        ${this.devMode ? `<script src="http://localhost:8097"></script>` : ''}
+        ${this.devMode ? `
+          <!-- Connect to the react development server -->
+          <script src="http://localhost:8097"></script>
+        ` : ''}
       </head>
       <body class="overflow-hidden">
+        <script>
+          window.DEV_MODE = ${this.devMode};
+        </script>
         <div id="root" class="flex flex-col min-h-[calc(100vh-8em)] max-h-screen"></div>
-        <script nonce="${nonce}" src="${webpackScript}"></script>
+        <script nonce="${nonce}" src="${webviewBundleUri}"></script>
         <script src="${vendorHighlightJs}" defer async></script>
         <script src="${vendorMarkedJs}" defer async></script>
         <link href="${vendorHighlightCss}" rel="stylesheet">
@@ -1027,7 +1052,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     }
     return text;
   }
-
 
   private getActiveEditorSelection(): {
     content: string;

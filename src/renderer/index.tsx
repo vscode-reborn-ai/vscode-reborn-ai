@@ -1,3 +1,4 @@
+let __webpack_public_path__: string = (window as any)?.webviewRootUri + "/out/";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";

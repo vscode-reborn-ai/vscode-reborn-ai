@@ -144,7 +144,7 @@ export default React.memo(function MoreActionsMenu({
               {t?.questionInputField?.actions ?? "Actions"}
             </Link>
           </li>
-          {process.env.NODE_ENV === "development" && (
+          {(window as any).DEV_MODE && (
             <li>
               <button
                 className={classNames(

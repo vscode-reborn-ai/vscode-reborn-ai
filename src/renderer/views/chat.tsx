@@ -1,7 +1,8 @@
-import React, { Suspense, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
 import ChatMessageComponent from "../components/ChatMessage";
+import DebugConversation from "../components/DebugConversation";
 import IntroductionSplash from "../components/IntroductionSplash";
 import QuestionInputField from "../components/QuestionInputField";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -14,10 +15,6 @@ import {
   setAutoscroll,
 } from "../store/conversation";
 import { ChatMessage, Role } from "../types";
-
-const LazyDebugConversation = React.lazy(
-  () => import("../components/DebugConversation")
-);
 
 const MessageList = ({
   conversationId,
@@ -130,13 +127,18 @@ export default function Chat({ vscode }: { vscode: any }) {
         passive: true, // do not block scrolling
       });
     }
+
+    // Unload the event listener on cleanup
+    return () => {
+      if (conversationListRef.current) {
+        conversationListRef.current.removeEventListener("scroll", handleScroll);
+      }
+    };
   }, [conversationListRef.current]);
 
   return (
     <div className="w-full overflow-y-auto flex-grow">
-      <Suspense fallback={<div>...</div>}>
-        {debug && <LazyDebugConversation conversationId={conversationId} />}
-      </Suspense>
+      {debug && <DebugConversation conversationId={conversationId} />}
       <IntroductionSplash
         className={messages?.length > 0 ? "hidden" : ""}
         vscode={vscode}

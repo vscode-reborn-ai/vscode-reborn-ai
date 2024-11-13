@@ -332,6 +332,7 @@ export default ({
       );
     }
 
+    // Unload the event listeners on cleanup
     return () => {
       if (questionInputRef.current) {
         questionInputRef.current.removeEventListener("input", handleInput);

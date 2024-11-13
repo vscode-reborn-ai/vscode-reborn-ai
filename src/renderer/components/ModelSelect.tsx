@@ -1095,7 +1095,7 @@ export default function ModelSelect({
         </button>
         {renderModelList && (
           <div
-            className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] w-full max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
+            className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] w-[calc(100%-4em)] max-w-lg items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
           `}

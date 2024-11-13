@@ -3,8 +3,7 @@
 .vscode-test-web
 # Build files
 *.vsix
-out/**/*.js
-out/**/*.map
+out
 dist
 node_modules
 !node_modules/chatgpt/build/index.js
