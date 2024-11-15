@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useSelector } from "react-redux";
 import {
   Navigate,
   Route,
@@ -13,8 +14,13 @@ import { useAppDispatch, useAppSelector } from "./hooks";
 import { useBackendMessageHandler } from "./message-handler";
 import { useMessenger } from "./send-to-backend";
 import { RootState } from "./store";
-import { ApiKeyStatus, setVSCode } from "./store/app";
-import { setCurrentConversationId } from "./store/conversation";
+import { selectMinimalUI, setVSCode } from "./store/app";
+import {
+  selectCurrentConversation,
+  selectCurrentConversationId,
+  setCurrentConversationId,
+} from "./store/conversation";
+import { ApiKeyStatus } from "./store/types";
 import { Conversation } from "./types";
 import ActionsView from "./views/actions";
 import APIView from "./views/api";
@@ -23,12 +29,9 @@ import OpenAISetup from "./views/openai-setup";
 
 export default function Layout({ vscode }: { vscode: any }) {
   const dispatch = useAppDispatch();
-  const currentConversationId = useAppSelector(
-    (state: any) => state.conversation.currentConversationId
-  );
-  const currentConversation = useAppSelector(
-    (state: any) => state.conversation.currentConversation
-  );
+  const currentConversationId = useSelector(selectCurrentConversationId);
+  const currentConversation = useSelector(selectCurrentConversation);
+  const minimalUI = useSelector(selectMinimalUI);
   const conversationList = Object.values(
     useAppSelector((state: RootState) => state.conversation.conversations)
   ) as Conversation[];
@@ -44,7 +47,7 @@ export default function Layout({ vscode }: { vscode: any }) {
   );
   const chatGPTModels = useAppSelector((state: RootState) => state.app.models);
   const useEditorSelection = useAppSelector(
-    (state: any) => state.app.useEditorSelection
+    (state: RootState) => state.app.useEditorSelection
   );
   const backendMessenger = useMessenger(vscode);
   const backendMessageHandler = useBackendMessageHandler(backendMessenger);
@@ -93,6 +96,10 @@ export default function Layout({ vscode }: { vscode: any }) {
   }, [viewOptions, sync.receivedViewOptions]);
 
   useEffect(() => {
+    if (!currentConversation) {
+      return;
+    }
+
     // When the current conversation changes, send a message to the extension to let it know
     backendMessenger.sendSetCurrentConversation(currentConversation);
   }, [currentConversationId]);
@@ -105,6 +112,10 @@ export default function Layout({ vscode }: { vscode: any }) {
     }
 
     debounceTimeout.current = setTimeout(() => {
+      if (!currentConversation) {
+        return;
+      }
+
       // Get new token count
       backendMessenger.sendGetTokenCount(
         currentConversation,
@@ -118,9 +129,9 @@ export default function Layout({ vscode }: { vscode: any }) {
       }
     };
   }, [
-    currentConversation.userInput,
-    currentConversation.messages,
-    currentConversation.model,
+    currentConversation?.userInput,
+    currentConversation?.messages,
+    currentConversation?.model,
     useEditorSelection,
   ]);
 
@@ -165,6 +176,10 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   // Keep the backend's conversation list in sync with the frontend's
   useEffect(() => {
+    if (!currentConversation) {
+      return;
+    }
+
     backendMessenger.sendConversationList(
       conversationList,
       currentConversation
@@ -173,31 +188,19 @@ export default function Layout({ vscode }: { vscode: any }) {
 
   return (
     <>
-      {!settings?.minimalUI && !settings?.disableMultipleConversations && (
-        <Tabs
-          conversationList={conversationList}
-          currentConversationId={currentConversationId}
-        />
-      )}
+      {!minimalUI && !settings?.disableMultipleConversations && <Tabs />}
       <Routes>
         {/* <Route path="/prompts" element={<Prompts vscode={vscode} />} /> */}
         <Route path="/actions" element={<ActionsView vscode={vscode} />} />
         <Route path="/api" element={<APIView vscode={vscode} />} />
         <Route path="/openai-setup" element={<OpenAISetup vscode={vscode} />} />
-        {conversationList &&
-          conversationList.map &&
+        {conversationList?.map &&
           conversationList.map((conversation: Conversation) => (
             <Route
               key={conversation.id}
               path={`/chat/${conversation.id}`}
               index={conversation.id === currentConversationId}
-              element={
-                <ChatView
-                  conversation={conversation}
-                  vscode={vscode}
-                  conversationList={conversationList}
-                />
-              }
+              element={<ChatView vscode={vscode} />}
             />
           ))}
         <Route

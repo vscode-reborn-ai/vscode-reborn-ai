@@ -11,6 +11,7 @@ import { WebviewApi } from "vscode-webview";
 import { useAppDispatch } from "./hooks";
 import { useMessenger } from "./send-to-backend";
 import { aiRenamedTitle } from "./store/conversation";
+import { ModelListStatus } from "./store/types";
 import {
   ActionNames,
   ChatMessage,
@@ -190,25 +191,26 @@ export function useRenameTabTitleWithAI(
 }
 
 export function getModelFriendlyName(
-  currentConversation: Conversation,
-  models: Model[],
+  model: Model | undefined,
+  modelList: Model[],
   settings: ExtensionSettings,
   shortVersion: boolean = false
 ) {
   let friendlyName: string;
   let usingModelId = false;
 
-  if (currentConversation.model?.name) {
-    friendlyName = currentConversation.model.name;
-  } else if (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")) {
-    friendlyName =
-      MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "") ?? "";
-  } else if (currentConversation.model?.id) {
-    friendlyName = currentConversation.model.id;
+  if (model?.name) {
+    friendlyName = model.name;
+  } else if (MODEL_FRIENDLY_NAME.has(model?.id ?? "")) {
+    friendlyName = MODEL_FRIENDLY_NAME.get(model?.id ?? "") ?? "";
+  } else if (model?.id) {
+    friendlyName = model.id;
     usingModelId = true;
-  } else if (models.find((model) => model.id === settings?.gpt3?.model)?.name) {
+  } else if (
+    modelList.find((model) => model.id === settings?.gpt3?.model)?.name
+  ) {
     friendlyName =
-      models.find((model) => model.id === settings?.gpt3?.model)?.name ?? "";
+      modelList.find((model) => model.id === settings?.gpt3?.model)?.name ?? "";
   } else if (settings?.gpt3?.model) {
     friendlyName = settings.gpt3.model;
     usingModelId = true;
@@ -238,6 +240,11 @@ export function getModelFriendlyName(
     if (friendlyName.includes(" (")) {
       friendlyName = friendlyName.split(" (")[0];
     }
+
+    // If it has a format like "google/gemma-7b-it", ignore everything before the slash
+    if (friendlyName.includes("/")) {
+      friendlyName = friendlyName.split("/")[1];
+    }
   }
 
   // trim
@@ -247,11 +254,11 @@ export function getModelFriendlyName(
 }
 // Hook version of getModelFriendlyName
 export function useModelFriendlyName(
-  currentConversation: Conversation,
-  models: Model[],
+  model: Model | undefined,
+  modelList: Model[],
   settings: ExtensionSettings
 ) {
-  return getModelFriendlyName(currentConversation, models, settings);
+  return getModelFriendlyName(model, modelList, settings);
 }
 
 // Model token limit for context (input)
@@ -311,6 +318,11 @@ export function getModelRates(model: Model | undefined): ModelCosts {
     return costs;
   }
 
+  // Feathers models - do not have pricing, it's a subscription service
+  if (model.featherless) {
+    return costs;
+  }
+
   // For OpenRouter models, check if the model has cost data with it
   if (model.pricing) {
     // Mutiply by 1,000,000 to convert from $ / 1 token to $ / 1 million tokens
@@ -353,27 +365,49 @@ export function isReasoningModel(model: Model | undefined) {
   return REASONING_MODELS.includes(model?.id ?? "");
 }
 
-// Custom hook useIsCurrentModelAvailable
 export function useIsModelAvailable(
   models: Array<{ id: string }>,
-  model: Model | undefined
+  model: Model | undefined,
+  modelListStatus: ModelListStatus,
+  manualModelInput?: boolean
 ): boolean {
   return useMemo(() => {
-    const modelsAreEmpty = models.length === 0;
-    const currentConversationModel = model?.id;
+    const currentModelId = model?.id;
 
-    if (modelsAreEmpty) {
-      return false;
-    }
-
-    if (!currentConversationModel) {
+    // If the model list status is unknown or fetching, we assume the model might become available
+    if (
+      modelListStatus === ModelListStatus.Unknown ||
+      modelListStatus === ModelListStatus.Fetching
+    ) {
       return true;
     }
 
-    return models.some((model) => model.id === currentConversationModel);
-  }, [models, model]);
+    // If manual model input is enabled, any model is considered available
+    if (manualModelInput) {
+      return true;
+    }
+
+    // If there are no models fetched and manual input is disabled, the model is not available
+    if (models.length === 0) {
+      return false;
+    }
+
+    // If there's no current model selected, we consider the model available
+    if (!currentModelId) {
+      return true;
+    }
+
+    // Finally, check if the current model ID exists in the list of fetched models
+    const isModelInList = models.some((model) => model.id === currentModelId);
+
+    return isModelInList;
+  }, [models, model?.id, modelListStatus, manualModelInput]);
 }
 
+// TODO: fix
+// ATM, the following function is only used with the OpenRouter models
+// But, specifying "openrouter.ai" seems like a bug in the making
+// This should be refactored to be more generic
 export function useConvertMarkdownToComponent(
   vscode: WebviewApi<unknown> | undefined
 ) {
@@ -385,9 +419,16 @@ export function useConvertMarkdownToComponent(
       ? baseUrl.slice(0, -1)
       : baseUrl;
     const adjustedHref = href.startsWith("/") ? baseUrlNoSlash + href : href;
-    let domain = new URL(adjustedHref).hostname;
-    // only get the highest level domain
-    domain = domain.split(".").slice(-2).join(".");
+    let domain = "";
+
+    try {
+      domain = new URL(adjustedHref).hostname;
+      // only get the highest level domain
+      domain = domain.split(".").slice(-2).join(".");
+    } catch (error) {
+      // This failing is okay. Some READMEs have relative links to files in their repo. (ie LICENSE)
+      domain = "url"; // Placeholder for screen reader
+    }
 
     const handleClick = (
       event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
@@ -409,6 +450,7 @@ export function useConvertMarkdownToComponent(
     );
   };
 
+  // TODO: tables do not render correctly (both MD and HTML)
   const markdownToComponent = useCallback(
     (markdown: string) => {
       return (
@@ -434,20 +476,32 @@ export function useConvertMarkdownToComponent(
 }
 
 // Hook - Get the max cost of a conversation
-export function useMaxCost(conversation: Conversation) {
+export function useMaxCost(
+  tokenCount:
+    | {
+        messages: number;
+        userInput: number;
+      }
+    | undefined,
+  model: Model | undefined
+) {
   const [maxCost, setMaxCost] = useState<number | undefined>(undefined);
 
   useEffect(() => {
+    if (!tokenCount || !model) {
+      setMaxCost(undefined);
+      return;
+    }
+
     const minPromptTokens =
-      (conversation.tokenCount?.messages ?? 0) +
-      (conversation.tokenCount?.userInput ?? 0);
-    const modelContextLimit = getModelContextLimit(conversation.model);
-    const modelMax = getModelCompletionLimit(conversation.model);
+      (tokenCount.messages ?? 0) + (tokenCount.userInput ?? 0);
+    const modelContextLimit = getModelContextLimit(model);
+    const modelMax = getModelCompletionLimit(model);
     const maxCompleteTokens = Math.min(
       modelContextLimit - minPromptTokens,
       modelMax ?? Infinity
     );
-    const rates = getModelRates(conversation.model);
+    const rates = getModelRates(model);
 
     if (rates.prompt !== undefined && rates.complete !== undefined) {
       const minCost = (minPromptTokens / 1000000) * rates.prompt;
@@ -455,7 +509,19 @@ export function useMaxCost(conversation: Conversation) {
     } else {
       setMaxCost(undefined);
     }
-  }, [conversation.tokenCount, conversation.model]);
+  }, [tokenCount, model]);
 
   return maxCost;
+}
+
+export function checkPropChanges(prevProps: any, nextProps: any) {
+  let hasChanged = false;
+
+  Object.entries(nextProps).forEach(([key, val]) => {
+    if (prevProps[key] !== val) {
+      hasChanged = true;
+    }
+  });
+
+  return true;
 }

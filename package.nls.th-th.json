@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI ยังไม่ได้ปล่อย GPT-4 32k",
   "modelSelect.noModelSelected": "ไม่มีโมเดลที่เลือก",
   "modelSelect.fetchingModels": "กำลังดึงรายการโมเดล...",
+  "modelSelect.model": "โมเดล",
   "stats.title": "สถิติ",
   "tabs.sr_label": "เลือกแท็บ",
   "tabs.sr_close_tab": "ปิดแท็บ",

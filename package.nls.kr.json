@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "OpenAI는 아직 GPT-4 32k를 출시하지 않았습니다.",
   "modelSelect.noModelSelected": "모델 선택 없음",
   "modelSelect.fetchingModels": "모델 가져오는 중...",
+  "modelSelect.model": "모델",
   "stats.title": "통계",
   "tabs.sr_label": "탭 선택",
   "tabs.sr_close_tab": "탭 닫기",

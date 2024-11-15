@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "您可以在此处注册以获取更新",
   "modelSelect.noModelSelected": "未选择模型",
   "modelSelect.fetchingModels": "获取模型...",
+  "modelSelect.model": "模型",
   "stats.title": "统计信息",
   "tabs.sr_label": "选择一个选项卡",
   "tabs.sr_close_tab": "关闭选项卡",

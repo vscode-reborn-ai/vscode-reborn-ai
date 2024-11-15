@@ -24,16 +24,16 @@ or **build** this extension yourself [(scroll further down)](#development).
     <td>
        <h3>A clean chat interface</h3>
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-1-dark.png">
-  <img alt="VSCode Reborn AI extension in use within VS Code, displaying a chat interface. The conversation panel shows a user asking, 'What is the difference between throttle and debounce?' at the top. Below it, the AI response is presented in a well-formatted message using Markdown, including an explanation of 'Throttle' with bullet points and a JavaScript code block example. Above the chat is a tab bar with conversation and chat history options. At the bottom of the screen, there is an input field for the user to ask questions, along with options for interacting with the chat." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-1-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshots/screenshot-1-dark.png">
+  <img alt="VSCode Reborn AI extension in use within VS Code, displaying a chat interface. The conversation panel shows a user asking, 'What is the difference between throttle and debounce?' at the top. Below it, the AI response is presented in a well-formatted message using Markdown, including an explanation of 'Throttle' with bullet points and a JavaScript code block example. Above the chat is a tab bar with conversation and chat history options. At the bottom of the screen, there is an input field for the user to ask questions, along with options for interacting with the chat." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshots/screenshot-1-light.png">
 </picture>
     </td>
     <td>
       <h3>Easy presets for popular LLMs</h3>
       <br/>
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-2-dark.png">
-  <img alt="VSCode Reborn AI extension's 'LLM Settings' interface for connecting to an official OpenAI API. A dropdown menu near the top allows the user to select the LLM (currently showing 'Official OpenAI API'). Below, instructions are provided with a suggested API URL (https://api.openai.com/v1) and a 'Use this API URL' button. The current API URL and API key fields are shown below with an API key validation indicator ('Valid' status in green). At the top, a tab bar allows switching between 'Chat' and other options, and there is a 'LLM Settings' tab visible." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-2-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshots/screenshot-2-dark.png">
+  <img alt="VSCode Reborn AI extension's 'LLM Settings' interface for connecting to an official OpenAI API. A dropdown menu near the top allows the user to select the LLM (currently showing 'Official OpenAI API'). Below, instructions are provided with a suggested API URL (https://api.openai.com/v1) and a 'Use this API URL' button. The current API URL and API key fields are shown below with an API key validation indicator ('Valid' status in green). At the top, a tab bar allows switching between 'Chat' and other options, and there is a 'LLM Settings' tab visible." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshots/screenshot-2-light.png">
 </picture>
       <br/>
       <br/>
@@ -43,15 +43,15 @@ or **build** this extension yourself [(scroll further down)](#development).
     <td>
 <h3>A rich model picker for APIs like OpenRouter.ai</h3>
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-3-dark.png">
-  <img alt="VSCode Reborn AI extension's model picker interface displaying a dropdown list of available models when using an API like OpenRouter.ai. The list includes models such as 'AI21: Jamba 1.5 Large' and 'Anthropic: Claude 3 Opus,' each with details like cost per million tokens, maximum tokens per request, and request completion times. Moderation statuses are shown for some models. At the bottom, there are filtering options (Name, Cost, Context, Completion) and a search field to help users quickly find specific models. The interface shows the dropdown overlaying the chat window." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-3-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshots/screenshot-3-dark.png">
+  <img alt="VSCode Reborn AI extension's model picker interface displaying a dropdown list of available models when using an API like OpenRouter.ai. The list includes models such as 'AI21: Jamba 1.5 Large' and 'Anthropic: Claude 3 Opus,' each with details like cost per million tokens, maximum tokens per request, and request completion times. Moderation statuses are shown for some models. At the bottom, there are filtering options (Name, Cost, Context, Completion) and a search field to help users quickly find specific models. The interface shows the dropdown overlaying the chat window." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshots/screenshot-3-light.png">
 </picture>
     </td>
     <td>
 <h3>Recent data with online models like Perplexity's Sonar</h3>
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-4-dark.png">
-  <img alt="VSCode Reborn AI extension showing a chat interface where the user asks, 'What is the latest news from OpenAI for me as a developer?' The LLM model in use is 'Perplexity: Llama 3.1 Sonar 405B Online,' which provides a real-time response with key updates from OpenAI, including the Realtime API, Model Distillation, Vision Fine-Tuning, Prompt Caching, and other updates for developers. The interface displays the response in a well-formatted markdown style, with bullet points highlighting each update. At the bottom, the input field allows users to ask further questions. The interface uses a dark theme, with the active model and status shown in the bottom bar." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshot-4-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshots/screenshot-4-dark.png">
+  <img alt="VSCode Reborn AI extension showing a chat interface where the user asks, 'What is the latest news from OpenAI for me as a developer?' The LLM model in use is 'Perplexity: Llama 3.1 Sonar 405B Online,' which provides a real-time response with key updates from OpenAI, including the Realtime API, Model Distillation, Vision Fine-Tuning, Prompt Caching, and other updates for developers. The interface displays the response in a well-formatted markdown style, with bullet points highlighting each update. At the bottom, the input field allows users to ask further questions. The interface uses a dark theme, with the active model and status shown in the bottom bar." src="https://raw.githubusercontent.com/vscode-reborn-ai/vscode-reborn-ai/develop/screenshots/screenshot-4-light.png">
 </picture>
     </td>
   </tr>
@@ -74,13 +74,13 @@ Any tool that is "compatible" with the OpenAI API should work with this extensio
 
 ### Proxies
 
-We've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers. This is mainly for anyone who wants to use OpenAI, but cannot due to api.openai.com being blocked in your region.
+We've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers. This is for anyone who cannot access the OpenAI API because api.openai.com is blocked in their region.
 
 ## Internationalization
 
-Translated to: 🇬🇧 🇨🇳 🇮🇳 🇪🇸 🇦🇪 🇧🇩 🇸🇦 🇫🇷 🇷🇺 🇵🇰 🇩🇪 🇯🇵 🇮🇩 🇧🇷 🇮🇹 🇹🇭 🇵🇱 🇻🇳 🇵🇭 🇳🇱 🇺🇦 🇵🇹 🇹🇷 🇪🇬 🇰🇷
+**Translated to:** 🇬🇧 🇨🇳 🇮🇳 🇪🇸 🇦🇪 🇧🇩 🇸🇦 🇫🇷 🇷🇺 🇵🇰 🇩🇪 🇯🇵 🇮🇩 🇧🇷 🇮🇹 🇹🇭 🇵🇱 🇻🇳 🇵🇭 🇳🇱 🇺🇦 🇵🇹 🇹🇷 🇪🇬 🇰🇷
 
-Most of this extension has been translated to a number of languages. The translations are not perfect and may not be correct in some places. If you'd like to help with translations, please see the [i18n discussion](https://github.com/vscode-reborn-ai/vscode-reborn-ai/discussions/20).
+Most of this extension is localized. Some translations may not be correct. If you would like to help with translations, please see the [i18n discussion](https://github.com/vscode-reborn-ai/vscode-reborn-ai/discussions/20).
 
 ## Changelog
 
@@ -125,6 +125,12 @@ To test the vscode-chatgpt-reborn extension in VS Code, follow these steps:
    2. or <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>F5</kbd>
    3. or <kbd>Run</kbd> > <kbd>Restart Debugging</kbd> in the top menu.
 
+**React DevTools** to profile and debug React components, run:
+
+```bash
+yarn run devtools
+```
+
 ### Package for VS Code
 
 ```bash
@@ -135,8 +141,8 @@ yarn run package # Runs `vsce package`
 
 [Yarn](https://yarnpkg.com/) - [TypeScript](https://www.typescriptlang.org/) - [VS Code Extension API](https://code.visualstudio.com/api) - [React](https://reactjs.org/) - [Redux](https://redux.js.org/) - [React Router](https://reactrouter.com/) - [Tailwind CSS](https://tailwindcss.com/)
 
-- This extension has a custom UI with React + TailwindCSS, but theme support and remaining consistent with VS Code's UI components is still a priority.
+- This extension has a custom UI with React + TailwindCSS. The UI should work inside any theme.
 
 ## License
 
-This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [ISC LICENSE](LICENSE).

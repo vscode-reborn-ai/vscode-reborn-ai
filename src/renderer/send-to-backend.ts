@@ -1,4 +1,4 @@
-import { ViewOptionsState } from "./store/app";
+import { ViewOptionsState } from "./store/types";
 import { Conversation, Model, Verbosity } from "./types";
 import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage, SetViewOptionsMessage } from "./types-messages";
 
@@ -30,6 +30,7 @@ export function useMessenger(vscode: any) {
   const sendGetSettings = () => sendMessageToBackend(BackendMessageType.getSettings);
   const sendGetViewOptions = () => sendMessageToBackend(BackendMessageType.getViewOptions);
   const sendGetModels = () => sendMessageToBackend(BackendMessageType.getModels);
+  const sendGetModelDetails = (modelId: string) => sendMessageToBackend(BackendMessageType.getModelDetails, { modelId });
   const sendGetApiKeyStatus = () => sendMessageToBackend(BackendMessageType.getApiKeyStatus);
   const sendGetTokenCount = (conversation: Conversation, useEditorSelection: boolean) => {
     sendMessageToBackend(BackendMessageType.getTokenCount, {
@@ -144,6 +145,7 @@ export function useMessenger(vscode: any) {
     sendGetSettings,
     sendGetViewOptions,
     sendGetModels,
+    sendGetModelDetails,
     sendGetApiKeyStatus,
     sendGenerateOpenRouterApiKey,
     sendGetTokenCount,

@@ -6,12 +6,13 @@ import * as vscode from 'vscode';
 import { getSelectedModelId, getUpdatedModel, isReasoningModel } from "./helpers";
 import { AuthStore, OfflineStore } from "./local-store";
 import { loadTranslations } from './localization';
+import { ModelCache as ModelListCache } from "./model-list-cache";
 import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
-import { ApiKeyStatus } from "./renderer/store/app";
+import { ApiKeyStatus } from "./renderer/store/types";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetModelDetailsMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
 
@@ -37,9 +38,11 @@ export interface ApiRequestOptions {
 }
 
 export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
+  private devMode: boolean;
   private webView?: vscode.WebviewView;
-  private authStore?: AuthStore;
-  private offlineStore?: OfflineStore;
+  private authStore?: AuthStore; // Local secrets storage for API keys
+  private offlineStore?: OfflineStore; // Local storage for view options
+  private modelListCache: ModelListCache; // Model list caching
   private runner: ActionRunner;
 
   private _temperature: number = 0.9;
@@ -54,7 +57,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     controller: AbortController;
   }[] = [];
 
-  public api: ApiProvider = new ApiProvider('');
+  public api: ApiProvider;
   public frontendMessenger: Messenger;
   public subscribeToResponse: boolean;
   public model: Model;
@@ -68,8 +71,20 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   * in time before resolveWebviewView is called.
   */
   constructor(private context: vscode.ExtensionContext) {
+    this.devMode = context.extensionMode === vscode.ExtensionMode.Development;
+    // Communication with the React frontend
     this.frontendMessenger = new Messenger();
-    this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
+
+    // Local VS Code storage
+    this.authStore = AuthStore.init(context); // API key storage
+    this.offlineStore = OfflineStore.init(context); // Non-config settings
+    this.modelListCache = ModelListCache.init(context); // Model list caching
+
+    // ApiProvider handles all API requests to LLMs
+    this.api = new ApiProvider('', undefined, this.frontendMessenger, this.modelListCache);
+    // ActionRunner runs "actions" with multiple ai steps
+    this.runner = new ActionRunner(this);
+
     this.model = {
       id: getSelectedModelId(),
       // dummy values
@@ -77,9 +92,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       created: 0,
       owned_by: Role.system
     };
+
+    // Load settings
+    this.subscribeToResponse = vscode.workspace.getConfiguration("chatgpt").get("response.showNotification") || false;
     this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
     this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
-    this.runner = new ActionRunner(this);
 
     // Check config settings for "chatgpt.gpt3.apiBaseUrl", if it is set to "https://api.openai.com", change it to "https://api.openai.com/v1"
     const baseUrl = vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
@@ -102,10 +119,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       // Remove chatgpt.apiVersion from the config
       vscode.workspace.getConfiguration("chatgpt").update("apiVersion", undefined, true);
     }
-
-    // Auth and Offline storage
-    this.authStore = AuthStore.init(context);
-    this.offlineStore = OfflineStore.init(context);
 
     vscode.commands.registerCommand("chatgptReborn.setOpenAIApiKey", async (apiKey: string) => {
       if (this.authStore) {
@@ -152,7 +165,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
           temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
           topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
-        });
+        },
+        this.frontendMessenger,
+        this.modelListCache
+      );
       this.frontendMessenger.setApiProvider(this.api);
     });
 
@@ -182,6 +198,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
               created: 0,
               owned_by: Role.system
             };
+          }
+
+          this.frontendMessenger.sendModels(modelList);
+          if (this.currentConversation) {
+            this.currentConversation.model = this.model;
           }
         }
       }
@@ -257,7 +278,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         apiBaseUrl: finalApiUrl,
         temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
         topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
-      });
+      }, this.frontendMessenger,
+      this.modelListCache
+    );
 
     // Test the API key
     const { status, models } = await this.testApiKey(this.api);
@@ -312,6 +335,10 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         this.frontendMessenger.setConversationModel(model, this.currentConversation);
       }
     }
+
+    // Request a new copy of the settings to be sent to the frontend
+    // For whatever reason, the actual settings and the rendered settings can get out of sync
+    this.frontendMessenger.sendUpdatedSettings(vscode.workspace.getConfiguration("chatgpt"));
   }
 
   public async setApiKey(apiKey: string) {
@@ -329,7 +356,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     models?: Model[],
   }> {
     if (!apiProvider) {
-      apiProvider = this.api ?? new ApiProvider('');
+      apiProvider = this.api ?? new ApiProvider('', undefined, this.frontendMessenger, this.modelListCache);
     }
 
     const apiKey = apiProvider.config.apiKey ?? '';
@@ -364,19 +391,34 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   ) {
     this.webView = webviewView;
     this.frontendMessenger.setWebView(webviewView);
+    /*
+
+        {
+          scheme: 'vscode-resource',
+          authority: 'vscode-resource',
+          fsPath: this.context.extensionUri.fsPath,
+          path: '/out',
+        },
+    */
+    // create a new resource root for webpack chunks.
 
     webviewView.webview.options = {
       // Allow scripts in the webview
       enableScripts: true,
 
       localResourceRoots: [
-        this.context.extensionUri
+        this.context.extensionUri,
+        // Build files (main process js + renderer process js)
+        vscode.Uri.joinPath(this.context.extensionUri, 'out'),
+        // Unbundled dependencies
+        vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor'),
       ],
     };
 
     webviewView.webview.html = this.getWebviewHtml(webviewView.webview);
 
     // TODO: split this out into its own file
+    // A "message handler" class similar to the one in the renderer
     webviewView.webview.onDidReceiveMessage(async (data: BaseBackendMessage) => {
       switch (data.type) {
         case BackendMessageType.addFreeTextQuestion:
@@ -405,12 +447,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           this.logEvent("code-inserted");
           break;
         }
-        case BackendMessageType.setModel:
+        case BackendMessageType.setModel: {
           const setModelData = data as SetModelMessage;
           // Note that due to some models being deprecated, this function may change the model
           this.model = await this.setModel(setModelData.model);
           break;
-        case BackendMessageType.openNew:
+        }
+        case BackendMessageType.openNew: {
           const openNewData = data as OpenNewMessage;
           const document = await vscode.workspace.openTextDocument({
             content: openNewData.code,
@@ -420,6 +463,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
           this.logEvent(openNewData.language === "markdown" ? "code-exported" : "code-opened");
           break;
+        }
         case BackendMessageType.cleargpt3:
           // TODO: remove this?
           // this.apiGpt3 = undefined;
@@ -457,24 +501,32 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           await this.offlineStore?.setViewOptions(viewOptionsData.viewOptions);
           break;
         }
-        case BackendMessageType.exportToMarkdown:
+        case BackendMessageType.exportToMarkdown: {
           const exportToMarkdownData = data as ExportToMarkdownMessage;
           this.exportToMarkdown(exportToMarkdownData.conversation);
           break;
+        }
         case BackendMessageType.getModels:
           this.frontendMessenger.sendModels();
           break;
-        case BackendMessageType.changeApiUrl:
+        case BackendMessageType.getModelDetails: {
+          const modelDetailsData = data as GetModelDetailsMessage;
+          const detailedModel = await this.modelListCache.getDetailedModelData(modelDetailsData.modelId);
+          this.frontendMessenger.sendDetailedModel(detailedModel);
+          break;
+        }
+        case BackendMessageType.changeApiUrl: {
           const changeApiUrlData = data as ChangeApiUrlMessage;
           this.setApiUrl(changeApiUrlData.apiUrl);
           break;
-        case BackendMessageType.changeApiKey:
+        }
+        case BackendMessageType.changeApiKey: {
           const changeApiKeyData = data as ChangeApiKeyMessage;
           this.setApiKey(changeApiKeyData.apiKey);
           break;
+        }
         case BackendMessageType.setAzureApiVersion: {
           const setAzureApiVersionData = data as SetAzureApiVersionMessage;
-          console.log('Not implemented: setAzureApiVersion');
           vscode.workspace.getConfiguration("chatgpt").update("azureApiVersion", setAzureApiVersionData.azureApiVersion, vscode.ConfigurationTarget.Global);
           break;
         }
@@ -892,13 +944,20 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       }
     } catch (error: any) {
       let message;
-      let apiMessage = error?.response?.data?.error?.message || error?.tostring?.() || error?.message || error?.name;
+      let apiMessage = error?.response?.data?.error?.message ?? error?.response?.data?.message ?? error?.response?.message ?? error?.message ?? error?.name ?? (error ?? '').toString();
+
+      if (error.responseBody) {
+        apiMessage = JSON.stringify(error.responseBody, null, 2) ?? apiMessage;
+      }
 
       console.error("[Reborn AI] api-request-failed info:", JSON.stringify(error, null, 2));
       console.error("[Reborn AI] api-request-failed error obj:", error);
 
       // For whatever reason error.status is undefined, but the below works
-      const status = JSON.parse(JSON.stringify(error)).status ?? error?.status ?? error?.response?.status ?? error?.response?.data?.error?.status;
+      const status = JSON.parse(JSON.stringify(error)).status ?? error?.status ?? error?.response?.status ?? error.statusCode ?? error?.response?.statusCode ?? error?.response?.data?.error?.status;
+
+      console.error("[Reborn AI] api-request-failed status:", status);
+      console.error("[Reborn AI] api-request-failed message:", apiMessage);
 
       switch (status) {
         case 400:
@@ -910,7 +969,12 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Invalid);
           break;
         case 403:
-          message = '403 Forbidden\n\nYour token has expired. Please try authenticating again. \n\nServer message: ' + apiMessage;
+          if (error?.responseBody) {
+            const errorObject = JSON.parse(error.responseBody);
+            message = `${errorObject.statusCode} | ${errorObject.code}\n\n${errorObject.message}`;
+          } else {
+            message = '403 Forbidden\n\nYour token has expired. Please try authenticating again. \n\nServer message: ' + apiMessage;
+          }
           break;
         case 404:
           message = `404 Not Found\n\n`;
@@ -920,7 +984,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           if (apiUrl.includes("openai.1rmb.tk") && apiUrl !== "https://openai.1rmb.tk/v1") {
             message += "It looks like you are using the openai.1rmb.tk proxy server, but the path might be wrong.\nThe recommended path is https://openai.1rmb.tk/v1";
           } else {
-            message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model?.id}' may be incompatible or you may have exhausted your ChatGPT subscription allowance. \n\nServer message: ${apiMessage}`;
+            message += `If you've changed the API baseUrlPath, double-check that it is correct.\nYour model: '${this.model?.id}' may be incompatible or you may have exhausted your ChatGPT subscription allowance. \n\nServer message: ${JSON.stringify(JSON.parse(error.responseBody ?? apiMessage), null, 2)}`;
           }
           break;
         case 429:
@@ -955,12 +1019,17 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   }
 
   private getWebviewHtml(webview: vscode.Webview): string {
+    // React / UI code
+    const webviewBundleUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview.bundle.js')
+    );
+
+    // Unbundled dependencies
     const vendorHighlightCss = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.css'));
     const vendorHighlightJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'highlight.min.js'));
     const vendorMarkedJs = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'vendor', 'marked.min.js'));
-    // React code bundled by webpack, this includes styling
-    const webpackScript = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview.bundle.js'));
 
+    // Defeat caching
     const nonce = this.getRandomId();
 
     return `<!DOCTYPE html>
@@ -968,10 +1037,17 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        ${this.devMode ? `
+          <!-- Connect to the react development server -->
+          <script src="http://localhost:8097"></script>
+        ` : ''}
       </head>
       <body class="overflow-hidden">
+        <script>
+          window.DEV_MODE = ${this.devMode};
+        </script>
         <div id="root" class="flex flex-col min-h-[calc(100vh-8em)] max-h-screen"></div>
-        <script nonce="${nonce}" src="${webpackScript}"></script>
+        <script nonce="${nonce}" src="${webviewBundleUri}"></script>
         <script src="${vendorHighlightJs}" defer async></script>
         <script src="${vendorMarkedJs}" defer async></script>
         <link href="${vendorHighlightCss}" rel="stylesheet">
@@ -987,7 +1063,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     }
     return text;
   }
-
 
   private getActiveEditorSelection(): {
     content: string;

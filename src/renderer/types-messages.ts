@@ -1,4 +1,4 @@
-import { ApiKeyStatus, ViewOptionsState } from "./store/app";
+import { ApiKeyStatus, ModelListStatus, ViewOptionsState } from "./store/types";
 import { ChatMessage, Conversation, ExtensionSettings, Model, Verbosity } from "./types";
 
 // A message that gets sent TO the backend
@@ -26,6 +26,7 @@ export enum BackendMessageType {
   setViewOptions = "setViewOptions",
   // Models
   getModels = "getModels",
+  getModelDetails = "getModelDetails",
   setModel = "setModel",
   // Base API URL
   changeApiUrl = "changeApiUrl",
@@ -101,6 +102,11 @@ export interface GetViewOptionsMessage extends BaseBackendMessage {
 export interface SetViewOptionsMessage extends BaseBackendMessage {
   type: BackendMessageType.setViewOptions;
   viewOptions: ViewOptionsState;
+}
+
+export interface GetModelDetailsMessage extends BaseBackendMessage {
+  type: BackendMessageType.getModelDetails;
+  modelId: string;
 }
 
 export interface ExportToMarkdownMessage extends BaseBackendMessage {
@@ -198,7 +204,9 @@ export enum FrontendMessageType {
   exportToMarkdown = "exportToMarkdown",
   // Models
   modelsUpdate = "modelsUpdate",
+  modelDetailsUpdate = "modelDetailsUpdate",
   setConversationModel = "setConversationModel",
+  updateModelListStatus = "updateModelListStatus",
   // Settings
   settingsUpdate = "settingsUpdate",
   viewOptionsUpdate = "viewOptionsUpdate",
@@ -218,6 +226,11 @@ export interface BaseFrontendMessage {
 export interface ModelsUpdateMessage extends BaseFrontendMessage {
   type: FrontendMessageType.modelsUpdate;
   models: Model[];
+}
+
+export interface ModelDetailsUpdateMessage extends BaseFrontendMessage {
+  type: FrontendMessageType.modelDetailsUpdate;
+  model: Model;
 }
 
 export interface SetConversationModelMessage extends BaseFrontendMessage {
@@ -244,6 +257,11 @@ export interface SetTranslationsMessage extends BaseFrontendMessage {
 export interface UpdateApiKeyStatusMessage extends BaseFrontendMessage {
   type: FrontendMessageType.updateApiKeyStatus;
   status: ApiKeyStatus;
+}
+
+export interface UpdateModelListStatusMessage extends BaseFrontendMessage {
+  type: FrontendMessageType.updateModelListStatus;
+  status: ModelListStatus;
 }
 
 export interface MessagesUpdatedMessage extends BaseFrontendMessage {

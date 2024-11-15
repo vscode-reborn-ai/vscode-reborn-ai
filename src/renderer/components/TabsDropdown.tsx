@@ -1,30 +1,21 @@
 import React from "react";
 import { useAppDispatch } from "../hooks";
 import { removeConversation } from "../store/conversation";
-import { Conversation } from "../types";
 import Icon from "./Icon";
+import { Tab } from "./Tabs";
 
-interface Tab {
-  name: string;
-  href: string;
-}
-
-interface Props {
-  tabs: Tab[];
-  currentConversation: Conversation;
-  navigate: (href: string) => void;
-  conversationList: Conversation[];
-  createNewConversation: () => void;
-  className?: string;
-}
-
-const Tabs: React.FC<Props> = ({
-  tabs,
-  currentConversation,
+const TabsDropdown = ({
+  tabList,
+  currentTabId,
   navigate,
-  conversationList,
   createNewConversation,
   className,
+}: {
+  tabList: Tab[];
+  currentTabId: string;
+  navigate: (href: string) => void;
+  createNewConversation: () => void;
+  className?: string;
 }) => {
   const dispatch = useAppDispatch();
   const selectedTabRef = React.useRef<HTMLButtonElement>(null);
@@ -54,6 +45,29 @@ const Tabs: React.FC<Props> = ({
     [navigate]
   );
 
+  const closeTab = React.useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      // Prevent the dropdown from opening
+      e.stopPropagation();
+
+      // navigate to the first tab
+      // if there's no more chats, create a new one
+      if (tabList.length === 1) {
+        createNewConversation();
+      } else {
+        navigate(
+          `/chat/${encodeURI(
+            tabList[0].id === currentTabId ? tabList[1].id : tabList[0].id
+          )}`
+        );
+      }
+
+      // remove the tab from the list
+      dispatch(removeConversation(currentTabId));
+    },
+    [dispatch, currentTabId, createNewConversation, navigate]
+  );
+
   return (
     <div className={`relative ${className}`} ref={parentRef}>
       <button
@@ -62,7 +76,7 @@ const Tabs: React.FC<Props> = ({
         ref={selectRef}
       >
         <span className="pl-1 flex-grow user-select-none text-start">
-          {tabs.find((tab) => currentConversation.title === tab.name)?.name}
+          {tabList.find((tab) => currentTabId === tab.name)?.name}
         </span>
         {/* down caret */}
         <Icon icon="caret-down" className="w-6 h-6 p-1" />
@@ -70,27 +84,7 @@ const Tabs: React.FC<Props> = ({
           type="button"
           className="block p-1 hover:text-white focus:outline-none hover:bg-opacity-40 hover:bg-button-secondary focus:bg-button-secondary rounded"
           // Close the tab and remove it from the list
-          onClick={(e) => {
-            // Prevent the dropdown from opening
-            e.stopPropagation();
-
-            // navigate to the first tab
-            // if there's no more chats, create a new one
-            if (conversationList.length === 1) {
-              createNewConversation();
-            } else {
-              navigate(
-                `/chat/${encodeURI(
-                  conversationList[0].id === currentConversation.id
-                    ? conversationList[1].id
-                    : conversationList[0].id
-                )}`
-              );
-            }
-
-            // remove the tab from the list
-            dispatch(removeConversation(currentConversation.id));
-          }}
+          onClick={closeTab}
         >
           <Icon icon="close" className="w-4 h-4" />
         </button>
@@ -100,17 +94,15 @@ const Tabs: React.FC<Props> = ({
           className="absolute z-10 w-full bg-menu shadow-lg border border-menu max-h-60 overflow-auto top-8 left-0"
           role="menu"
         >
-          {tabs.map((tab, index) => (
+          {tabList.map((tab, index) => (
             <button
               key={index}
               role="menuitem"
-              aria-selected={currentConversation.title === tab.name}
+              aria-selected={currentTabId === tab.id}
               onClick={() => handleSelectChange(tab)}
               ref={selectedTabRef}
               className={`w-full text-start py-2 px-2 text-xs bg-menu hover:bg-menu-selection focus:bg-menu-selection focus:underline cursor-pointer appearance-none ${
-                currentConversation.title === tab.name
-                  ? "bg-menu-selection font-semibold"
-                  : ""
+                currentTabId === tab.id ? "bg-menu-selection font-semibold" : ""
               }`}
             >
               {tab.name}
@@ -122,4 +114,4 @@ const Tabs: React.FC<Props> = ({
   );
 };
 
-export default Tabs;
+export default TabsDropdown;

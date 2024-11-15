@@ -140,6 +140,7 @@
   "modelSelect.gpt432kUnavailableNote": "لم تصدر OpenAI بعد GPT-4 32k.",
   "modelSelect.noModelSelected": "لم يتم تحديد نموذج",
   "modelSelect.fetchingModels": "جارٍ جلب ال نماذج...",
+  "modelSelect.model": "نموذج",
   "stats.title": "إحصائيات",
   "tabs.sr_label": "اختر علامة تبويب",
   "tabs.sr_close_tab": "إغلاق علامة التبويب",

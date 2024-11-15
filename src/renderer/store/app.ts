@@ -1,38 +1,32 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { WebviewApi } from "vscode-webview";
+import { RootState } from "../store";
 import { DEFAULT_EXTENSION_SETTINGS, ExtensionSettings, Model } from "../types";
+import { ApiKeyStatus, ModelListStatus, ViewOptionsState } from "./types";
 
-export enum ApiKeyStatus {
-  Unknown = "unknown", // On extension load, key has not yet been checked
-  Unset = "unset", // On extension load, key is checked, but no valid API key is discovered
-  Pending = "pending", // When the user submits an API key
-  Authenticating = "authenticating", // When the extension is checking the API key
-  Invalid = "invalid", // When the user's submission is checked, and it not valid. This is when the error message is shown.
-  Valid = "valid", // Either after user submits a valid key, or on extension load, if a valid key is discovered
-  Error = "error", // When an error occurs while checking the API key
-}
-
-export interface ViewOptionsState {
-  // Chat messages
-  hideName?: boolean; // Hide names from the chat for compactness.
-  showCodeOnly?: boolean; // Only show code in ai responses.
-  showMarkdown?: boolean; // Show markdown instead of rendering HTML.
-  alignRight?: boolean; // Align user responses to the right.
-  showCompact?: boolean; // TODO: A more compact UI overall - think irc or slack's compact mode.
-  showNetworkLogs?: boolean; // TODO: Show network logs in the chat.
-  // User input UI
-  showEditorSelection?: boolean; // Show the "Editor selection" button.
-  showClear?: boolean; // Show the "Clear" button.
-  showVerbosity?: boolean; // Show the verbosity button.
-  showModelSelect?: boolean; // Show the model select button.
-  showTokenCount?: boolean; // Show the token count.
-}
+export const selectApiBaseUrl = createSelector(
+  (state: RootState) => state.app.extensionSettings.gpt3.apiBaseUrl,
+  (apiBaseUrl) => apiBaseUrl
+);
+export const selectVerbosity = createSelector(
+  (state: RootState) => state.app.extensionSettings.verbosity,
+  (verbosity) => verbosity
+);
+export const selectMinimalUI = createSelector(
+  (state: RootState) => state.app.extensionSettings.minimalUI,
+  (minimalUI) => minimalUI
+);
+export const selectModelList = createSelector(
+  (state: RootState) => state.app.models,
+  (models) => models
+);
 
 export interface AppState {
   debug: boolean;
   extensionSettings: ExtensionSettings;
   models: Model[];
   apiKeyStatus: ApiKeyStatus;
+  modelListStatus: ModelListStatus;
   translations: any;
   useEditorSelection: boolean;
   vscode?: WebviewApi<unknown>;
@@ -51,6 +45,7 @@ const initialState: AppState = {
   extensionSettings: DEFAULT_EXTENSION_SETTINGS,
   models: [],
   apiKeyStatus: ApiKeyStatus.Unknown,
+  modelListStatus: ModelListStatus.Unknown,
   translations: {},
   useEditorSelection: false,
   vscode: undefined,
@@ -67,6 +62,7 @@ const initialState: AppState = {
     showVerbosity: true,
     showModelSelect: true,
     showTokenCount: true,
+    showModelName: true,
   },
   sync: {
     receivedViewOptions: false,
@@ -87,10 +83,14 @@ export const appSlice = createSlice({
       state.extensionSettings = action.payload.newSettings;
     },
     setModels: (state, action: PayloadAction<{ models: Model[]; }>) => {
-      state.models = action.payload.models ?? [];
+      // Create a new object to avoid mutating the state directly
+      state.models = [...action.payload.models];
     },
     setApiKeyStatus: (state, action: PayloadAction<ApiKeyStatus>) => {
       state.apiKeyStatus = action.payload;
+    },
+    setModelListStatus: (state, action: PayloadAction<ModelListStatus>) => {
+      state.modelListStatus = action.payload;
     },
     setTranslations: (state, action: PayloadAction<any>) => {
       state.translations = action.payload;
@@ -133,6 +133,7 @@ export const {
   setExtensionSettings,
   setModels,
   setApiKeyStatus,
+  setModelListStatus,
   setTranslations,
   setUseEditorSelection,
   setVSCode,

@@ -52,7 +52,7 @@ export const appSlice = createSlice({
   name: 'conversations',
   initialState,
   reducers: {
-    setActionError: (state: any, action: PayloadAction<{
+    setActionError: (state: ActionState, action: PayloadAction<{
       actionId: string;
       error: string;
     }>) => {

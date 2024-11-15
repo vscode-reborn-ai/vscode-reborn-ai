@@ -1,9 +1,10 @@
-out/**/*.js
-out/**/*.map
+# Web browser test tool
+.vscode-test/
+.vscode-test-web
+# Build files
+*.vsix
+out
 dist
 node_modules
-.vscode-test/
-*.vsix
 !node_modules/chatgpt/build/index.js
 yarn-error.log
-.vscode-test-web

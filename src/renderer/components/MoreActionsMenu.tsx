@@ -1,34 +1,35 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/16/solid";
 import classNames from "classnames";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
 import { setDebug } from "../store/app";
-import { Conversation } from "../types";
+import {
+  selectCurrentConversation,
+  selectCurrentConversationId,
+} from "../store/conversation";
 import Icon from "./Icon";
-import ModelSelect from "./ModelSelect";
 import VerbositySelect from "./VerbositySelect";
 import ViewOptions from "./ViewOptions";
 
-export default function MoreActionsMenu({
-  currentConversation,
-  conversationList,
+export default React.memo(function MoreActionsMenu({
   vscode,
   showMoreActions,
   setShowMoreActions,
   className,
 }: {
-  currentConversation: Conversation;
-  conversationList: Conversation[];
   vscode: any;
   showMoreActions: boolean;
   setShowMoreActions: React.Dispatch<React.SetStateAction<boolean>>;
   className?: string;
 }) {
   const dispatch = useAppDispatch();
+  const currentConversation = useSelector(selectCurrentConversation);
+  const conversationId = useSelector(selectCurrentConversationId);
   const t = useAppSelector((state: RootState) => state.app.translations);
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const navigate = useNavigate();
@@ -42,6 +43,58 @@ export default function MoreActionsMenu({
       setShowViewOptions(false);
     }
   }, [showMoreActions]);
+
+  const changeLLMClickHandler = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      // if the local API tab is already open, close it
+      if (location.pathname === "/api") {
+        e.preventDefault();
+        navigate(`/chat/${encodeURI(conversationId ?? "")}`);
+      }
+
+      // close menu
+      setShowMoreActions(false);
+    },
+    [conversationId, navigate, setShowMoreActions]
+  );
+
+  const actionsClickHandler = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      // if the actions tab is already open, close it
+      if (location.pathname === "/actions") {
+        e.preventDefault();
+        navigate(`/chat/${encodeURI(conversationId ?? "")}`);
+      }
+    },
+    [conversationId, navigate]
+  );
+
+  const debugClickHandler = useCallback(() => {
+    dispatch(setDebug(!debug));
+  }, [debug, dispatch]);
+
+  const settingsClickHandler = useCallback(() => {
+    backendMessenger.sendOpenSettings();
+
+    // close menu
+    setShowMoreActions(false);
+  }, [backendMessenger, setShowMoreActions]);
+
+  const markdownExportClickHandler = useCallback(() => {
+    if (!currentConversation) {
+      console.error("No current conversation to export.");
+      return;
+    }
+
+    backendMessenger.sendExportToMarkdown(currentConversation);
+
+    // close menu
+    setShowMoreActions(false);
+  }, [backendMessenger, conversationId, setShowMoreActions]);
+
+  const toggleViewOptions = useCallback(() => {
+    setShowViewOptions(!showViewOptions);
+  }, [showViewOptions]);
 
   return (
     <>
@@ -73,16 +126,7 @@ export default function MoreActionsMenu({
             <Link
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               to="/api"
-              onClick={(e) => {
-                // if the local API tab is already open, close it
-                if (location.pathname === "/api") {
-                  e.preventDefault();
-                  navigate(`/chat/${encodeURI(currentConversation.id)}`);
-                }
-
-                // close menu
-                setShowMoreActions(false);
-              }}
+              onClick={changeLLMClickHandler}
               data-tooltip-id="local-api-tooltip"
               data-tooltip-content="Open the local API tab"
             >
@@ -94,19 +138,13 @@ export default function MoreActionsMenu({
             <Link
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               to="/actions"
-              onClick={(e) => {
-                // if the actions tab is already open, close it
-                if (location.pathname === "/actions") {
-                  e.preventDefault();
-                  navigate(`/chat/${encodeURI(currentConversation.id)}`);
-                }
-              }}
+              onClick={actionsClickHandler}
             >
               <Icon icon="zap" className="w-3 h-3" />
               {t?.questionInputField?.actions ?? "Actions"}
             </Link>
           </li>
-          {process.env.NODE_ENV === "development" && (
+          {(window as any).DEV_MODE && (
             <li>
               <button
                 className={classNames(
@@ -118,9 +156,7 @@ export default function MoreActionsMenu({
                 )}
                 data-tooltip-id="more-actions-tooltip"
                 data-tooltip-content="Toggle debug mode"
-                onClick={() => {
-                  dispatch(setDebug(!debug));
-                }}
+                onClick={debugClickHandler}
               >
                 <Icon icon="box" className="w-3 h-3" />
                 {t?.questionInputField?.debug ?? "Debug"}
@@ -130,12 +166,7 @@ export default function MoreActionsMenu({
           <li>
             <button
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
-              onClick={() => {
-                backendMessenger.sendOpenSettings();
-
-                // close menu
-                setShowMoreActions(false);
-              }}
+              onClick={settingsClickHandler}
               data-tooltip-id="more-actions-tooltip"
               data-tooltip-content="Open extension settings"
             >
@@ -148,47 +179,15 @@ export default function MoreActionsMenu({
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               data-tooltip-id="more-actions-tooltip"
               data-tooltip-content="Export the conversation to a markdown file"
-              onClick={() => {
-                backendMessenger.sendExportToMarkdown(currentConversation);
-
-                // close menu
-                setShowMoreActions(false);
-              }}
+              onClick={markdownExportClickHandler}
             >
               <Icon icon="download" className="w-3 h-3" />
               {t?.questionInputField?.markdown ?? "Markdown"}
             </button>
           </li>
-          {/*
-          The more actions menu is starting to get cluttered.
-          "Reset API key" is redundant when the "LLM Settings" page exists.
-          <li>
-            <button
-              className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
-              data-tooltip-id="more-actions-tooltip"
-              data-tooltip-content="Reset your OpenAI API key."
-              onClick={() => {
-                backendMessenger.sendResetApiKey();
-
-                // close menu
-                setShowMoreActions(false);
-
-                // navigate to the /api tab
-                navigate("/api");
-              }}
-            >
-              <Icon icon="cancel" className="w-3 h-3" />
-              {t?.questionInputField?.resetAPIKey ?? "Reset API Key"}
-            </button>
-          </li> */}
           {/* View */}
           <li>
-            <button
-              className="group w-full"
-              onClick={() => {
-                setShowViewOptions(!showViewOptions);
-              }}
-            >
+            <button className="group w-full" onClick={toggleViewOptions}>
               <span className="w-full py-0.5 px-1 rounded flex gap-1 items-center justify-start group-hover:bg-button-secondary group-focus:bg-button-secondary group-hover:text-button-secondary group-focus:text-button-secondary">
                 <AdjustmentsHorizontalIcon className="w-3 h-3" />
                 {t?.questionInputField?.view ?? "View"}
@@ -199,18 +198,17 @@ export default function MoreActionsMenu({
             </button>
           </li>
           <li className="block xs:hidden">
-            <ModelSelect
-              currentConversation={currentConversation}
+            {/* TODO: ADD BACK IN, REMOVED FOR DEBUG REASONS */}
+            {/* <ModelSelect
               vscode={vscode}
-              conversationList={conversationList}
               dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
               tooltipId="more-actions-tooltip"
-              showParentMenu={setShowMoreActions}
-            />
+              setShowParentMenu={setShowMoreActions}
+              renderModelList={showMoreActions}
+            /> */}
           </li>
           <li className="block xs:hidden">
             <VerbositySelect
-              currentConversation={currentConversation}
               vscode={vscode}
               dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
               tooltipId="more-actions-tooltip"
@@ -227,4 +225,4 @@ export default function MoreActionsMenu({
       />
     </>
   );
-}
+});

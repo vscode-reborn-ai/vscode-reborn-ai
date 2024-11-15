@@ -1,7 +1,8 @@
 import classNames from "classnames";
 import React from "react";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { toggleViewOption, ViewOptionsState } from "../store/app";
+import { toggleViewOption } from "../store/app";
+import { ViewOptionsState } from "../store/types";
 import Icon from "./Icon";
 
 interface ViewOptionsToggleProps {
@@ -20,6 +21,7 @@ const currentViewOptions: {
   // { label: "Compact UI", key: "showCompact" },
   // Not yet implemented
   // { label: "Network Logs", key: "showNetworkLogs" },
+  { label: "Show Model Name", key: "showModelName" },
 ];
 
 const userUIOptions: {

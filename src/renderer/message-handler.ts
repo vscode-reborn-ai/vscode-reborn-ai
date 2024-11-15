@@ -1,13 +1,14 @@
 import { useEffect } from "react";
+import { useSelector } from "react-redux";
 import { v4 as uuidv4 } from "uuid";
 import { isSameObject, useRenameTabTitleWithAI } from "./helpers";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { RootState } from "./store";
 import { ActionRunState, setActionError, setActionState } from "./store/action";
-import { setApiKeyStatus, setExtensionSettings, setModels, setReceivedExtensionSettings, setReceivedModels, setReceivedTranslations, setReceivedViewOptions, setTranslations, setViewOptions } from "./store/app";
-import { addMessage, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
+import { setApiKeyStatus, setExtensionSettings, setModelListStatus, setModels, setReceivedExtensionSettings, setReceivedModels, setReceivedTranslations, setReceivedViewOptions, setTranslations, setViewOptions } from "./store/app";
+import { addMessage, selectCurrentConversation, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
 import { ActionNames, ChatMessage, Conversation, Role } from "./types";
-import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage, ViewOptionsUpdateMessage } from "./types-messages";
+import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelDetailsUpdateMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateModelListStatusMessage, UpdateTokenCountMessage, ViewOptionsUpdateMessage } from "./types-messages";
 
 export const useBackendMessageHandler = (backendMessenger: any) => {
   const dispatch = useAppDispatch();
@@ -26,10 +27,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
   );
   const models = useAppSelector((state: RootState) => state.app.models);
   const debug = useAppSelector((state: RootState) => state.app.debug);
-  const apiKeyStatus = useAppSelector(
-    (state: RootState) => state.app?.apiKeyStatus
-  );
-  const vscode = useAppSelector((state: RootState) => state.app.vscode);
+  const currentConversation = useSelector(selectCurrentConversation);
   const renameTabTitleWithAI = useRenameTabTitleWithAI(backendMessenger, settings);
 
   // Update the model for each conversation when the models list is updated
@@ -63,7 +61,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
       console.info("[Reborn AI] Renderer - Received message from main process: ", event.data);
     }
 
-    let message = event.data as ModelsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | ViewOptionsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
+    let message = event.data as ModelsUpdateMessage | ModelDetailsUpdateMessage | SetConversationModelMessage | SettingsUpdateMessage | ViewOptionsUpdateMessage | SetTranslationsMessage | UpdateApiKeyStatusMessage | UpdateModelListStatusMessage | MessagesUpdatedMessage | ShowInProgressMessage | UpdateMessageMessage | AddMessageMessage | StreamMessageMessage | AddErrorMessage | ActionCompleteMessage | ActionErrorMessage | UpdateTokenCountMessage;
 
     switch (message.type) {
       case FrontendMessageType.showInProgress: {
@@ -200,41 +198,53 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         dispatch(setExtensionSettings({ newSettings: settingsUpdateData.config }));
         dispatch(setReceivedExtensionSettings(true));
 
-        const currentConversation = conversationList.find(
-          (conversation) => conversation.id === currentConversationId
-        );
+        if (currentConversation && !currentConversation?.model && settingsUpdateData.config.gpt3?.model) {
+          // Find the conversation in the list and update the model
+          const conversation = conversationList.find(
+            (conversation) => conversation.id === currentConversationId
+          );
 
-        if (!currentConversation?.model || !currentConversation?.verbosity) {
-          if (!!models?.length) {
+          const model = models.find((model) => model.id === settingsUpdateData.config.gpt3?.model);
+
+          if (conversation && model) {
             dispatch(
               setModel({
                 conversationId: currentConversationId,
-                model: models.find((model) => model.id === (settingsUpdateData.config.gpt3?.model ?? settings?.gpt3?.model)
-                ) ?? models[0],
-              })
-            );
-          } else {
-            dispatch(
-              setModel({
-                conversationId: currentConversationId,
-                model: {
-                  id: settingsUpdateData.config.gpt3?.model,
-                  // dummy values
-                  created: 0,
-                  object: "model",
-                  owned_by: Role.system,
-                }
+                model,
               })
             );
           }
+        }
 
+        if (!!models?.length) {
           dispatch(
-            setVerbosity({
+            setModel({
               conversationId: currentConversationId,
-              verbosity: settingsUpdateData.config.verbosity,
+              model: models.find((model) => model.id === (settingsUpdateData.config.gpt3?.model ?? settings?.gpt3?.model)
+              ) ?? models[0],
+            })
+          );
+        } else {
+          dispatch(
+            setModel({
+              conversationId: currentConversationId,
+              model: {
+                id: settingsUpdateData.config.gpt3?.model,
+                // dummy values
+                created: 0,
+                object: "model",
+                owned_by: Role.system,
+              }
             })
           );
         }
+
+        dispatch(
+          setVerbosity({
+            conversationId: currentConversationId,
+            verbosity: settingsUpdateData.config.verbosity,
+          })
+        );
         break;
       }
       case FrontendMessageType.viewOptionsUpdate: {
@@ -266,10 +276,28 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
         dispatch(setReceivedModels(true));
         break;
       }
+      case FrontendMessageType.modelDetailsUpdate: {
+        const modelDetailsUpdateData = message as ModelDetailsUpdateMessage;
+
+        dispatch(
+          setModels({
+            models: models.map((model) =>
+              model.id === modelDetailsUpdateData.model.id ? modelDetailsUpdateData.model : model
+            ),
+          })
+        );
+        break;
+      }
       case FrontendMessageType.updateApiKeyStatus: {
         const apiKeyStatusData = message as UpdateApiKeyStatusMessage;
 
         dispatch(setApiKeyStatus(apiKeyStatusData.status));
+        break;
+      }
+      case FrontendMessageType.updateModelListStatus: {
+        const modelListStatusData = message as UpdateModelListStatusMessage;
+
+        dispatch(setModelListStatus(modelListStatusData.status));
         break;
       }
       case FrontendMessageType.tokenCount: {

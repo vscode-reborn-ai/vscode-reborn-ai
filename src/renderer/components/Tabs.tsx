@@ -1,12 +1,27 @@
 import classNames from "classnames";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { RootState } from "../store";
-import { addConversation, removeConversation } from "../store/conversation";
-import { Conversation, Verbosity } from "../types";
+import { selectVerbosity } from "../store/app";
+import {
+  addConversation,
+  removeConversation,
+  selectConversationList,
+  selectCurrentConversation,
+  selectCurrentConversationId,
+  selectCurrentModel,
+} from "../store/conversation";
+import { Conversation } from "../types";
 import Icon from "./Icon";
 import TabsDropdown from "./TabsDropdown";
+
+export interface Tab {
+  name: string;
+  id: string;
+  href: string;
+}
 
 // Subcomponent for the "Close" button
 function TabCloseButton({
@@ -40,19 +55,14 @@ function TabCloseButton({
 // Subcomponent for the "Link" tab
 function TabLink({
   tab,
-  conversationList,
-  currentConversation,
+  closeTab,
   createNewConversation,
 }: {
-  tab: { name: string; id: string; href: string };
-  conversationList: Conversation[];
-  currentConversation: Conversation;
+  tab: Tab;
+  closeTab: Function;
   createNewConversation: any;
 }) {
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
   const location = useLocation();
-  const t = useAppSelector((state: RootState) => state.app.translations);
 
   return (
     <li key={tab.id}>
@@ -81,24 +91,7 @@ function TabLink({
           <span className="pt-0.5">{tab.name}</span>
           <TabCloseButton
             path={`/chat/${encodeURI(tab.id)}`}
-            onClick={() => {
-              // navigate to the first tab
-              // if there's no more chats, create a new one
-              if (conversationList.length === 1) {
-                createNewConversation();
-              } else if (currentConversation.title === tab.name) {
-                navigate(
-                  `/chat/${encodeURI(
-                    conversationList[0].id === tab.id
-                      ? conversationList[1].id
-                      : conversationList[0].id
-                  )}`
-                );
-              }
-
-              // remove the tab from the list
-              dispatch(removeConversation(tab.id));
-            }}
+            onClick={closeTab.bind(null, tab)}
           />
         </span>
       </Link>
@@ -106,75 +99,58 @@ function TabLink({
   );
 }
 
-export default function Tabs({
-  conversationList,
-  currentConversationId,
-}: {
-  conversationList: Conversation[];
-  currentConversationId: string;
-}) {
-  const navigate = useNavigate();
+export default React.memo(function Tabs({}: {}) {
   const dispatch = useAppDispatch();
-  const settings = useAppSelector(
-    (state: RootState) => state.app.extensionSettings
-  );
+  const navigate = useNavigate();
   const t = useAppSelector((state: RootState) => state.app.translations);
   const location = useLocation();
-  const [tabs, setTabs] = useState(
-    [] as {
-      name: string;
-      id: string;
-      href: string;
-    }[]
-  );
-  const [currentConversation, setCurrentConversation] = useState(
-    {} as Conversation
-  );
   const selectRef = React.useRef<HTMLSelectElement>(null);
   const tabListRef = React.useRef<HTMLUListElement>(null);
   const [showLocalLlmTab, setShowLocalLlmTab] = useState(false);
   const [showActionsTab, setShowActionsTab] = useState(false);
 
-  useEffect(() => {
-    if (location.pathname === "/api") {
-      setShowLocalLlmTab(true);
-    } else if (location.pathname === "/actions") {
-      setShowActionsTab(true);
-    }
-  }, [location.pathname]);
+  const verbosity = useSelector(selectVerbosity);
+  const model = useSelector(selectCurrentModel);
+  const currentConversation = useSelector(selectCurrentConversation);
+  const currentConversationId = useSelector(selectCurrentConversationId);
+  const conversationList = useSelector(selectConversationList);
+
+  // const tabList = useMemo(() => {
+  //   return conversationList.map((conversation) => ({
+  //     id: conversation.id,
+  //     title: conversation.title,
+  //   }));
+  // }, [conversationList]);
+  const [tabList, setTabList] = React.useState<Tab[]>([]);
+
+  // useEffect(() => {
+  //   if (conversationList && conversationList.find) {
+  //     setCurrentConversation(
+  //       conversationList.find(
+  //         (conversation) => conversation.id === currentConversationId
+  //       ) ?? conversationList[0]
+  //     );
+  //   } else {
+  //     console.warn(
+  //       "[Reborn AI] conversationList is null",
+  //       JSON.stringify(conversationList)
+  //     );
+  //   }
+  // }, [currentConversationId, conversationList]);
 
   useEffect(() => {
-    if (conversationList && conversationList.find) {
-      setCurrentConversation(
-        conversationList.find(
-          (conversation) => conversation.id === currentConversationId
-        ) ?? conversationList[0]
-      );
-    } else {
-      console.warn(
-        "[Reborn AI] conversationList is null",
-        JSON.stringify(conversationList)
-      );
-    }
-  }, [currentConversationId, conversationList]);
-
-  useEffect(() => {
-    // update the select element
-    if (selectRef?.current) {
-      selectRef.current.value = currentConversation.title ?? "Chat";
-    }
-  }, [currentConversation]);
-
-  useEffect(() => {
-    if (conversationList && conversationList.map) {
-      setTabs([
+    if (conversationList?.map) {
+      setTabList([
         // { name: "Prompts", href: "/prompts" id: "prompts" },
         // { name: "Actions", href: "/actions" id: "actions" },
-        ...conversationList.map((conversation) => ({
-          name: conversation.title ?? "Chat",
-          id: conversation.id,
-          href: `/chat/${encodeURI(conversation.id)}`,
-        })),
+        ...conversationList.map(
+          (conversation: Conversation) =>
+            ({
+              name: conversation.title ?? "Chat",
+              id: conversation.id,
+              href: `/chat/${encodeURI(conversation.id)}`,
+            } as Tab)
+        ),
       ]);
     } else {
       console.warn(
@@ -184,11 +160,13 @@ export default function Tabs({
     }
   }, [conversationList]);
 
-  const createNewConversation = () => {
+  const createNewConversationHandler = useCallback(() => {
     let title = "Chat";
     let i = 2;
     while (
-      conversationList.find((conversation) => conversation.title === title)
+      conversationList.find(
+        (conversation: Conversation) => conversation.title === title
+      )
     ) {
       title = `Chat ${i}`;
       i++;
@@ -200,12 +178,9 @@ export default function Tabs({
       messages: [],
       inProgress: false,
       createdAt: Date.now(),
-      model: currentConversation.model,
+      model: model ?? currentConversation?.model,
       autoscroll: true,
-      verbosity:
-        settings?.verbosity ??
-        currentConversation?.verbosity ??
-        Verbosity.normal,
+      verbosity: currentConversation?.verbosity ?? verbosity,
       tools: {},
     } as Conversation;
 
@@ -220,28 +195,79 @@ export default function Tabs({
         tabListRef.current.scrollLeft = tabListRef.current.scrollWidth;
       }
     }, 100);
-  };
+  }, [
+    conversationList,
+    dispatch,
+    model,
+    navigate,
+    currentConversation,
+    verbosity,
+  ]);
+
+  const closeTabHandler = useCallback(
+    (tab: Tab) => {
+      // navigate to the first tab
+      // if there's no more chats, create a new one
+      if (tabList.length === 1) {
+        createNewConversationHandler();
+      } else if (currentConversationId === tab.id) {
+        navigate(
+          `/chat/${encodeURI(
+            conversationList[0].id === tab.id
+              ? conversationList[1].id
+              : conversationList[0].id
+          )}`
+        );
+      }
+
+      // Remove conversation
+      dispatch(removeConversation(tab.id));
+    },
+    [
+      conversationList,
+      currentConversationId,
+      createNewConversationHandler,
+      navigate,
+    ]
+  );
+
+  useEffect(() => {
+    // update the select element
+    if (selectRef?.current) {
+      selectRef.current.value =
+        tabList.find((tab) => tab.id === currentConversationId)?.name ??
+        t.tabs?.new_chat ??
+        "New";
+    }
+  }, [currentConversationId, tabList, t.tabs]);
+
+  useEffect(() => {
+    if (location.pathname === "/api") {
+      setShowLocalLlmTab(true);
+    } else if (location.pathname === "/actions") {
+      setShowActionsTab(true);
+    }
+  }, [location.pathname]);
 
   return (
     <>
       {/* Tab layout specifically for a skinny UI (switches to dropdown) or when the tab count exceeds 5 */}
-      <div className={`${tabs.length > 5 ? "" : "2xs:hidden"}`}>
+      <div className={`${tabList.length > 5 ? "" : "2xs:hidden"}`}>
         <label htmlFor="tabs" className="sr-only">
           {t?.tabs?.sr_label ?? "Select a tab"}
         </label>
         <div className="flex flex-row divide-x divide-tab border-b border-tab">
           <TabsDropdown
-            tabs={tabs}
-            currentConversation={currentConversation}
-            conversationList={conversationList}
+            tabList={tabList}
+            currentTabId={currentConversationId}
             navigate={navigate}
-            createNewConversation={createNewConversation}
+            createNewConversation={createNewConversationHandler}
             className="flex-grow"
           />
           {/* button for new chat */}
           <button
             className="flex gap-x-2 items-center bg-button-secondary text-button-secondary hover:bg-button-secondary-hover hover:text-button-secondary-hover whitespace-nowrap p-2 pr-3 text-2xs"
-            onClick={createNewConversation}
+            onClick={createNewConversationHandler}
           >
             <Icon icon="plus" className="w-4 h-4" />
             {t?.tabs?.new_chat ?? "New"}
@@ -249,7 +275,7 @@ export default function Tabs({
         </div>
       </div>
       {/* Wider tab layout */}
-      <div className={`${tabs.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
+      <div className={`${tabList.length > 5 ? "hidden" : "hidden 2xs:block"}`}>
         <nav className="flex justify-between border-b border-tab">
           <ul
             ref={tabListRef}
@@ -277,13 +303,13 @@ export default function Tabs({
                 <TabCloseButton
                   path="/api"
                   onClick={() => {
-                    // If there's no conversations, create a new one
-                    if (conversationList.length === 0) {
-                      createNewConversation();
+                    // If there's no tabs
+                    if (tabList.length === 0) {
+                      createNewConversationHandler();
                     }
 
                     // Navigate to the first conversation
-                    navigate(`/chat/${encodeURI(conversationList[0].id)}`);
+                    navigate(`/chat/${encodeURI(tabList[0].id)}`);
 
                     // Hide the tab
                     setShowLocalLlmTab(false);
@@ -313,12 +339,12 @@ export default function Tabs({
                   path="/actions"
                   onClick={() => {
                     // If there's no conversations, create a new one
-                    if (conversationList.length === 0) {
-                      createNewConversation();
+                    if (tabList.length === 0) {
+                      createNewConversationHandler();
                     }
 
                     // Navigate to the first conversation
-                    navigate(`/chat/${encodeURI(conversationList[0].id)}`);
+                    navigate(`/chat/${encodeURI(tabList[0].id)}`);
 
                     // Hide the tab
                     setShowActionsTab(false);
@@ -327,21 +353,19 @@ export default function Tabs({
               </Link>
             </li>
             {/* Chats */}
-            {tabs &&
-              tabs.map((tab) => (
-                <TabLink
-                  key={tab.id}
-                  tab={tab}
-                  conversationList={conversationList}
-                  currentConversation={currentConversation}
-                  createNewConversation={createNewConversation}
-                />
-              ))}
+            {tabList.map((tab) => (
+              <TabLink
+                key={tab.id}
+                tab={tab}
+                closeTab={closeTabHandler}
+                createNewConversation={createNewConversationHandler}
+              />
+            ))}
             {/* create new chat button */}
             <li className="flex items-center sticky right-0">
               <button
                 className="flex gap-x-1 bg-button-secondary text-button-secondary whitespace-nowrap py-2 pl-2 pr-3 text-2xs hover:bg-button-secondary-hover hover:text-button-secondary-hover focus:outline-none focus:bg-button-secondary-hover focus:text-button-secondary-hover"
-                onClick={createNewConversation}
+                onClick={createNewConversationHandler}
               >
                 <Icon icon="plus" className="w-4 h-4" />
                 {t?.tabs?.new_chat ?? "New"}
@@ -352,4 +376,4 @@ export default function Tabs({
       </div>
     </>
   );
-}
+});

@@ -1,7 +1,16 @@
+import { createSelector } from "@reduxjs/toolkit";
 import classNames from "classnames";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useSelector } from "react-redux";
 import { Tooltip } from "react-tooltip";
 import {
+  checkPropChanges,
   isInstructModel,
   isReasoningModel,
   useIsModelAvailable,
@@ -10,14 +19,23 @@ import {
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
-import { setUseEditorSelection } from "../store/app";
+import {
+  selectApiBaseUrl,
+  selectMinimalUI,
+  setUseEditorSelection,
+} from "../store/app";
 import {
   clearMessages,
+  selectConversationInProgress,
+  selectCurrentConversation,
+  selectCurrentConversationId,
+  selectCurrentModel,
+  selectTokenCount,
   setAutoscroll,
   setInProgress,
   updateUserInput,
 } from "../store/conversation";
-import { Conversation, MODEL_TOKEN_LIMITS } from "../types";
+import { MODEL_TOKEN_LIMITS } from "../types";
 import Icon from "./Icon";
 import ModelInput from "./ModelInput";
 import ModelSelect from "./ModelSelect";
@@ -25,55 +43,51 @@ import MoreActionsMenu from "./MoreActionsMenu";
 import TokenCountPopup from "./TokenCountPopup";
 import VerbositySelect from "./VerbositySelect";
 
-export default ({
-  conversation: currentConversation,
-  conversationList,
-  vscode,
-}: {
-  conversation: Conversation;
-  conversationList: Conversation[];
-  vscode: any;
-}) => {
-  const dispatch = useAppDispatch();
-  const settings = useAppSelector(
-    (state: RootState) => state.app.extensionSettings
-  );
-  const t = useAppSelector((state: any) => state.app.translations);
-  const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
-  const [showMoreActions, setShowMoreActions] = useState(false);
-  const [useEditorSelection, setIncludeEditorSelection] = useState(false);
-  const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
-  const tokenCountRef = React.useRef<HTMLDivElement>(null);
-  const [tokenCountLabel, setTokenCountLabel] = useState("0");
-  const maxCost = useMaxCost(currentConversation);
+const MemoModelSelect = React.memo(ModelSelect, checkPropChanges);
+
+interface ExtendedKeyboardEvent
+  extends React.KeyboardEvent<HTMLTextAreaElement> {
+  isComposing?: boolean;
+}
+
+const selectUserInput = createSelector(
+  [
+    (state: RootState) => state.conversation.conversations,
+    (state: RootState) => state.conversation.currentConversationId,
+  ],
+  (conversations, currentConversationId) =>
+    currentConversationId
+      ? conversations[currentConversationId]?.userInput
+      : undefined
+);
+
+const selectIsFeatherless = createSelector(selectApiBaseUrl, (apiBaseUrl) =>
+  apiBaseUrl.includes("api.featherless.ai")
+);
+
+function TokenCountComponent() {
+  // Selectors
+  const model = useSelector(selectCurrentModel);
+  const isFeatherless = useSelector(selectIsFeatherless);
+  const tokenCount = useSelector(selectTokenCount);
+  const maxCost = useMaxCost(tokenCount, model);
+  // State
   // Animation on token count value change
   const [tokenCountAnimation, setTokenCountAnimation] = useState(false);
+  const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
+  const [tokenCountLabel, setTokenCountLabel] = useState("0");
+  // Refs
   const tokenCountAnimationTimer = useRef(null);
-  const backendMessenger = useMessenger(vscode);
-  const models = useAppSelector((state: RootState) => state.app.models);
-  // View options
-  const showEditorSelection = useAppSelector(
-    (state) => state.app.viewOptions.showEditorSelection
-  );
-  const showModelSelect = useAppSelector(
-    (state) => state.app.viewOptions.showModelSelect
-  );
-  const showVerbosity = useAppSelector(
-    (state) => state.app.viewOptions.showVerbosity
-  );
-  const showClear = useAppSelector((state) => state.app.viewOptions.showClear);
-  const showTokenCount = useAppSelector(
-    (state) => state.app.viewOptions.showTokenCount
-  );
-  const isCurrentModelAvailable = useIsModelAvailable(
-    models,
-    currentConversation?.model
-  );
+  const tokenCountRef = React.useRef<HTMLDivElement>(null);
 
-  // when includeEditorSelection changes, update the store (needed for token calculations elsewhere), one-way binding for now
-  useEffect(() => {
-    dispatch(setUseEditorSelection(useEditorSelection));
-  }, [useEditorSelection]);
+  const hitTokenLimit = useMemo(() => {
+    return (
+      parseInt(tokenCountLabel) >
+      (MODEL_TOKEN_LIMITS.has(model?.id ?? "gpt-4-turbo")
+        ? MODEL_TOKEN_LIMITS.get(model?.id ?? "gpt-4-turbo")?.context ?? 128000
+        : 128000)
+    );
+  }, [tokenCountLabel, model?.id]);
 
   useEffect(() => {
     // Clear the previous timer if there is one
@@ -92,15 +106,121 @@ export default ({
     return () => clearTimeout(tokenCountAnimationTimer.current as any); // Cleanup on unmount
   }, [tokenCountLabel]);
 
+  return (
+    <>
+      {!isFeatherless && !!maxCost?.toFixed() && (
+        <div
+          className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
+            tokenCountAnimation
+              ? "duration-200 bg-blue-300 bg-opacity-20"
+              : "duration-500"
+          }
+                ${hitTokenLimit ? "duration-200 bg-red-700 bg-opacity-20" : ""}
+              `}
+          ref={tokenCountRef}
+          tabIndex={0}
+          // on hover showTokenBreakdown
+          onMouseEnter={() => {
+            setShowTokenBreakdown(true);
+          }}
+          onMouseLeave={() => {
+            setShowTokenBreakdown(false);
+          }}
+          onFocus={() => {
+            setShowTokenBreakdown(true);
+          }}
+          onBlur={() => {
+            setShowTokenBreakdown(false);
+          }}
+          onKeyUp={(e) => {
+            if (e.key === "Escape") {
+              setShowTokenBreakdown(false);
+            } else if (e.key === "Space") {
+              setShowTokenBreakdown(!showTokenBreakdown);
+            }
+          }}
+        >
+          {"≤ $"}
+          {maxCost?.toFixed(2) ?? "???"}
+          <TokenCountPopup
+            showTokenBreakdown={showTokenBreakdown}
+            setTokenCountLabel={setTokenCountLabel}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+const DebugTokenCountComponent = React.memo(
+  TokenCountComponent,
+  checkPropChanges
+);
+
+const selectManualModelInput = createSelector(
+  (state: RootState) => state.app.extensionSettings.manualModelInput,
+  (manualModelInput) => manualModelInput
+);
+
+export default ({
+  // conversationList,
+  vscode,
+}: {
+  // conversationList: Conversation[];
+  vscode: any;
+}) => {
+  const dispatch = useAppDispatch();
+  const currentConversation = useSelector(selectCurrentConversation);
+  const conversationId = useSelector(selectCurrentConversationId);
+  const model = useSelector(selectCurrentModel);
+  const inProgress = useSelector(selectConversationInProgress);
+  const userInput = useSelector(selectUserInput);
+  // Settings
+  const minimalUI = useSelector(selectMinimalUI);
+  const manualModelInput = useSelector(selectManualModelInput);
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const modelListStatus = useAppSelector(
+    (state: RootState) => state.app.modelListStatus
+  );
+  const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
+  const [showMoreActions, setShowMoreActions] = useState(false);
+  const [useEditorSelection, setIncludeEditorSelection] = useState(false);
+  const backendMessenger = useMessenger(vscode);
+  const modelList = useAppSelector((state: RootState) => state.app.models);
+  // View options
+  const showEditorSelection = useAppSelector(
+    (state) => state.app.viewOptions.showEditorSelection
+  );
+  const showModelSelect = useAppSelector(
+    (state) => state.app.viewOptions.showModelSelect
+  );
+  const showVerbosity = useAppSelector(
+    (state) => state.app.viewOptions.showVerbosity
+  );
+  const showClear = useAppSelector((state) => state.app.viewOptions.showClear);
+  const showTokenCount = useAppSelector(
+    (state) => state.app.viewOptions.showTokenCount
+  );
+  const isCurrentModelAvailable = useIsModelAvailable(
+    modelList,
+    model,
+    modelListStatus
+  );
+
+  // when includeEditorSelection changes, update the store (needed for token calculations elsewhere), one-way binding for now
+  useEffect(() => {
+    dispatch(setUseEditorSelection(useEditorSelection));
+  }, [useEditorSelection]);
+
   // on conversation change, focus on the question input, set the question input value to the user input
   useEffect(() => {
-    if (questionInputRef.current && conversationList.length > 1) {
+    if (questionInputRef.current && currentConversation) {
       questionInputRef.current.focus();
-      questionInputRef.current.value = currentConversation?.userInput ?? "";
+      questionInputRef.current.value = userInput ?? "";
     }
-  }, [currentConversation.id]);
+  }, [conversationId]);
 
-  const askQuestion = () => {
+  const askQuestion = useCallback(() => {
     if (!isCurrentModelAvailable) {
       console.error("[Reborn AI] Model not available. Select a model first.");
       return;
@@ -109,10 +229,19 @@ export default ({
     const question = questionInputRef?.current?.value;
 
     if (question && question.length > 0) {
+      // const currentConversation = conversationList.find(
+      //   (convo) => convo.id === conversationId
+      // );
+
+      if (!currentConversation || !conversationId) {
+        console.error("[Reborn AI] Ask() - No current conversation found");
+        return;
+      }
+
       // Set the conversation to in progress
       dispatch(
         setInProgress({
-          conversationId: currentConversation.id,
+          conversationId,
           inProgress: true,
         })
       );
@@ -129,7 +258,7 @@ export default ({
       // update the state
       dispatch(
         updateUserInput({
-          conversationId: currentConversation.id,
+          conversationId: conversationId,
           userInput: "",
         })
       );
@@ -137,7 +266,7 @@ export default ({
       // re-enable autoscroll to send the user to the bottom of the conversation
       dispatch(
         setAutoscroll({
-          conversationId: currentConversation.id,
+          conversationId: conversationId,
           autoscroll: true,
         })
       );
@@ -154,17 +283,76 @@ export default ({
         ).dataset.replicatedValue = "";
       }
     }
-  };
+  }, [useEditorSelection, conversationId, isCurrentModelAvailable]);
+
+  const handleKeyDown = useCallback(
+    (event: ExtendedKeyboardEvent) => {
+      // If the user presses enter, submit the question
+      // Does not apply to Shift+Enter
+      if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+        // remove the last instance of a newline character from the end of the input
+        const input = event.target as HTMLTextAreaElement;
+        input.value = input.value.replace(/\n+$/, "");
+
+        askQuestion();
+      } else if (
+        event.key === "Enter" &&
+        event.shiftKey &&
+        !event.isComposing
+      ) {
+        // update the textarea height
+        const target = event.target as any;
+
+        if (target) {
+          target.parentNode.dataset.replicatedValue = target?.value;
+        }
+      }
+    },
+    [askQuestion, conversationId]
+  );
+
+  const handleInput = useCallback((e: Event) => {
+    const target = e.target as HTMLTextAreaElement;
+
+    if (target) {
+      (target.parentNode as HTMLElement)!.dataset.replicatedValue =
+        target.value;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (questionInputRef.current) {
+      questionInputRef.current.addEventListener("input", handleInput, {
+        passive: true,
+      });
+      questionInputRef.current.addEventListener(
+        "keydown",
+        handleKeyDown as any as EventListenerOrEventListenerObject,
+        { passive: true }
+      );
+    }
+
+    // Unload the event listeners on cleanup
+    return () => {
+      if (questionInputRef.current) {
+        questionInputRef.current.removeEventListener("input", handleInput);
+        questionInputRef.current.removeEventListener(
+          "keydown",
+          handleKeyDown as any
+        );
+      }
+    };
+  }, [questionInputRef.current, handleInput, handleKeyDown]);
 
   return (
     <footer
       className={`fixed z-20 bottom-0 w-full flex flex-col gap-y-1 pt-2 bg-gradient-to-t from-bg from-50% to-transparent
-      ${settings?.minimalUI ? "pb-2" : "pb-1"}
+      ${minimalUI ? "pb-2" : "pb-1"}
     `}
     >
       <div className="px-4 flex items-center gap-x-2">
         <div className="bg flex-1 textarea-wrapper w-full flex items-center">
-          {currentConversation.inProgress && (
+          {inProgress && (
             // show the text "Thinking..." when the conversation is in progress in place of the question input
             <div className="flex flex-row items-center text-sm px-3 py-2 mb-1 rounded border bg-input text-input w-full">
               <Icon
@@ -172,13 +360,13 @@ export default ({
                 className="w-5 h-5 mr-2 text stroke-current"
               />
               <span>{t?.questionInputField?.thinking ?? "Thinking..."}</span>
-              {isInstructModel(currentConversation.model) && (
+              {isInstructModel(model) && (
                 <span className="text-xs opacity-50 ml-2">
                   {t?.questionInputField?.streamingOnInstructModels ??
                     "(streaming is disabled on instruct models)"}
                 </span>
               )}
-              {isReasoningModel(currentConversation.model) && (
+              {isReasoningModel(model) && (
                 <span className="text-xs opacity-50 ml-2">
                   {t?.questionInputField?.streamingOnReasoningModels ??
                     "(streaming not yet supported on reasoning models)"}
@@ -186,79 +374,41 @@ export default ({
               )}
             </div>
           )}
-          {!currentConversation.inProgress && (
-            <textarea
-              rows={1}
-              className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
-              id="question-input"
-              // placeholder="Ask a question..."
-              placeholder={
-                t?.questionInputField?.askAQuestion ?? "Ask a question..."
-              }
-              ref={questionInputRef}
-              disabled={currentConversation.inProgress}
-              onInput={(e) => {
-                const target = e.target as any;
-                if (target) {
-                  target.parentNode.dataset.replicatedValue = target?.value;
-                }
-              }}
-              onKeyDown={(event: any) => {
-                // avoid awkward newline before submitting question
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  event.preventDefault();
-                }
-              }}
-              onKeyUp={(event: any) => {
-                const question = questionInputRef?.current?.value;
-
-                // update the state
-                dispatch(
-                  updateUserInput({
-                    conversationId: currentConversation.id,
-                    userInput: question ?? "",
-                  })
-                );
-
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  askQuestion();
-                } else if (
-                  event.key === "Enter" &&
-                  event.shiftKey &&
-                  !event.isComposing
-                ) {
-                  // update the textarea height
-                  const target = event.target as any;
-                  if (target) {
-                    target.parentNode.dataset.replicatedValue = target?.value;
-                  }
-                }
-              }}
-            ></textarea>
-          )}
+          <textarea
+            rows={1}
+            className="text-sm rounded-sm border border-input text-input bg-input resize-none w-full outline-0"
+            style={{
+              display: inProgress ? "none" : "block",
+            }}
+            id="question-input"
+            placeholder={
+              t?.questionInputField?.askAQuestion ?? "Ask a question..."
+            }
+            ref={questionInputRef}
+            disabled={inProgress}
+          ></textarea>
         </div>
 
         <div className="bg" id="question-input-buttons">
-          {currentConversation.inProgress && (
+          {inProgress && (
             // show the "stop" button when the conversation is in progress
             <button
               title="Stop"
               className="px-2 py-1 h-full flex flex-row items-center border border-red-900 rounded hover:bg-button-secondary focus:bg-button-secondary"
               onClick={(e) => {
-                backendMessenger.sendStopGenerating(currentConversation.id);
+                if (!conversationId) {
+                  console.error(
+                    "[Reborn AI] Stop() - No current conversation found"
+                  );
+                  return;
+                }
+
+                backendMessenger.sendStopGenerating(conversationId);
 
                 // Set the conversation to not in progress
                 dispatch(
                   setInProgress({
-                    conversationId: currentConversation.id,
+                    conversationId,
                     inProgress: false,
                   })
                 );
@@ -268,7 +418,7 @@ export default ({
               {t?.questionInputField?.stop ?? "Stop"}
             </button>
           )}
-          {!currentConversation.inProgress && (
+          {!inProgress && (
             <button
               title="Submit prompt"
               className={classNames(
@@ -280,9 +430,7 @@ export default ({
               onClick={() => {
                 askQuestion();
               }}
-              disabled={
-                currentConversation.inProgress || !isCurrentModelAvailable
-              }
+              disabled={inProgress || !isCurrentModelAvailable}
             >
               {isCurrentModelAvailable
                 ? t?.questionInputField?.ask ?? "Ask"
@@ -293,32 +441,31 @@ export default ({
           )}
         </div>
       </div>
-      {!settings?.minimalUI && (
+      {!minimalUI && (
         <div className="flex flex-wrap xs:flex-nowrap flex-row justify-between gap-x-1 px-4 overflow-x-auto">
           <div className="flex-grow flex flex-nowrap xs:flex-wrap flex-row gap-1">
-            {showModelSelect && (
-              <>
-                {settings.manualModelInput ? (
-                  <ModelInput
-                    currentConversation={currentConversation}
-                    vscode={vscode}
-                    className="hidden xs:flex items-end"
-                    tooltipId="footer-tooltip"
-                  />
-                ) : (
-                  <ModelSelect
-                    currentConversation={currentConversation}
-                    vscode={vscode}
-                    conversationList={conversationList}
-                    className="hidden xs:flex items-end"
-                    tooltipId="footer-tooltip"
-                  />
-                )}
-              </>
-            )}
+            <div
+              className={classNames({
+                hidden: !showModelSelect,
+              })}
+            >
+              {manualModelInput ? (
+                <ModelInput
+                  vscode={vscode}
+                  className="hidden xs:flex items-end"
+                  tooltipId="footer-tooltip"
+                />
+              ) : (
+                <MemoModelSelect
+                  vscode={vscode}
+                  className="hidden xs:flex items-end"
+                  tooltipId="footer-tooltip"
+                  renderModelList={showModelSelect}
+                />
+              )}
+            </div>
             {showVerbosity && (
               <VerbositySelect
-                currentConversation={currentConversation}
                 vscode={vscode}
                 className="hidden xs:flex items-end"
                 tooltipId="footer-tooltip"
@@ -362,10 +509,17 @@ export default ({
                 data-tooltip-id="footer-tooltip"
                 data-tooltip-content="Clear all messages from conversation"
                 onClick={() => {
+                  if (!conversationId) {
+                    console.error(
+                      "[Reborn AI] Clear() - No current conversation found"
+                    );
+                    return;
+                  }
+
                   // clear all messages from the current conversation
                   dispatch(
                     clearMessages({
-                      conversationId: currentConversation.id,
+                      conversationId,
                     })
                   );
                 }}
@@ -377,60 +531,9 @@ export default ({
             <Tooltip id="footer-tooltip" place="top" delayShow={800} />
           </div>
           <div className="flex flex-row items-start gap-2">
-            {showTokenCount && (
-              <div
-                className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
-                  tokenCountAnimation
-                    ? "duration-200 bg-blue-300 bg-opacity-20"
-                    : "duration-500"
-                }
-                ${
-                  parseInt(tokenCountLabel) >
-                  (MODEL_TOKEN_LIMITS.has(
-                    currentConversation.model?.id ?? "gpt-4-turbo"
-                  )
-                    ? MODEL_TOKEN_LIMITS.get(
-                        currentConversation.model?.id ?? "gpt-4-turbo"
-                      )?.context ?? 128000
-                    : 128000)
-                    ? "duration-200 bg-red-700 bg-opacity-20"
-                    : ""
-                }
-              `}
-                ref={tokenCountRef}
-                tabIndex={0}
-                // on hover showTokenBreakdown
-                onMouseEnter={() => {
-                  setShowTokenBreakdown(true);
-                }}
-                onMouseLeave={() => {
-                  setShowTokenBreakdown(false);
-                }}
-                onFocus={() => {
-                  setShowTokenBreakdown(true);
-                }}
-                onBlur={() => {
-                  setShowTokenBreakdown(false);
-                }}
-                onKeyUp={(e) => {
-                  if (e.key === "Escape") {
-                    setShowTokenBreakdown(false);
-                  } else if (e.key === "Space") {
-                    setShowTokenBreakdown(!showTokenBreakdown);
-                  }
-                }}
-              >
-                {"≤ $"}
-                {maxCost?.toFixed(2) ?? "???"}
-                <TokenCountPopup
-                  showTokenBreakdown={showTokenBreakdown}
-                  currentConversation={currentConversation}
-                  conversationList={conversationList}
-                  setTokenCountLabel={setTokenCountLabel}
-                  vscode={vscode}
-                />
-              </div>
-            )}
+            {/* Token Count */}
+            {showTokenCount && <DebugTokenCountComponent />}
+            {/* More Actions */}
             <button
               className="rounded flex gap-1 items-center justify-start py-0.5 px-1 w-full whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary"
               onClick={() => {
@@ -470,9 +573,7 @@ export default ({
             <MoreActionsMenu
               vscode={vscode}
               showMoreActions={showMoreActions}
-              currentConversation={currentConversation}
               setShowMoreActions={setShowMoreActions}
-              conversationList={conversationList}
             />
           </div>
         </div>

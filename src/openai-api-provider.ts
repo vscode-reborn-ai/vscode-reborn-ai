@@ -5,13 +5,18 @@ import { Tiktoken, TiktokenModel, encodingForModel } from "js-tiktoken";
 import ky from "ky";
 import { z } from 'zod';
 import { isReasoningModel } from "./helpers";
+import { ModelCache } from "./model-list-cache";
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
+import { ApiKeyStatus, ModelListStatus } from "./renderer/store/types";
 import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
+import Messenger from "./send-to-frontend";
 
 /** openai-api-provider.ts
 
 Responsible for handling API calls to OpenAI's API
 (or any server that implements the OpenAI API).
+
+* TODO: Abstract the custom API calls for specific providers (like OpenRouter, Featherless).
 
 */
 
@@ -42,6 +47,12 @@ export class ApiProvider {
 
   public config: OpenAIProviderSettings | AzureOpenAIProviderSettings = {};
 
+  // For communication with the frontend
+  private frontendMessenger: Messenger;
+
+  // For model fetching
+  private modelCache: ModelCache; // Model list caching
+
   // For Azure
   public isAzure: boolean = false;
   public deploymentName: string | undefined;
@@ -69,9 +80,15 @@ export class ApiProvider {
       apiBaseUrl: 'https://api.openai.com/v1',
       temperature: 0.9,
       topP: 1,
-    }) {
+    },
+    frontendMessenger: Messenger,
+    modelCache: ModelCache,
+  ) {
     this._temperature = temperature;
     this._topP = topP;
+
+    this.frontendMessenger = frontendMessenger;
+    this.modelCache = modelCache;
 
     if (this.checkIfAzure(baseApiUrl)) {
       this.updateAzureConfig({
@@ -358,6 +375,8 @@ export class ApiProvider {
   }
 
   async updateApiKey(apiKey: string) {
+    this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Pending);
+
     if (this.isAzure) {
       this.updateAzureConfig({
         apiKey,
@@ -384,6 +403,8 @@ export class ApiProvider {
   }
 
   async updateApiBaseUrl(apiBaseUrl: string) {
+    this.frontendMessenger.sendApiKeyStatus(ApiKeyStatus.Pending);
+
     // If apiBaseUrl ends with slash, remove it
     apiBaseUrl = apiBaseUrl.replace(/\/$/, '');
 
@@ -429,7 +450,13 @@ export class ApiProvider {
   // Ensures that only a single model list fetch is in progress at a time
   private async repullModelListOnce(): Promise<void> {
     if (!this.pendingModelFetch) {
-      this.pendingModelFetch = this.repullModelList();
+      this.pendingModelFetch = this.repullModelList()
+        .catch((reason) => {
+          console.error('[Reborn AI] Failed to fetch models:', reason);
+        }).finally(() => {
+          // Reset the pending model fetch promise
+          this.pendingModelFetch = undefined;
+        });
     }
 
     return this.pendingModelFetch;
@@ -450,7 +477,9 @@ export class ApiProvider {
 
     if (!this._openai) {
       console.error('[Reborn AI] OpenAI API not initialized');
-      return;
+
+      throw new Error('OpenAI API not initialized');
+      // return;
     }
 
     const modelEndpointNotFound = new Error('Model endpoint not found.');
@@ -471,32 +500,102 @@ export class ApiProvider {
         url = `${config.baseURL}/models`;
       }
 
-      const data = await ky.get(url, {
-        headers: {
-          "Authorization": `Bearer ${this.config.apiKey}`,
-        },
-        hooks: {
-          afterResponse: [
-            async (_input, _options, response) => {
-              switch (response.status) {
-                case 401:
-                  throw missingApiKey;
-                case 404:
-                  throw modelEndpointNotFound;
-                default:
-                  return response;
-              }
-            },
-          ],
-        },
-      }).json() as {
-        object: string;
-        data: Model[];
-      };
+      try {
+        this._modelList = await this.modelCache.getModels(url, this.config.apiKey ?? '');
+      } catch (error) {
+        console.error("[Reborn AI] Error fetching models:", error);
+        throw (new Error("Failed to fetch models."));
+      }
 
-      // Did not 404, so we can fetch models from the OpenAI API
-      this._modelList = data.data as Model[];
+      // const data = await ky.get(url, {
+      //   headers: {
+      //     "Authorization": `Bearer ${this.config.apiKey}`,
+      //   },
+      //   hooks: {
+      //     afterResponse: [
+      //       async (_input, _options, response) => {
+      //         switch (response.status) {
+      //           case 401:
+      //             throw missingApiKey;
+      //           case 404:
+      //             throw modelEndpointNotFound;
+      //           default:
+      //             return response;
+      //         }
+      //       },
+      //     ],
+      //   },
+      // }).json() as {
+      //   object: string;
+      //   data: Model[];
+      // };
+
+      // if (url.includes('api.featherless.ai')) {
+      //   // Get extra data about models from the featherless API
+      //   const featherModels = await ky.get('https://api.featherless.ai/feather/models').json() as {
+      //     items: {
+      //       id: string;
+      //       // TODO: Consider supporting these fields in the future
+      //       // acc_tags: string[];
+      //       // avg_rating: number;
+      //       // total_reviews: number;
+      //       created_at: string;
+      //       updated_at: string;
+      //       name: string;
+      //       owned_by: string;
+      //       model_class: string;
+      //       favorites: number;
+      //       downloads: number;
+      //       status: string;
+      //       health: string;
+      //     }[],
+      //     pagination: {
+      //       current_page: number;
+      //       per_page: number;
+      //       total_items: number;
+      //       total_pages: number;
+      //     };
+      //   };
+
+      //   // Combine the two model lists
+      //   // so that properties for a model are combined from both sources
+      //   // and the list is deduplicated
+      //   const combinedModels = new Map<string, Model>();
+
+      //   for (const model of featherModels.items) {
+      //     combinedModels.set(model.id, {
+      //       id: model.id,
+      //       name: model.name,
+      //       created: Date.parse(model.created_at),
+      //       object: "model",
+      //       owned_by: model.owned_by as Role,
+      //       // Featherless-specific fields
+      //       featherless: {
+      //         favorites: model.favorites,
+      //         downloads: model.downloads,
+      //         status: model.status,
+      //         health: model.health,
+      //       }
+      //     });
+      //   }
+
+      //   for (const model of data.data) {
+      //     combinedModels.set(model.id, {
+      //       ...combinedModels.get(model.id) ?? {},
+      //       ...model
+      //     });
+      //   }
+
+      //   this._modelList = Array.from(combinedModels.values());
+
+      //   console.info('[Reborn AI] Successfully fetched models from featherless API');
+      // } else {
+      //   // Did not 404, so we can fetch models from the OpenAI API
+      //   this._modelList = data.data as Model[];
+      // }
     } catch (error: any | Error) {
+      console.error('[Reborn AI] Failed to fetch models from OpenAI API', error);
+
       if (error === modelEndpointNotFound) {
         // If 404 error, this might be the ollama API
         // Attempt to fetch models from the ollama API
@@ -528,6 +627,8 @@ export class ApiProvider {
           console.info('[Reborn AI] Successfully fetched models from ollama API');
         } catch (e) {
           console.error('[Reborn AI] Failed to fetch models from ollama API', e);
+
+          throw new Error('Failed to fetch models.');
         }
       } else if (error === missingApiKey) {
         // print out the request URL, body, and headers
@@ -537,14 +638,13 @@ export class ApiProvider {
             "Authorization": `Bearer ${this.config.apiKey}`,
           },
         }, 'config:', this.config);
+
         throw error;
       } else {
         console.error('[Reborn AI] Failed to fetch models from OpenAI API', error);
+
         throw error;
       }
-    } finally {
-      // Reset the pending model fetch promise
-      this.pendingModelFetch = undefined;
     }
   }
 
@@ -552,7 +652,11 @@ export class ApiProvider {
   // _modelList is only updated when API settings are updated
   async getModelList(): Promise<Model[]> {
     if (this._modelList?.length === 0) {
+      this.frontendMessenger.sendModelListStatus(ModelListStatus.Fetching);
+
       await this.repullModelListOnce();
+
+      this.frontendMessenger.sendModelListStatus(ModelListStatus.Fetched);
     }
 
     return this._modelList ?? [];
