@@ -198,7 +198,11 @@ const DetailedModel = React.memo(function ({
       let description = model.featherless?.readme ?? model.description ?? "";
 
       // Remove any HTML comments
-      description = description.replace(/<!--.*?-->/gs, "");
+      let previousDescription;
+      do {
+        previousDescription = description;
+        description = description.replace(/<!--.*?-->/gs, "");
+      } while (description !== previousDescription);
 
       return convertMarkdownToComponent(description);
     }
