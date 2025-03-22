@@ -64,14 +64,13 @@ const modelsArray: RichModel[] = [
     speed: "⚡⚡⚡",
     cost: "💸⬜⬜",
   },
-  // o1 will be available once the model is released
-  // {
-  //   id: "o1",
-  //   name: "o1",
-  //   quality: "⭐⭐⭐",
-  //   speed: "⚡⬜⬜",
-  //   cost: "💸💸💸",
-  // },
+  {
+    id: "o1",
+    name: "o1",
+    quality: "⭐⭐⭐",
+    speed: "⚡⬜⬜",
+    cost: "💸💸💸",
+  },
   {
     id: "o1-preview",
     name: "o1-preview",

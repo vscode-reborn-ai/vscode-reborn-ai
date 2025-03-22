@@ -171,8 +171,8 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     max: 4096,
   },
   'o1': {
-    context: 128000,
-    max: 32768,
+    context: 200000,
+    max: 100000,
   },
   'o1-preview': {
     context: 128000,
