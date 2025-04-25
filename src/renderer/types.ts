@@ -86,6 +86,7 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "o1": "o1",
   "o1-preview": "o1 Preview",
   "o1-mini": "o1 Mini",
+  "o3-mini": "o3 Mini",
 }));
 
 // source: https://openai.com/pricing
@@ -140,6 +141,10 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     prompt: 3,
     complete: 12,
   },
+  'o3-mini': {
+    prompt: 1.10,
+    complete: 4.40,
+  },
 }));
 
 // source: https://platform.openai.com/docs/models
@@ -191,12 +196,16 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 128000,
     max: 65536,
   },
+  'o3-mini': {
+    context: 2000000,
+    max: 100000,
+  },
 }));
 
 // Reasoning models have specific constraints:
 // 1. System context messages are not allowed.
 // 2. Different max_tokens behavior - max_completion_tokens used instead.
-export const REASONING_MODELS = ['o1', 'o1-preview', 'o1-mini'];
+export const REASONING_MODELS = ['o1', 'o1-preview', 'o1-mini', 'o3-mini'];
 
 interface OpenAIMessage {
   role: Role;

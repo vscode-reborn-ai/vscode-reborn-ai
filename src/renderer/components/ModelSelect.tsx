@@ -86,12 +86,19 @@ const modelsArray: RichModel[] = [
     cost: "💸💸💸",
   },
   {
+    id: "o3-mini",
+    name: "o3-mini",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⚡",
+    cost: "💸💸⬜"
+  },
+  {
     id: "o1-mini",
     name: "o1-mini",
-    quality: "⭐⭐⭐",
+    quality: "⭐⭐⬜",
     speed: "⚡⬜⬜",
     cost: "💸💸⬜",
-  },
+  }
 ];
 
 export default function ModelSelect({
