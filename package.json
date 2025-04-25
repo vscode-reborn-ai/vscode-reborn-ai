@@ -457,7 +457,7 @@
         "chatgpt.gpt3.model": {
           "type": "string",
           "enum": [
-            "gpt-4.5-preview",
+            "gpt-4.1",
             "gpt-4o",
             "gpt-4o-mini",
             "gpt-4-turbo",
@@ -465,11 +465,11 @@
             "gpt-4-32k",
             "gpt-3.5-turbo"
           ],
-          "default": "gpt-4o",
+          "default": "gpt-4.1",
           "markdownDescription": "OpenAI models to use for your prompts. [Documentation](https://platform.openai.com/docs/models/models). \n\n**If you face 400 Bad Request please make sure you are using the right model for your integration method.**",
           "order": 36,
           "enumItemLabels": [
-            "OpenAI GPT-4.5 Preview",
+            "OpenAI GPT-4.1",
             "OpenAI GPT-4o",
             "OpenAI GPT-4o Mini",
             "OpenAI GPT-4 Turbo",

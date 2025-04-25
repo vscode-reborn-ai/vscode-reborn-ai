@@ -36,17 +36,17 @@ export interface RichModel extends Partial<Model> {
 }
 const modelsArray: RichModel[] = [
   {
-    id: "gpt-4.5-preview",
-    name: "gpt-4.5-preview",
+    id: "gpt-4.1",
+    name: "gpt-4.1",
     quality: "⭐⭐⭐",
-    speed: "⚡⬜⬜",
-    cost: "💸💸💸",
+    speed: "⚡⚡⬜",
+    cost: "💸💸⬜",
     recommended: true,
   },
   {
     id: "gpt-4-turbo",
     name: "gpt-4-turbo",
-    quality: "⭐⭐⬜",
+    quality: "⭐⬜⬜",
     speed: "⚡⚡⬜",
     cost: "💸💸⬜",
   },
@@ -63,7 +63,6 @@ const modelsArray: RichModel[] = [
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
     cost: "💸⬜⬜",
-    recommended: true,
   },
   {
     id: "gpt-4o-mini",
