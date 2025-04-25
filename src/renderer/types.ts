@@ -75,6 +75,7 @@ export interface Model {
 // Maps ID to a friendly name
 // Ref: https://platform.openai.com/docs/models
 export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
+  "gpt-4.1": "GPT-4.1",
   "gpt-4-turbo": "GPT-4 Turbo",
   "gpt-4": "GPT-4",
   "gpt-4-32k": "GPT-4 32k",
@@ -95,6 +96,10 @@ interface ModelCost {
 
 // Token cost per 1 million tokens
 export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
+  'gpt-4.1': {
+    prompt: 2,
+    complete: 8,
+  },
   'gpt-4-turbo': {
     prompt: 10,
     complete: 30,
@@ -143,6 +148,10 @@ interface ModelTokenLimits {
   max?: number;
 }
 export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.entries({
+  'gpt-4.1': {
+    context: 1047576,
+    max: 32768,
+  },
   'gpt-4-turbo': {
     context: 128000,
     max: 4096,
@@ -314,7 +323,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o1-preview" | "o1-mini",
+    model: "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o1-preview" | "o1-mini",
     maxTokens: number,
     temperature: number,
     top_p: number;
@@ -366,7 +375,7 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
     generateCodeEnabled: true,
     apiBaseUrl: "https://api.openai.com/v1",
     organization: "",
-    model: "gpt-4o",
+    model: "gpt-4.1",
     maxTokens: 4000,
     temperature: 1,
     top_p: 1
