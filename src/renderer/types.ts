@@ -375,7 +375,7 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
     generateCodeEnabled: true,
     apiBaseUrl: "https://api.openai.com/v1",
     organization: "",
-    model: "gpt-4o",
+    model: "gpt-4.1",
     maxTokens: 4000,
     temperature: 1,
     top_p: 1
