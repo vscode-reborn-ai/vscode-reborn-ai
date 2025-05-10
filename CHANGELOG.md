@@ -6,7 +6,7 @@
 
 ## Next [next]
 
-- ✨ **Feature** - Added support for `gpt-4.1` and `o3-mini` when using OpenAI. *Thanks @PeterDaveHello*
+- ✨ **Feature** - Added support for `gpt-4.1`, `o4-mini` and `o3-mini` when using OpenAI. *Thanks @PeterDaveHello*
 - 📼 **Deprecated** - `gpt-4` and `o1-mini` are deprecated in favor of newer models.
 
 ## October 20, 2024 [v3.26.0]
