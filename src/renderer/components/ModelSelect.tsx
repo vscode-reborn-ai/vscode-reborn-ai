@@ -37,7 +37,7 @@ export interface RichModel extends Partial<Model> {
 const SUGGESTED_OPENAI_MODELS: RichModel[] = [
   {
     id: "gpt-4.1",
-    name: "gpt-4.1",
+    name: "GPT-4.1",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⬜",
     cost: "💸💸⬜",
@@ -45,14 +45,14 @@ const SUGGESTED_OPENAI_MODELS: RichModel[] = [
   },
   {
     id: "gpt-4o",
-    name: "gpt-4o",
+    name: "GPT-4o",
     quality: "⭐⭐⭐",
-    speed: "⚡⚡⚡",
+    speed: "⚡⚡⬜",
     cost: "💸⬜⬜",
   },
   {
     id: "o4-mini",
-    name: "o4-mini",
+    name: "o4 mini",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
     cost: "💸💸⬜",
@@ -65,15 +65,22 @@ const SUGGESTED_OPENAI_MODELS: RichModel[] = [
     cost: "💸💸💸",
   },
   {
+    id: "gpt-4o-search-preview",
+    name: "GPT-4o Search Preview",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⬜",
+    cost: "💸⬜⬜",
+  },
+  {
     id: "o3-mini",
-    name: "o3-mini",
+    name: "o3 mini",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
     cost: "💸💸⬜",
   },
   {
     id: "gpt-4o-mini",
-    name: "gpt-4o-mini",
+    name: "GPT-4o mini",
     quality: "⭐⭐⬜",
     speed: "⚡⚡⚡",
     cost: "💸⬜⬜",

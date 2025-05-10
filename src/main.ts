@@ -8,7 +8,7 @@ import { AuthStore, OfflineStore } from "./local-store";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
-import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
+import { isStreamingModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
 import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
 import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
@@ -818,7 +818,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         this.frontendMessenger.sendAddMessage(message, options.conversation?.id ?? '');
       }
 
-      if (this.chatMode && !isInstructModel(this.model)) {
+      if (this.chatMode && isStreamingModel(this.model)) {
         let lastMessageTime = 0;
         const controller = new AbortController();
         this.abortControllers.push({ conversationId: options.conversation?.id ?? '', controller });
@@ -850,8 +850,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
 
         // Send webview full updated message
         this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
-      } else if (isInstructModel(this.model)) {
-        // Instruct models are not streamed, they are completed in one go
+      } else if (this.chatMode) {
         const content = await this.api.getChatCompletion(options.conversation);
 
         if (content) {
