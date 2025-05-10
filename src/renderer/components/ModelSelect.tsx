@@ -86,10 +86,10 @@ const modelsArray: RichModel[] = [
     cost: "💸💸💸",
   },
   {
-    id: "o1-mini",
-    name: "o1-mini",
+    id: "o3-mini",
+    name: "o3-mini",
     quality: "⭐⭐⭐",
-    speed: "⚡⬜⬜",
+    speed: "⚡⚡⚡",
     cost: "💸💸⬜",
   },
 ];
