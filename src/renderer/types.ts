@@ -84,6 +84,7 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "gpt-3.5-turbo": "GPT-3.5 Turbo",
   "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k",
   "o1": "o1",
+  "o3": "o3",
   "o1-preview": "o1 Preview",
   "o1-mini": "o1 Mini",
   "o3-mini": "o3 Mini",
@@ -133,6 +134,10 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
   'o1': {
     prompt: 15,
     complete: 60,
+  },
+  'o3': {
+    prompt: 10,
+    complete: 40,
   },
   'o1-preview': {
     prompt: 15,
@@ -193,6 +198,10 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 200000,
     max: 100000,
   },
+  'o3': {
+    context: 200000,
+    max: 100000,
+  },
   'o1-preview': {
     context: 128000,
     max: 32768,
@@ -214,7 +223,7 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
 // Reasoning models have specific constraints:
 // 1. System context messages are not allowed.
 // 2. Different max_tokens behavior - max_completion_tokens used instead.
-export const REASONING_MODELS = ['o1', 'o1-preview', 'o1-mini', 'o3-mini', 'o4-mini'];
+export const REASONING_MODELS = ['o1', 'o3', 'o1-preview', 'o1-mini', 'o3-mini', 'o4-mini'];
 
 interface OpenAIMessage {
   role: Role;
@@ -341,7 +350,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o1-preview" | "o1-mini",
+    model: "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
     maxTokens: number,
     temperature: number,
     top_p: number;
