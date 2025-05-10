@@ -497,7 +497,6 @@ export class ApiProvider {
       // Did not 404, so we can fetch models from the OpenAI API
       this._modelList = data.data as Model[];
 
-      console.log('[Reborn AI] fetched models:', this._modelList);
     } catch (error: any | Error) {
       if (error === modelEndpointNotFound) {
         // If 404 error, this might be the ollama API
