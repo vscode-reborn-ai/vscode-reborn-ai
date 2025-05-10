@@ -44,17 +44,31 @@ const modelsArray: RichModel[] = [
     recommended: true,
   },
   {
+    id: "o4-mini",
+    name: "o4-mini",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⚡",
+    cost: "💸💸⬜",
+  },
+  {
+    id: "o1",
+    name: "o1",
+    quality: "⭐⭐⭐",
+    speed: "⚡⬜⬜",
+    cost: "💸💸💸",
+  },
+  {
+    id: "o3-mini",
+    name: "o3-mini",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⚡",
+    cost: "💸💸⬜",
+  },
+  {
     id: "gpt-4-turbo",
     name: "gpt-4-turbo",
     quality: "⭐⬜⬜",
     speed: "⚡⚡⬜",
-    cost: "💸💸⬜",
-  },
-  {
-    id: "gpt-4",
-    name: "gpt-4",
-    quality: "⭐⭐⬜",
-    speed: "⚡⬜⬜",
     cost: "💸💸⬜",
   },
   {
@@ -70,27 +84,6 @@ const modelsArray: RichModel[] = [
     quality: "⭐⭐⬜",
     speed: "⚡⚡⚡",
     cost: "💸⬜⬜",
-  },
-  {
-    id: "o1",
-    name: "o1",
-    quality: "⭐⭐⭐",
-    speed: "⚡⬜⬜",
-    cost: "💸💸💸",
-  },
-  {
-    id: "o1-preview",
-    name: "o1-preview",
-    quality: "⭐⭐⭐",
-    speed: "⚡⬜⬜",
-    cost: "💸💸💸",
-  },
-  {
-    id: "o3-mini",
-    name: "o3-mini",
-    quality: "⭐⭐⭐",
-    speed: "⚡⚡⚡",
-    cost: "💸💸⬜",
   },
 ];
 
@@ -178,14 +171,14 @@ export default function ModelSelect({
           rate.prompt === 0
             ? "FREE"
             : rate.prompt === undefined
-              ? "varies"
-              : `$${rate.prompt.toFixed(1)}/M`,
+            ? "varies"
+            : `$${rate.prompt.toFixed(1)}/M`,
         completeText:
           rate.complete === 0
             ? "FREE"
             : rate.complete === undefined
-              ? "varies"
-              : `$${rate.complete.toFixed(1)}/M`,
+            ? "varies"
+            : `$${rate.complete.toFixed(1)}/M`,
         isFree: rate.prompt === 0 && rate.complete === 0,
         isExpensive:
           (rate.prompt !== undefined && rate.prompt > 10) ||
@@ -283,10 +276,10 @@ export default function ModelSelect({
     const filteredModelList =
       query.length > 0
         ? modelList.filter(
-          (model) =>
-            model.id.toLowerCase().includes(query) ||
-            (model?.name && model.name.toLowerCase().includes(query))
-        )
+            (model) =>
+              model.id.toLowerCase().includes(query) ||
+              (model?.name && model.name.toLowerCase().includes(query))
+          )
         : modelList;
 
     setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
@@ -370,8 +363,8 @@ export default function ModelSelect({
           {isCurrentModelAvailable
             ? currentModelFriendlyName
             : sync.receivedModels
-              ? t?.modelSelect?.noModelSelected ?? "No model selected"
-              : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
+            ? t?.modelSelect?.noModelSelected ?? "No model selected"
+            : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
         </button>
         <div
           className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
@@ -491,8 +484,8 @@ export default function ModelSelect({
                         <div className="w-full flex justify-around gap-2 divide-dropdown text-2xs">
                           {computedModelDataMap.get(model.id)?.prompt ===
                             undefined &&
-                            (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
-                              settings.gpt3.apiBaseUrl.includes("localhost")) ? (
+                          (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
+                            settings.gpt3.apiBaseUrl.includes("localhost")) ? (
                             <>
                               {model.details?.family && (
                                 <span>{model.details.family}</span>
