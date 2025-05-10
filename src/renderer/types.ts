@@ -75,6 +75,7 @@ export interface Model {
 // Maps ID to a friendly name
 // Ref: https://platform.openai.com/docs/models
 export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
+  "gpt-4.1": "GPT-4.1",
   "gpt-4-turbo": "GPT-4 Turbo",
   "gpt-4": "GPT-4",
   "gpt-4-32k": "GPT-4 32k",
@@ -83,8 +84,11 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "gpt-3.5-turbo": "GPT-3.5 Turbo",
   "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k",
   "o1": "o1",
+  "o3": "o3",
   "o1-preview": "o1 Preview",
   "o1-mini": "o1 Mini",
+  "o3-mini": "o3 Mini",
+  "o4-mini": "o4 Mini",
 }));
 
 // source: https://openai.com/pricing
@@ -95,6 +99,10 @@ interface ModelCost {
 
 // Token cost per 1 million tokens
 export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
+  'gpt-4.1': {
+    prompt: 2,
+    complete: 8,
+  },
   'gpt-4-turbo': {
     prompt: 10,
     complete: 30,
@@ -127,6 +135,10 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     prompt: 15,
     complete: 60,
   },
+  'o3': {
+    prompt: 10,
+    complete: 40,
+  },
   'o1-preview': {
     prompt: 15,
     complete: 60,
@@ -135,6 +147,14 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     prompt: 3,
     complete: 12,
   },
+  'o3-mini': {
+    prompt: 1.10,
+    complete: 4.40,
+  },
+  'o4-mini': {
+    prompt: 1.10,
+    complete: 4.40,
+  }
 }));
 
 // source: https://platform.openai.com/docs/models
@@ -143,6 +163,10 @@ interface ModelTokenLimits {
   max?: number;
 }
 export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.entries({
+  'gpt-4.1': {
+    context: 1047576,
+    max: 32768,
+  },
   'gpt-4-turbo': {
     context: 128000,
     max: 4096,
@@ -171,8 +195,12 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     max: 4096,
   },
   'o1': {
-    context: 128000,
-    max: 32768,
+    context: 200000,
+    max: 100000,
+  },
+  'o3': {
+    context: 200000,
+    max: 100000,
   },
   'o1-preview': {
     context: 128000,
@@ -182,12 +210,20 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 128000,
     max: 65536,
   },
+  'o3-mini': {
+    context: 2000000,
+    max: 100000,
+  },
+  'o4-mini': {
+    context: 2000000,
+    max: 100000,
+  },
 }));
 
 // Reasoning models have specific constraints:
 // 1. System context messages are not allowed.
 // 2. Different max_tokens behavior - max_completion_tokens used instead.
-export const REASONING_MODELS = ['o1', 'o1-preview', 'o1-mini'];
+export const REASONING_MODELS = ['o1', 'o3', 'o1-preview', 'o1-mini', 'o3-mini', 'o4-mini'];
 
 interface OpenAIMessage {
   role: Role;
@@ -314,7 +350,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o1-preview" | "o1-mini",
+    model: "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
     maxTokens: number,
     temperature: number,
     top_p: number;
@@ -366,7 +402,7 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
     generateCodeEnabled: true,
     apiBaseUrl: "https://api.openai.com/v1",
     organization: "",
-    model: "gpt-4o",
+    model: "gpt-4.1",
     maxTokens: 4000,
     temperature: 1,
     top_p: 1

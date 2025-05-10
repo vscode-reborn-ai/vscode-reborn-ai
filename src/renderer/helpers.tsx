@@ -189,69 +189,79 @@ export function useRenameTabTitleWithAI(
   );
 }
 
-export function getModelFriendlyName(
-  currentConversation: Conversation,
-  models: Model[],
-  settings: ExtensionSettings,
+// Returns a friendly name for a specific model (does not use models array or settings fallback)
+export function getModelFriendlyNameFromModel(
+  model: Model | undefined,
   shortVersion: boolean = false
 ) {
   let friendlyName: string;
   let usingModelId = false;
 
-  if (currentConversation.model?.name) {
-    friendlyName = currentConversation.model.name;
-  } else if (MODEL_FRIENDLY_NAME.has(currentConversation.model?.id ?? "")) {
-    friendlyName =
-      MODEL_FRIENDLY_NAME.get(currentConversation.model?.id ?? "") ?? "";
-  } else if (currentConversation.model?.id) {
-    friendlyName = currentConversation.model.id;
-    usingModelId = true;
-  } else if (models.find((model) => model.id === settings?.gpt3?.model)?.name) {
-    friendlyName =
-      models.find((model) => model.id === settings?.gpt3?.model)?.name ?? "";
-  } else if (settings?.gpt3?.model) {
-    friendlyName = settings.gpt3.model;
+  if (model?.name) {
+    friendlyName = model.name;
+  } else if (MODEL_FRIENDLY_NAME.has(model?.id ?? "")) {
+    friendlyName = MODEL_FRIENDLY_NAME.get(model?.id ?? "") ?? "";
+  } else if (model?.id) {
+    friendlyName = model.id;
     usingModelId = true;
   } else {
     friendlyName = "No model selected";
   }
 
   if (usingModelId) {
-    // Expect a format like "google/gemma-7b-it:free"
-    // if the friendly has a slash (ie perplexity/model-name), ignore everything before the slash
     if (friendlyName.includes("/")) {
       friendlyName = friendlyName.split("/")[1];
     }
-
-    //  if the friendly name has a colon (ie model-name:version), ignore everything after the colon
     if (friendlyName.includes(":")) {
       friendlyName = friendlyName.split(":")[0];
     }
   } else if (shortVersion) {
-    // Expect a format like "Google: Gemini Pro 1.0"
-    // If it includes a colon, ignore everything before the colon
     if (friendlyName.includes(":")) {
       friendlyName = friendlyName.split(":")[1];
     }
-
-    // If the name ends with " (some text here)", remove it
     if (friendlyName.includes(" (")) {
       friendlyName = friendlyName.split(" (")[0];
     }
   }
 
-  // trim
-  friendlyName = friendlyName.trim();
-
-  return friendlyName;
+  return friendlyName.trim();
 }
-// Hook version of getModelFriendlyName
-export function useModelFriendlyName(
-  currentConversation: Conversation,
+
+// Returns a friendly name for the model used in a conversation, with fallback logic using models/settings
+export function getModelFriendlyName(
+  conversation: Conversation,
   models: Model[],
-  settings: ExtensionSettings
+  settings: ExtensionSettings,
+  shortVersion: boolean = false
 ) {
-  return getModelFriendlyName(currentConversation, models, settings);
+  let model = conversation.model;
+  if (!model) {
+    // Try to find the model from settings.gpt3.model in the models array
+    model = models.find((m) => m.id === settings?.gpt3?.model);
+    if (!model && settings?.gpt3?.model) {
+      // If not found, create a minimal model object with just the id
+      model = { id: settings.gpt3.model } as Model;
+    }
+  }
+  return getModelFriendlyNameFromModel(model, shortVersion);
+}
+
+// Hook version for model
+export function useModelFriendlyNameFromModel(
+  model: Model | undefined,
+  shortVersion: boolean = false
+) {
+  return getModelFriendlyNameFromModel(model, shortVersion);
+}
+
+// Hook version for conversation
+export function useModelFriendlyName(
+  conversation: Conversation,
+  models: Model[],
+  settings: ExtensionSettings,
+  shortVersion: boolean = false
+) {
+  return getModelFriendlyName(conversation, models, settings, shortVersion);
 }
 
 // Model token limit for context (input)
@@ -458,4 +468,29 @@ export function useMaxCost(conversation: Conversation) {
   }, [conversation.tokenCount, conversation.model]);
 
   return maxCost;
+}
+
+export function useFormatInteger() {
+  const formatInteger = useCallback((num: number | undefined) => {
+    if (num === undefined) {
+      return "varies";
+    }
+
+    return num.toLocaleString();
+  }, []);
+
+  return formatInteger;
+}
+
+export function useFormatSize() {
+  const formatSize = useCallback((bytes: number) => {
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    if (bytes === 0) {
+      return "0 B";
+    }
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return (bytes / Math.pow(1024, i)).toFixed(2) + " " + sizes[i];
+  }, []);
+
+  return formatSize;
 }

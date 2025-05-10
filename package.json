@@ -4,14 +4,16 @@
   "displayName": "VSCode Reborn AI",
   "icon": "images/reborn-ai-logo.png",
   "description": "Code with AI in VSCode, but you get to choose the AI.",
-  "version": "3.26.0",
+  "version": "3.27.0",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/vscode-reborn-ai/vscode-reborn-ai"
   },
   "engines": {
-    "vscode": "^1.70.0"
+    "vscode": "^1.70.0",
+    "node": ">=20"
   },
+  "packageManager": "yarn@1.22.19",
   "categories": [
     "Programming Languages",
     "Machine Learning",
@@ -19,10 +21,11 @@
     "Education"
   ],
   "keywords": [
-    "chatgpt",
-    "gpt4o",
-    "o1",
     "ai",
+    "gpt-4.1",
+    "o4-mini",
+    "o3",
+    "chatgpt",
     "openai",
     "find bugs"
   ],
@@ -455,6 +458,7 @@
         "chatgpt.gpt3.model": {
           "type": "string",
           "enum": [
+            "gpt-4.1",
             "gpt-4o",
             "gpt-4o-mini",
             "gpt-4-turbo",
@@ -462,10 +466,11 @@
             "gpt-4-32k",
             "gpt-3.5-turbo"
           ],
-          "default": "gpt-4o",
+          "default": "gpt-4.1",
           "markdownDescription": "OpenAI models to use for your prompts. [Documentation](https://platform.openai.com/docs/models/models). \n\n**If you face 400 Bad Request please make sure you are using the right model for your integration method.**",
           "order": 36,
           "enumItemLabels": [
+            "OpenAI GPT-4.1",
             "OpenAI GPT-4o",
             "OpenAI GPT-4o Mini",
             "OpenAI GPT-4 Turbo",
@@ -474,6 +479,7 @@
             "OpenAI GPT-3.5 Turbo"
           ],
           "markdownEnumDescriptions": [
+            "The latest high-intelligence model for complex tasks.",
             "High-intelligence flagship model for complex, multi-step tasks.",
             "Affordable and intelligent small model for fast, lightweight tasks",
             "The previous set of high-intelligence models. 3x cheaper than GPT-4. 16x longer inputs than GPT-4.",
@@ -590,6 +596,7 @@
   "scripts": {
     "vscode:prepublish": "rimraf out && yarn esbuild-base --minify && yarn build-webview",
     "esbuild-base": "esbuild ./src/entry-point.ts --bundle --outfile=out/entry-point.js --external:vscode --format=cjs --platform=node",
+    "esbuild-test": "esbuild ./src/test/**/*.ts --bundle --outdir=out/test --external:vscode --external:mocha --external:./reporters/parallel-buffered --external:./worker.js --format=cjs --platform=node",
     "build": "yarn esbuild-base --sourcemap && yarn build-webview",
     "dev": "yarn watch",
     "watch": "npm-run-all -p watch:*",
@@ -597,7 +604,8 @@
     "watch:webview": "webpack --mode development --watch",
     "build-webview": "webpack --mode production",
     "fmt": "prettier --write \"src/**/*.ts\" && yarn test --fix",
-    "test": "eslint src --ext ts && tsc --noEmit",
+    "test": "yarn esbuild-test && vscode-test --log=error",
+    "test:coverage": "vscode-test --coverage",
     "package": "npx @vscode/vsce package"
   },
   "devDependencies": {
@@ -607,7 +615,7 @@
     "@types/glob": "^8.0.0",
     "@types/isomorphic-fetch": "^0.0.36",
     "@types/marked": "^4.0.8",
-    "@types/mocha": "^10.0.1",
+    "@types/mocha": "^10.0.10",
     "@types/node": "16.x",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
@@ -618,12 +626,14 @@
     "@types/vscode-webview": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
-    "@vscode/test-electron": "^2.2.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
     "autoprefixer": "^10.4.19",
     "css-loader": "^7.1.2",
-    "esbuild": "^0.15.18",
+    "esbuild": "^0.25.0",
     "eslint": "^8.28.0",
     "glob": "^8.0.3",
+    "mocha": "^11.1.0",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.38",
     "postcss-loader": "^8.1.1",
@@ -631,18 +641,18 @@
     "style-loader": "^4.0.0",
     "tailwindcss": "^3.4.4",
     "ts-loader": "^9.4.2",
-    "typescript": "^4.9.3",
+    "typescript": "^5.7.3",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
-    "@ai-sdk/azure": "^0.0.45",
-    "@ai-sdk/openai": "^0.0.66",
+    "@ai-sdk/azure": "^1.3.23",
+    "@ai-sdk/openai": "^1.3.22",
     "@headlessui/react": "^2.0.4",
     "@heroicons/react": "^2.1.3",
     "@reduxjs/toolkit": "^1.9.3",
-    "ai": "^3.4.9",
-    "dompurify": "^3.1.7",
+    "ai": "^4.3.15",
+    "dompurify": "^3.2.4",
     "highlight.js": "^11.7.0",
     "js-tiktoken": "^1.0.12",
     "ky": "^1.3.0",

@@ -1,15 +1,33 @@
 import * as assert from 'assert';
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from 'vscode';
-// import * as myExtension from '../../extension';
+
+const EXTENSION_ID = 'chris-hayes.chatgpt-reborn';
 
 suite('Extension Test Suite', () => {
-  vscode.window.showInformationMessage('Start all tests.');
+  test('Check if extension activates', async () => {
+    const extension = vscode.extensions.getExtension(EXTENSION_ID);
 
-  test('Sample test', () => {
-    assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-    assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+    assert.ok(extension, `Extension ${EXTENSION_ID} not found.`);
+
+    if (!extension.isActive) {
+      await extension.activate();
+    }
+
+    assert.strictEqual(extension.isActive, true, 'Extension did not activate.');
+  });
+
+  test('Check if translations load correctly', async () => {
+    const extension = vscode.extensions.getExtension(EXTENSION_ID);
+
+    assert.ok(extension, `Extension ${EXTENSION_ID} not found.`);
+
+    if (!extension.isActive) {
+      await extension.activate();
+    }
+
+    const translations = await import('../../localization');
+    const loadedTranslations = await translations.loadTranslations(extension.extensionPath);
+
+    assert.ok(loadedTranslations, 'Translations did not load correctly.');
   });
 });

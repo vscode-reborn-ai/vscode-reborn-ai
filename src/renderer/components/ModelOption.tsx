@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import React from "react";
+import { useFormatInteger } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
@@ -25,13 +26,17 @@ export default function ModelOption({
   const isSelected = model.id === currentlySelectedId;
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: RootState) => state.app.translations);
+  const settings = useAppSelector(
+    (state: RootState) => state.app.extensionSettings
+  );
   const backendMessenger = useMessenger(vscode);
-  const models: Model[] = useAppSelector(
+  const modelList: Model[] = useAppSelector(
     (state: RootState) => state.app.models
   );
   const [selectedModel, setSelectedModel] = React.useState<Model | undefined>(
     undefined
   );
+  const formatInteger = useFormatInteger();
 
   const setModel = (model: Model) => {
     // Update settings
@@ -51,13 +56,13 @@ export default function ModelOption({
   // Calculate currently selected OpenAI model
   // (converts from RichModel to Model)
   React.useEffect(() => {
-    setSelectedModel(models.find((m) => m.id === model.id));
-  }, [models, currentlySelectedId, model]);
+    setSelectedModel(modelList.find((m) => m.id === model.id));
+  }, [modelList, currentlySelectedId, model]);
 
   return (
     <button
       className={classNames(
-        "group flex flex-col gap-2 items-start justify-start p-2 w-full",
+        "group flex flex-col gap-1 items-start justify-start p-2 w-[27em] max-w-full",
         "hover:bg-menu-selection hover:text-menu-selection",
         "focus:bg-menu-selection focus:text-menu-selection",
         {
@@ -80,26 +85,34 @@ export default function ModelOption({
       }}
     >
       <span>
-        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
+        <label className="font-bold group-hover:text-menu-selection group-focus:text-menu-selection">
           {model.name}
-        </code>
-        {model.recommended && <strong> (recommended)</strong>}
+        </label>
+        {model.recommended && " - recommended"}
       </span>
-      <p>
-        Quality: {model.quality}, Speed: {model.speed}, Cost: {model.cost},
-        Context:{" "}
-        <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-          {MODEL_TOKEN_LIMITS.get(model.id ?? "")?.context}
-        </code>
-        {MODEL_TOKEN_LIMITS.get(model.id ?? "")?.max && (
-          <>
-            , Completion:{" "}
-            <code className="group-hover:text-menu-selection group-focus:text-menu-selection">
-              {MODEL_TOKEN_LIMITS.get(model.id ?? "")?.max}
-            </code>
-          </>
-        )}
-      </p>
+      <div className="flex flex-wrap gap-2">
+        <span>Quality: {model.quality}</span>
+        <span>Speed: {model.speed}</span>
+        <span>Cost: {model.cost}</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <span>
+          Context:{" "}
+          <code className="text-2xs group-hover:text-menu-selection group-focus:text-menu-selection">
+            {formatInteger(MODEL_TOKEN_LIMITS.get(model.id ?? "")?.context)}
+          </code>
+        </span>
+        <span>
+          {MODEL_TOKEN_LIMITS.get(model.id ?? "")?.max && (
+            <>
+              Completion:{" "}
+              <code className="text-2xs group-hover:text-menu-selection group-focus:text-menu-selection">
+                {formatInteger(MODEL_TOKEN_LIMITS.get(model.id ?? "")?.max)}
+              </code>
+            </>
+          )}
+        </span>
+      </div>
     </button>
   );
 }

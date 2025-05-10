@@ -34,20 +34,14 @@ export interface RichModel extends Partial<Model> {
   cost: string;
   recommended?: boolean;
 }
-const modelsArray: RichModel[] = [
+const SUGGESTED_OPENAI_MODELS: RichModel[] = [
   {
-    id: "gpt-4-turbo",
-    name: "gpt-4-turbo",
-    quality: "⭐⭐⬜",
+    id: "gpt-4.1",
+    name: "gpt-4.1",
+    quality: "⭐⭐⭐",
     speed: "⚡⚡⬜",
     cost: "💸💸⬜",
-  },
-  {
-    id: "gpt-4",
-    name: "gpt-4",
-    quality: "⭐⭐⬜",
-    speed: "⚡⬜⬜",
-    cost: "💸💸⬜",
+    recommended: true,
   },
   {
     id: "gpt-4o",
@@ -55,7 +49,27 @@ const modelsArray: RichModel[] = [
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
     cost: "💸⬜⬜",
-    recommended: true,
+  },
+  {
+    id: "o4-mini",
+    name: "o4-mini",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⚡",
+    cost: "💸💸⬜",
+  },
+  {
+    id: "o3",
+    name: "o3",
+    quality: "⭐⭐⭐",
+    speed: "⚡⬜⬜",
+    cost: "💸💸💸",
+  },
+  {
+    id: "o3-mini",
+    name: "o3-mini",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⚡",
+    cost: "💸💸⬜",
   },
   {
     id: "gpt-4o-mini",
@@ -64,27 +78,12 @@ const modelsArray: RichModel[] = [
     speed: "⚡⚡⚡",
     cost: "💸⬜⬜",
   },
-  // o1 will be available once the model is released
-  // {
-  //   id: "o1",
-  //   name: "o1",
-  //   quality: "⭐⭐⭐",
-  //   speed: "⚡⬜⬜",
-  //   cost: "💸💸💸",
-  // },
   {
-    id: "o1-preview",
-    name: "o1-preview",
+    id: "o1",
+    name: "o1",
     quality: "⭐⭐⭐",
     speed: "⚡⬜⬜",
     cost: "💸💸💸",
-  },
-  {
-    id: "o1-mini",
-    name: "o1-mini",
-    quality: "⭐⭐⭐",
-    speed: "⚡⬜⬜",
-    cost: "💸💸⬜",
   },
 ];
 
@@ -114,11 +113,11 @@ export default function ModelSelect({
   const apiKeyStatus = useAppSelector(
     (state: RootState) => state.app?.apiKeyStatus
   );
-  const models: Model[] = useAppSelector(
+  const modelList: Model[] = useAppSelector(
     (state: RootState) => state.app.models
   );
   const sync = useAppSelector((state: RootState) => state.app.sync);
-  const [filteredModels, setFilteredModels] = useState<Model[]>(models);
+  const [filteredModels, setFilteredModels] = useState<Model[]>(modelList);
   const backendMessenger = useMessenger(vscode);
   const [sortBy, setSortBy] = useState<
     "name" | "cost" | "context" | "completion"
@@ -131,19 +130,13 @@ export default function ModelSelect({
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 
   const hasOpenAIModels = useMemo(() => {
-    // check if the model list has at least one of: gpt-4, gpt-4-turbo, gpt-4o, gpt-4o-mini, gpt-3.5-turbo
-    return models.some(
-      (model) =>
-        model.id === "gpt-4" ||
-        model.id === "gpt-4-turbo" ||
-        model.id === "gpt-4o" ||
-        model.id === "gpt-4o-mini" ||
-        model.id === "gpt-3.5-turbo"
-    );
-  }, [models]);
+    // Check if the model list has at least one model from modelsArray
+    const openAIModelIds = SUGGESTED_OPENAI_MODELS.map((model) => model.id);
+    return modelList.some((model) => openAIModelIds.includes(model.id));
+  }, [modelList]);
 
   const isCurrentModelAvailable = useIsModelAvailable(
-    models,
+    modelList,
     currentConversation?.model
   );
 
@@ -163,7 +156,7 @@ export default function ModelSelect({
   const computedModelDataMap = useMemo(() => {
     const modelData = new Map<string, ComputedModelData>();
 
-    models.forEach((model) => {
+    modelList.forEach((model) => {
       const rate = getModelRates(model);
 
       modelData.set(model.id, {
@@ -194,11 +187,11 @@ export default function ModelSelect({
     });
 
     return modelData;
-  }, [models]);
+  }, [modelList]);
 
   const currentModelFriendlyName = useMemo(() => {
-    return getModelFriendlyName(currentConversation, models, settings, true);
-  }, [currentConversation, models, settings]);
+    return getModelFriendlyName(currentConversation, modelList, settings, true);
+  }, [currentConversation, modelList, settings]);
 
   // returns sorted list of models
   const sortList = useCallback(
@@ -279,22 +272,22 @@ export default function ModelSelect({
     const query = searchInputRef.current?.value.toLowerCase() ?? "";
 
     // Search for models that match the query
-    const modelList: Model[] = Object.assign([], models);
+    const modelListCopy: Model[] = Object.assign([], modelList);
     const filteredModelList =
       query.length > 0
-        ? modelList.filter(
+        ? modelListCopy.filter(
             (model) =>
               model.id.toLowerCase().includes(query) ||
               (model?.name && model.name.toLowerCase().includes(query))
           )
-        : modelList;
+        : modelListCopy;
 
     setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
-  }, [models, sortBy, ascending, searchInputRef]);
+  }, [modelList, sortBy, ascending, searchInputRef]);
 
   useEffect(() => {
-    setFilteredModels(sortList(sortBy, models, !ascending));
-  }, [models, currentConversation.model, isCurrentModelAvailable]);
+    setFilteredModels(sortList(sortBy, modelList, !ascending));
+  }, [modelList, currentConversation.model, isCurrentModelAvailable]);
 
   useEffect(() => {
     setFilteredModels(sortList(sortBy, filteredModels, !ascending));
@@ -386,7 +379,7 @@ export default function ModelSelect({
           */}
           {settings?.showAllModels || !hasOpenAIModels ? (
             <>
-              {models.length === 0 ? (
+              {modelList.length === 0 ? (
                 <>
                   {apiKeyStatus === ApiKeyStatus.Pending ? (
                     <div className="p-2 text-center">
@@ -409,7 +402,7 @@ export default function ModelSelect({
               ) : (
                 <>
                   {/* Custom LLM (not OpenAI) - LONG LLM list */}
-                  {(models.length > 6 ? filteredModels : models).map(
+                  {(modelList.length > 6 ? filteredModels : modelList).map(
                     (model: Model) => (
                       <button
                         key={model.id}
@@ -599,11 +592,11 @@ export default function ModelSelect({
                     )
                   )}
                   {/* Custom LLM (not OpenAI) - LONG LLM list */}
-                  {models.length > 6 && (
+                  {modelList.length > 6 && (
                     <div className="sticky flex flex-col gap-1 bottom-0 p-2 w-full bg-menu">
                       <div className="flex flex-wrap gap-2 items-center justify-between">
                         <span className="flex-grow opacity-50 text-2xs">
-                          Showing {filteredModels.length} of {models.length}
+                          Showing {filteredModels.length} of {modelList.length}
                         </span>
                         {/* button list of sort by buttons, the current sort by button is highlighted */}
                         <div className="flex flex-wrap justify-end gap-1">
@@ -734,7 +727,9 @@ export default function ModelSelect({
           ) : (
             <>
               {/* OpenAI - base models */}
-              {modelsArray.map((model) => (
+              {SUGGESTED_OPENAI_MODELS.filter((model) =>
+                modelList.some((m) => m.id === model.id)
+              ).map((model) => (
                 <ModelOption
                   key={model.id}
                   model={model}
@@ -745,6 +740,27 @@ export default function ModelSelect({
                   setShowModels={setShowModels}
                 />
               ))}
+              {/* Message for "suggested models" that are not available to the user */}
+              {SUGGESTED_OPENAI_MODELS.filter((model) =>
+                modelList.some((m) => m.id === model.id)
+              ).length > 0 && (
+                <>
+                  <div className="p-2">
+                    <span>
+                      {t?.modelSelect?.noUserAccess ??
+                        "Models not yet available on your account:"}
+                      {SUGGESTED_OPENAI_MODELS.filter(
+                        (model) => !modelList.some((m) => m.id === model.id)
+                      ).map((model) => (
+                        <>
+                          {" "}
+                          <code key={model.id}>{model.name}</code>
+                        </>
+                      ))}
+                    </span>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>

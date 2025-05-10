@@ -1,9 +1,38 @@
+# 🔹 Build output (ignored, but keep specific built files if needed)
 out/**/*.js
 out/**/*.map
-dist
+# Ignore TypeScript incremental build info
+out/**/*.tsbuildinfo
 node_modules
-.vscode-test/
-*.vsix
+# Keep this specific file if necessary
 !node_modules/chatgpt/build/index.js
+
+# 🔹 Distribution & Release files
+dist/
+# VS Code extension package
+*.vsix
+
+# 🔹 VS Code Extension Testing (Integration & Browser)
+.vscode-test/
+.vscode-test-web/
+.vscode-test-log.txt  # In case logs get written here
+out/test/
+coverage/
+
+# 🔹 Logs & Debugging
 yarn-error.log
-.vscode-test-web
+npm-debug.log*
+*.log
+
+# 🔹 Package manager (Yarn, Zero-Installs, & PnP)
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+# Remove this line if using Zero-Installs
+!.yarn/cache
+.pnp.*
+.yarnrc.yml
+
+# 🔹 System files
+.DS_Store
+Thumbs.db
