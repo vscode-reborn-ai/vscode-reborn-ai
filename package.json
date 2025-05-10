@@ -4,7 +4,7 @@
   "displayName": "VSCode Reborn AI",
   "icon": "images/reborn-ai-logo.png",
   "description": "Code with AI in VSCode, but you get to choose the AI.",
-  "version": "3.26.0",
+  "version": "3.27.0",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/vscode-reborn-ai/vscode-reborn-ai"
