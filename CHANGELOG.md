@@ -10,7 +10,9 @@
 
 ## May 10, 2025 [v3.27.0]
 
+- ✨ **Feature** - Added support for OpenAI's Search model, `gpt-4o-search-preview`.
 - ✨ **Feature** - Added support for `gpt-4.1`, `o3`, `o4-mini` and `o3-mini` when using OpenAI. *Thanks @PeterDaveHello*
+- 🎨 **Branding** - Minor improvements to model select UI.
 - 📼 **Deprecated** - `gpt-4`, `gpt-4-turbo` and `o1-mini` are deprecated in favor of newer models.
 
 ## October 20, 2024 [v3.26.0]
