@@ -73,7 +73,7 @@ const SUGGESTED_OPENAI_MODELS: RichModel[] = [
   },
   {
     id: "o3-mini",
-    name: "o3 mini",
+    name: "o3-mini",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
     cost: "💸💸⬜",
