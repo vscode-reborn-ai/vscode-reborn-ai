@@ -5,7 +5,7 @@ import {
   ArrowUpIcon,
 } from "@heroicons/react/24/solid";
 import classNames from "classnames";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getModelCompletionLimit,
   getModelContextLimit,
@@ -127,6 +127,29 @@ export default function ModelSelect({
   const [showDescriptionOn, setShowDescriptionOn] = useState<string | null>(
     null
   );
+
+  // Reference to the menu container for outside click detection
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close the select menu when clicking outside of it
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowModels(false);
+      }
+    }
+
+    if (showModels) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showModels]);
+
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 
   const hasOpenAIModels = useMemo(() => {
@@ -171,14 +194,14 @@ export default function ModelSelect({
           rate.prompt === 0
             ? "FREE"
             : rate.prompt === undefined
-            ? "varies"
-            : `$${rate.prompt.toFixed(1)}/M`,
+              ? "varies"
+              : `$${rate.prompt.toFixed(1)}/M`,
         completeText:
           rate.complete === 0
             ? "FREE"
             : rate.complete === undefined
-            ? "varies"
-            : `$${rate.complete.toFixed(1)}/M`,
+              ? "varies"
+              : `$${rate.complete.toFixed(1)}/M`,
         isFree: rate.prompt === 0 && rate.complete === 0,
         isExpensive:
           (rate.prompt !== undefined && rate.prompt > 10) ||
@@ -276,10 +299,10 @@ export default function ModelSelect({
     const filteredModelList =
       query.length > 0
         ? modelListCopy.filter(
-            (model) =>
-              model.id.toLowerCase().includes(query) ||
-              (model?.name && model.name.toLowerCase().includes(query))
-          )
+          (model) =>
+            model.id.toLowerCase().includes(query) ||
+            (model?.name && model.name.toLowerCase().includes(query))
+        )
         : modelListCopy;
 
     setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
@@ -363,10 +386,11 @@ export default function ModelSelect({
           {isCurrentModelAvailable
             ? currentModelFriendlyName
             : sync.receivedModels
-            ? t?.modelSelect?.noModelSelected ?? "No model selected"
-            : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
+              ? t?.modelSelect?.noModelSelected ?? "No model selected"
+              : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
         </button>
         <div
+          ref={dropdownRef}
           className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
@@ -484,8 +508,8 @@ export default function ModelSelect({
                         <div className="w-full flex justify-around gap-2 divide-dropdown text-2xs">
                           {computedModelDataMap.get(model.id)?.prompt ===
                             undefined &&
-                          (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
-                            settings.gpt3.apiBaseUrl.includes("localhost")) ? (
+                            (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
+                              settings.gpt3.apiBaseUrl.includes("localhost")) ? (
                             <>
                               {model.details?.family && (
                                 <span>{model.details.family}</span>
@@ -744,23 +768,23 @@ export default function ModelSelect({
               {SUGGESTED_OPENAI_MODELS.filter((model) =>
                 modelList.some((m) => m.id === model.id)
               ).length > 0 && (
-                <>
-                  <div className="p-2">
-                    <span>
-                      {t?.modelSelect?.noUserAccess ??
-                        "Models not yet available on your account:"}
-                      {SUGGESTED_OPENAI_MODELS.filter(
-                        (model) => !modelList.some((m) => m.id === model.id)
-                      ).map((model) => (
-                        <>
-                          {" "}
-                          <code key={model.id}>{model.name}</code>
-                        </>
-                      ))}
-                    </span>
-                  </div>
-                </>
-              )}
+                  <>
+                    <div className="p-2">
+                      <span>
+                        {t?.modelSelect?.noUserAccess ??
+                          "Models not yet available on your account:"}
+                        {SUGGESTED_OPENAI_MODELS.filter(
+                          (model) => !modelList.some((m) => m.id === model.id)
+                        ).map((model) => (
+                          <>
+                            {" "}
+                            <code key={model.id}>{model.name}</code>
+                          </>
+                        ))}
+                      </span>
+                    </div>
+                  </>
+                )}
             </>
           )}
         </div>

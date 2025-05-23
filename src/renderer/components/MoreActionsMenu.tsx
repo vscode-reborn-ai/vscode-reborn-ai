@@ -1,6 +1,6 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/16/solid";
 import classNames from "classnames";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import { useAppDispatch, useAppSelector } from "../hooks";
@@ -35,6 +35,29 @@ export default function MoreActionsMenu({
   const backendMessenger = useMessenger(vscode);
   const [showViewOptions, setShowViewOptions] = useState(false);
 
+  // Reference to the menu container for outside click detection
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close the actions menu when clicking outside of it
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMoreActions(false);
+      }
+    }
+
+    if (showMoreActions) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMoreActions]);
+
+
   // When the show more actions menu is shown, hide the view options menu
   // So, if the user leaves the view options menu open on close, it won't be shown on open
   useEffect(() => {
@@ -47,6 +70,7 @@ export default function MoreActionsMenu({
     <>
       <div
         id="more-actions-menu"
+        ref={menuRef}
         className={classNames(
           "MoreActionsMenu",
           "fixed z-20 right-4 p-2 bg-menu rounded border border-menu overflow-hidden max-w-[calc(100vw-2em)]",
