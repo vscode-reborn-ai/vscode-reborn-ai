@@ -92,14 +92,14 @@ export const addChatMessage = (
     prev.map((conversation: Conversation) =>
       conversation.id === currentConversationId
         ? {
-            ...conversation,
-            // Add message to conversation; filter is here to prevent duplicate messages
-            messages: [...conversation.messages, newMessage].filter(
-              (message: ChatMessage, index: number, self: ChatMessage[]) =>
-                index ===
-                self.findIndex((m: ChatMessage) => m.id === message.id)
-            ),
-          }
+          ...conversation,
+          // Add message to conversation; filter is here to prevent duplicate messages
+          messages: [...conversation.messages, newMessage].filter(
+            (message: ChatMessage, index: number, self: ChatMessage[]) =>
+              index ===
+              self.findIndex((m: ChatMessage) => m.id === message.id)
+          ),
+        }
         : conversation
     )
   );
@@ -365,7 +365,7 @@ export function isReasoningModel(model: Model | undefined) {
 
 // Custom hook useIsCurrentModelAvailable
 export function useIsModelAvailable(
-  models: Array<{ id: string }>,
+  models: Array<{ id: string; }>,
   model: Model | undefined
 ): boolean {
   return useMemo(() => {
@@ -493,4 +493,24 @@ export function useFormatSize() {
   }, []);
 
   return formatSize;
+}
+
+// Hook - Close the dropdown menu when clicking outside.
+export function useOnClickOutside(
+  ref: React.RefObject<HTMLElement>,
+  handler: () => void
+) {
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        handler();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [ref, handler]);
 }

@@ -15,6 +15,7 @@ import {
   isOnlineModel,
   useConvertMarkdownToComponent,
   useIsModelAvailable,
+  useOnClickOutside,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
@@ -128,27 +129,11 @@ export default function ModelSelect({
     null
   );
 
-  // Reference to the menu container for outside click detection
+  // Reference to the dropdown container for outside click detection
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close the select menu when clicking outside of it
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowModels(false);
-      }
-    }
-
-    if (showModels) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showModels]);
+  // Close the dropdown menu when clicking outside of it
+  useOnClickOutside(dropdownRef, () => setShowModels(false));
 
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+import { useOnClickOutside } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
@@ -25,29 +26,11 @@ export default function VerbositySelect({
   const t = useAppSelector((state: RootState) => state.app.translations);
   const [showOptions, setShowOptions] = useState(false);
 
-  // Reference to the menu container for outside click detection
+  // Reference to the dropdown container for outside click detection
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close the dropdown menu when clicking outside of it
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowOptions(false);
-      }
-    }
-
-    if (showOptions) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showOptions]);
-
-
+  useOnClickOutside(dropdownRef, () => setShowOptions(false));
 
   const backendMessenger = useMessenger(vscode);
 
@@ -80,7 +63,7 @@ export default function VerbositySelect({
   return (
     <>
       <div
-        ref={dropdownRef}  // Attach a ref to the dropdown container so we can detect outside clicks
+        ref={dropdownRef}  // Attach a ref to the dropdown container for outside-click detection
         className={`${className}`}
         data-tooltip-id={tooltipId ?? "footer-tooltip"}
         data-tooltip-content={
