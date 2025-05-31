@@ -10,8 +10,8 @@ import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
 import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
-import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { ActionNames, ChatMessage, Conversation, Model, ReasoningEffort, Role, Verbosity } from "./renderer/types";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetReasoningEffortMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
 
@@ -487,11 +487,18 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         case BackendMessageType.resetApiKey:
           this.clearApiKey();
           break;
-        case BackendMessageType.setVerbosity:
+        case BackendMessageType.setVerbosity: {
           const setVerbosityData = data as SetVerbosityMessage;
           const verbosity = setVerbosityData?.verbosity ?? Verbosity.normal;
           vscode.workspace.getConfiguration("chatgpt").update("verbosity", verbosity, vscode.ConfigurationTarget.Global);
           break;
+        }
+        case BackendMessageType.setReasoningEffort: {
+          const setReasoningEffortData = data as SetReasoningEffortMessage;
+          const reasoningEffort = setReasoningEffortData?.reasoningEffort ?? ReasoningEffort.Medium;
+          vscode.workspace.getConfiguration("chatgpt").update("reasoningEffort", reasoningEffort, vscode.ConfigurationTarget.Global);
+          break;
+        }
         case BackendMessageType.setShowAllModels:
           const setShowAllModelsData = data as SetShowAllModelsMessage;
           this.showAllModels = setShowAllModelsData.showAllModels;

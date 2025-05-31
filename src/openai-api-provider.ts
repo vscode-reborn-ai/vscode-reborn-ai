@@ -139,8 +139,9 @@ export class ApiProvider {
 
     const { textStream } = await
       streamText({
-        // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
-        model: this._openai.languageModel(model),
+        model: this._openai.languageModel(model, {
+          reasoningEffort: isReasoningModel(model) ? conversation.reasoningEffort : undefined,
+        }),
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -184,8 +185,9 @@ export class ApiProvider {
     }
 
     const { text } = await generateText({
-      // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
-      model: this._openai.languageModel(model),
+      model: this._openai.languageModel(model, {
+        reasoningEffort: isReasoningModel(model) ? conversation.reasoningEffort : undefined,
+      }),
       messages: conversation.messages.map((message) => ({
         role: message.role,
         content: message.content,

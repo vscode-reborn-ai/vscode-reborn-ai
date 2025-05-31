@@ -566,6 +566,27 @@
             "Detailed, full explanations"
           ]
         },
+        "chatgpt.reasoningEffort": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "medium",
+          "description": "How much reasoning effort should Reborn AI put into the response?",
+          "order": 46,
+          "enumItemLabels": [
+            "Low",
+            "Medium",
+            "High"
+          ],
+          "markdownEnumDescriptions": [
+            "Fast and cheap, but spends the least time reasoning",
+            "Balanced speed and reasoning quality",
+            "Best reasoning quality, but slow and expensive"
+          ]
+        },
         "chatgpt.renameTabTitles": {
           "type": "boolean",
           "default": true,

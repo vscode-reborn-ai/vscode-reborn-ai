@@ -90,6 +90,9 @@ export default function VerbositySelect({
           ${dropdownClassName ? dropdownClassName : "mb-8 -ml-11"}
         `}
         >
+          <div className="px-2 py-1 border-b text-xs font-semibold">
+            {t?.verbosity?.title ?? "Response Style"}
+          </div>
           {Object.values(Verbosity).map((option) => (
             <button
               className="flex gap-2 items-center justify-start p-2 w-full hover:bg-menu-selection"

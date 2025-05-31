@@ -282,6 +282,12 @@ export enum Verbosity {
   full = "full"
 }
 
+export enum ReasoningEffort {
+  Low = "low",
+  Medium = "medium",
+  High = "high"
+}
+
 export interface CoreTool {
   description: string;
   parameters: any;
@@ -300,6 +306,7 @@ export interface Conversation {
   aiRenamedTitle?: boolean;
   autoscroll: boolean;
   verbosity?: Verbosity | undefined;
+  reasoningEffort?: ReasoningEffort | undefined;
   // allow the user to switch tabs while working on a prompt
   userInput?: string;
   tokenCount?: {
@@ -391,6 +398,7 @@ export interface ExtensionSettings {
   minimalUI: boolean,
   disableMultipleConversations: boolean,
   verbosity: Verbosity,
+  reasoningEffort: ReasoningEffort;
   renameTabTitles: boolean;
   showAllModels: boolean;
   manualModelInput: boolean;
@@ -443,6 +451,7 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   minimalUI: false,
   disableMultipleConversations: false,
   verbosity: Verbosity.normal,
+  reasoningEffort: ReasoningEffort.Medium,
   renameTabTitles: true,
   showAllModels: false,
   manualModelInput: false,
