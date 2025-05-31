@@ -575,7 +575,7 @@
           ],
           "default": "medium",
           "description": "How much reasoning effort should Reborn AI put into the response?",
-          "order": 46,
+          "order": 47,
           "enumItemLabels": [
             "Low",
             "Medium",
@@ -591,25 +591,25 @@
           "type": "boolean",
           "default": true,
           "description": "If enabled, after the first user message, gpt-4o will be used to rename the tab title.",
-          "order": 47
+          "order": 48
         },
         "chatgpt.showAllModels": {
           "type": "boolean",
           "default": false,
           "description": "If enabled, the model select dropdown will show ALL available models returned from the API.",
-          "order": 48
+          "order": 49
         },
         "chatgpt.manualModelInput": {
           "type": "boolean",
           "default": false,
           "description": "If enabled, you can manually input the model name in the model id in the select dropdown. This is required for some APIs, like ollama.",
-          "order": 49
+          "order": 50
         },
         "chatgpt.azureApiVersion": {
           "type": "string",
           "default": "2024-02-01",
           "description": "This is required by Azure's API. It must match the API version the deployment expects.",
-          "order": 50
+          "order": 51
         }
       }
     }
