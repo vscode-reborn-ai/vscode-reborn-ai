@@ -21,6 +21,7 @@ export default function MoreActionsMenu({
   showMoreActions,
   setShowMoreActions,
   className,
+  buttonRef,
 }: {
   currentConversation: Conversation;
   conversationList: Conversation[];
@@ -28,6 +29,7 @@ export default function MoreActionsMenu({
   showMoreActions: boolean;
   setShowMoreActions: React.Dispatch<React.SetStateAction<boolean>>;
   className?: string;
+  buttonRef?: React.RefObject<HTMLButtonElement>;
 }) {
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: RootState) => state.app.translations);
@@ -40,7 +42,7 @@ export default function MoreActionsMenu({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close the dropdown menu when clicking outside of it
-  useOnClickOutside(dropdownRef, () => setShowMoreActions(false));
+  useOnClickOutside(dropdownRef, () => setShowMoreActions(false), buttonRef);
 
   // When the show more actions menu is shown, hide the view options menu
   // So, if the user leaves the view options menu open on close, it won't be shown on open

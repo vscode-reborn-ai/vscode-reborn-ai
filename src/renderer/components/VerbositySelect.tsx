@@ -28,9 +28,10 @@ export default function VerbositySelect({
 
   // Reference to the dropdown container for outside click detection
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Close the dropdown menu when clicking outside of it
-  useOnClickOutside(dropdownRef, () => setShowOptions(false));
+  useOnClickOutside(dropdownRef, () => setShowOptions(false), buttonRef);
 
   const backendMessenger = useMessenger(vscode);
 
@@ -72,6 +73,7 @@ export default function VerbositySelect({
         }
       >
         <button
+          ref={buttonRef}
           className="rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary"
           onClick={() => {
             setShowOptions(!showOptions);

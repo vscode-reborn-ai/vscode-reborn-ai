@@ -107,6 +107,7 @@ export default function ModelSelect({
 }) {
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: RootState) => state.app.translations);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [showModels, setShowModels] = useState(false);
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
@@ -133,7 +134,7 @@ export default function ModelSelect({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close the dropdown menu when clicking outside of it
-  useOnClickOutside(dropdownRef, () => setShowModels(false));
+  useOnClickOutside(dropdownRef, () => setShowModels(false), buttonRef);
 
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 
@@ -348,6 +349,7 @@ export default function ModelSelect({
     <>
       <div className={className}>
         <button
+          ref={buttonRef}
           className={classNames(
             `rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary`,
             {

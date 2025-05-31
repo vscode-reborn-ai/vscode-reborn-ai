@@ -498,11 +498,15 @@ export function useFormatSize() {
 // Hook - Close the dropdown menu when clicking outside.
 export function useOnClickOutside(
   ref: React.RefObject<HTMLElement>,
-  handler: () => void
+  handler: () => void,
+  // Use buttonRef to reference the button that opens the dropdown
+  // Without this, the button click would both close and reopen the dropdown
+  buttonRef?: React.RefObject<HTMLElement> | null,
 ) {
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
+      if (ref.current && !ref.current.contains(event.target as Node) &&
+          (!buttonRef || (buttonRef && !buttonRef.current?.contains(event.target as Node)))) {
         handler();
       }
     }
