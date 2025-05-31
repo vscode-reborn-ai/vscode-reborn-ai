@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
+import { useOnClickOutside } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
@@ -24,6 +25,14 @@ export default function VerbositySelect({
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: RootState) => state.app.translations);
   const [showOptions, setShowOptions] = useState(false);
+
+  // Reference to the dropdown container for outside click detection
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Close the dropdown menu when clicking outside of it
+  useOnClickOutside(dropdownRef, () => setShowOptions(false), buttonRef);
+
   const backendMessenger = useMessenger(vscode);
 
   const getHumanFriendlyLabel = (verbosity: Verbosity) => {
@@ -55,6 +64,7 @@ export default function VerbositySelect({
   return (
     <>
       <div
+        ref={dropdownRef}  // Attach a ref to the dropdown container for outside-click detection
         className={`${className}`}
         data-tooltip-id={tooltipId ?? "footer-tooltip"}
         data-tooltip-content={
@@ -63,6 +73,7 @@ export default function VerbositySelect({
         }
       >
         <button
+          ref={buttonRef}
           className="rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary"
           onClick={() => {
             setShowOptions(!showOptions);

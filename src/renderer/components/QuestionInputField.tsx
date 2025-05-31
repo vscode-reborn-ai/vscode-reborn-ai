@@ -40,6 +40,7 @@ export default ({
   );
   const t = useAppSelector((state: any) => state.app.translations);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
+  const moreActionsButtonRef = useRef<HTMLButtonElement>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [useEditorSelection, setIncludeEditorSelection] = useState(false);
   const [showTokenBreakdown, setShowTokenBreakdown] = useState(false);
@@ -461,6 +462,7 @@ export default ({
                   setShowMoreActions(!showMoreActions);
                 }
               }}
+              ref={moreActionsButtonRef}
             >
               <Icon icon="zap" className="w-3.5 h-3.5 hidden 2xs:block" />
               {t?.questionInputField?.moreActions ?? "More Actions"}
@@ -473,6 +475,7 @@ export default ({
               currentConversation={currentConversation}
               setShowMoreActions={setShowMoreActions}
               conversationList={conversationList}
+              buttonRef={moreActionsButtonRef}
             />
           </div>
         </div>
