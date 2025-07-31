@@ -55,8 +55,6 @@ const ErrorMessageComponent = ({
 		}
 	};
 
-	const previousUserMessage = findPreviousUserMessage();
-
 	if (debug) {
 		// Debug logging to understand the issue
 		console.log("[Reborn AI] Error message debug:", {
