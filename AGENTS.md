@@ -186,7 +186,8 @@ catch (error) {
 - **Frontend**: Webpack for React code (`yarn build-webview`)
 - **Full Build**: `yarn build` chains the two scripts and refreshes `out/` bundles.
 - **Watch Mode**: `yarn watch` runs both in parallel
-- **Testing**: `yarn test` exercises the VS Code test runner (`@vscode/test-cli`); add `xvfb-run -a` only when running headless to avoid X server errors.
+- **Testing**: Use `yarn test` to exercise the VS Code test runner (`@vscode/test-cli`).
+- **Headless Testing**: Add `xvfb-run -a` before `yarn test` when running in a headless environment to avoid X server errors.
 - **Packaging**: `yarn package` delegates to `npx @vscode/vsce package`; VSCE will call the `vscode:prepublish` script during packaging so `out/` artifacts are rebuilt (see scripts in `package.json`).
 
 ### Package Management
