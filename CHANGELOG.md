@@ -2,10 +2,11 @@
 
 **Contributors:**
 
-[@Christopher-Hayes](github.com/Christopher-Hayes) - [@danyalaytekin](github.com/danyalaytekin) - [@flutterrausch](github.com/flutterrausch) - [@hakula139](github.com/hakula139) - [@lvii](github.com/lvii) - [@moritz-t-w](github.com/moritz-t-w) - [@nickv2002](github.com/nickv2002) - [@nossebro](github.com/nossebro) - [@PeterDaveHello](github.com/PeterDaveHello) - [@raphael2692](github.com/raphael2692) - [@rambalachandran](github.com/rambalachandran) - [@xmjiao](github.com/xmjiao) - [@wojtekcz](github.com/wojtekcz) - [@ZsgsDesign](github.com/ZsgsDesign) - [@zzy-life](github.com/zzy-life)
+[@Christopher-Hayes](github.com/Christopher-Hayes) - [@danyalaytekin](github.com/danyalaytekin) - [@flutterrausch](github.com/flutterrausch) - [@hakula139](github.com/hakula139) - [@lvii](github.com/lvii) - [@moritz-t-w](github.com/moritz-t-w) - [@nickv2002](github.com/nickv2002) - [@nossebro](github.com/nossebro) - [@nove-b](github.com/nove-b) - [@PeterDaveHello](github.com/PeterDaveHello) - [@raphael2692](github.com/raphael2692) - [@rambalachandran](github.com/rambalachandran) - [@xmjiao](github.com/xmjiao) - [@wojtekcz](github.com/wojtekcz) - [@ZsgsDesign](github.com/ZsgsDesign) - [@zzy-life](github.com/zzy-life)
 
 ## [next]
 
+- 🔧 **Fixes** - Fix user message loses space indents. - *Thank you for the PR @nove-b*
 - ✨ **Feature** - Added support for OpenAI's Search model, `gpt-4o-search-preview`.
 
 ## May 10, 2025 [v3.27.0]
