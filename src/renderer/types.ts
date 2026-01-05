@@ -75,6 +75,8 @@ export interface Model {
 // Maps ID to a friendly name
 // Ref: https://platform.openai.com/docs/models
 export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
+  "gpt-5.2": "GPT-5.2",
+  "gpt-5.1-codex-max": "GPT-5.1 Codex Max",
   "gpt-4.1": "GPT-4.1",
   "gpt-4-turbo": "GPT-4 Turbo",
   "gpt-4": "GPT-4",
@@ -99,6 +101,17 @@ interface ModelCost {
 
 // Token cost per 1 million tokens
 export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
+  // NOTE: Costs are used only for UI display. If costs are unknown/changed,
+  // users can still manually enter any model and use it.
+  // Sources for new models: OpenAI pricing/model docs (see issue #179 links).
+  'gpt-5.2': {
+    prompt: 0,
+    complete: 0,
+  },
+  'gpt-5.1-codex-max': {
+    prompt: 0,
+    complete: 0,
+  },
   'gpt-4.1': {
     prompt: 2,
     complete: 8,
@@ -163,6 +176,15 @@ interface ModelTokenLimits {
   max?: number;
 }
 export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.entries({
+  // NOTE: Token limits are used for UI display. If unknown, we leave them unset.
+  'gpt-5.2': {
+    context: 128000,
+    max: 4096,
+  },
+  'gpt-5.1-codex-max': {
+    context: 128000,
+    max: 4096,
+  },
   'gpt-4.1': {
     context: 1047576,
     max: 32768,
@@ -350,7 +372,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
+    model: "gpt-5.2" | "gpt-5.1-codex-max" | "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
     maxTokens: number,
     temperature: number,
     top_p: number;
@@ -402,7 +424,7 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
     generateCodeEnabled: true,
     apiBaseUrl: "https://api.openai.com/v1",
     organization: "",
-    model: "gpt-4.1",
+    model: "gpt-5.2",
     maxTokens: 4000,
     temperature: 1,
     top_p: 1
