@@ -101,16 +101,15 @@ interface ModelCost {
 
 // Token cost per 1 million tokens
 export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
-  // NOTE: Costs are used only for UI display. If costs are unknown/changed,
-  // users can still manually enter any model and use it.
-  // Sources for new models: OpenAI pricing/model docs (see issue #179 links).
   'gpt-5.2': {
-    prompt: 0,
-    complete: 0,
+    // Per OpenAI model page: Input $1.75 / 1M tokens, Output $14 / 1M tokens
+    prompt: 1.75,
+    complete: 14,
   },
   'gpt-5.1-codex-max': {
-    prompt: 0,
-    complete: 0,
+    // Per OpenAI model page: Input $1.25 / 1M tokens, Output $10 / 1M tokens
+    prompt: 1.25,
+    complete: 10,
   },
   'gpt-4.1': {
     prompt: 2,
@@ -129,8 +128,9 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     complete: 120,
   },
   'gpt-4o': {
-    prompt: 5,
-    complete: 15,
+    // Per OpenAI pricing page: Input $2.50 / 1M, Output $10 / 1M
+    prompt: 2.5,
+    complete: 10,
   },
   'gpt-4o-mini': {
     prompt: 0.15,
@@ -149,16 +149,18 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     complete: 60,
   },
   'o3': {
-    prompt: 10,
-    complete: 40,
+    // Per OpenAI pricing page: Input $2 / 1M, Output $8 / 1M
+    prompt: 2,
+    complete: 8,
   },
   'o1-preview': {
     prompt: 15,
     complete: 60,
   },
   'o1-mini': {
-    prompt: 3,
-    complete: 12,
+    // Per OpenAI pricing page: Input $1.10 / 1M, Output $4.40 / 1M
+    prompt: 1.10,
+    complete: 4.40,
   },
   'o3-mini': {
     prompt: 1.10,
@@ -178,12 +180,14 @@ interface ModelTokenLimits {
 export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.entries({
   // NOTE: Token limits are used for UI display. If unknown, we leave them unset.
   'gpt-5.2': {
-    context: 128000,
-    max: 4096,
+    // Per OpenAI model page: 400,000 context window, 128,000 max output tokens
+    context: 400000,
+    max: 128000,
   },
   'gpt-5.1-codex-max': {
-    context: 128000,
-    max: 4096,
+    // Per OpenAI model page: 400,000 context window, 128,000 max output tokens
+    context: 400000,
+    max: 128000,
   },
   'gpt-4.1': {
     context: 1047576,
