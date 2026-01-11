@@ -1,5 +1,5 @@
 import { ApiKeyStatus, ViewOptionsState } from "./store/app";
-import { ChatMessage, Conversation, ExtensionSettings, Model, Verbosity } from "./types";
+import { ChatMessage, Conversation, ExtensionSettings, Model, ReasoningEffort, Verbosity } from "./types";
 
 // A message that gets sent TO the backend
 export enum BackendMessageType {
@@ -19,6 +19,7 @@ export enum BackendMessageType {
   openSettings = "openSettings",
   openSettingsPrompt = "openSettingsPrompt",
   setVerbosity = "setVerbosity",
+  setReasoningEffort = "setReasoningEffort",
   setShowAllModels = "setShowAllModels",
   setManualModelInput = "setManualModelInput",
   // View options
@@ -138,6 +139,11 @@ export interface GenerateOpenRouterApiKeyMessage extends BaseBackendMessage {
 export interface SetVerbosityMessage extends BaseBackendMessage {
   type: BackendMessageType.setVerbosity;
   verbosity: Verbosity;
+}
+
+export interface SetReasoningEffortMessage extends BaseBackendMessage {
+  type: BackendMessageType.setReasoningEffort;
+  reasoningEffort: ReasoningEffort;
 }
 
 export interface SetShowAllModelsMessage extends BaseBackendMessage {

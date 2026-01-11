@@ -4,7 +4,7 @@
   "displayName": "VSCode Reborn AI",
   "icon": "images/reborn-ai-logo.png",
   "description": "Code with AI in VSCode, but you get to choose the AI.",
-  "version": "3.26.0",
+  "version": "3.27.0",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/vscode-reborn-ai/vscode-reborn-ai"
@@ -13,7 +13,7 @@
     "vscode": "^1.70.0",
     "node": ">=20"
   },
-  "packageManager": "yarn@1.22.19",
+  "packageManager": "yarn@1.22.22",
   "categories": [
     "Programming Languages",
     "Machine Learning",
@@ -566,29 +566,50 @@
             "Detailed, full explanations"
           ]
         },
+        "chatgpt.reasoningEffort": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "medium",
+          "description": "How much reasoning effort should Reborn AI put into the response?",
+          "order": 47,
+          "enumItemLabels": [
+            "Low",
+            "Medium",
+            "High"
+          ],
+          "markdownEnumDescriptions": [
+            "Fast and cheap, but spends the least time reasoning",
+            "Balanced speed and reasoning quality",
+            "Best reasoning quality, but slow and expensive"
+          ]
+        },
         "chatgpt.renameTabTitles": {
           "type": "boolean",
           "default": true,
           "description": "If enabled, after the first user message, gpt-4o will be used to rename the tab title.",
-          "order": 47
+          "order": 48
         },
         "chatgpt.showAllModels": {
           "type": "boolean",
           "default": false,
           "description": "If enabled, the model select dropdown will show ALL available models returned from the API.",
-          "order": 48
+          "order": 49
         },
         "chatgpt.manualModelInput": {
           "type": "boolean",
           "default": false,
           "description": "If enabled, you can manually input the model name in the model id in the select dropdown. This is required for some APIs, like ollama.",
-          "order": 49
+          "order": 50
         },
         "chatgpt.azureApiVersion": {
           "type": "string",
           "default": "2024-02-01",
           "description": "This is required by Azure's API. It must match the API version the deployment expects.",
-          "order": 50
+          "order": 51
         }
       }
     }
@@ -646,12 +667,12 @@
     "webpack-cli": "^5.0.1"
   },
   "dependencies": {
-    "@ai-sdk/azure": "^1.3.23",
-    "@ai-sdk/openai": "^1.3.22",
+    "@ai-sdk/azure": "^3.0.7",
+    "@ai-sdk/openai": "^3.0.7",
     "@headlessui/react": "^2.0.4",
     "@heroicons/react": "^2.1.3",
     "@reduxjs/toolkit": "^1.9.3",
-    "ai": "^4.3.15",
+    "ai": "^6.0.27",
     "dompurify": "^3.2.4",
     "highlight.js": "^11.7.0",
     "js-tiktoken": "^1.0.12",
@@ -665,7 +686,7 @@
     "sanitize-html": "^2.13.0",
     "upath": "^2.0.1",
     "uuid": "^9.0.0",
-    "zod": "^3.23.8"
+    "zod": "^4.3.5"
   },
   "resolutions": {
     "clone-deep": "^4.0.1"

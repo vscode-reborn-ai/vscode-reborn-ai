@@ -1,8 +1,9 @@
 import { AdjustmentsHorizontalIcon } from "@heroicons/react/16/solid";
 import classNames from "classnames";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
+import { useOnClickOutside } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
 import { RootState } from "../store";
@@ -10,6 +11,7 @@ import { setDebug } from "../store/app";
 import { Conversation } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
+import ReasoningEffortSelect from "./ReasoningEffortSelect";
 import VerbositySelect from "./VerbositySelect";
 import ViewOptions from "./ViewOptions";
 
@@ -20,6 +22,7 @@ export default function MoreActionsMenu({
   showMoreActions,
   setShowMoreActions,
   className,
+  buttonRef,
 }: {
   currentConversation: Conversation;
   conversationList: Conversation[];
@@ -27,6 +30,7 @@ export default function MoreActionsMenu({
   showMoreActions: boolean;
   setShowMoreActions: React.Dispatch<React.SetStateAction<boolean>>;
   className?: string;
+  buttonRef?: React.RefObject<HTMLButtonElement>;
 }) {
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: RootState) => state.app.translations);
@@ -34,6 +38,12 @@ export default function MoreActionsMenu({
   const navigate = useNavigate();
   const backendMessenger = useMessenger(vscode);
   const [showViewOptions, setShowViewOptions] = useState(false);
+
+  // Reference to the dropdown container for outside click detection
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close the dropdown menu when clicking outside of it
+  useOnClickOutside(dropdownRef, () => setShowMoreActions(false), buttonRef);
 
   // When the show more actions menu is shown, hide the view options menu
   // So, if the user leaves the view options menu open on close, it won't be shown on open
@@ -47,6 +57,7 @@ export default function MoreActionsMenu({
     <>
       <div
         id="more-actions-menu"
+        ref={dropdownRef}
         className={classNames(
           "MoreActionsMenu",
           "fixed z-20 right-4 p-2 bg-menu rounded border border-menu overflow-hidden max-w-[calc(100vw-2em)]",
@@ -203,6 +214,15 @@ export default function MoreActionsMenu({
               currentConversation={currentConversation}
               vscode={vscode}
               conversationList={conversationList}
+              dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
+              tooltipId="more-actions-tooltip"
+              showParentMenu={setShowMoreActions}
+            />
+          </li>
+          <li className="block xs:hidden">
+            <ReasoningEffortSelect
+              currentConversation={currentConversation}
+              vscode={vscode}
               dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
               tooltipId="more-actions-tooltip"
               showParentMenu={setShowMoreActions}

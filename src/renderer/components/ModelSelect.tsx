@@ -5,7 +5,7 @@ import {
   ArrowUpIcon,
 } from "@heroicons/react/24/solid";
 import classNames from "classnames";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getModelCompletionLimit,
   getModelContextLimit,
@@ -15,6 +15,7 @@ import {
   isOnlineModel,
   useConvertMarkdownToComponent,
   useIsModelAvailable,
+  useOnClickOutside,
 } from "../helpers";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
@@ -36,33 +37,56 @@ export interface RichModel extends Partial<Model> {
 }
 const SUGGESTED_OPENAI_MODELS: RichModel[] = [
   {
+<<<<<<< HEAD
     id: "gpt-4.1",
     name: "GPT-4.1",
+||||||| dc9d397
+    id: "gpt-4.1",
+    name: "gpt-4.1",
+=======
+    id: "gpt-5.2",
+    name: "gpt-5.2",
+>>>>>>> develop
     quality: "⭐⭐⭐",
     speed: "⚡⚡⬜",
     cost: "💸💸⬜",
     recommended: true,
   },
   {
+    id: "gpt-5.1-codex-max",
+    name: "gpt-5.1-codex-max",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⬜",
+    cost: "💸💸⬜",
+  },
+  {
     id: "gpt-4o",
     name: "GPT-4o",
     quality: "⭐⭐⭐",
+<<<<<<< HEAD
     speed: "⚡⚡⬜",
     cost: "💸⬜⬜",
+||||||| dc9d397
+    speed: "⚡⚡⚡",
+    cost: "💸⬜⬜",
+=======
+    speed: "⚡⚡⚡",
+    cost: "💸💸⬜",
+>>>>>>> develop
   },
   {
     id: "o4-mini",
     name: "o4 mini",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
-    cost: "💸💸⬜",
+    cost: "💸⬜⬜",
   },
   {
     id: "o3",
     name: "o3",
     quality: "⭐⭐⭐",
     speed: "⚡⬜⬜",
-    cost: "💸💸💸",
+    cost: "💸💸⬜",
   },
   {
     id: "gpt-4o-search-preview",
@@ -76,6 +100,7 @@ const SUGGESTED_OPENAI_MODELS: RichModel[] = [
     name: "o3-mini",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
+<<<<<<< HEAD
     cost: "💸💸⬜",
   },
   {
@@ -83,6 +108,16 @@ const SUGGESTED_OPENAI_MODELS: RichModel[] = [
     name: "GPT-4o mini",
     quality: "⭐⭐⬜",
     speed: "⚡⚡⚡",
+||||||| dc9d397
+    cost: "💸💸⬜",
+  },
+  {
+    id: "gpt-4o-mini",
+    name: "gpt-4o-mini",
+    quality: "⭐⭐⬜",
+    speed: "⚡⚡⚡",
+=======
+>>>>>>> develop
     cost: "💸⬜⬜",
   },
   {
@@ -113,6 +148,7 @@ export default function ModelSelect({
 }) {
   const dispatch = useAppDispatch();
   const t = useAppSelector((state: RootState) => state.app.translations);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const [showModels, setShowModels] = useState(false);
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
@@ -134,6 +170,13 @@ export default function ModelSelect({
   const [showDescriptionOn, setShowDescriptionOn] = useState<string | null>(
     null
   );
+
+  // Reference to the dropdown container for outside click detection
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close the dropdown menu when clicking outside of it
+  useOnClickOutside(dropdownRef, () => setShowModels(false), buttonRef);
+
   const convertMarkdownToComponent = useConvertMarkdownToComponent(vscode);
 
   const hasOpenAIModels = useMemo(() => {
@@ -178,14 +221,14 @@ export default function ModelSelect({
           rate.prompt === 0
             ? "FREE"
             : rate.prompt === undefined
-            ? "varies"
-            : `$${rate.prompt.toFixed(1)}/M`,
+              ? "varies"
+              : `$${rate.prompt.toFixed(1)}/M`,
         completeText:
           rate.complete === 0
             ? "FREE"
             : rate.complete === undefined
-            ? "varies"
-            : `$${rate.complete.toFixed(1)}/M`,
+              ? "varies"
+              : `$${rate.complete.toFixed(1)}/M`,
         isFree: rate.prompt === 0 && rate.complete === 0,
         isExpensive:
           (rate.prompt !== undefined && rate.prompt > 10) ||
@@ -283,10 +326,10 @@ export default function ModelSelect({
     const filteredModelList =
       query.length > 0
         ? modelListCopy.filter(
-            (model) =>
-              model.id.toLowerCase().includes(query) ||
-              (model?.name && model.name.toLowerCase().includes(query))
-          )
+          (model) =>
+            model.id.toLowerCase().includes(query) ||
+            (model?.name && model.name.toLowerCase().includes(query))
+        )
         : modelListCopy;
 
     setFilteredModels(sortList(sortBy, filteredModelList, !ascending));
@@ -347,6 +390,7 @@ export default function ModelSelect({
     <>
       <div className={className}>
         <button
+          ref={buttonRef}
           className={classNames(
             `rounded py-0.5 px-1 flex flex-row items-center hover:bg-button-secondary focus:bg-button-secondary whitespace-nowrap hover:text-button-secondary focus:text-button-secondary`,
             {
@@ -370,10 +414,11 @@ export default function ModelSelect({
           {isCurrentModelAvailable
             ? currentModelFriendlyName
             : sync.receivedModels
-            ? t?.modelSelect?.noModelSelected ?? "No model selected"
-            : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
+              ? t?.modelSelect?.noModelSelected ?? "No model selected"
+              : t?.modelSelect?.fetchingModels ?? "Fetching models.."}
         </button>
         <div
+          ref={dropdownRef}
           className={`fixed mb-8 overflow-y-auto max-h-[calc(100%-10em)] max-w-[calc(100%-4em)] items-center more-menu border text-menu bg-menu border-menu shadow-xl text-xs rounded
             ${showModels ? "block" : "hidden"}
             ${dropdownClassName ? dropdownClassName : "left-4 z-10"}
@@ -491,8 +536,8 @@ export default function ModelSelect({
                         <div className="w-full flex justify-around gap-2 divide-dropdown text-2xs">
                           {computedModelDataMap.get(model.id)?.prompt ===
                             undefined &&
-                          (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
-                            settings.gpt3.apiBaseUrl.includes("localhost")) ? (
+                            (settings.gpt3.apiBaseUrl.includes("127.0.0.1") ||
+                              settings.gpt3.apiBaseUrl.includes("localhost")) ? (
                             <>
                               {model.details?.family && (
                                 <span>{model.details.family}</span>
@@ -751,23 +796,23 @@ export default function ModelSelect({
               {SUGGESTED_OPENAI_MODELS.filter((model) =>
                 modelList.some((m) => m.id === model.id)
               ).length > 0 && (
-                <>
-                  <div className="p-2">
-                    <span>
-                      {t?.modelSelect?.noUserAccess ??
-                        "Models not yet available on your account:"}
-                      {SUGGESTED_OPENAI_MODELS.filter(
-                        (model) => !modelList.some((m) => m.id === model.id)
-                      ).map((model) => (
-                        <>
-                          {" "}
-                          <code key={model.id}>{model.name}</code>
-                        </>
-                      ))}
-                    </span>
-                  </div>
-                </>
-              )}
+                  <>
+                    <div className="p-2">
+                      <span>
+                        {t?.modelSelect?.noUserAccess ??
+                          "Models not yet available on your account:"}
+                        {SUGGESTED_OPENAI_MODELS.filter(
+                          (model) => !modelList.some((m) => m.id === model.id)
+                        ).map((model) => (
+                          <>
+                            {" "}
+                            <code key={model.id}>{model.name}</code>
+                          </>
+                        ))}
+                      </span>
+                    </div>
+                  </>
+                )}
             </>
           )}
         </div>

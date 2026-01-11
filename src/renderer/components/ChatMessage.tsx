@@ -161,7 +161,7 @@ const UserMessageComponent = ({
                             {line}
                           </pre>
                         ) : (
-                          <p key={index} className="my-0 text-pretty">
+                          <p key={index} className="my-0 text-pretty whitespace-pre-wrap">
                             {/* if markdown view disabled -> render a paragraph */}
                             {line}
                           </p>
