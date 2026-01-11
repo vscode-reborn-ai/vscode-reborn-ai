@@ -28,7 +28,7 @@ const openaiSettingsSchema = z.object({
   baseURL: z.string().default('https://api.openai.com/v1'),
   organization: z.string().optional(),
   project: z.string().optional(),
-  headers: z.record(z.string()).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
   compatibility: z.enum(['strict', 'compatible']).default('compatible'),
   fetch: z.function().optional(),
 });
@@ -146,7 +146,7 @@ export class ApiProvider {
           role: message.role,
           content: message.content,
         })),
-        maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
+        maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
         temperature,
         topP,
         abortSignal,
@@ -192,7 +192,7 @@ export class ApiProvider {
         role: message.role,
         content: message.content,
       })),
-      maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
+      maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       temperature,
       topP,
     });
@@ -290,7 +290,8 @@ export class ApiProvider {
     } as OpenAIProviderSettings;
 
     // Use 'compatible' for non-OpenAI tools that mimic the OpenAI API.
-    (this.config as OpenAIProviderSettings).compatibility = ((this.config as OpenAIProviderSettings).baseURL ?? '').includes('openai.com') ? 'strict' : 'compatible';
+    // UPDATE - No longer a valid property.
+    // (this.config as OpenAIProviderSettings).compatibility = ((this.config as OpenAIProviderSettings).baseURL ?? '').includes('openai.com') ? 'strict' : 'compatible';
 
     this.rebuildOpenAIProvider();
   }
