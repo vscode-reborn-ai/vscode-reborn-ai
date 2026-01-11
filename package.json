@@ -13,7 +13,7 @@
     "vscode": "^1.70.0",
     "node": ">=20"
   },
-  "packageManager": "yarn@1.22.19",
+  "packageManager": "yarn@1.22.22",
   "categories": [
     "Programming Languages",
     "Machine Learning",
