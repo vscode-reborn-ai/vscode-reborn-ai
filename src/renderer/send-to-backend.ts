@@ -1,6 +1,6 @@
 import { ViewOptionsState } from "./store/app";
-import { Conversation, Model, Verbosity } from "./types";
-import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetVerbosityMessage, SetViewOptionsMessage } from "./types-messages";
+import { Conversation, Model, ReasoningEffort, Verbosity } from "./types";
+import { AddFreeTextQuestionMessage, BackendMessageType, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenNewMessage, RunActionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetModelMessage, SetReasoningEffortMessage, SetVerbosityMessage, SetViewOptionsMessage } from "./types-messages";
 
 export function useMessenger(vscode: any) {
   const sendMessageToBackend = (type: string, data: any = {}) => {
@@ -124,6 +124,11 @@ export function useMessenger(vscode: any) {
       verbosity
     } as SetVerbosityMessage);
   };
+  const sendSetReasoningEffort = (reasoningEffort: ReasoningEffort) => {
+    sendMessageToBackend(BackendMessageType.setReasoningEffort, {
+      reasoningEffort
+    } as SetReasoningEffortMessage);
+  };
   const sendSetShowAllModels = (showAllModels: boolean) => {
     sendMessageToBackend(BackendMessageType.setShowAllModels, {
       showAllModels
@@ -165,6 +170,7 @@ export function useMessenger(vscode: any) {
     sendAddFreeTextQuestion,
     sendStopGenerating,
     sendSetVerbosity,
+    sendSetReasoningEffort,
     sendSetShowAllModels,
     sendSetManualModelInput,
     sendOpenExternalUrl,

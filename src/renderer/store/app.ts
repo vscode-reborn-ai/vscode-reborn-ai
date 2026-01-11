@@ -24,6 +24,7 @@ export interface ViewOptionsState {
   showEditorSelection?: boolean; // Show the "Editor selection" button.
   showClear?: boolean; // Show the "Clear" button.
   showVerbosity?: boolean; // Show the verbosity button.
+  showReasoningEffort?: boolean; // Show the reasoning effort button.
   showModelSelect?: boolean; // Show the model select button.
   showTokenCount?: boolean; // Show the token count.
 }
@@ -65,6 +66,7 @@ const initialState: AppState = {
     showEditorSelection: true,
     showClear: true,
     showVerbosity: true,
+    showReasoningEffort: false,
     showModelSelect: true,
     showTokenCount: true,
   },

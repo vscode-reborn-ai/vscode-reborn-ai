@@ -11,6 +11,7 @@ import { setDebug } from "../store/app";
 import { Conversation } from "../types";
 import Icon from "./Icon";
 import ModelSelect from "./ModelSelect";
+import ReasoningEffortSelect from "./ReasoningEffortSelect";
 import VerbositySelect from "./VerbositySelect";
 import ViewOptions from "./ViewOptions";
 
@@ -213,6 +214,15 @@ export default function MoreActionsMenu({
               currentConversation={currentConversation}
               vscode={vscode}
               conversationList={conversationList}
+              dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
+              tooltipId="more-actions-tooltip"
+              showParentMenu={setShowMoreActions}
+            />
+          </li>
+          <li className="block xs:hidden">
+            <ReasoningEffortSelect
+              currentConversation={currentConversation}
+              vscode={vscode}
               dropdownClassName="right-32 bottom-8 max-w-[calc(100vw-9rem)] z-20"
               tooltipId="more-actions-tooltip"
               showParentMenu={setShowMoreActions}
