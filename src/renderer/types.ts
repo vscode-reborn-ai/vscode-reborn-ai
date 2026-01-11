@@ -129,21 +129,12 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     complete: 120,
   },
   'gpt-4o': {
-<<<<<<< HEAD
     prompt: 2.5,
     complete: 10,
   },
   'gpt-4o-search-preview': {
     prompt: 2.5,
     complete: 10,
-||||||| dc9d397
-    prompt: 5,
-    complete: 15,
-=======
-    // Per OpenAI pricing page: Input $2.50 / 1M, Output $10 / 1M
-    prompt: 2.5,
-    complete: 10,
->>>>>>> develop
   },
   'gpt-4o-mini': {
     prompt: 0.15,
@@ -416,13 +407,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-<<<<<<< HEAD
-    model: "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-search-preview" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
-||||||| dc9d397
-    model: "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
-=======
-    model: "gpt-5.2" | "gpt-5.1-codex-max" | "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
->>>>>>> develop
+    model: "gpt-5.2" | "gpt-5.1-codex-max" | "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-search-preview" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
     maxTokens: number,
     temperature: number,
     top_p: number;
