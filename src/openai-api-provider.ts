@@ -139,9 +139,7 @@ export class ApiProvider {
 
     const { textStream } = await
       streamText({
-        model: this._openai.languageModel(model, {
-          reasoningEffort: isReasoningModel(model) ? conversation.reasoningEffort : undefined,
-        }),
+        model: this._openai.languageModel(model),
         messages: conversation.messages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -150,6 +148,11 @@ export class ApiProvider {
         temperature,
         topP,
         abortSignal,
+        ...(isReasoningModel(model) && conversation.reasoningEffort ? {
+          experimental_providerMetadata: {
+            openai: { reasoningEffort: conversation.reasoningEffort }
+          }
+        } : {}),
       });
 
     for await (const textPart of textStream) {
@@ -185,9 +188,7 @@ export class ApiProvider {
     }
 
     const { text } = await generateText({
-      model: this._openai.languageModel(model, {
-        reasoningEffort: isReasoningModel(model) ? conversation.reasoningEffort : undefined,
-      }),
+      model: this._openai.languageModel(model),
       messages: conversation.messages.map((message) => ({
         role: message.role,
         content: message.content,
@@ -195,6 +196,11 @@ export class ApiProvider {
       maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       temperature,
       topP,
+      ...(isReasoningModel(model) && conversation.reasoningEffort ? {
+        experimental_providerMetadata: {
+          openai: { reasoningEffort: conversation.reasoningEffort }
+        }
+      } : {}),
     });
 
     return text;

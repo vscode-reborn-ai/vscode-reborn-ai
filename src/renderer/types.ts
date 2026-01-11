@@ -249,7 +249,23 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
 // Reasoning models have specific constraints:
 // 1. System context messages are not allowed.
 // 2. Different max_tokens behavior - max_completion_tokens used instead.
-export const REASONING_MODELS = ['o1', 'o3', 'o1-preview', 'o1-mini', 'o3-mini', 'o4-mini'];
+// NOTE: OpenAI docs show "Reasoning token support" for these models.
+// We treat them as "reasoning models" in the extension because they use a different
+// token accounting mode and, for some models (notably the o-series), have conversational
+// constraints compared to standard GPT models.
+export const REASONING_MODELS = [
+  'o1',
+  'o3',
+  'o1-preview',
+  'o1-mini',
+  'o3-mini',
+  'o4-mini',
+  'gpt-5',
+  'gpt-5-mini',
+  'gpt-5-codex',
+  'gpt-5.1-codex-max',
+  'gpt-5.2',
+];
 
 interface OpenAIMessage {
   role: Role;
