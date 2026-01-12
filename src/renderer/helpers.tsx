@@ -354,11 +354,8 @@ export function isInstructModel(model: Model | undefined) {
 // Can this model stream back its responses?
 export function isStreamingModel(model: Model | undefined) {
   const isInstruct = isInstructModel(model);
-  const isSearchPreview = ["gpt-4o-search", "gpt-4o-search-preview"].includes(
-    model?.id ?? ""
-  );
 
-  return !isInstruct && !isSearchPreview;
+  return !isInstruct;
 }
 
 export function isMultimodalModel(model: Model | undefined) {

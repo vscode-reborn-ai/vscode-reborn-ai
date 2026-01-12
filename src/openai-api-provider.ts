@@ -137,6 +137,11 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
+    const webSearchTool = (this._openai as any)?.tools?.webSearch?.({
+      externalWebAccess: true,
+      searchContextSize: "high",
+    });
+
     const { textStream } = await
       streamText({
         model: this._openai.languageModel(model),
@@ -144,6 +149,7 @@ export class ApiProvider {
           role: message.role,
           content: message.content,
         })),
+        tools: webSearchTool ? { web_search: webSearchTool } : undefined,
         maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
         temperature,
         topP,
@@ -187,12 +193,18 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
+    const webSearchTool = (this._openai as any)?.tools?.webSearch?.({
+      externalWebAccess: true,
+      searchContextSize: "high",
+    });
+
     const { text } = await generateText({
       model: this._openai.languageModel(model),
       messages: conversation.messages.map((message) => ({
         role: message.role,
         content: message.content,
       })),
+      tools: webSearchTool ? { web_search: webSearchTool } : undefined,
       maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       temperature,
       topP,

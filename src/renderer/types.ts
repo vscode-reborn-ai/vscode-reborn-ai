@@ -82,7 +82,7 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "gpt-4": "GPT-4",
   "gpt-4-32k": "GPT-4 32k",
   "gpt-4o": "GPT-4o",
-  "gpt-4o-search-preview": "GPT-4o Search",
+  // Search is exposed via the Responses API web_search tool; no search-only model ID needed
   "gpt-4o-mini": "GPT-4o mini",
   "gpt-3.5-turbo": "GPT-3.5 Turbo",
   "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k",
@@ -129,10 +129,6 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     complete: 120,
   },
   'gpt-4o': {
-    prompt: 2.5,
-    complete: 10,
-  },
-  'gpt-4o-search-preview': {
     prompt: 2.5,
     complete: 10,
   },
@@ -209,10 +205,6 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 32768,
   },
   'gpt-4o': {
-    context: 128000,
-    max: 16384,
-  },
-  'gpt-4o-search-preview': {
     context: 128000,
     max: 16384,
   },
@@ -407,7 +399,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-5.2" | "gpt-5.1-codex-max" | "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-search-preview" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
+    model: "gpt-5.2" | "gpt-5.1-codex-max" | "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
     maxTokens: number,
     temperature: number,
     top_p: number;

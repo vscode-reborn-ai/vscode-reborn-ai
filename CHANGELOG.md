@@ -8,7 +8,7 @@
 
 - 🔧 **Fixes** - Fix user message loses space indents. - *Thank you for the PR @nove-b*
 - ✨ **Feature** - Added support for `gpt-5.2`, OpenAI's latest model. As well as the coding-specific, `gpt-5.1-codex-max` model.
-- ✨ **Feature** - Added support for OpenAI's Search model, `gpt-4o-search-preview`.
+- ✨ **Feature** - Add Web Search capability to OpenAI models.
 
 ## May 10, 2025 [v3.27.0]
 
