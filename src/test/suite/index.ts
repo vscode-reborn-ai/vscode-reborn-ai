@@ -8,8 +8,8 @@ export function run(): Promise<void> {
 
   return new Promise((resolve, reject) => {
     try {
-  const files = globSync('**/*.test.js', { cwd: testsRoot });
-  files.forEach((f: string) => mocha.addFile(path.resolve(testsRoot, f)));
+      const files = globSync('**/*.test.js', { cwd: testsRoot });
+      files.forEach((f: string) => mocha.addFile(path.resolve(testsRoot, f)));
 
       try {
         mocha.run(failures => {
