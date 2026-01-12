@@ -507,6 +507,12 @@
           "description": "Whenever there is a new question or response added to the chat, extension will automatically scroll to the bottom. You can change that behavior by disabling this setting.",
           "order": 41
         },
+        "chatgpt.allowWebSearch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow Reborn AI to use the web search tool when available. When disabled, the AI will not be given web access.",
+          "order": 42
+        },
         "chatgpt.systemContext": {
           "type": "string",
           "default": "You are Reborn AI helping the User with coding. You are intelligent, helpful and an expert developer, who always gives the correct answer and only does what instructed. If you show code, your response must always be markdown with any code inside markdown codeblocks. If the user is trying to do a bad programming practice, helpfully let them know and mention an alternative. When responding to the following prompt, please make sure to properly style your response using Github Flavored Markdown. Use markdown syntax for text like headings, lists, colored text, code blocks, highlights etc.",

@@ -44,6 +44,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   private systemContext: string;
   private showAllModels: boolean = false;
   private throttling: number = 100;
+  private allowWebSearch: boolean = true;
   private abortControllers: {
     conversationId?: string,
     actionName?: string,
@@ -75,7 +76,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     };
     this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
     this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
+    this.allowWebSearch = vscode.workspace.getConfiguration("chatgpt").get("allowWebSearch") ?? true;
     this.runner = new ActionRunner(this);
+    this.api.setAllowWebSearch(this.allowWebSearch);
 
     // Check config settings for "chatgpt.gpt3.apiBaseUrl", if it is set to "https://api.openai.com", change it to "https://api.openai.com/v1"
     const baseUrl = vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
@@ -138,6 +141,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
           organization: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string ?? undefined,
           apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
         });
+      this.api.setAllowWebSearch(this.allowWebSearch);
       this.frontendMessenger.setApiProvider(this.api);
     });
 
@@ -177,6 +181,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       // Throttling
       if (e.affectsConfiguration("chatgpt.throttling")) {
         this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") ?? 100;
+      }
+      // Allow web search
+      if (e.affectsConfiguration("chatgpt.allowWebSearch")) {
+        this.allowWebSearch = vscode.workspace.getConfiguration("chatgpt").get("allowWebSearch") ?? true;
+        this.api?.setAllowWebSearch(this.allowWebSearch);
       }
       // organization
       if (e.affectsConfiguration("chatgpt.gpt3.organization")) {
@@ -225,6 +234,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         organization: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string ?? undefined,
         apiBaseUrl: finalApiUrl,
       });
+    this.api.setAllowWebSearch(this.allowWebSearch);
 
     // Test the API key
     const { status, models } = await this.testApiKey(this.api);
@@ -297,6 +307,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   }> {
     if (!apiProvider) {
       apiProvider = this.api ?? new ApiProvider('');
+      apiProvider.setAllowWebSearch(this.allowWebSearch);
     }
 
     const apiKey = apiProvider.config.apiKey ?? '';

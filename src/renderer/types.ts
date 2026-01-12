@@ -448,6 +448,7 @@ export interface ExtensionSettings {
   renameTabTitles: boolean;
   showAllModels: boolean;
   manualModelInput: boolean;
+  allowWebSearch: boolean;
   azureApiVersion: string;
 }
 
@@ -501,5 +502,6 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   renameTabTitles: true,
   showAllModels: false,
   manualModelInput: false,
+  allowWebSearch: true,
   azureApiVersion: "2024-02-01"
 };

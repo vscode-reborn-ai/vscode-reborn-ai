@@ -38,6 +38,7 @@ export class ApiProvider {
   private _openai: OpenAIProvider | AzureOpenAIProvider | undefined;
   private _modelList: Model[] = [];
   private _lastResponseMeta: Map<string, { steps?: any[]; usedWebSearch?: boolean; sources?: any[]; }> = new Map();
+  private _allowWebSearch: boolean = true;
 
   public config: OpenAIProviderSettings | AzureOpenAIProviderSettings = {};
 
@@ -77,6 +78,10 @@ export class ApiProvider {
     }
 
     // this.providerRegistry = createProviderRegistry({});
+  }
+
+  setAllowWebSearch(allow: boolean) {
+    this._allowWebSearch = allow;
   }
 
   // setModel(modelId: string) {
@@ -120,10 +125,12 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const webSearchTool = (this._openai as any)?.tools?.webSearch?.({
-      externalWebAccess: true,
-      searchContextSize: "high",
-    });
+    const webSearchTool = this._allowWebSearch
+      ? (this._openai as any)?.tools?.webSearch?.({
+        externalWebAccess: true,
+        searchContextSize: "high",
+      })
+      : undefined;
 
     const streamResult = await streamText({
       model: this._openai.languageModel(model),
@@ -214,10 +221,12 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const webSearchTool = (this._openai as any)?.tools?.webSearch?.({
-      externalWebAccess: true,
-      searchContextSize: "high",
-    });
+    const webSearchTool = this._allowWebSearch
+      ? (this._openai as any)?.tools?.webSearch?.({
+        externalWebAccess: true,
+        searchContextSize: "high",
+      })
+      : undefined;
 
     const result = await generateText({
       model: this._openai.languageModel(model),
