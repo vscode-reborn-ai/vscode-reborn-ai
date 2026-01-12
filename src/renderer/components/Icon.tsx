@@ -11,6 +11,7 @@ export enum IconName {
 	clipboard = "clipboard",
 	close = "close",
 	cog = "cog",
+	globe = "globe",
 	cpu = "cpu",
 	download = "download",
 	help = "help",
@@ -90,6 +91,21 @@ export default (props: { icon: string; className: string }) => {
 					<line x1="12" y1="22.08" x2="12" y2="12" />
 				</svg>
 			)}
+					{icon === IconName.globe && (
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24"
+							strokeWidth="1.5"
+							stroke="currentColor"
+							className={`${css}`}
+						>
+							<circle cx="12" cy="12" r="9" />
+							<path d="M3 12h18" />
+							<path d="M12 3a14.5 14.5 0 010 18" />
+							<path d="M12 3a14.5 14.5 0 000 18" />
+						</svg>
+					)}
 			{icon === IconName.user && (
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

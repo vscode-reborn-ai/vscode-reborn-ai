@@ -128,7 +128,6 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     complete: 120,
   },
   'gpt-4o': {
-    // Per OpenAI pricing page: Input $2.50 / 1M, Output $10 / 1M
     prompt: 2.5,
     complete: 10,
   },
@@ -206,7 +205,7 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
   },
   'gpt-4o': {
     context: 128000,
-    max: 4096,
+    max: 16384,
   },
   'gpt-4o-mini': {
     context: 128000,
@@ -271,6 +270,25 @@ interface OpenAIMessage {
   role: Role;
   content: string;
 }
+
+export interface ResponseToolCallMeta {
+  toolName?: string;
+}
+
+export interface ResponseStep {
+  type?: string;
+  toolName?: string;
+  toolCall?: ResponseToolCallMeta;
+  name?: string;
+}
+
+export interface ResponseSource {
+  id?: string;
+  title?: string;
+  url?: string;
+  // Preserve unknown fields from providers
+  [key: string]: unknown;
+}
 // interface OpenAIChatRequest {
 //   model: string;
 //   messages: OpenAIMessage[];
@@ -293,6 +311,10 @@ export interface ChatMessage extends OpenAIMessage {
   content: string;
   // Raw content from OpenAI
   rawContent: string;
+  // Optional metadata from the model/tooling layer
+  steps?: ResponseStep[];
+  usedWebSearch?: boolean;
+  sources?: ResponseSource[];
 
   // Not sure if these are used
   // adding them since they're used in process messages
@@ -444,6 +466,7 @@ export interface ExtensionSettings {
   renameTabTitles: boolean;
   showAllModels: boolean;
   manualModelInput: boolean;
+  allowWebSearch: boolean;
   azureApiVersion: string;
 }
 
@@ -497,5 +520,6 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   renameTabTitles: true,
   showAllModels: false,
   manualModelInput: false,
+  allowWebSearch: true,
   azureApiVersion: "2024-02-01"
 };

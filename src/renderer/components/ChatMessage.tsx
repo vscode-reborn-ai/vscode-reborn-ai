@@ -383,6 +383,12 @@ const Name = ({
   const alignRight = useAppSelector(
     (state: RootState) => state.app.viewOptions.alignRight
   );
+  const usedWebSearch =
+    message.usedWebSearch ||
+    message.steps?.some((step) => {
+      const toolName = step?.toolName ?? step?.toolCall?.toolName ?? step?.name ?? "";
+      return toolName === "web_search";
+    });
 
   return (
     <h2
@@ -399,6 +405,14 @@ const Name = ({
         <>
           <Icon icon="box" className="w-6 h-6" />
           <span>{modelFriendlyName ?? "ChatGPT"}</span>
+          {usedWebSearch && (
+            <span
+              className="inline-flex items-center gap-1 text-xs text-blue-400"
+              title="Used web search"
+            >
+              <Icon icon="globe" className="w-4 h-4" />
+            </span>
+          )}
         </>
       )}
     </h2>

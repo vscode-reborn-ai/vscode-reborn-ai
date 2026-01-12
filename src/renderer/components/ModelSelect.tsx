@@ -53,14 +53,14 @@ const SUGGESTED_OPENAI_MODELS: RichModel[] = [
   },
   {
     id: "gpt-4o",
-    name: "gpt-4o",
+    name: "GPT-4o",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
     cost: "💸💸⬜",
   },
   {
     id: "o4-mini",
-    name: "o4-mini",
+    name: "o4 mini",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⚡",
     cost: "💸⬜⬜",
