@@ -1,11 +1,12 @@
 import * as assert from 'assert';
+import { DEFAULT_EXTENSION_SETTINGS, Model, ReasoningEffort, Verbosity } from '../types';
 import actionReducer, {
   ActionRunState,
   clearActionError,
   clearActionErrors,
   setActionError,
   setActionState,
-} from '../../renderer/store/action';
+} from './action';
 import appReducer, {
   ApiKeyStatus,
   setApiKeyStatus,
@@ -16,7 +17,7 @@ import appReducer, {
   setUseEditorSelection,
   setViewOptions,
   toggleViewOption,
-} from '../../renderer/store/app';
+} from './app';
 import conversationReducer, {
   addConversation,
   addMessage,
@@ -30,8 +31,7 @@ import conversationReducer, {
   updateConversationTokenCount,
   updateMessage,
   updateMessageContent,
-} from '../../renderer/store/conversation';
-import { DEFAULT_EXTENSION_SETTINGS, Model, ReasoningEffort, Verbosity } from '../../renderer/types';
+} from './conversation';
 
 const createModel = (id: string): Model => ({
   id,
@@ -49,7 +49,6 @@ suite('App reducer', () => {
 
     const withCustom = appReducer(initial, setViewOptions({ showMarkdown: true }));
     assert.strictEqual(withCustom.viewOptions.showMarkdown, true);
-    // Unspecified options are preserved from defaults
     assert.strictEqual(withCustom.viewOptions.showClear, initial.viewOptions.showClear);
   });
 

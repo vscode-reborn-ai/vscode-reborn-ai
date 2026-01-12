@@ -611,7 +611,7 @@
   "scripts": {
     "vscode:prepublish": "rimraf out && yarn esbuild-base --minify && yarn build-webview",
     "esbuild-base": "esbuild ./src/entry-point.ts --bundle --outfile=out/entry-point.js --external:vscode --format=cjs --platform=node",
-    "esbuild-test": "esbuild ./src/test/**/*.ts --bundle --outdir=out/test --external:vscode --external:mocha --external:./reporters/parallel-buffered --external:./worker.js --format=cjs --platform=node",
+    "esbuild-test": "esbuild ./src/**/*.test.ts --bundle --outdir=out/test --external:vscode --external:mocha --external:./reporters/parallel-buffered --external:./worker.js --format=cjs --platform=node",
     "build": "yarn esbuild-base --sourcemap && yarn build-webview",
     "dev": "yarn watch",
     "watch": "npm-run-all -p watch:*",

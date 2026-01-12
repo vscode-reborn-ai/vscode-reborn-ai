@@ -1,8 +1,8 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { AuthStore, OfflineStore } from '../../local-store';
-import { ViewOptionsState } from '../../renderer/store/app';
-import { Model, Role } from '../../renderer/types';
+import { AuthStore, OfflineStore } from './local-store';
+import { ViewOptionsState } from './renderer/store/app';
+import { Model, Role } from './renderer/types';
 
 type SecretMap = Map<string, string>;
 

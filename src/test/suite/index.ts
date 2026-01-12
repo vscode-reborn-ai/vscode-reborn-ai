@@ -8,6 +8,7 @@ export function run(): Promise<void> {
 
   return new Promise((resolve, reject) => {
     try {
+      // Pick up bundled tests emitted by esbuild; glob relative to testsRoot and allow nested placement
       const files = globSync('**/*.test.js', { cwd: testsRoot });
       files.forEach((f: string) => mocha.addFile(path.resolve(testsRoot, f)));
 
