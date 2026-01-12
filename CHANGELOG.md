@@ -6,9 +6,12 @@
 
 ## [next]
 
-- 🔧 **Fixes** - Fix user message loses space indents. - *Thank you for the PR @nove-b*
+
+## January 11, 2026 [v3.28.0]
+
+- ✨ **Feature** - Add Web Search capability to OpenAI models. *Thanks for the suggestion @PeterDaveHello*
 - ✨ **Feature** - Added support for `gpt-5.2`, OpenAI's latest model. As well as the coding-specific, `gpt-5.1-codex-max` model.
-- ✨ **Feature** - Add Web Search capability to OpenAI models.
+- 🔧 **Fixes** - Fix user message loses space indents. - *Thank you for the PR @nove-b*
 
 ## May 10, 2025 [v3.27.0]
 
@@ -155,7 +158,8 @@
 - 🎮 **QoL** - When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
 - 🎮 **QoL** - Configuring "System message" is now an extension setting.
 
-[next]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.27.0...HEAD
+[next]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.28.0...HEAD
+[v3.28.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.27.0...3.28.0
 [v3.27.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.26.0...3.27.0
 [v3.26.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.25.0...3.26.0
 [v3.25.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.24.0...3.25.0
