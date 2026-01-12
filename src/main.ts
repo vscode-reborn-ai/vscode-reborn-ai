@@ -31,8 +31,6 @@ export interface ApiRequestOptions {
   messageId?: string,
   code?: string,
   language?: string;
-  topP?: number;
-  temperature?: number;
   maxTokens?: number;
 }
 
@@ -42,8 +40,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   private offlineStore?: OfflineStore;
   private runner: ActionRunner;
 
-  private _temperature: number = 0.9;
-  private _topP: number = 1;
   private chatMode?: boolean = true;
   private systemContext: string;
   private showAllModels: boolean = false;
@@ -134,15 +130,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiKey", undefined, true);
     }
 
-    // * EXPERIMENT: Turn off maxTokens
-    //   Due to how extension settings work, the setting will default to the 1,024 setting
-    //   from a very long time ago. New models support 128,000 tokens, but you have to tell the
-    //   user to update their config to "enable" these larger contexts. With the updated UI
-    //   now showing token counts, I think it's better to just turn off the maxTokens setting
-    // this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number;
-    this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number;
-    this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number;
-
     // Initialize the API
     this.authStore.getApiKey(baseUrl).then((apiKey) => {
       this.api = new ApiProvider(
@@ -150,8 +137,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         {
           organization: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string ?? undefined,
           apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
-          temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
-          topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
         });
       this.frontendMessenger.setApiProvider(this.api);
     });
@@ -203,22 +188,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         this.api.updateApiBaseUrl(vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") ?? "");
         rebuildApiProvider = true;
       }
-      // * EXPERIMENT: Turn off maxTokens
-      //   Due to how extension settings work, the setting will default to the 1,024 setting
-      //   from a very long time ago. New models support 128,000 tokens, but you have to tell the
-      //   user to update their config to "enable" these larger contexts. With the updated UI
-      //   now showing token counts, I think it's better to just turn off the maxTokens setting
-      // if (e.affectsConfiguration("chatgpt.gpt3.maxTokens")) {
-      // 	this.api.maxTokens = this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number ?? 2048;
-      // }
-      // temperature
-      if (e.affectsConfiguration("chatgpt.gpt3.temperature")) {
-        this.api.temperature = this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number ?? 0.9;
-      }
-      // topP
-      if (e.affectsConfiguration("chatgpt.gpt3.top_p")) {
-        this.api.topP = this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number ?? 1;
-      }
 
       if (rebuildApiProvider) {
         await this.rebuildApiProvider();
@@ -255,8 +224,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       {
         organization: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string ?? undefined,
         apiBaseUrl: finalApiUrl,
-        temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
-        topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
       });
 
     // Test the API key
@@ -831,10 +798,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         this.abortControllers.push({ conversationId: options.conversation?.id ?? '', controller });
 
         // Stream ChatGPT response (this is using an async iterator)
-        for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal, {
-          temperature: options.temperature ?? this._temperature,
-          topP: options.topP ?? this._topP,
-        })) {
+        for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal)) {
           message.rawContent += token;
 
           const now = Date.now();

@@ -36,8 +36,6 @@ const openaiSettingsSchema = z.object({
 
 export class ApiProvider {
   private _openai: OpenAIProvider | AzureOpenAIProvider | undefined;
-  private _temperature: number;
-  private _topP: number;
   private _modelList: Model[] = [];
 
   public config: OpenAIProviderSettings | AzureOpenAIProviderSettings = {};
@@ -57,21 +55,13 @@ export class ApiProvider {
   constructor(apiKey: string, {
     organization,
     apiBaseUrl: baseApiUrl = 'https://api.openai.com/v1',
-    temperature = 0.9,
-    topP = 1,
   }: {
     organization: string | undefined;
     apiBaseUrl: string;
-    temperature: number;
-    topP: number;
   } = {
       organization: undefined,
       apiBaseUrl: 'https://api.openai.com/v1',
-      temperature: 0.9,
-      topP: 1,
     }) {
-    this._temperature = temperature;
-    this._topP = topP;
 
     if (this.checkIfAzure(baseApiUrl)) {
       this.updateAzureConfig({
@@ -114,13 +104,7 @@ export class ApiProvider {
     return tokensLeft;
   }
 
-  async* streamChatCompletion(conversation: Conversation, abortSignal: AbortSignal, {
-    temperature = this._temperature,
-    topP = this._topP,
-  }: {
-    temperature?: number;
-    topP?: number;
-  } = {}): AsyncGenerator<any, any, unknown> {
+  async* streamChatCompletion(conversation: Conversation, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
     const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
@@ -151,8 +135,6 @@ export class ApiProvider {
         })),
         tools: webSearchTool ? { web_search: webSearchTool } : undefined,
         maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
-        temperature,
-        topP,
         abortSignal,
         ...(isReasoningModel(model) && conversation.reasoningEffort ? {
           experimental_providerMetadata: {
@@ -170,13 +152,7 @@ export class ApiProvider {
     }
   }
 
-  async getChatCompletion(conversation: Conversation, {
-    temperature = this._temperature,
-    topP = this._topP,
-  }: {
-    temperature?: number;
-    topP?: number;
-  } = {}): Promise<string | undefined> {
+  async getChatCompletion(conversation: Conversation): Promise<string | undefined> {
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
     const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
@@ -206,8 +182,6 @@ export class ApiProvider {
       })),
       tools: webSearchTool ? { web_search: webSearchTool } : undefined,
       maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
-      temperature,
-      topP,
       ...(isReasoningModel(model) && conversation.reasoningEffort ? {
         experimental_providerMetadata: {
           openai: { reasoningEffort: conversation.reasoningEffort }
@@ -274,15 +248,6 @@ export class ApiProvider {
     const tokens = enc.encode(prompt).length;
 
     return tokens;
-  }
-
-  // * Getters and setters
-  set temperature(value: number) {
-    this._temperature = value;
-  }
-
-  set topP(value: number) {
-    this._topP = value;
   }
 
   private updateConfig(config: OpenAIProviderSettings) {
