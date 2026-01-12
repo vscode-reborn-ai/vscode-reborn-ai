@@ -5,7 +5,7 @@ import { useAppDispatch, useAppSelector } from "./hooks";
 import { RootState } from "./store";
 import { ActionRunState, setActionError, setActionState } from "./store/action";
 import { setApiKeyStatus, setExtensionSettings, setModels, setReceivedExtensionSettings, setReceivedModels, setReceivedTranslations, setReceivedViewOptions, setTranslations, setViewOptions } from "./store/app";
-import { addMessage, setInProgress, setModel, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
+import { addMessage, setInProgress, setModel, setReasoningEffort, setVerbosity, updateConversationMessages, updateConversationTitle, updateConversationTokenCount, updateMessage, updateMessageContent } from "./store/conversation";
 import { ActionNames, ChatMessage, Conversation, Role } from "./types";
 import { ActionCompleteMessage, ActionErrorMessage, AddErrorMessage, AddMessageMessage, BaseFrontendMessage, FrontendMessageType, MessagesUpdatedMessage, ModelsUpdateMessage, SetConversationModelMessage, SetTranslationsMessage, SettingsUpdateMessage, ShowInProgressMessage, StreamMessageMessage, UpdateApiKeyStatusMessage, UpdateMessageMessage, UpdateTokenCountMessage, ViewOptionsUpdateMessage } from "./types-messages";
 
@@ -204,7 +204,7 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
           (conversation) => conversation.id === currentConversationId
         );
 
-        if (!currentConversation?.model || !currentConversation?.verbosity) {
+        if (!currentConversation?.model) {
           if (!!models?.length) {
             dispatch(
               setModel({
@@ -227,7 +227,10 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
               })
             );
           }
+        }
 
+        if (!currentConversation?.verbosity) {
+          // Set verbosity to the current setting value
           dispatch(
             setVerbosity({
               conversationId: currentConversationId,
@@ -235,6 +238,17 @@ export const useBackendMessageHandler = (backendMessenger: any) => {
             })
           );
         }
+
+        if (!currentConversation?.reasoningEffort) {
+          // Set reasoning effort to the current setting value
+          dispatch(
+            setReasoningEffort({
+              conversationId: currentConversationId,
+              reasoningEffort: settingsUpdateData.config.reasoningEffort,
+            })
+          );
+        }
+
         break;
       }
       case FrontendMessageType.viewOptionsUpdate: {

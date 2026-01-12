@@ -26,8 +26,9 @@ const userUIOptions: {
   label: string;
   key: keyof ViewOptionsState;
 }[] = [
-  { label: "Model Select Button", key: "showModelSelect" },
-  { label: "Verbosity Button", key: "showVerbosity" },
+  { label: "Model Select", key: "showModelSelect" },
+  { label: "Verbosity", key: "showVerbosity" },
+  { label: "Reasoning Effort", key: "showReasoningEffort" },
   { label: "Editor Selection", key: "showEditorSelection" },
   { label: "Clear Button", key: "showClear" },
   { label: "Token Count", key: "showTokenCount" },

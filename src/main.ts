@@ -8,10 +8,10 @@ import { AuthStore, OfflineStore } from "./local-store";
 import { loadTranslations } from './localization';
 import { ApiProvider } from "./openai-api-provider";
 import pkceChallenge from "./pkce-challenge";
-import { isInstructModel, unEscapeHTML } from "./renderer/helpers";
+import { isStreamingModel, unEscapeHTML } from "./renderer/helpers";
 import { ApiKeyStatus } from "./renderer/store/app";
-import { ActionNames, ChatMessage, Conversation, Model, Role, Verbosity } from "./renderer/types";
-import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
+import { ActionNames, ChatMessage, Conversation, Model, ReasoningEffort, Role, Verbosity } from "./renderer/types";
+import { AddFreeTextQuestionMessage, BackendMessageType, BaseBackendMessage, ChangeApiKeyMessage, ChangeApiUrlMessage, EditCodeMessage, ExportToMarkdownMessage, GetTokenCountMessage, OpenExternalUrlMessage, OpenNewMessage, RunActionMessage, SetAzureApiVersionMessage, SetConversationListMessage, SetCurrentConversationMessage, SetManualModelInputMessage, SetModelMessage, SetReasoningEffortMessage, SetShowAllModelsMessage, SetVerbosityMessage, SetViewOptionsMessage, StopActionMessage, StopGeneratingMessage } from "./renderer/types-messages";
 import Messenger from "./send-to-frontend";
 import { ActionRunner } from "./smart-action-runner";
 
@@ -31,8 +31,6 @@ export interface ApiRequestOptions {
   messageId?: string,
   code?: string,
   language?: string;
-  topP?: number;
-  temperature?: number;
   maxTokens?: number;
 }
 
@@ -42,12 +40,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   private offlineStore?: OfflineStore;
   private runner: ActionRunner;
 
-  private _temperature: number = 0.9;
-  private _topP: number = 1;
   private chatMode?: boolean = true;
   private systemContext: string;
   private showAllModels: boolean = false;
   private throttling: number = 100;
+  private allowWebSearch: boolean = true;
   private abortControllers: {
     conversationId?: string,
     actionName?: string,
@@ -79,7 +76,9 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
     };
     this.systemContext = vscode.workspace.getConfiguration('chatgpt').get('systemContext') ?? vscode.workspace.getConfiguration('chatgpt').get('systemContext.default') ?? '';
     this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") || 100;
+    this.allowWebSearch = vscode.workspace.getConfiguration("chatgpt").get("allowWebSearch") ?? true;
     this.runner = new ActionRunner(this);
+    this.api.setAllowWebSearch(this.allowWebSearch);
 
     // Check config settings for "chatgpt.gpt3.apiBaseUrl", if it is set to "https://api.openai.com", change it to "https://api.openai.com/v1"
     const baseUrl = vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string;
@@ -134,15 +133,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       vscode.workspace.getConfiguration("chatgpt").update("gpt3.apiKey", undefined, true);
     }
 
-    // * EXPERIMENT: Turn off maxTokens
-    //   Due to how extension settings work, the setting will default to the 1,024 setting
-    //   from a very long time ago. New models support 128,000 tokens, but you have to tell the
-    //   user to update their config to "enable" these larger contexts. With the updated UI
-    //   now showing token counts, I think it's better to just turn off the maxTokens setting
-    // this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number;
-    this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number;
-    this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number;
-
     // Initialize the API
     this.authStore.getApiKey(baseUrl).then((apiKey) => {
       this.api = new ApiProvider(
@@ -150,9 +140,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         {
           organization: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string ?? undefined,
           apiBaseUrl: vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") as string,
-          temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
-          topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
         });
+      this.api.setAllowWebSearch(this.allowWebSearch);
       this.frontendMessenger.setApiProvider(this.api);
     });
 
@@ -193,6 +182,11 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       if (e.affectsConfiguration("chatgpt.throttling")) {
         this.throttling = vscode.workspace.getConfiguration("chatgpt").get("throttling") ?? 100;
       }
+      // Allow web search
+      if (e.affectsConfiguration("chatgpt.allowWebSearch")) {
+        this.allowWebSearch = vscode.workspace.getConfiguration("chatgpt").get("allowWebSearch") ?? true;
+        this.api?.setAllowWebSearch(this.allowWebSearch);
+      }
       // organization
       if (e.affectsConfiguration("chatgpt.gpt3.organization")) {
         this.api.updateOrganizationId(vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") ?? "");
@@ -202,22 +196,6 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       if (e.affectsConfiguration("chatgpt.gpt3.apiBaseUrl")) {
         this.api.updateApiBaseUrl(vscode.workspace.getConfiguration("chatgpt").get("gpt3.apiBaseUrl") ?? "");
         rebuildApiProvider = true;
-      }
-      // * EXPERIMENT: Turn off maxTokens
-      //   Due to how extension settings work, the setting will default to the 1,024 setting
-      //   from a very long time ago. New models support 128,000 tokens, but you have to tell the
-      //   user to update their config to "enable" these larger contexts. With the updated UI
-      //   now showing token counts, I think it's better to just turn off the maxTokens setting
-      // if (e.affectsConfiguration("chatgpt.gpt3.maxTokens")) {
-      // 	this.api.maxTokens = this._maxTokens = vscode.workspace.getConfiguration("chatgpt").get("gpt3.maxTokens") as number ?? 2048;
-      // }
-      // temperature
-      if (e.affectsConfiguration("chatgpt.gpt3.temperature")) {
-        this.api.temperature = this._temperature = vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number ?? 0.9;
-      }
-      // topP
-      if (e.affectsConfiguration("chatgpt.gpt3.top_p")) {
-        this.api.topP = this._topP = vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number ?? 1;
       }
 
       if (rebuildApiProvider) {
@@ -255,9 +233,8 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
       {
         organization: vscode.workspace.getConfiguration("chatgpt").get("gpt3.organization") as string ?? undefined,
         apiBaseUrl: finalApiUrl,
-        temperature: vscode.workspace.getConfiguration("chatgpt").get("gpt3.temperature") as number,
-        topP: vscode.workspace.getConfiguration("chatgpt").get("gpt3.top_p") as number,
       });
+    this.api.setAllowWebSearch(this.allowWebSearch);
 
     // Test the API key
     const { status, models } = await this.testApiKey(this.api);
@@ -330,6 +307,7 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
   }> {
     if (!apiProvider) {
       apiProvider = this.api ?? new ApiProvider('');
+      apiProvider.setAllowWebSearch(this.allowWebSearch);
     }
 
     const apiKey = apiProvider.config.apiKey ?? '';
@@ -487,11 +465,18 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         case BackendMessageType.resetApiKey:
           this.clearApiKey();
           break;
-        case BackendMessageType.setVerbosity:
+        case BackendMessageType.setVerbosity: {
           const setVerbosityData = data as SetVerbosityMessage;
           const verbosity = setVerbosityData?.verbosity ?? Verbosity.normal;
           vscode.workspace.getConfiguration("chatgpt").update("verbosity", verbosity, vscode.ConfigurationTarget.Global);
           break;
+        }
+        case BackendMessageType.setReasoningEffort: {
+          const setReasoningEffortData = data as SetReasoningEffortMessage;
+          const reasoningEffort = setReasoningEffortData?.reasoningEffort ?? ReasoningEffort.Medium;
+          vscode.workspace.getConfiguration("chatgpt").update("reasoningEffort", reasoningEffort, vscode.ConfigurationTarget.Global);
+          break;
+        }
         case BackendMessageType.setShowAllModels:
           const setShowAllModelsData = data as SetShowAllModelsMessage;
           this.showAllModels = setShowAllModelsData.showAllModels;
@@ -818,16 +803,13 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         this.frontendMessenger.sendAddMessage(message, options.conversation?.id ?? '');
       }
 
-      if (this.chatMode && !isInstructModel(this.model)) {
+      if (this.chatMode && isStreamingModel(this.model)) {
         let lastMessageTime = 0;
         const controller = new AbortController();
         this.abortControllers.push({ conversationId: options.conversation?.id ?? '', controller });
 
         // Stream ChatGPT response (this is using an async iterator)
-        for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal, {
-          temperature: options.temperature ?? this._temperature,
-          topP: options.topP ?? this._topP,
-        })) {
+        for await (const token of this.api.streamChatCompletion(options.conversation, controller.signal)) {
           message.rawContent += token;
 
           const now = Date.now();
@@ -848,15 +830,30 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         message.done = true;
         message.content = this.formatMessageContent(message.rawContent ?? "", responseInMarkdown);
 
+        const responseMeta = this.api.getLastResponseMeta(options.conversation?.id ?? "");
+        if (responseMeta) {
+          message.usedWebSearch = responseMeta.usedWebSearch;
+          message.steps = responseMeta.steps;
+          message.sources = responseMeta.sources;
+          this.api.clearLastResponseMeta(options.conversation?.id ?? "");
+        }
+
         // Send webview full updated message
         this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
-      } else if (isInstructModel(this.model)) {
-        // Instruct models are not streamed, they are completed in one go
+      } else if (this.chatMode) {
         const content = await this.api.getChatCompletion(options.conversation);
 
         if (content) {
           message.rawContent = content;
           message.content = this.formatMessageContent(message.rawContent, responseInMarkdown);
+
+          const responseMeta = this.api.getLastResponseMeta(options.conversation?.id ?? "");
+          if (responseMeta) {
+            message.usedWebSearch = responseMeta.usedWebSearch;
+            message.steps = responseMeta.steps;
+            message.sources = responseMeta.sources;
+            this.api.clearLastResponseMeta(options.conversation?.id ?? "");
+          }
 
           this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
         } else {

@@ -72,7 +72,9 @@ export class AuthStore {
       const key = keyByApi[apiBaseUrl] ?? await this.secretStorage.get(DEFAULT_KEY_NAME);
 
       // Last accessed key becomes the default key
-      await this.secretStorage.store(DEFAULT_KEY_NAME, key);
+      if (key !== undefined) {
+        await this.secretStorage.store(DEFAULT_KEY_NAME, key);
+      }
 
       return key;
     } else {

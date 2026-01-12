@@ -75,6 +75,8 @@ export interface Model {
 // Maps ID to a friendly name
 // Ref: https://platform.openai.com/docs/models
 export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
+  "gpt-5.2": "GPT-5.2",
+  "gpt-5.1-codex-max": "GPT-5.1 Codex Max",
   "gpt-4.1": "GPT-4.1",
   "gpt-4-turbo": "GPT-4 Turbo",
   "gpt-4": "GPT-4",
@@ -99,6 +101,16 @@ interface ModelCost {
 
 // Token cost per 1 million tokens
 export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
+  'gpt-5.2': {
+    // Per OpenAI model page: Input $1.75 / 1M tokens, Output $14 / 1M tokens
+    prompt: 1.75,
+    complete: 14,
+  },
+  'gpt-5.1-codex-max': {
+    // Per OpenAI model page: Input $1.25 / 1M tokens, Output $10 / 1M tokens
+    prompt: 1.25,
+    complete: 10,
+  },
   'gpt-4.1': {
     prompt: 2,
     complete: 8,
@@ -116,8 +128,8 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     complete: 120,
   },
   'gpt-4o': {
-    prompt: 5,
-    complete: 15,
+    prompt: 2.5,
+    complete: 10,
   },
   'gpt-4o-mini': {
     prompt: 0.15,
@@ -136,16 +148,18 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     complete: 60,
   },
   'o3': {
-    prompt: 10,
-    complete: 40,
+    // Per OpenAI pricing page: Input $2 / 1M, Output $8 / 1M
+    prompt: 2,
+    complete: 8,
   },
   'o1-preview': {
     prompt: 15,
     complete: 60,
   },
   'o1-mini': {
-    prompt: 3,
-    complete: 12,
+    // Per OpenAI pricing page: Input $1.10 / 1M, Output $4.40 / 1M
+    prompt: 1.10,
+    complete: 4.40,
   },
   'o3-mini': {
     prompt: 1.10,
@@ -163,6 +177,17 @@ interface ModelTokenLimits {
   max?: number;
 }
 export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.entries({
+  // NOTE: Token limits are used for UI display. If unknown, we leave them unset.
+  'gpt-5.2': {
+    // Per OpenAI model page: 400,000 context window, 128,000 max output tokens
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5.1-codex-max': {
+    // Per OpenAI model page: 400,000 context window, 128,000 max output tokens
+    context: 400000,
+    max: 128000,
+  },
   'gpt-4.1': {
     context: 1047576,
     max: 32768,
@@ -180,7 +205,7 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
   },
   'gpt-4o': {
     context: 128000,
-    max: 4096,
+    max: 16384,
   },
   'gpt-4o-mini': {
     context: 128000,
@@ -223,11 +248,46 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
 // Reasoning models have specific constraints:
 // 1. System context messages are not allowed.
 // 2. Different max_tokens behavior - max_completion_tokens used instead.
-export const REASONING_MODELS = ['o1', 'o3', 'o1-preview', 'o1-mini', 'o3-mini', 'o4-mini'];
+// NOTE: OpenAI docs show "Reasoning token support" for these models.
+// We treat them as "reasoning models" in the extension because they use a different
+// token accounting mode and, for some models (notably the o-series), have conversational
+// constraints compared to standard GPT models.
+export const REASONING_MODELS = [
+  'o1',
+  'o3',
+  'o1-preview',
+  'o1-mini',
+  'o3-mini',
+  'o4-mini',
+  'gpt-5',
+  'gpt-5-mini',
+  'gpt-5-codex',
+  'gpt-5.1-codex-max',
+  'gpt-5.2',
+];
 
 interface OpenAIMessage {
   role: Role;
   content: string;
+}
+
+export interface ResponseToolCallMeta {
+  toolName?: string;
+}
+
+export interface ResponseStep {
+  type?: string;
+  toolName?: string;
+  toolCall?: ResponseToolCallMeta;
+  name?: string;
+}
+
+export interface ResponseSource {
+  id?: string;
+  title?: string;
+  url?: string;
+  // Preserve unknown fields from providers
+  [key: string]: unknown;
 }
 // interface OpenAIChatRequest {
 //   model: string;
@@ -251,6 +311,10 @@ export interface ChatMessage extends OpenAIMessage {
   content: string;
   // Raw content from OpenAI
   rawContent: string;
+  // Optional metadata from the model/tooling layer
+  steps?: ResponseStep[];
+  usedWebSearch?: boolean;
+  sources?: ResponseSource[];
 
   // Not sure if these are used
   // adding them since they're used in process messages
@@ -282,6 +346,12 @@ export enum Verbosity {
   full = "full"
 }
 
+export enum ReasoningEffort {
+  Low = "low",
+  Medium = "medium",
+  High = "high"
+}
+
 export interface CoreTool {
   description: string;
   parameters: any;
@@ -300,6 +370,7 @@ export interface Conversation {
   aiRenamedTitle?: boolean;
   autoscroll: boolean;
   verbosity?: Verbosity | undefined;
+  reasoningEffort?: ReasoningEffort | undefined;
   // allow the user to switch tabs while working on a prompt
   userInput?: string;
   tokenCount?: {
@@ -350,7 +421,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
+    model: "gpt-5.2" | "gpt-5.1-codex-max" | "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
     maxTokens: number,
     temperature: number,
     top_p: number;
@@ -391,9 +462,11 @@ export interface ExtensionSettings {
   minimalUI: boolean,
   disableMultipleConversations: boolean,
   verbosity: Verbosity,
+  reasoningEffort: ReasoningEffort;
   renameTabTitles: boolean;
   showAllModels: boolean;
   manualModelInput: boolean;
+  allowWebSearch: boolean;
   azureApiVersion: string;
 }
 
@@ -402,7 +475,7 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
     generateCodeEnabled: true,
     apiBaseUrl: "https://api.openai.com/v1",
     organization: "",
-    model: "gpt-4.1",
+    model: "gpt-5.2",
     maxTokens: 4000,
     temperature: 1,
     top_p: 1
@@ -443,8 +516,10 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   minimalUI: false,
   disableMultipleConversations: false,
   verbosity: Verbosity.normal,
+  reasoningEffort: ReasoningEffort.Medium,
   renameTabTitles: true,
   showAllModels: false,
   manualModelInput: false,
+  allowWebSearch: true,
   azureApiVersion: "2024-02-01"
 };

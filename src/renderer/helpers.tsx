@@ -92,14 +92,14 @@ export const addChatMessage = (
     prev.map((conversation: Conversation) =>
       conversation.id === currentConversationId
         ? {
-            ...conversation,
-            // Add message to conversation; filter is here to prevent duplicate messages
-            messages: [...conversation.messages, newMessage].filter(
-              (message: ChatMessage, index: number, self: ChatMessage[]) =>
-                index ===
-                self.findIndex((m: ChatMessage) => m.id === message.id)
-            ),
-          }
+          ...conversation,
+          // Add message to conversation; filter is here to prevent duplicate messages
+          messages: [...conversation.messages, newMessage].filter(
+            (message: ChatMessage, index: number, self: ChatMessage[]) =>
+              index ===
+              self.findIndex((m: ChatMessage) => m.id === message.id)
+          ),
+        }
         : conversation
     )
   );
@@ -351,6 +351,14 @@ export function isInstructModel(model: Model | undefined) {
   return model?.architecture?.instruct_type || model?.id.includes("instruct");
 }
 
+// Can this model stream back its responses?
+export function isStreamingModel(model: Model | undefined) {
+  const isInstruct = isInstructModel(model);
+
+  // Streaming means "chat-style" models; instruct-style models don't stream token-wise
+  return !isInstruct;
+}
+
 export function isMultimodalModel(model: Model | undefined) {
   return model?.architecture?.modality === "multimodal";
 }
@@ -365,7 +373,7 @@ export function isReasoningModel(model: Model | undefined) {
 
 // Custom hook useIsCurrentModelAvailable
 export function useIsModelAvailable(
-  models: Array<{ id: string }>,
+  models: Array<{ id: string; }>,
   model: Model | undefined
 ): boolean {
   return useMemo(() => {
@@ -493,4 +501,28 @@ export function useFormatSize() {
   }, []);
 
   return formatSize;
+}
+
+// Hook - Close the dropdown menu when clicking outside.
+export function useOnClickOutside(
+  ref: React.RefObject<HTMLElement>,
+  handler: () => void,
+  // Use buttonRef to reference the button that opens the dropdown
+  // Without this, the button click would both close and reopen the dropdown
+  buttonRef?: React.RefObject<HTMLElement> | null,
+) {
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node) &&
+          (!buttonRef || (buttonRef && !buttonRef.current?.contains(event.target as Node)))) {
+        handler();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [ref, handler]);
 }

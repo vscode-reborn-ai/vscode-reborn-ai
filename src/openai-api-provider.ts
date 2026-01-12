@@ -6,7 +6,7 @@ import ky from "ky";
 import { z } from 'zod';
 import { isReasoningModel } from "./helpers";
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
-import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
+import { ChatMessage, Conversation, Model, ResponseSource, ResponseStep, Role } from "./renderer/types";
 
 /** openai-api-provider.ts
 
@@ -28,7 +28,7 @@ const openaiSettingsSchema = z.object({
   baseURL: z.string().default('https://api.openai.com/v1'),
   organization: z.string().optional(),
   project: z.string().optional(),
-  headers: z.record(z.string()).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
   compatibility: z.enum(['strict', 'compatible']).default('compatible'),
   fetch: z.function().optional(),
 });
@@ -36,9 +36,9 @@ const openaiSettingsSchema = z.object({
 
 export class ApiProvider {
   private _openai: OpenAIProvider | AzureOpenAIProvider | undefined;
-  private _temperature: number;
-  private _topP: number;
   private _modelList: Model[] = [];
+  private _lastResponseMeta: Map<string, { steps?: ResponseStep[]; usedWebSearch?: boolean; sources?: ResponseSource[]; }> = new Map();
+  private _allowWebSearch: boolean = true;
 
   public config: OpenAIProviderSettings | AzureOpenAIProviderSettings = {};
 
@@ -57,21 +57,13 @@ export class ApiProvider {
   constructor(apiKey: string, {
     organization,
     apiBaseUrl: baseApiUrl = 'https://api.openai.com/v1',
-    temperature = 0.9,
-    topP = 1,
   }: {
     organization: string | undefined;
     apiBaseUrl: string;
-    temperature: number;
-    topP: number;
   } = {
       organization: undefined,
       apiBaseUrl: 'https://api.openai.com/v1',
-      temperature: 0.9,
-      topP: 1,
     }) {
-    this._temperature = temperature;
-    this._topP = topP;
 
     if (this.checkIfAzure(baseApiUrl)) {
       this.updateAzureConfig({
@@ -86,6 +78,23 @@ export class ApiProvider {
     }
 
     // this.providerRegistry = createProviderRegistry({});
+  }
+
+  setAllowWebSearch(allow: boolean) {
+    this._allowWebSearch = allow;
+  }
+
+  private getWebSearchTool() {
+    if (!this._allowWebSearch || !this._openai) {
+      return undefined;
+    }
+
+    type WebSearchFactory = (options: { externalWebAccess: boolean; searchContextSize?: "low" | "medium" | "high"; }) => unknown;
+    type ToolCapableProvider = { tools?: { webSearch?: WebSearchFactory; }; };
+
+    const toolFactory = (this._openai as ToolCapableProvider)?.tools?.webSearch;
+
+    return toolFactory?.({ externalWebAccess: true, searchContextSize: "high" });
   }
 
   // setModel(modelId: string) {
@@ -114,13 +123,10 @@ export class ApiProvider {
     return tokensLeft;
   }
 
-  async* streamChatCompletion(conversation: Conversation, abortSignal: AbortSignal, {
-    temperature = this._temperature,
-    topP = this._topP,
-  }: {
-    temperature?: number;
-    topP?: number;
-  } = {}): AsyncGenerator<any, any, unknown> {
+  async* streamChatCompletion(
+    conversation: Conversation,
+    abortSignal: AbortSignal,
+  ): AsyncGenerator<any, any, unknown> {
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
     const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
@@ -132,70 +138,130 @@ export class ApiProvider {
     let model = conversation.model?.id ?? FALLBACK_MODEL_ID;
 
     if (this.isAzure) {
-      // sample api url: https://reborn-testing.openai.azure.com/openai/deployments/gpt-4o
-      // if the "model" contains /deployments/, then extract the deployment name
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const { textStream } = await
-      streamText({
-        // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
-        model: this._openai.languageModel(model),
-        messages: conversation.messages.map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
-        maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
-        temperature,
-        topP,
-        abortSignal,
-      });
+    const webSearchTool = this.getWebSearchTool();
 
-    for await (const textPart of textStream) {
-      if (abortSignal.aborted) {
-        return;
-      }
-
-      yield textPart;
-    }
-  }
-
-  async getChatCompletion(conversation: Conversation, {
-    temperature = this._temperature,
-    topP = this._topP,
-  }: {
-    temperature?: number;
-    topP?: number;
-  } = {}): Promise<string | undefined> {
-    const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
-    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
-
-    if (!this._openai) {
-      console.error('[Reborn AI] OpenAI API not initialized');
-      return;
-    }
-
-    let model = conversation.model?.id ?? FALLBACK_MODEL_ID;
-
-    if (this.isAzure) {
-      // sample api url: https://reborn-testing.openai.azure.com/openai/deployments/gpt-4o
-      // if the "model" contains /deployments/, then extract the deployment name
-      model = model.split('/deployments/').pop() ?? model;
-    }
-
-    const { text } = await generateText({
-      // model: this.providerRegistry.languageModel(`${this.isAzure ? 'azure' : 'openai'}:${conversation.model?.id ?? FALLBACK_MODEL_ID}`),
+    const streamResult = await streamText({
       model: this._openai.languageModel(model),
       messages: conversation.messages.map((message) => ({
         role: message.role,
         content: message.content,
       })),
-      maxTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
-      temperature,
-      topP,
+      tools: webSearchTool ? { web_search: webSearchTool as any } : undefined,
+      maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
+      abortSignal,
+      ...(isReasoningModel(model) && conversation.reasoningEffort ? {
+        experimental_providerMetadata: {
+          openai: { reasoningEffort: conversation.reasoningEffort }
+        }
+      } : {}),
     });
 
-    return text;
+    let usedWebSearch = false;
+    const sources: any[] = [];
+
+    for await (const part of streamResult.fullStream) {
+      if (abortSignal.aborted) {
+        return;
+      }
+
+      switch (part.type) {
+        case "text-delta": {
+          yield (part as any).text;
+          break;
+        }
+        case "tool-call": {
+          const toolName = (part as any)?.toolName;
+          if (toolName === "web_search") {
+            usedWebSearch = true;
+          }
+          break;
+        }
+        case "tool-result": {
+          const toolName = (part as any)?.toolName;
+          if (toolName === "web_search") {
+            usedWebSearch = true;
+          }
+          break;
+        }
+        case "source": {
+          sources.push(part);
+          break;
+        }
+        default:
+          break;
+      }
+    }
+
+    let steps: ResponseStep[] | undefined;
+    try {
+      steps = await streamResult.steps as ResponseStep[];
+    } catch {
+      steps = undefined;
+    }
+
+    if (steps && Array.isArray(steps)) {
+      usedWebSearch = usedWebSearch || steps.some((step: any) =>
+        (step.toolCalls ?? []).some((tc: any) => tc.toolName === "web_search")
+      );
+    }
+
+    this._lastResponseMeta.set(conversation.id, {
+      steps,
+      usedWebSearch,
+      sources,
+    });
+    this.evictOldResponseMeta();
+  }
+
+  async getChatCompletion(conversation: Conversation): Promise<string | undefined> {
+    const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
+    const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
+
+    if (!this._openai) {
+      console.error('[Reborn AI] OpenAI API not initialized');
+      return;
+    }
+
+    let model = conversation.model?.id ?? FALLBACK_MODEL_ID;
+
+    if (this.isAzure) {
+      // sample api url: https://reborn-testing.openai.azure.com/openai/deployments/gpt-4o
+      // if the "model" contains /deployments/, then extract the deployment name
+      model = model.split('/deployments/').pop() ?? model;
+    }
+
+    const webSearchTool = this.getWebSearchTool();
+
+    const result = await generateText({
+      model: this._openai.languageModel(model),
+      messages: conversation.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+      tools: webSearchTool ? { web_search: webSearchTool as any } : undefined,
+      maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
+      ...(isReasoningModel(model) && conversation.reasoningEffort ? {
+        experimental_providerMetadata: {
+          openai: { reasoningEffort: conversation.reasoningEffort }
+        }
+      } : {}),
+    });
+
+    const usedWebSearch = (result as any)?.toolCalls?.some((tc: any) => tc.toolName === "web_search") ?? false;
+    const steps = (result as any)?.steps as ResponseStep[] | undefined;
+    const sources = ((result as any)?.sources ?? []) as ResponseSource[];
+
+    this._lastResponseMeta.set(conversation.id, {
+      steps,
+      usedWebSearch,
+      sources,
+    });
+    this.evictOldResponseMeta();
+
+    return (result as any)?.text;
   }
 
   // Utility token counting methods
@@ -256,15 +322,6 @@ export class ApiProvider {
     return tokens;
   }
 
-  // * Getters and setters
-  set temperature(value: number) {
-    this._temperature = value;
-  }
-
-  set topP(value: number) {
-    this._topP = value;
-  }
-
   private updateConfig(config: OpenAIProviderSettings) {
     const validGlobalConfig = openaiSettingsSchema.parse(this.config);
     const validConfig = openaiSettingsSchema.parse(config);
@@ -288,7 +345,8 @@ export class ApiProvider {
     } as OpenAIProviderSettings;
 
     // Use 'compatible' for non-OpenAI tools that mimic the OpenAI API.
-    (this.config as OpenAIProviderSettings).compatibility = ((this.config as OpenAIProviderSettings).baseURL ?? '').includes('openai.com') ? 'strict' : 'compatible';
+    // UPDATE - No longer a valid property.
+    // (this.config as OpenAIProviderSettings).compatibility = ((this.config as OpenAIProviderSettings).baseURL ?? '').includes('openai.com') ? 'strict' : 'compatible';
 
     this.rebuildOpenAIProvider();
   }
@@ -575,6 +633,25 @@ export class ApiProvider {
 
   buildAzureApiUrl(resourceName: string, deploymentName: string): string {
     return `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentName}`;
+  }
+
+  getLastResponseMeta(conversationId: string) {
+    return this._lastResponseMeta.get(conversationId);
+  }
+
+  clearLastResponseMeta(conversationId: string) {
+    this._lastResponseMeta.delete(conversationId);
+  }
+
+  private evictOldResponseMeta(maxEntries: number = 100) {
+    if (this._lastResponseMeta.size <= maxEntries) {
+      return;
+    }
+
+    const oldestKey = this._lastResponseMeta.keys().next().value;
+    if (oldestKey) {
+      this._lastResponseMeta.delete(oldestKey);
+    }
   }
 
 }
