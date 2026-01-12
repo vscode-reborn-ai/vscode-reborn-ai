@@ -37,6 +37,7 @@ const openaiSettingsSchema = z.object({
 export class ApiProvider {
   private _openai: OpenAIProvider | AzureOpenAIProvider | undefined;
   private _modelList: Model[] = [];
+  private _lastResponseMeta: Map<string, { steps?: any[]; usedWebSearch?: boolean; sources?: any[]; }> = new Map();
 
   public config: OpenAIProviderSettings | AzureOpenAIProviderSettings = {};
 
@@ -116,8 +117,6 @@ export class ApiProvider {
     let model = conversation.model?.id ?? FALLBACK_MODEL_ID;
 
     if (this.isAzure) {
-      // sample api url: https://reborn-testing.openai.azure.com/openai/deployments/gpt-4o
-      // if the "model" contains /deployments/, then extract the deployment name
       model = model.split('/deployments/').pop() ?? model;
     }
 
@@ -126,30 +125,76 @@ export class ApiProvider {
       searchContextSize: "high",
     });
 
-    const { textStream } = await
-      streamText({
-        model: this._openai.languageModel(model),
-        messages: conversation.messages.map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
-        tools: webSearchTool ? { web_search: webSearchTool } : undefined,
-        maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
-        abortSignal,
-        ...(isReasoningModel(model) && conversation.reasoningEffort ? {
-          experimental_providerMetadata: {
-            openai: { reasoningEffort: conversation.reasoningEffort }
-          }
-        } : {}),
-      });
+    const streamResult = await streamText({
+      model: this._openai.languageModel(model),
+      messages: conversation.messages.map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
+      tools: webSearchTool ? { web_search: webSearchTool } : undefined,
+      maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
+      abortSignal,
+      ...(isReasoningModel(model) && conversation.reasoningEffort ? {
+        experimental_providerMetadata: {
+          openai: { reasoningEffort: conversation.reasoningEffort }
+        }
+      } : {}),
+    });
 
-    for await (const textPart of textStream) {
+    let usedWebSearch = false;
+    const sources: any[] = [];
+
+    for await (const part of streamResult.fullStream) {
       if (abortSignal.aborted) {
         return;
       }
 
-      yield textPart;
+      switch (part.type) {
+        case "text-delta": {
+          yield (part as any).text;
+          break;
+        }
+        case "tool-call": {
+          const toolName = (part as any)?.toolName;
+          if (toolName === "web_search") {
+            usedWebSearch = true;
+          }
+          break;
+        }
+        case "tool-result": {
+          const toolName = (part as any)?.toolName;
+          if (toolName === "web_search") {
+            usedWebSearch = true;
+          }
+          break;
+        }
+        case "source": {
+          sources.push(part);
+          break;
+        }
+        default:
+          break;
+      }
     }
+
+    let steps: any[] | undefined;
+    try {
+      steps = await streamResult.steps;
+    } catch {
+      steps = undefined;
+    }
+
+    if (steps && Array.isArray(steps)) {
+      usedWebSearch = usedWebSearch || steps.some((step: any) =>
+        (step.toolCalls ?? []).some((tc: any) => tc.toolName === "web_search")
+      );
+    }
+
+    this._lastResponseMeta.set(conversation.id, {
+      steps,
+      usedWebSearch,
+      sources,
+    });
   }
 
   async getChatCompletion(conversation: Conversation): Promise<string | undefined> {
@@ -174,7 +219,7 @@ export class ApiProvider {
       searchContextSize: "high",
     });
 
-    const { text } = await generateText({
+    const result = await generateText({
       model: this._openai.languageModel(model),
       messages: conversation.messages.map((message) => ({
         role: message.role,
@@ -189,7 +234,17 @@ export class ApiProvider {
       } : {}),
     });
 
-    return text;
+    const usedWebSearch = (result as any)?.toolCalls?.some((tc: any) => tc.toolName === "web_search") ?? false;
+    const steps = (result as any)?.steps;
+    const sources = (result as any)?.sources ?? [];
+
+    this._lastResponseMeta.set(conversation.id, {
+      steps,
+      usedWebSearch,
+      sources,
+    });
+
+    return (result as any)?.text;
   }
 
   // Utility token counting methods
@@ -561,6 +616,14 @@ export class ApiProvider {
 
   buildAzureApiUrl(resourceName: string, deploymentName: string): string {
     return `https://${resourceName}.openai.azure.com/openai/deployments/${deploymentName}`;
+  }
+
+  getLastResponseMeta(conversationId: string) {
+    return this._lastResponseMeta.get(conversationId);
+  }
+
+  clearLastResponseMeta(conversationId: string) {
+    this._lastResponseMeta.delete(conversationId);
   }
 
 }

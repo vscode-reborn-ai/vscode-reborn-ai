@@ -819,6 +819,14 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         message.done = true;
         message.content = this.formatMessageContent(message.rawContent ?? "", responseInMarkdown);
 
+        const responseMeta = this.api.getLastResponseMeta(options.conversation?.id ?? "");
+        if (responseMeta) {
+          message.usedWebSearch = responseMeta.usedWebSearch;
+          message.steps = responseMeta.steps;
+          message.sources = responseMeta.sources;
+          this.api.clearLastResponseMeta(options.conversation?.id ?? "");
+        }
+
         // Send webview full updated message
         this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
       } else if (this.chatMode) {
@@ -827,6 +835,14 @@ export default class ChatGptViewProvider implements vscode.WebviewViewProvider {
         if (content) {
           message.rawContent = content;
           message.content = this.formatMessageContent(message.rawContent, responseInMarkdown);
+
+          const responseMeta = this.api.getLastResponseMeta(options.conversation?.id ?? "");
+          if (responseMeta) {
+            message.usedWebSearch = responseMeta.usedWebSearch;
+            message.steps = responseMeta.steps;
+            message.sources = responseMeta.sources;
+            this.api.clearLastResponseMeta(options.conversation?.id ?? "");
+          }
 
           this.frontendMessenger.sendUpdateMessage(message, options.conversation?.id ?? '');
         } else {

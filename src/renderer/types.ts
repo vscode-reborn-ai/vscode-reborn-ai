@@ -293,6 +293,10 @@ export interface ChatMessage extends OpenAIMessage {
   content: string;
   // Raw content from OpenAI
   rawContent: string;
+  // Optional metadata from the model/tooling layer
+  steps?: any[];
+  usedWebSearch?: boolean;
+  sources?: any[];
 
   // Not sure if these are used
   // adding them since they're used in process messages
