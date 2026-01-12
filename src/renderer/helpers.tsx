@@ -355,6 +355,7 @@ export function isInstructModel(model: Model | undefined) {
 export function isStreamingModel(model: Model | undefined) {
   const isInstruct = isInstructModel(model);
 
+  // Streaming means "chat-style" models; instruct-style models don't stream token-wise
   return !isInstruct;
 }
 

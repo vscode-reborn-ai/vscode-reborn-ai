@@ -6,7 +6,7 @@ import ky from "ky";
 import { z } from 'zod';
 import { isReasoningModel } from "./helpers";
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
-import { ChatMessage, Conversation, Model, Role } from "./renderer/types";
+import { ChatMessage, Conversation, Model, ResponseSource, ResponseStep, Role } from "./renderer/types";
 
 /** openai-api-provider.ts
 
@@ -37,7 +37,7 @@ const openaiSettingsSchema = z.object({
 export class ApiProvider {
   private _openai: OpenAIProvider | AzureOpenAIProvider | undefined;
   private _modelList: Model[] = [];
-  private _lastResponseMeta: Map<string, { steps?: any[]; usedWebSearch?: boolean; sources?: any[]; }> = new Map();
+  private _lastResponseMeta: Map<string, { steps?: ResponseStep[]; usedWebSearch?: boolean; sources?: ResponseSource[]; }> = new Map();
   private _allowWebSearch: boolean = true;
 
   public config: OpenAIProviderSettings | AzureOpenAIProviderSettings = {};
@@ -84,6 +84,19 @@ export class ApiProvider {
     this._allowWebSearch = allow;
   }
 
+  private getWebSearchTool() {
+    if (!this._allowWebSearch || !this._openai) {
+      return undefined;
+    }
+
+    type WebSearchFactory = (options: { externalWebAccess: boolean; searchContextSize?: "low" | "medium" | "high"; }) => unknown;
+    type ToolCapableProvider = { tools?: { webSearch?: WebSearchFactory; }; };
+
+    const toolFactory = (this._openai as ToolCapableProvider)?.tools?.webSearch;
+
+    return toolFactory?.({ externalWebAccess: true, searchContextSize: "high" });
+  }
+
   // setModel(modelId: string) {
 
   getRemainingTokens(model: Model | undefined, promptTokensUsed: number) {
@@ -110,7 +123,10 @@ export class ApiProvider {
     return tokensLeft;
   }
 
-  async* streamChatCompletion(conversation: Conversation, abortSignal: AbortSignal): AsyncGenerator<any, any, unknown> {
+  async* streamChatCompletion(
+    conversation: Conversation,
+    abortSignal: AbortSignal,
+  ): AsyncGenerator<any, any, unknown> {
     const promptTokensUsed = ApiProvider.countConversationTokens(conversation);
     const completeTokensLeft = this.getRemainingTokens(conversation.model, promptTokensUsed);
 
@@ -125,12 +141,7 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const webSearchTool = this._allowWebSearch
-      ? (this._openai as any)?.tools?.webSearch?.({
-        externalWebAccess: true,
-        searchContextSize: "high",
-      })
-      : undefined;
+    const webSearchTool = this.getWebSearchTool();
 
     const streamResult = await streamText({
       model: this._openai.languageModel(model),
@@ -138,7 +149,7 @@ export class ApiProvider {
         role: message.role,
         content: message.content,
       })),
-      tools: webSearchTool ? { web_search: webSearchTool } : undefined,
+      tools: webSearchTool ? { web_search: webSearchTool as any } : undefined,
       maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       abortSignal,
       ...(isReasoningModel(model) && conversation.reasoningEffort ? {
@@ -184,9 +195,9 @@ export class ApiProvider {
       }
     }
 
-    let steps: any[] | undefined;
+    let steps: ResponseStep[] | undefined;
     try {
-      steps = await streamResult.steps;
+      steps = await streamResult.steps as ResponseStep[];
     } catch {
       steps = undefined;
     }
@@ -202,6 +213,7 @@ export class ApiProvider {
       usedWebSearch,
       sources,
     });
+    this.evictOldResponseMeta();
   }
 
   async getChatCompletion(conversation: Conversation): Promise<string | undefined> {
@@ -221,12 +233,7 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const webSearchTool = this._allowWebSearch
-      ? (this._openai as any)?.tools?.webSearch?.({
-        externalWebAccess: true,
-        searchContextSize: "high",
-      })
-      : undefined;
+    const webSearchTool = this.getWebSearchTool();
 
     const result = await generateText({
       model: this._openai.languageModel(model),
@@ -234,7 +241,7 @@ export class ApiProvider {
         role: message.role,
         content: message.content,
       })),
-      tools: webSearchTool ? { web_search: webSearchTool } : undefined,
+      tools: webSearchTool ? { web_search: webSearchTool as any } : undefined,
       maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       ...(isReasoningModel(model) && conversation.reasoningEffort ? {
         experimental_providerMetadata: {
@@ -244,14 +251,15 @@ export class ApiProvider {
     });
 
     const usedWebSearch = (result as any)?.toolCalls?.some((tc: any) => tc.toolName === "web_search") ?? false;
-    const steps = (result as any)?.steps;
-    const sources = (result as any)?.sources ?? [];
+    const steps = (result as any)?.steps as ResponseStep[] | undefined;
+    const sources = ((result as any)?.sources ?? []) as ResponseSource[];
 
     this._lastResponseMeta.set(conversation.id, {
       steps,
       usedWebSearch,
       sources,
     });
+    this.evictOldResponseMeta();
 
     return (result as any)?.text;
   }
@@ -633,6 +641,17 @@ export class ApiProvider {
 
   clearLastResponseMeta(conversationId: string) {
     this._lastResponseMeta.delete(conversationId);
+  }
+
+  private evictOldResponseMeta(maxEntries: number = 100) {
+    if (this._lastResponseMeta.size <= maxEntries) {
+      return;
+    }
+
+    const oldestKey = this._lastResponseMeta.keys().next().value;
+    if (oldestKey) {
+      this._lastResponseMeta.delete(oldestKey);
+    }
   }
 
 }

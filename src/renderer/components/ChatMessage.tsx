@@ -385,9 +385,8 @@ const Name = ({
   );
   const usedWebSearch =
     message.usedWebSearch ||
-    message.steps?.some((step: any) => {
-      const toolName =
-        step?.toolName ?? step?.toolCall?.toolName ?? step?.name ?? "";
+    message.steps?.some((step) => {
+      const toolName = step?.toolName ?? step?.toolCall?.toolName ?? step?.name ?? "";
       return toolName === "web_search";
     });
 

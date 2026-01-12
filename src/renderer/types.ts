@@ -82,7 +82,6 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "gpt-4": "GPT-4",
   "gpt-4-32k": "GPT-4 32k",
   "gpt-4o": "GPT-4o",
-  // Search is exposed via the Responses API web_search tool; no search-only model ID needed
   "gpt-4o-mini": "GPT-4o mini",
   "gpt-3.5-turbo": "GPT-3.5 Turbo",
   "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k",
@@ -271,6 +270,25 @@ interface OpenAIMessage {
   role: Role;
   content: string;
 }
+
+export interface ResponseToolCallMeta {
+  toolName?: string;
+}
+
+export interface ResponseStep {
+  type?: string;
+  toolName?: string;
+  toolCall?: ResponseToolCallMeta;
+  name?: string;
+}
+
+export interface ResponseSource {
+  id?: string;
+  title?: string;
+  url?: string;
+  // Preserve unknown fields from providers
+  [key: string]: unknown;
+}
 // interface OpenAIChatRequest {
 //   model: string;
 //   messages: OpenAIMessage[];
@@ -294,9 +312,9 @@ export interface ChatMessage extends OpenAIMessage {
   // Raw content from OpenAI
   rawContent: string;
   // Optional metadata from the model/tooling layer
-  steps?: any[];
+  steps?: ResponseStep[];
   usedWebSearch?: boolean;
-  sources?: any[];
+  sources?: ResponseSource[];
 
   // Not sure if these are used
   // adding them since they're used in process messages
