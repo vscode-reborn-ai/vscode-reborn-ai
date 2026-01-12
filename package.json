@@ -3,8 +3,8 @@
   "publisher": "chris-hayes",
   "displayName": "VSCode Reborn AI",
   "icon": "images/reborn-ai-logo.png",
-  "description": "Code with AI in VSCode, but you get to choose the AI.",
-  "version": "3.27.0",
+  "description": "Code with AI in VSCode, you choose the AI.",
+  "version": "3.28.0",
   "license": "ISC",
   "repository": {
     "url": "https://github.com/vscode-reborn-ai/vscode-reborn-ai"
@@ -22,11 +22,10 @@
   ],
   "keywords": [
     "ai",
-    "gpt-4.1",
-    "o4-mini",
-    "o3",
-    "chatgpt",
+    "gpt-5.2",
+    "gpt-5.1-code-max",
     "openai",
+    "chatgpt",
     "find bugs"
   ],
   "activationEvents": [
