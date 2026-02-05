@@ -143,6 +143,10 @@ export class ApiProvider {
 
     const webSearchTool = this.getWebSearchTool();
 
+    const providerOptions = isReasoningModel(model) && conversation.reasoningEffort ? {
+      openai: { reasoningEffort: conversation.reasoningEffort }
+    } : undefined;
+
     const streamResult = await streamText({
       model: this._openai.languageModel(model),
       messages: conversation.messages.map((message) => ({
@@ -152,11 +156,7 @@ export class ApiProvider {
       tools: webSearchTool ? { web_search: webSearchTool as any } : undefined,
       maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
       abortSignal,
-      ...(isReasoningModel(model) && conversation.reasoningEffort ? {
-        experimental_providerMetadata: {
-          openai: { reasoningEffort: conversation.reasoningEffort }
-        }
-      } : {}),
+      ...(providerOptions ? { providerOptions } : {}),
     });
 
     let usedWebSearch = false;
@@ -235,6 +235,10 @@ export class ApiProvider {
 
     const webSearchTool = this.getWebSearchTool();
 
+    const providerOptionsNonStreaming = isReasoningModel(model) && conversation.reasoningEffort ? {
+      openai: { reasoningEffort: conversation.reasoningEffort }
+    } : undefined;
+
     const result = await generateText({
       model: this._openai.languageModel(model),
       messages: conversation.messages.map((message) => ({
@@ -243,11 +247,7 @@ export class ApiProvider {
       })),
       tools: webSearchTool ? { web_search: webSearchTool as any } : undefined,
       maxOutputTokens: isReasoningModel(model) ? undefined : completeTokensLeft,
-      ...(isReasoningModel(model) && conversation.reasoningEffort ? {
-        experimental_providerMetadata: {
-          openai: { reasoningEffort: conversation.reasoningEffort }
-        }
-      } : {}),
+      ...(providerOptionsNonStreaming ? { providerOptions: providerOptionsNonStreaming } : {}),
     });
 
     const usedWebSearch = (result as any)?.toolCalls?.some((tc: any) => tc.toolName === "web_search") ?? false;
