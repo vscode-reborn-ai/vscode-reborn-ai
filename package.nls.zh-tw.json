@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "欲了解更多詳細資訊，請造訪 openai.com/pricing",
   "chat.send": "傳送",
   "chat.cancel": "取消",
+  "chat.retry": "重試",
   "chat.you": "你",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "ChatGPT：隨意提問",

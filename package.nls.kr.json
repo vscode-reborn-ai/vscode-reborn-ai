@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "자세한 내용은 openai.com/pricing을 참조하세요",
   "chat.send": "보내기",
   "chat.cancel": "취소",
+  "chat.retry": "다시 시도",
   "chat.you": "당신",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "Reborn AI: 무엇이든 물어보세요",

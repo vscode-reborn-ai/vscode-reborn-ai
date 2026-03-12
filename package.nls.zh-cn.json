@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "有关更多详细信息，请访问openai.com/pricing",
   "chat.send": "发送",
   "chat.cancel": "取消",
+  "chat.retry": "重试",
   "chat.you": "你",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "Reborn AI: 随便问问",

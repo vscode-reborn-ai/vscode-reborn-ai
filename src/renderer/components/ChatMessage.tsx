@@ -4,16 +4,74 @@ import React, { useRef } from "react";
 import { useModelFriendlyName } from "../helpers";
 import { useAppSelector } from "../hooks";
 import { useMessenger } from "../send-to-backend";
-import { RootState } from "../store";
-import { ChatMessage, Conversation, Role } from "../types";
+import type { RootState } from "../store";
+import { type ChatMessage, type Conversation, Role } from "../types";
 import CodeBlock from "./CodeBlock";
 import Icon from "./Icon";
 
 // Error message component.
-const ErrorMessageComponent = ({ message }: { message: ChatMessage; }) => {
+const ErrorMessageComponent = ({
+  message,
+  conversation,
+  index,
+  vscode,
+}: {
+  message: ChatMessage;
+  conversation: Conversation;
+  index: number;
+  vscode: any;
+}) => {
   const settings = useAppSelector(
-    (state: RootState) => state.app.extensionSettings
+    (state: RootState) => state.app.extensionSettings,
   );
+  const debug = useAppSelector((state: RootState) => state.app.debug);
+  const t = useAppSelector((state: RootState) => state.app.translations);
+  const backendMessenger = useMessenger(vscode);
+
+  // Find the previous user message to retry
+  const findPreviousUserMessage = (): ChatMessage | null => {
+    // Look backwards from current index to find the last user message
+    for (let i = index - 1; i >= 0; i--) {
+      const msg = conversation.messages[i];
+      if (msg.role === Role.user) {
+        return msg;
+      }
+    }
+    return null;
+  };
+
+  const handleRetryClick = () => {
+    const previousUserMessage = findPreviousUserMessage();
+    if (previousUserMessage) {
+      // Resend the previous user message, similar to the edit functionality
+      backendMessenger.sendAddFreeTextQuestion({
+        conversation,
+        question: previousUserMessage.rawContent,
+        includeEditorSelection: false,
+        questionId: previousUserMessage.id,
+        messageId: message.id, // The current error message ID
+        code: previousUserMessage.questionCode ?? "",
+      });
+    }
+  };
+
+  const previousUserMessage = findPreviousUserMessage();
+
+  if (debug) {
+    // Debug logging to understand the issue
+    console.log("[Reborn AI] Error message debug:", {
+      messageIndex: index,
+      totalMessages: conversation.messages.length,
+      currentMessage: message,
+      previousUserMessage,
+      conversationMessages: conversation.messages.map((msg, i) => ({
+        index: i,
+        id: msg.id,
+        role: msg.role,
+        isError: msg.isError,
+      })),
+    });
+  }
 
   return (
     <div className="text p-4 bg-red-700 rounded bg-opacity-10">
@@ -35,6 +93,19 @@ const ErrorMessageComponent = ({ message }: { message: ChatMessage; }) => {
             Model.
           </p>
         )}
+      {/* Always show retry button for error messages if there is a previous user message */}
+      {previousUserMessage && (
+        <div className="mt-3 pt-3 border-t border-red-600 border-opacity-30">
+          <button
+            type="button"
+            className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-100 bg-red-600 hover:bg-red-500 rounded-md transition-colors duration-200"
+            onClick={handleRetryClick}
+          >
+            <Icon icon="refresh" className="w-4 h-4 mr-2" />
+            {t?.chat?.retry ?? "Retry"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -70,7 +141,7 @@ const EditMessageComponent = ({
   editingMessageRef: React.RefObject<HTMLTextAreaElement>;
 }) => {
   const hideName = useAppSelector(
-    (state: RootState) => state.app.viewOptions.hideName
+    (state: RootState) => state.app.viewOptions.hideName,
   );
 
   return (
@@ -105,10 +176,10 @@ const UserMessageComponent = ({
   editingMessageRef: React.RefObject<HTMLTextAreaElement>;
 }) => {
   const showMarkdown = useAppSelector(
-    (state: RootState) => state.app.viewOptions.showMarkdown
+    (state: RootState) => state.app.viewOptions.showMarkdown,
   );
   const alignRight = useAppSelector(
-    (state: RootState) => state.app.viewOptions.alignRight
+    (state: RootState) => state.app.viewOptions.alignRight,
   );
 
   return (
@@ -122,11 +193,11 @@ const UserMessageComponent = ({
         <div
           className={classNames(
             "message-wrapper",
-            message?.done ?? true ? "" : "result-streaming",
+            (message?.done ?? true) ? "" : "result-streaming",
             {
               "max-w-[80%]": alignRight,
               "float-right": alignRight,
-            }
+            },
           )}
         >
           {message.rawContent
@@ -165,7 +236,7 @@ const UserMessageComponent = ({
                             {/* if markdown view disabled -> render a paragraph */}
                             {line}
                           </p>
-                        )
+                        ),
                       )}
                   </div>
                 );
@@ -199,23 +270,23 @@ const BotMessageComponent = ({
   message: ChatMessage;
 }) => {
   const showMarkdown = useAppSelector(
-    (state: RootState) => state.app.viewOptions.showMarkdown
+    (state: RootState) => state.app.viewOptions.showMarkdown,
   );
   const codeOnly = useAppSelector(
-    (state: RootState) => state.app.viewOptions.showCodeOnly
+    (state: RootState) => state.app.viewOptions.showCodeOnly,
   );
   const alignRight = useAppSelector(
-    (state: RootState) => state.app.viewOptions.alignRight
+    (state: RootState) => state.app.viewOptions.alignRight,
   );
 
   return (
     <div
       className={classNames(
         "message-wrapper",
-        message?.done ?? true ? "" : "result-streaming",
+        (message?.done ?? true) ? "" : "result-streaming",
         {
           "max-w-[80%]": alignRight,
-        }
+        },
       )}
     >
       {(showMarkdown
@@ -384,7 +455,7 @@ const Name = ({
 }) => {
   const t = useAppSelector((state: RootState) => state.app.translations);
   const alignRight = useAppSelector(
-    (state: RootState) => state.app.viewOptions.alignRight
+    (state: RootState) => state.app.viewOptions.alignRight,
   );
   const usedWebSearch =
     message.usedWebSearch ||
@@ -438,25 +509,25 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
 }) => {
   const debug = useAppSelector((state: RootState) => state.app.debug);
   const [editingMessageID, setEditingMessageID] = React.useState<string | null>(
-    null
+    null,
   );
   const editingMessageRef = useRef<HTMLTextAreaElement>(null);
   const hideName = useAppSelector((state) => state.app.viewOptions.hideName);
   const networkLogs = useAppSelector(
-    (state) => state.app.viewOptions.showNetworkLogs
+    (state) => state.app.viewOptions.showNetworkLogs,
   );
   const alignRight = useAppSelector(
-    (state: RootState) => state.app.viewOptions.alignRight
+    (state: RootState) => state.app.viewOptions.alignRight,
   );
   const models = useAppSelector((state: RootState) => state.app.models);
   const settings = useAppSelector(
-    (state: RootState) => state.app.extensionSettings
+    (state: RootState) => state.app.extensionSettings,
   );
 
   const modelFriendlyName = useModelFriendlyName(
     conversation,
     models,
-    settings
+    settings,
   );
 
   return (
@@ -466,20 +537,18 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
       key={message.id}
     >
       {hideName ? (
-        <>
-          {message.role === Role.user && (
-            <ChatMessageOptions
-              className="absolute top-0 right-2 invisible group-hover/chat-message:visible group-focus-within/chat-message:visible"
-              message={message}
-              conversation={conversation}
-              index={index}
-              editingMessageID={editingMessageID}
-              setEditingMessageID={setEditingMessageID}
-              editingMessageRef={editingMessageRef}
-              vscode={vscode}
-            />
-          )}
-        </>
+        message.role === Role.user && (
+          <ChatMessageOptions
+            className="absolute top-0 right-2 invisible group-hover/chat-message:visible group-focus-within/chat-message:visible"
+            message={message}
+            conversation={conversation}
+            index={index}
+            editingMessageID={editingMessageID}
+            setEditingMessageID={setEditingMessageID}
+            editingMessageRef={editingMessageRef}
+            vscode={vscode}
+          />
+        )
       ) : (
         <header
           className={classNames("flex items-center gap-2", {
@@ -502,7 +571,12 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
         </header>
       )}
       {message.isError ? (
-        <ErrorMessageComponent message={message} />
+        <ErrorMessageComponent
+          message={message}
+          conversation={conversation}
+          index={index}
+          vscode={vscode}
+        />
       ) : (
         <div>
           <MessageBodyComponent
