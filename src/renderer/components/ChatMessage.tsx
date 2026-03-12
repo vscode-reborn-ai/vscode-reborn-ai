@@ -8,6 +8,10 @@ import type { RootState } from "../store";
 import { type ChatMessage, type Conversation, Role } from "../types";
 import CodeBlock from "./CodeBlock";
 import Icon from "./Icon";
+import {
+  splitMessageContentSegments,
+  splitMessageDisplayLines,
+} from "./chat-message-rendering";
 
 // Error message component.
 const ErrorMessageComponent = ({
@@ -162,6 +166,75 @@ const EditMessageComponent = ({
 };
 
 // Message body content for user messages.
+const SharedMessageContentComponent = ({
+  content,
+  conversationId,
+  vscode,
+  showMarkdown,
+  plainTextMode,
+  codeOnly = false,
+}: {
+  content: string;
+  conversationId: string;
+  vscode: any;
+  showMarkdown: boolean;
+  plainTextMode: "paragraphs" | "html";
+  codeOnly?: boolean;
+}) => {
+  return (
+    <>
+      {splitMessageContentSegments(content).map((item: string, index: number) => {
+        if (item.startsWith("<pre><code") && !showMarkdown) {
+          return (
+            <CodeBlock
+              code={item}
+              key={index}
+              conversationId={conversationId}
+              vscode={vscode}
+            />
+          );
+        }
+
+        if (codeOnly) {
+          return null;
+        }
+
+        if (showMarkdown) {
+          return (
+            <div key={index}>
+              {splitMessageDisplayLines(item).map((line: string, lineIndex: number) => (
+                <pre key={lineIndex} className="py-1 text-pretty">
+                  {line}
+                </pre>
+              ))}
+            </div>
+          );
+        }
+
+        if (plainTextMode === "html") {
+          return (
+            <div
+              key={index}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }}
+            />
+          );
+        }
+
+        return (
+          <div key={index}>
+            {splitMessageDisplayLines(item).map((line: string, lineIndex: number) => (
+              <p key={lineIndex} className="my-0 text-pretty whitespace-pre-wrap">
+                {line}
+              </p>
+            ))}
+          </div>
+        );
+      })}
+    </>
+  );
+};
+
+// Message body content for user messages.
 const UserMessageComponent = ({
   vscode,
   conversation,
@@ -200,48 +273,13 @@ const UserMessageComponent = ({
             },
           )}
         >
-          {message.rawContent
-            .replace(/\n/g, "<br/>")
-            .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
-            .reduce((acc: any[], item: any) => {
-              if (item) {
-                acc.push(item);
-              }
-              return acc;
-            }, [])
-            .map((item: string, index: React.Key | null | undefined) => {
-              if (item.startsWith("<pre><code") && !showMarkdown) {
-                return (
-                  <CodeBlock
-                    code={item}
-                    key={index}
-                    conversationId={conversation.id}
-                    vscode={vscode}
-                  />
-                );
-              } else {
-                return (
-                  <div key={index}>
-                    {item
-                      .replace(/<br\s*\/?>\n/gi, "<br>") // replace newlines next to <br> tags with just <br> tags (to avoid double newlines)
-                      .split(/(?:\n|<br\s*\/?>)/gi) // split on newlines and <br> tags
-                      .map((line: string, index: number) =>
-                        showMarkdown ? (
-                          <pre key={index} className="py-1 text-pretty">
-                            {/* show markdown enabled -> render a preformatted block */}
-                            {line}
-                          </pre>
-                        ) : (
-                          <p key={index} className="my-0 text-pretty whitespace-pre-wrap">
-                            {/* if markdown view disabled -> render a paragraph */}
-                            {line}
-                          </p>
-                        ),
-                      )}
-                  </div>
-                );
-              }
-            })}
+          <SharedMessageContentComponent
+            content={message.rawContent.replace(/\n/g, "<br/>")}
+            conversationId={conversation.id}
+            vscode={vscode}
+            showMarkdown={Boolean(showMarkdown)}
+            plainTextMode="paragraphs"
+          />
           {message.questionCode && (
             <>
               <CodeBlock
@@ -289,48 +327,14 @@ const BotMessageComponent = ({
         },
       )}
     >
-      {(showMarkdown
-        ? message.rawContent.replace(/\n/g, "<br/>")
-        : message.content
-      )
-        .split(/(<pre><code[^>]*>[\s\S]*?<\/code><\/pre>)/g)
-        .reduce((acc: any[], item: any) => {
-          if (item) {
-            acc.push(item);
-          }
-          return acc;
-        }, [])
-        .map((item: string, index: React.Key | null | undefined) => {
-          if (item.startsWith("<pre><code") && !showMarkdown) {
-            return (
-              <CodeBlock
-                code={item}
-                key={index}
-                conversationId={conversation.id}
-                vscode={vscode}
-              />
-            );
-          } else if (!codeOnly) {
-            return showMarkdown ? (
-              <div key={index}>
-                {item
-                  .replace(/<br\s*\/?>\n/gi, "<br>") // replace newlines next to <br> tags with just <br> tags (to avoid double newlines)
-                  .split(/(?:\n|<br\s*\/?>)/gi) // split on newlines and <br> tags
-                  .map((line: string, index: number) => (
-                    <pre key={index} className="py-1 text-pretty">
-                      {/* show markdown enabled -> render a preformatted block */}
-                      {line}
-                    </pre>
-                  ))}
-              </div>
-            ) : (
-              <div
-                key={index}
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }}
-              />
-            );
-          }
-        })}
+      <SharedMessageContentComponent
+        content={showMarkdown ? message.rawContent.replace(/\n/g, "<br/>") : message.content}
+        conversationId={conversation.id}
+        vscode={vscode}
+        showMarkdown={Boolean(showMarkdown)}
+        plainTextMode="html"
+        codeOnly={Boolean(codeOnly)}
+      />
     </div>
   );
 };
