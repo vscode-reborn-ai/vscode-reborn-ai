@@ -39,6 +39,10 @@ export default ({
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
+  // Get the up-to-date conversation from Redux store (the prop may be stale due to React Router caching)
+  const upToDateConversation = useAppSelector(
+    (state: RootState) => state.conversation.conversations[currentConversation.id]
+  ) ?? currentConversation;
   const t = useAppSelector((state: any) => state.app.translations);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
   const moreActionsButtonRef = useRef<HTMLButtonElement>(null);
@@ -122,8 +126,9 @@ export default ({
         })
       );
 
+      // Use upToDateConversation to ensure we have the latest reasoningEffort and other settings
       backendMessenger.sendAddFreeTextQuestion({
-        conversation: currentConversation,
+        conversation: upToDateConversation,
         question: questionInputRef.current.value,
         includeEditorSelection: useEditorSelection,
       });

@@ -10,7 +10,7 @@ import CodeBlock from "./CodeBlock";
 import Icon from "./Icon";
 
 // Error message component.
-const ErrorMessageComponent = ({ message }: { message: ChatMessage }) => {
+const ErrorMessageComponent = ({ message }: { message: ChatMessage; }) => {
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
@@ -40,7 +40,7 @@ const ErrorMessageComponent = ({ message }: { message: ChatMessage }) => {
 };
 
 // Debug message component.
-const DebugMessageComponent = ({ message }: { message: ChatMessage }) => {
+const DebugMessageComponent = ({ message }: { message: ChatMessage; }) => {
   return (
     <div className="text-xs text-gray-500">
       Message ID: {message?.id} <br />
@@ -320,12 +320,16 @@ const ChatMessageOptions = ({
   vscode: any;
 }) => {
   const t = useAppSelector((state: RootState) => state.app.translations);
+  // Get the up-to-date conversation from Redux store (the prop may be stale due to React Router caching)
+  const upToDateConversation = useAppSelector(
+    (state: RootState) => state.conversation.conversations[conversation.id]
+  ) ?? conversation;
   const backendMessenger = useMessenger(vscode);
 
   const handleSendClick = () => {
     const newQuestion = editingMessageRef.current?.value ?? "";
     backendMessenger.sendAddFreeTextQuestion({
-      conversation,
+      conversation: upToDateConversation,
       question: newQuestion,
       includeEditorSelection: false,
       questionId: message.id,
@@ -338,9 +342,8 @@ const ChatMessageOptions = ({
   return (
     <div className={classNames("flex items-center", className)}>
       <div
-        className={`send-cancel-elements-ext gap-2 ${
-          editingMessageID === message.id ? "" : "hidden"
-        }`}
+        className={`send-cancel-elements-ext gap-2 ${editingMessageID === message.id ? "" : "hidden"
+          }`}
       >
         <button
           className="send-element-ext p-1 pr-2 flex items-center"
@@ -458,9 +461,8 @@ const ChatMessageComponent: React.FC<MessageComponentProps> = ({
 
   return (
     <div
-      className={`group/chat-message w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative ${
-        message.role === Role.user ? "bg-input" : "bg-sidebar"
-      }`}
+      className={`group/chat-message w-full flex flex-col gap-y-4 p-4 self-end question-element-ext relative ${message.role === Role.user ? "bg-input" : "bg-sidebar"
+        }`}
       key={message.id}
     >
       {hideName ? (
