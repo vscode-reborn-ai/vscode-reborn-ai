@@ -166,7 +166,7 @@ const EditMessageComponent = ({
 };
 
 // Message body content for user messages.
-const SharedMessageContentComponent = ({
+const MessageContentRenderer = ({
   content,
   conversationId,
   vscode,
@@ -273,7 +273,7 @@ const UserMessageComponent = ({
             },
           )}
         >
-          <SharedMessageContentComponent
+          <MessageContentRenderer
             content={message.rawContent.replace(/\n/g, "<br/>")}
             conversationId={conversation.id}
             vscode={vscode}
@@ -327,7 +327,7 @@ const BotMessageComponent = ({
         },
       )}
     >
-      <SharedMessageContentComponent
+      <MessageContentRenderer
         content={showMarkdown ? message.rawContent.replace(/\n/g, "<br/>") : message.content}
         conversationId={conversation.id}
         vscode={vscode}
