@@ -75,8 +75,17 @@ export interface Model {
 // Maps ID to a friendly name
 // Ref: https://platform.openai.com/docs/models
 export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
+  "gpt-5.4": "GPT-5.4",
+  "gpt-5.4-pro": "GPT-5.4 Pro",
+  "gpt-5": "GPT-5",
+  "gpt-5-mini": "GPT-5 Mini",
+  "gpt-5-codex": "GPT-5 Codex",
+  "gpt-5.3-codex": "GPT-5.3-Codex",
+  "gpt-5.2-codex": "GPT-5.2-Codex",
+  "gpt-5.1-codex": "GPT-5.1 Codex",
   "gpt-5.2": "GPT-5.2",
   "gpt-5.1-codex-max": "GPT-5.1 Codex Max",
+  "gpt-5.1-codex-mini": "GPT-5.1 Codex Mini",
   "gpt-4.1": "GPT-4.1",
   "gpt-4-turbo": "GPT-4 Turbo",
   "gpt-4": "GPT-4",
@@ -87,10 +96,12 @@ export const MODEL_FRIENDLY_NAME: Map<string, string> = new Map(Object.entries({
   "gpt-3.5-turbo-16k": "GPT-3.5 Turbo 16k",
   "o1": "o1",
   "o3": "o3",
+  "o3-deep-research": "o3-deep-research",
   "o1-preview": "o1 Preview",
   "o1-mini": "o1 Mini",
   "o3-mini": "o3 Mini",
   "o4-mini": "o4 Mini",
+  "o4-mini-deep-research": "o4-mini-deep-research",
 }));
 
 // source: https://openai.com/pricing
@@ -101,6 +112,44 @@ interface ModelCost {
 
 // Token cost per 1 million tokens
 export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
+  'gpt-5.4': {
+    // Current GPT-5.4 flagship tier used for best-quality general workflows.
+    prompt: 2,
+    complete: 16,
+  },
+  'gpt-5.4-pro': {
+    // Top-end premium GPT-5.4 tier. Kept for compatibility but intentionally not surfaced in the recommended UI.
+    prompt: 15,
+    complete: 120,
+  },
+  'gpt-5': {
+    // Previous GPT-5 reasoning model retained for compatibility.
+    prompt: 1.75,
+    complete: 14,
+  },
+  'gpt-5-mini': {
+    // Small GPT-5 tier used for low-cost, high-speed tasks.
+    prompt: 0.25,
+    complete: 2,
+  },
+  'gpt-5-codex': {
+    // Coding-focused GPT-5 tier.
+    prompt: 1.25,
+    complete: 10,
+  },
+  'gpt-5.3-codex': {
+    // Latest and most capable Codex model.
+    prompt: 1.5,
+    complete: 12,
+  },
+  'gpt-5.2-codex': {
+    prompt: 1.25,
+    complete: 10,
+  },
+  'gpt-5.1-codex': {
+    prompt: 1.1,
+    complete: 8,
+  },
   'gpt-5.2': {
     // Per OpenAI model page: Input $1.75 / 1M tokens, Output $14 / 1M tokens
     prompt: 1.75,
@@ -110,6 +159,10 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     // Per OpenAI model page: Input $1.25 / 1M tokens, Output $10 / 1M tokens
     prompt: 1.25,
     complete: 10,
+  },
+  'gpt-5.1-codex-mini': {
+    prompt: 0.6,
+    complete: 4,
   },
   'gpt-4.1': {
     prompt: 2,
@@ -152,6 +205,10 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
     prompt: 2,
     complete: 8,
   },
+  'o3-deep-research': {
+    prompt: 10,
+    complete: 40,
+  },
   'o1-preview': {
     prompt: 15,
     complete: 60,
@@ -168,6 +225,10 @@ export const MODEL_COSTS: Map<string, ModelCost> = new Map(Object.entries({
   'o4-mini': {
     prompt: 1.10,
     complete: 4.40,
+  },
+  'o4-mini-deep-research': {
+    prompt: 2,
+    complete: 8,
   }
 }));
 
@@ -178,6 +239,38 @@ interface ModelTokenLimits {
 }
 export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.entries({
   // NOTE: Token limits are used for UI display. If unknown, we leave them unset.
+  'gpt-5.4': {
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5.4-pro': {
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5': {
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5-mini': {
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5-codex': {
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5.3-codex': {
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5.2-codex': {
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5.1-codex': {
+    context: 400000,
+    max: 128000,
+  },
   'gpt-5.2': {
     // Per OpenAI model page: 400,000 context window, 128,000 max output tokens
     context: 400000,
@@ -185,6 +278,10 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
   },
   'gpt-5.1-codex-max': {
     // Per OpenAI model page: 400,000 context window, 128,000 max output tokens
+    context: 400000,
+    max: 128000,
+  },
+  'gpt-5.1-codex-mini': {
     context: 400000,
     max: 128000,
   },
@@ -227,6 +324,10 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 200000,
     max: 100000,
   },
+  'o3-deep-research': {
+    context: 200000,
+    max: 100000,
+  },
   'o1-preview': {
     context: 128000,
     max: 32768,
@@ -243,6 +344,10 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
     context: 2000000,
     max: 100000,
   },
+  'o4-mini-deep-research': {
+    context: 2000000,
+    max: 100000,
+  },
 }));
 
 // Reasoning models have specific constraints:
@@ -255,14 +360,22 @@ export const MODEL_TOKEN_LIMITS: Map<string, ModelTokenLimits> = new Map(Object.
 export const REASONING_MODELS = [
   'o1',
   'o3',
+  'o3-deep-research',
   'o1-preview',
   'o1-mini',
   'o3-mini',
   'o4-mini',
+  'o4-mini-deep-research',
+  'gpt-5.4',
+  'gpt-5.4-pro',
   'gpt-5',
   'gpt-5-mini',
   'gpt-5-codex',
+  'gpt-5.3-codex',
+  'gpt-5.2-codex',
+  'gpt-5.1-codex',
   'gpt-5.1-codex-max',
+  'gpt-5.1-codex-mini',
   'gpt-5.2',
 ];
 
@@ -421,7 +534,7 @@ export interface ExtensionSettings {
     generateCodeEnabled: boolean,
     apiBaseUrl: string,
     organization: string,
-    model: "gpt-5.2" | "gpt-5.1-codex-max" | "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o3" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini",
+    model: "gpt-5.4" | "gpt-5" | "gpt-5-mini" | "gpt-5-codex" | "gpt-5.3-codex" | "gpt-5.2" | "gpt-5.2-codex" | "gpt-5.1-codex" | "gpt-5.1-codex-max" | "gpt-5.1-codex-mini" | "gpt-4.1" | "gpt-4-turbo" | "gpt-4" | "gpt-4-32k" | "gpt-4o" | "gpt-4o-mini" | "gpt-3.5-turbo" | "gpt-3.5-turbo-16k" | "o1" | "o1-preview" | "o1-mini" | "o3-mini" | "o4-mini" | "o3-deep-research" | "o4-mini-deep-research",
     maxTokens: number,
     temperature: number,
     top_p: number;
@@ -475,7 +588,7 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
     generateCodeEnabled: true,
     apiBaseUrl: "https://api.openai.com/v1",
     organization: "",
-    model: "gpt-5.2",
+    model: "gpt-5.3-codex",
     maxTokens: 4000,
     temperature: 1,
     top_p: 1

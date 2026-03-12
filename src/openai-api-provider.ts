@@ -4,7 +4,7 @@ import { generateText, streamText } from 'ai';
 import { Tiktoken, TiktokenModel, encodingForModel } from "js-tiktoken";
 import ky from "ky";
 import { z } from 'zod';
-import { isReasoningModel } from "./helpers";
+import { isDeepResearchModel, isReasoningModel } from "./helpers";
 import { getModelCompletionLimit, getModelContextLimit } from "./renderer/helpers";
 import { ChatMessage, Conversation, Model, ResponseSource, ResponseStep, Role } from "./renderer/types";
 
@@ -84,7 +84,7 @@ export class ApiProvider {
     this._allowWebSearch = allow;
   }
 
-  private getWebSearchTool() {
+  private getWebSearchTool(modelId?: string) {
     if (!this._allowWebSearch || !this._openai) {
       return undefined;
     }
@@ -93,8 +93,9 @@ export class ApiProvider {
     type ToolCapableProvider = { tools?: { webSearch?: WebSearchFactory; }; };
 
     const toolFactory = (this._openai as ToolCapableProvider)?.tools?.webSearch;
+    const searchContextSize = isDeepResearchModel(modelId ?? '') ? "medium" : "high";
 
-    return toolFactory?.({ externalWebAccess: true, searchContextSize: "high" });
+    return toolFactory?.({ externalWebAccess: true, searchContextSize });
   }
 
   // setModel(modelId: string) {
@@ -141,7 +142,7 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const webSearchTool = this.getWebSearchTool();
+    const webSearchTool = this.getWebSearchTool(model);
 
     const providerOptions = isReasoningModel(model) && conversation.reasoningEffort ? {
       openai: { reasoningEffort: conversation.reasoningEffort }
@@ -233,7 +234,7 @@ export class ApiProvider {
       model = model.split('/deployments/').pop() ?? model;
     }
 
-    const webSearchTool = this.getWebSearchTool();
+    const webSearchTool = this.getWebSearchTool(model);
 
     const providerOptionsNonStreaming = isReasoningModel(model) && conversation.reasoningEffort ? {
       openai: { reasoningEffort: conversation.reasoningEffort }

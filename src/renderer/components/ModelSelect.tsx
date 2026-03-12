@@ -37,54 +37,47 @@ export interface RichModel extends Partial<Model> {
 }
 const SUGGESTED_OPENAI_MODELS: RichModel[] = [
   {
-    id: "gpt-5.2",
-    name: "gpt-5.2",
+    id: "gpt-5.4",
+    name: "GPT-5.4",
+    quality: "⭐⭐⭐",
+    speed: "⚡⚡⬜",
+    cost: "💸💸⬜",
+  },
+  {
+    id: "gpt-5.3-codex",
+    name: "GPT-5.3-Codex",
     quality: "⭐⭐⭐",
     speed: "⚡⚡⬜",
     cost: "💸💸⬜",
     recommended: true,
   },
   {
-    id: "gpt-5.1-codex-max",
-    name: "gpt-5.1-codex-max",
-    quality: "⭐⭐⭐",
-    speed: "⚡⚡⬜",
-    cost: "💸💸⬜",
-  },
-  {
-    id: "gpt-4o",
-    name: "GPT-4o",
-    quality: "⭐⭐⭐",
-    speed: "⚡⚡⚡",
-    cost: "💸💸⬜",
-  },
-  {
-    id: "o4-mini",
-    name: "o4 mini",
-    quality: "⭐⭐⭐",
-    speed: "⚡⚡⚡",
-    cost: "💸⬜⬜",
-  },
-  {
-    id: "o3",
-    name: "o3",
-    quality: "⭐⭐⭐",
-    speed: "⚡⬜⬜",
-    cost: "💸💸⬜",
-  },
-  {
-    id: "o3-mini",
-    name: "o3-mini",
-    quality: "⭐⭐⭐",
-    speed: "⚡⚡⚡",
-    cost: "💸⬜⬜",
-  },
-  {
-    id: "o1",
-    name: "o1",
+    id: "o3-deep-research",
+    name: "o3-deep-research",
     quality: "⭐⭐⭐",
     speed: "⚡⬜⬜",
     cost: "💸💸💸",
+  },
+  {
+    id: "o4-mini-deep-research",
+    name: "o4-mini-deep-research",
+    quality: "⭐⭐",
+    speed: "⚡⬜⬜",
+    cost: "💸💸⬜"
+  },
+  {
+    id: "gpt-5-mini",
+    name: "GPT-5 Mini",
+    quality: "⭐⭐",
+    speed: "⚡⚡⚡",
+    cost: "💸⬜⬜",
+  },
+  {
+    id: "gpt-4.1",
+    name: "GPT-4.1",
+    quality: "⭐⭐",
+    speed: "⚡⚡⬜",
+    cost: "💸💸⬜",
   },
 ];
 

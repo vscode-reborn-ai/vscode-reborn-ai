@@ -44,6 +44,12 @@ export async function listItems(currentProjectDir: string): Promise<string[]> {
 }
 
 const deprecatedModelMap = new Map<string, string>([
+  // Legacy - prefer the latest Codex coding model over older general-purpose defaults.
+  ['gpt-4.1', 'gpt-5.3-codex'],
+  // Legacy - move GPT-5 snapshot users to the newer Codex coding default.
+  ['gpt-5.2', 'gpt-5.3-codex'],
+  ['gpt-5.4', 'gpt-5.3-codex'],
+  ['gpt-5-codex', 'gpt-5.3-codex'],
   // Legacy - gpt-4-turbo is no longer in preview, use the latest model alias
   ['gpt-4-1106-preview', 'gpt-4-turbo'],
   // Legacy - All gpt-3.5-turbo models are now 16k
@@ -138,3 +144,6 @@ export class WriteStream {
 
 // Check if model is a reasoning model.
 export const isReasoningModel = (modelId: string) => REASONING_MODELS.includes(modelId);
+
+// Deep research models currently require OpenAI web search context size "medium".
+export const isDeepResearchModel = (modelId: string) => modelId.includes('deep-research');

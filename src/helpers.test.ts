@@ -1,10 +1,14 @@
 import * as assert from 'assert';
-import { getUpdatedModel, isReasoningModel, throttle } from './helpers';
+import { getUpdatedModel, isDeepResearchModel, isReasoningModel, throttle } from './helpers';
 
 suite('Helper utilities (co-located)', () => {
   test('getUpdatedModel maps deprecated models to replacements', () => {
     assert.strictEqual(getUpdatedModel('gpt-3.5-turbo'), 'gpt-4o-mini');
     assert.strictEqual(getUpdatedModel('gpt-4-1106-preview'), 'gpt-4-turbo');
+    assert.strictEqual(getUpdatedModel('gpt-4.1'), 'gpt-5.3-codex');
+    assert.strictEqual(getUpdatedModel('gpt-5.2'), 'gpt-5.3-codex');
+    assert.strictEqual(getUpdatedModel('gpt-5.4'), 'gpt-5.3-codex');
+    assert.strictEqual(getUpdatedModel('gpt-5-codex'), 'gpt-5.3-codex');
   });
 
   test('getUpdatedModel returns the same id when not deprecated', () => {
@@ -14,6 +18,12 @@ suite('Helper utilities (co-located)', () => {
   test('isReasoningModel flags reasoning-capable models', () => {
     assert.ok(isReasoningModel('o1'));
     assert.ok(!isReasoningModel('gpt-4o'));
+  });
+
+  test('isDeepResearchModel flags deep research models', () => {
+    assert.ok(isDeepResearchModel('o3-deep-research'));
+    assert.ok(isDeepResearchModel('o4-mini-deep-research'));
+    assert.ok(!isDeepResearchModel('o3-mini'));
   });
 
   test('throttle limits rapid consecutive calls but allows spaced calls', async () => {
