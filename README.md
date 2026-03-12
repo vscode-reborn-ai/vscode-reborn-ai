@@ -72,10 +72,6 @@ Any tool that is "compatible" with the OpenAI API should work with this extensio
 - [X] [OpenRouter](https://openrouter.ai/)
 - [X] [Azure OpenAI Service](https://azure.microsoft.com/en-us/products/ai-services/openai-service/)
 
-### Proxies
-
-We've set up a proxy for anyone that needs it at `https://openai-proxy.dev/v1`. It's running [x-dr/chatgptProxyAPI](https://github.com/x-dr/chatgptProxyAPI) code on CloudFlare Workers. This is mainly for anyone who wants to use OpenAI, but cannot due to api.openai.com being blocked in your region.
-
 ## Internationalization
 
 Translated to: 🇬🇧 🇨🇳 🇮🇳 🇪🇸 🇦🇪 🇧🇩 🇸🇦 🇫🇷 🇷🇺 🇵🇰 🇩🇪 🇯🇵 🇮🇩 🇧🇷 🇮🇹 🇹🇭 🇵🇱 🇻🇳 🇵🇭 🇳🇱 🇺🇦 🇵🇹 🇹🇷 🇪🇬 🇰🇷

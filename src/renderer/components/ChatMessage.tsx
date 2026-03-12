@@ -232,7 +232,7 @@ const UserMessageComponent = ({
                             {line}
                           </pre>
                         ) : (
-                          <p key={index} className="my-0 text-pretty">
+                          <p key={index} className="my-0 text-pretty whitespace-pre-wrap">
                             {/* if markdown view disabled -> render a paragraph */}
                             {line}
                           </p>
@@ -391,12 +391,16 @@ const ChatMessageOptions = ({
   vscode: any;
 }) => {
   const t = useAppSelector((state: RootState) => state.app.translations);
+  // Get the up-to-date conversation from Redux store (the prop may be stale due to React Router caching)
+  const upToDateConversation = useAppSelector(
+    (state: RootState) => state.conversation.conversations[conversation.id]
+  ) ?? conversation;
   const backendMessenger = useMessenger(vscode);
 
   const handleSendClick = () => {
     const newQuestion = editingMessageRef.current?.value ?? "";
     backendMessenger.sendAddFreeTextQuestion({
-      conversation,
+      conversation: upToDateConversation,
       question: newQuestion,
       includeEditorSelection: false,
       questionId: message.id,
@@ -453,6 +457,12 @@ const Name = ({
   const alignRight = useAppSelector(
     (state: RootState) => state.app.viewOptions.alignRight,
   );
+  const usedWebSearch =
+    message.usedWebSearch ||
+    message.steps?.some((step) => {
+      const toolName = step?.toolName ?? step?.toolCall?.toolName ?? step?.name ?? "";
+      return toolName === "web_search";
+    });
 
   return (
     <h2
@@ -469,6 +479,14 @@ const Name = ({
         <>
           <Icon icon="box" className="w-6 h-6" />
           <span>{modelFriendlyName ?? "ChatGPT"}</span>
+          {usedWebSearch && (
+            <span
+              className="inline-flex items-center gap-1 text-xs text-blue-400"
+              title="Used web search"
+            >
+              <Icon icon="globe" className="w-4 h-4" />
+            </span>
+          )}
         </>
       )}
     </h2>

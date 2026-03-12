@@ -2,15 +2,22 @@
 
 **Contributors:**
 
-[@Christopher-Hayes](github.com/Christopher-Hayes) - [@danyalaytekin](github.com/danyalaytekin) - [@flutterrausch](github.com/flutterrausch) - [@hakula139](github.com/hakula139) - [@lvii](github.com/lvii) - [@moritz-t-w](github.com/moritz-t-w) - [@nickv2002](github.com/nickv2002) - [@nossebro](github.com/nossebro) - [@PeterDaveHello](github.com/PeterDaveHello) - [@raphael2692](github.com/raphael2692) - [@rambalachandran](github.com/rambalachandran) - [@xmjiao](github.com/xmjiao) - [@wojtekcz](github.com/wojtekcz) - [@ZsgsDesign](github.com/ZsgsDesign) - [@zzy-life](github.com/zzy-life)
+[@Christopher-Hayes](github.com/Christopher-Hayes) - [@danyalaytekin](github.com/danyalaytekin) - [@flutterrausch](github.com/flutterrausch) - [@hakula139](github.com/hakula139) - [@lvii](github.com/lvii) - [@moritz-t-w](github.com/moritz-t-w) - [@nickv2002](github.com/nickv2002) - [@nossebro](github.com/nossebro) - [@nove-b](github.com/nove-b) - [@PeterDaveHello](github.com/PeterDaveHello) - [@raphael2692](github.com/raphael2692) - [@rambalachandran](github.com/rambalachandran) - [@xmjiao](github.com/xmjiao) - [@wojtekcz](github.com/wojtekcz) - [@ZsgsDesign](github.com/ZsgsDesign) - [@zzy-life](github.com/zzy-life)
 
 ## [next]
 
-- ✨ **Feature** - Added support for OpenAI's Search model, `gpt-4o-search-preview`.
+
+## January 11, 2026 [v3.28.0]
+
+- ✨ **Feature** - Add Web Search capability to OpenAI models. *Thanks for the suggestion @PeterDaveHello*
+- ✨ **Feature** - Added support for `gpt-5.2`, OpenAI's latest model. As well as the coding-specific, `gpt-5.1-codex-max` model.
+- 🔧 **Fixes** - Fix user message loses space indents. - *Thank you for the PR @nove-b*
 
 ## May 10, 2025 [v3.27.0]
 
+- ✨ **Feature** - Added support for OpenAI's Search model, `gpt-4o-search-preview`.
 - ✨ **Feature** - Added support for `gpt-4.1`, `o3`, `o4-mini` and `o3-mini` when using OpenAI. *Thanks @PeterDaveHello*
+- 🎨 **Branding** - Minor improvements to model select UI.
 - 📼 **Deprecated** - `gpt-4`, `gpt-4-turbo` and `o1-mini` are deprecated in favor of newer models.
 
 ## October 20, 2024 [v3.26.0]
@@ -151,7 +158,8 @@
 - 🎮 **QoL** - When opening code in a new text editor, VSCode should now automatically know how to syntax highlight it.
 - 🎮 **QoL** - Configuring "System message" is now an extension setting.
 
-[next]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.27.0...HEAD
+[next]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.28.0...HEAD
+[v3.28.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.27.0...3.28.0
 [v3.27.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.26.0...3.27.0
 [v3.26.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.25.0...3.26.0
 [v3.25.0]: https://github.com/vscode-reborn-ai/vscode-reborn-ai/compare/3.24.0...3.25.0

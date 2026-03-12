@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import { RootState } from "../store";
 import { addConversation, removeConversation } from "../store/conversation";
-import { Conversation, Verbosity } from "../types";
+import { Conversation, ReasoningEffort, Verbosity } from "../types";
 import Icon from "./Icon";
 import TabsDropdown from "./TabsDropdown";
 
@@ -44,7 +44,7 @@ function TabLink({
   currentConversation,
   createNewConversation,
 }: {
-  tab: { name: string; id: string; href: string };
+  tab: { name: string; id: string; href: string; };
   conversationList: Conversation[];
   currentConversation: Conversation;
   createNewConversation: any;
@@ -206,6 +206,10 @@ export default function Tabs({
         settings?.verbosity ??
         currentConversation?.verbosity ??
         Verbosity.normal,
+      reasoningEffort:
+        settings?.reasoningEffort ??
+        currentConversation?.reasoningEffort ??
+        ReasoningEffort.Medium,
       tools: {},
     } as Conversation;
 

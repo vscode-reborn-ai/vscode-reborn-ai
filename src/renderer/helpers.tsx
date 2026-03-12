@@ -351,6 +351,14 @@ export function isInstructModel(model: Model | undefined) {
   return model?.architecture?.instruct_type || model?.id.includes("instruct");
 }
 
+// Can this model stream back its responses?
+export function isStreamingModel(model: Model | undefined) {
+  const isInstruct = isInstructModel(model);
+
+  // Streaming means "chat-style" models; instruct-style models don't stream token-wise
+  return !isInstruct;
+}
+
 export function isMultimodalModel(model: Model | undefined) {
   return model?.architecture?.modality === "multimodal";
 }

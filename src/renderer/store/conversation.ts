@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ChatMessage, Conversation, Model, Verbosity } from "../types";
+import { ChatMessage, Conversation, Model, ReasoningEffort, Verbosity } from "../types";
 
 export interface ConversationState {
   conversations: {
@@ -20,6 +20,7 @@ const initialConversation: Conversation = {
   model: undefined,
   autoscroll: true,
   verbosity: undefined,
+  reasoningEffort: undefined,
   tools: {},
 };
 
@@ -278,6 +279,21 @@ export const conversationSlice = createSlice({
         state.conversations[conversationId].verbosity = verbosity;
       }
     },
+    setReasoningEffort: (
+      state,
+      action: PayloadAction<{
+        conversationId: string;
+        reasoningEffort: ReasoningEffort;
+      }>
+    ) => {
+      const { conversationId, reasoningEffort } = action.payload;
+      if (state.conversations[conversationId]) {
+        state.conversations[conversationId].reasoningEffort = reasoningEffort;
+        if (conversationId === state.currentConversationId && state.currentConversation) {
+          state.currentConversation.reasoningEffort = reasoningEffort;
+        }
+      }
+    },
     setModel: (
       state,
       action: PayloadAction<{
@@ -327,6 +343,7 @@ export const {
   setInProgress,
   setAutoscroll,
   setVerbosity,
+  setReasoningEffort,
   setModel,
   updateUserInput,
 } = conversationSlice.actions;

@@ -22,6 +22,7 @@ import Icon from "./Icon";
 import ModelInput from "./ModelInput";
 import ModelSelect from "./ModelSelect";
 import MoreActionsMenu from "./MoreActionsMenu";
+import ReasoningEffortSelect from "./ReasoningEffortSelect";
 import TokenCountPopup from "./TokenCountPopup";
 import VerbositySelect from "./VerbositySelect";
 
@@ -38,6 +39,10 @@ export default ({
   const settings = useAppSelector(
     (state: RootState) => state.app.extensionSettings
   );
+  // Get the up-to-date conversation from Redux store (the prop may be stale due to React Router caching)
+  const upToDateConversation = useAppSelector(
+    (state: RootState) => state.conversation.conversations[currentConversation.id]
+  ) ?? currentConversation;
   const t = useAppSelector((state: any) => state.app.translations);
   const questionInputRef = React.useRef<HTMLTextAreaElement>(null);
   const moreActionsButtonRef = useRef<HTMLButtonElement>(null);
@@ -61,6 +66,9 @@ export default ({
   );
   const showVerbosity = useAppSelector(
     (state) => state.app.viewOptions.showVerbosity
+  );
+  const showReasoningEffort = useAppSelector(
+    (state) => state.app.viewOptions.showReasoningEffort
   );
   const showClear = useAppSelector((state) => state.app.viewOptions.showClear);
   const showTokenCount = useAppSelector(
@@ -118,8 +126,9 @@ export default ({
         })
       );
 
+      // Use upToDateConversation to ensure we have the latest reasoningEffort and other settings
       backendMessenger.sendAddFreeTextQuestion({
-        conversation: currentConversation,
+        conversation: upToDateConversation,
         question: questionInputRef.current.value,
         includeEditorSelection: useEditorSelection,
       });
@@ -288,7 +297,7 @@ export default ({
               {isCurrentModelAvailable
                 ? t?.questionInputField?.ask ?? "Ask"
                 : t?.questionInputField?.selectAModelFirst ??
-                  "Select a model first"}
+                "Select a model first"}
               <Icon icon="send" className="w-5 h-5 ml-1 hidden 2xs:block" />
             </button>
           )}
@@ -317,6 +326,14 @@ export default ({
                 )}
               </>
             )}
+            {showReasoningEffort && isReasoningModel(currentConversation.model) && (
+              <ReasoningEffortSelect
+                currentConversation={currentConversation}
+                vscode={vscode}
+                className="hidden xs:flex items-end"
+                tooltipId="footer-tooltip"
+              />
+            )}
             {showVerbosity && (
               <VerbositySelect
                 currentConversation={currentConversation}
@@ -328,11 +345,10 @@ export default ({
             {showEditorSelection && (
               <button
                 className={`rounded flex gap-1 items-center justify-start py-0.5 px-1 whitespace-nowrap
-                ${
-                  useEditorSelection
+                ${useEditorSelection
                     ? "bg-button text-button hover:bg-button-hover focus:bg-button-hover"
                     : "hover:bg-button-secondary hover:text-button-secondary focus:text-button-secondary focus:bg-button-secondary"
-                }
+                  }
               `}
                 data-tooltip-id="footer-tooltip"
                 data-tooltip-content="Include the code selected in your editor in the prompt?"
@@ -380,23 +396,21 @@ export default ({
           <div className="flex flex-row items-start gap-2">
             {showTokenCount && (
               <div
-                className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${
-                  tokenCountAnimation
-                    ? "duration-200 bg-blue-300 bg-opacity-20"
-                    : "duration-500"
-                }
-                ${
-                  parseInt(tokenCountLabel) >
-                  (MODEL_TOKEN_LIMITS.has(
-                    currentConversation.model?.id ?? "gpt-4-turbo"
-                  )
-                    ? MODEL_TOKEN_LIMITS.get(
+                className={`rounded flex gap-1 items-end justify-start py-1 px-2 w-full text-[10px] whitespace-nowrap hover:bg-button-secondary focus:bg-button-secondary hover:text-button-secondary focus:text-button-secondary transition-bg  ${tokenCountAnimation
+                  ? "duration-200 bg-blue-300 bg-opacity-20"
+                  : "duration-500"
+                  }
+                ${parseInt(tokenCountLabel) >
+                    (MODEL_TOKEN_LIMITS.has(
+                      currentConversation.model?.id ?? "gpt-4-turbo"
+                    )
+                      ? MODEL_TOKEN_LIMITS.get(
                         currentConversation.model?.id ?? "gpt-4-turbo"
                       )?.context ?? 128000
-                    : 128000)
+                      : 128000)
                     ? "duration-200 bg-red-700 bg-opacity-20"
                     : ""
-                }
+                  }
               `}
                 ref={tokenCountRef}
                 tabIndex={0}
