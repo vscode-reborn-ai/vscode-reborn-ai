@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "Tingnan ang openai.com/pricing para sa karagdagang detalye",
   "chat.send": "Ipadala",
   "chat.cancel": "Kanselahin",
+  "chat.retry": "Subukan Muli",
   "chat.you": "Ikaw",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "Reborn AI: Magtanong ng kahit ano",

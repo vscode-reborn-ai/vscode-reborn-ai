@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "Lihat openai.com/pricing untuk maklumat lanjut",
   "chat.send": "Hantar",
   "chat.cancel": "Batal",
+  "chat.retry": "Cuba Lagi",
   "chat.you": "Anda",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "Reborn AI: Tanya apa sahaja",

@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "Xem openai.com/pricing để biết thêm chi tiết",
   "chat.send": "Gửi",
   "chat.cancel": "Hủy",
+  "chat.retry": "Thử lại",
   "chat.you": "Bạn",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "Reborn AI: Hỏi bất cứ điều gì",

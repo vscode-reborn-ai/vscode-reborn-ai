@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "ดูรายละเอียดเพิ่มเติมที่ openai.com/pricing",
   "chat.send": "ส่ง",
   "chat.cancel": "ยกเลิก",
+  "chat.retry": "ลองใหม่",
   "chat.you": "คุณ",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "Reborn AI: ถามอะไรก็ได้",

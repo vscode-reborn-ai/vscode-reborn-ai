@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "Daha fazla ayrıntı için openai.com/pricing adresini ziyaret edin",
   "chat.send": "Gönder",
   "chat.cancel": "İptal",
+  "chat.retry": "Yeniden Dene",
   "chat.you": "Sen",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "Reborn AI: Herhangi bir şey sor",

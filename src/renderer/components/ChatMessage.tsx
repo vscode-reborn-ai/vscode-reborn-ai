@@ -55,6 +55,8 @@ const ErrorMessageComponent = ({
 		}
 	};
 
+	const previousUserMessage = findPreviousUserMessage();
+
 	if (debug) {
 		// Debug logging to understand the issue
 		console.log("[Reborn AI] Error message debug:", {
@@ -91,8 +93,8 @@ const ErrorMessageComponent = ({
 						Model.
 					</p>
 				)}
-			{/* Always show retry button for error messages if there are any user messages in the conversation */}
-			{conversation.messages.some((msg) => msg.role === Role.user) && (
+			{/* Always show retry button for error messages if there is a previous user message */}
+			{previousUserMessage && (
 				<div className="mt-3 pt-3 border-t border-red-600 border-opacity-30">
 					<button
 						type="button"

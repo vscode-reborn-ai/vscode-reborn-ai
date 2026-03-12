@@ -23,6 +23,7 @@
   "apiKeySetup.openAIAPICosts.moreDetails": "Посетите openai.com/pricing для получения дополнительной информации",
   "chat.send": "Отправить",
   "chat.cancel": "Отмена",
+  "chat.retry": "Повторить",
   "chat.you": "Вы",
   "chat.ai": "ChatGPT",
   "vscode-chatgpt.freeText.title": "Reborn AI: Задайте любой вопрос",
